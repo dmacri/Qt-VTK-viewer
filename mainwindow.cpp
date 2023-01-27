@@ -72,7 +72,7 @@ void MainWindow::openFile(const QString& fileName)
 
 void MainWindow::on_pushButton_clicked()
 {
-    ui->sceneWidget->increaseCountUp();
+   // ui->sceneWidget->increaseCountUp();
 }
 
 

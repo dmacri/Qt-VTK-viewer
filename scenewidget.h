@@ -34,8 +34,6 @@ public:
     vtkNew<vtkNamedColors> colors;
     vtkSmartPointer<vtkRenderer>  m_renderer = vtkSmartPointer<vtkRenderer>::New();
     vtkSmartPointer<vtkGenericOpenGLRenderWindow>renderWindow;
- //   vtkNew<vtkRenderWindow>renderWindow;
- //   vtkNew<vtkRenderWindowInteractor> interactor;
 };
 
 class SceneWidget : public QVTKOpenGLNativeWidget {

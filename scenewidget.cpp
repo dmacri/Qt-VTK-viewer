@@ -30,6 +30,9 @@
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
 
+#include <chrono>
+
+
 using namespace std;
 
 
@@ -184,6 +187,8 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     // Render
     // settingRenderParameter->renderWindow= RenderWindow();
     renderWindow()->Render();
+    interactor()->Initialize();
+    // interactor()->CreateRepeatingTimer(1);
     interactor()->Start();
 
 
@@ -211,13 +216,17 @@ void SceneWidget::zoomToExtent()
     renderWindow()->Render();
 }
 
-void SceneWidget::increaseCountUp()
+void SceneWidget:: increaseCountUp()
 {
     if (settingParameter->step < settingParameter->nsteps * 2){
         settingParameter->step += 1;
         settingParameter->changed = true;
     }
-   SceneWidget::upgradeModelInCentralPanel();
+    auto beginMethod = std::chrono::high_resolution_clock::now();
+    SceneWidget::upgradeModelInCentralPanel();
+    auto endMethod = std::chrono::high_resolution_clock::now();
+    auto elapsedMethod = std::chrono::duration_cast<std::chrono::nanoseconds>(endMethod - beginMethod);
+    std::cout << "Time measured Method in increase phase: %.3f seconds.\n"<< elapsedMethod.count() * 1e-9<< std::endl;
 }
 
 
@@ -228,7 +237,11 @@ void SceneWidget::decreaseCountDown()
         settingParameter->changed = true;
     }
 
-     SceneWidget::upgradeModelInCentralPanel();
+    auto beginMethod = std::chrono::high_resolution_clock::now();
+    SceneWidget::upgradeModelInCentralPanel();
+    auto endMethod = std::chrono::high_resolution_clock::now();
+    auto elapsedMethod = std::chrono::duration_cast<std::chrono::nanoseconds>(endMethod - beginMethod);
+    std::cout << "Time measured Method in decrease phase: %.3f seconds.\n"<< elapsedMethod.count() * 1e-9<< std::endl;
 }
 
 void SceneWidget::selectedStepParameter(string parameterInsertedInTextEdit)
@@ -273,8 +286,11 @@ void SceneWidget::selectedStepParameter(string parameterInsertedInTextEdit)
         settingParameter->step  = 400;
         settingParameter->changed = true;
     }
-
-     SceneWidget::upgradeModelInCentralPanel();
+    auto beginMethod = std::chrono::high_resolution_clock::now();
+    SceneWidget::upgradeModelInCentralPanel();
+    auto endMethod = std::chrono::high_resolution_clock::now();
+    auto elapsedMethod = std::chrono::duration_cast<std::chrono::nanoseconds>(endMethod - beginMethod);
+    std::cout << "Time measured Method: %.3f seconds.\n"<< elapsedMethod.count() * 1e-9<< std::endl;
 }
 
 
@@ -287,10 +303,153 @@ void SceneWidget::upgradeModelInCentralPanel(){
         //  std::cout << "Sono al passo prima getElementMatrix: " << cam->step << std::endl;
         try
         {
+            auto beginMatrix = std::chrono::high_resolution_clock::now();
             vis->getElementMatrix(settingParameter->step, p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, lines);
+            auto endMatrix = std::chrono::high_resolution_clock::now();
+            auto elapsedMatrix = std::chrono::duration_cast<std::chrono::nanoseconds>(endMatrix - beginMatrix);
+            std::cout << "Time measured getElementMatrix: %.3f seconds.\n"<< elapsedMatrix.count()* 1e-9<< std::endl;;
             // std::cout << "Sono al passo dopo getElementMatrix: " << cam->step << std::endl;
+            auto begin = std::chrono::high_resolution_clock::now();
             vis->refreshWindowsVTK(p, settingParameter->dimY+1, settingParameter->dimX+1, settingParameter->step, lines, settingParameter->numberOfLines,gridActor);
+            auto end = std::chrono::high_resolution_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
+            std::cout << "Time measured Refresh Windows: %.3f seconds.\n"<< elapsed.count() * 1e-9<< std::endl;;
+            auto beginLoad = std::chrono::high_resolution_clock::now();
+
             vis->refreshBuildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,actorBuildLine,colors);
+            auto endLoad = std::chrono::high_resolution_clock::now();
+            auto elapsedLoad = std::chrono::duration_cast<std::chrono::nanoseconds>(endLoad - beginLoad);
+            std::cout << "Time measured elapsedLoad: %.3f seconds.\n"<< elapsedLoad.count() * 1e-9<< std::endl;;
+
+            // vis->refreshBuildStepText(settingParameter->step,buildStepActor);
+            vis->buildStepLine(settingParameter->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
+
+        }catch(const std::runtime_error& re)
+        {
+            std::cerr << "Runtime error di getElementMatrix: " << re.what() << std::endl;
+        }
+        catch(const std::exception& ex)
+        {
+            // speciffic handling for all exceptions extending std::exception, except
+            // std::runtime_error which is handled explicitly
+            std::cerr << "Error occurred: " << ex.what() << std::endl;
+        }
+
+        settingParameter->firstTime = false;
+        settingParameter->changed = false;
+        //  cout << cam-> step << endl;
+        delete[] lines;
+       renderWindow_->Render();
+    }
+
+}
+
+namespace {
+
+void KeypressCallbackFunction(vtkObject* caller,
+                              long unsigned int vtkNotUsed(eventId),
+                              void* clientData,
+                              void* callData)
+{
+    //std::cout << "Keypress callback" << std::endl;
+    vtkRenderWindowInteractor* key =
+            static_cast<vtkRenderWindowInteractor*>(caller);
+
+    //  std::cout << "Pressed: " << key->GetKeySym() << std::endl;
+    string keyPressed=key->GetKeySym();
+    SettingParameter* cam = (SettingParameter*) clientData;
+    if (keyPressed.compare("Up")==0)
+    {
+        if (cam->step < cam->nsteps * 2)
+            cam->step += 1;
+        cam->changed = true;
+
+    }
+
+    if (keyPressed.compare("Down")==0)
+    {
+        if (cam->step  > 1)
+            cam->step  -= 1;
+        cam->changed = true;
+    }
+    if (keyPressed.compare("i")==0)
+    {
+        cam->insertAction = true;
+    }
+    if (keyPressed.compare("s")==0)
+    {
+        cam->step = 98;
+        cam->changed = true;
+    }
+    if (keyPressed.compare("d")==0)
+    {
+        cam->step = 99;
+        cam->changed = true;
+    }
+    if (keyPressed.compare("f")==0)
+    {
+        cam->step  = 198;
+        cam->changed = true;
+    }
+    if (keyPressed.compare("g")==0)
+    {
+        cam->step  = 199;
+        cam->changed = true;
+    }
+    if (keyPressed.compare("h")==0)
+    {
+        cam->step = 298;
+        cam->changed = true;
+    }
+    if (keyPressed.compare("j")==0)
+    {
+        cam->step = 299;
+        cam->changed = true;
+    }
+    if (keyPressed.compare("k")==0)
+    {
+        cam->step  = 398;
+        cam->changed = true;
+    }
+    if (keyPressed.compare("l")==0)
+    {
+        cam->step  = 400;
+        cam->changed = true;
+    }
+    if (keyPressed.compare("Escape")==0)
+    {
+        for (int i = 0; i < settingParameter->nNodeY; i++)
+        {
+            delete p[i];
+        }
+        delete[] p;
+        delete[] hashMap;
+        delete[] maxStepVisited;
+
+        auto iren = static_cast<vtkRenderWindowInteractor*>(caller);
+        // Close the window
+        iren->GetRenderWindow()->Finalize();
+
+        // Stop the interactor
+        iren->TerminateApp();
+        std::cout << "Closing window..." << std::endl;
+
+    }
+
+    if (cam->changed==true || cam->firstTime==true )
+    {
+        lines = new Line[cam->numberOfLines];
+        //  std::cout << "Sono al passo prima getElementMatrix: " << cam->step << std::endl;
+        try
+        {
+            vis->getElementMatrix(cam->step, p, cam->dimX, cam->dimY, cam->nNodeX, cam->nNodeY, cam->outputFileName, lines);
+            // std::cout << "Sono al passo dopo getElementMatrix: " << cam->step << std::endl;
+            auto begin = std::chrono::high_resolution_clock::now();
+            vis->refreshWindowsVTK(p, cam->dimY+1, cam->dimX+1, cam->step, lines, cam->numberOfLines,gridActor);
+            auto end = std::chrono::high_resolution_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
+            std::cout << "Time measured Refresh windows: %.3f seconds.\n"<< elapsed.count() * 1e-9<< std::endl;;
+            vis->refreshBuildLoadBalanceLine(lines,cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors);
             // vis->refreshBuildStepText(settingParameter->step,buildStepActor);
             vis->buildStepLine(settingParameter->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
 
@@ -305,137 +464,12 @@ void SceneWidget::upgradeModelInCentralPanel(){
             std::cerr << "Error occurred: " << ex.what() << std::endl;
         }
         renderWindow_->Render();
-        settingParameter->firstTime = false;
-        settingParameter->changed = false;
+        cam->firstTime = false;
+        cam->changed = false;
         //  cout << cam-> step << endl;
         delete[] lines;
-
     }
-
 }
-
-    namespace {
-
-    void KeypressCallbackFunction(vtkObject* caller,
-                                  long unsigned int vtkNotUsed(eventId),
-                                  void* clientData,
-                                  void* callData)
-    {
-        //std::cout << "Keypress callback" << std::endl;
-        vtkRenderWindowInteractor* key =
-                static_cast<vtkRenderWindowInteractor*>(caller);
-
-        //  std::cout << "Pressed: " << key->GetKeySym() << std::endl;
-        string keyPressed=key->GetKeySym();
-        SettingParameter* cam = (SettingParameter*) clientData;
-        if (keyPressed.compare("Up")==0)
-        {
-            if (cam->step < cam->nsteps * 2)
-                cam->step += 1;
-            cam->changed = true;
-
-        }
-
-        if (keyPressed.compare("Down")==0)
-        {
-            if (cam->step  > 1)
-                cam->step  -= 1;
-            cam->changed = true;
-        }
-        if (keyPressed.compare("i")==0)
-        {
-            cam->insertAction = true;
-        }
-        if (keyPressed.compare("s")==0)
-        {
-            cam->step = 98;
-            cam->changed = true;
-        }
-        if (keyPressed.compare("d")==0)
-        {
-            cam->step = 99;
-            cam->changed = true;
-        }
-        if (keyPressed.compare("f")==0)
-        {
-            cam->step  = 198;
-            cam->changed = true;
-        }
-        if (keyPressed.compare("g")==0)
-        {
-            cam->step  = 199;
-            cam->changed = true;
-        }
-        if (keyPressed.compare("h")==0)
-        {
-            cam->step = 298;
-            cam->changed = true;
-        }
-        if (keyPressed.compare("j")==0)
-        {
-            cam->step = 299;
-            cam->changed = true;
-        }
-        if (keyPressed.compare("k")==0)
-        {
-            cam->step  = 398;
-            cam->changed = true;
-        }
-        if (keyPressed.compare("l")==0)
-        {
-            cam->step  = 400;
-            cam->changed = true;
-        }
-        if (keyPressed.compare("Escape")==0)
-        {
-            for (int i = 0; i < settingParameter->nNodeY; i++)
-            {
-                delete p[i];
-            }
-            delete[] p;
-            delete[] hashMap;
-            delete[] maxStepVisited;
-
-            auto iren = static_cast<vtkRenderWindowInteractor*>(caller);
-            // Close the window
-            iren->GetRenderWindow()->Finalize();
-
-            // Stop the interactor
-            iren->TerminateApp();
-            std::cout << "Closing window..." << std::endl;
-
-        }
-
-        if (cam->changed==true || cam->firstTime==true )
-        {
-            lines = new Line[cam->numberOfLines];
-            //  std::cout << "Sono al passo prima getElementMatrix: " << cam->step << std::endl;
-            try
-            {
-                vis->getElementMatrix(cam->step, p, cam->dimX, cam->dimY, cam->nNodeX, cam->nNodeY, cam->outputFileName, lines);
-                // std::cout << "Sono al passo dopo getElementMatrix: " << cam->step << std::endl;
-                vis->refreshWindowsVTK(p, cam->dimY+1, cam->dimX+1, cam->step, lines, cam->numberOfLines,gridActor);
-                vis->refreshBuildLoadBalanceLine(lines,cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors);
-                // vis->refreshBuildStepText(settingParameter->step,buildStepActor);
-                vis->buildStepLine(settingParameter->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
-
-            }catch(const std::runtime_error& re)
-            {
-                std::cerr << "Runtime error di getElementMatrix: " << re.what() << std::endl;
-            }
-            catch(const std::exception& ex)
-            {
-                // speciffic handling for all exceptions extending std::exception, except
-                // std::runtime_error which is handled explicitly
-                std::cerr << "Error occurred: " << ex.what() << std::endl;
-            }
-            renderWindow_->Render();
-            cam->firstTime = false;
-            cam->changed = false;
-            //  cout << cam-> step << endl;
-            delete[] lines;
-        }
-    }
-    }
+}
 
 

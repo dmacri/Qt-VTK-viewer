@@ -299,66 +299,7 @@ void Visualizer<T>::getElementMatrix(int step, T **&m, int nGlobalCols, int nGlo
     delete[] AlllocalCols;
     delete[] AlllocalRows;
 }
-template <class T>
-void Visualizer<T>::drawWithVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines, string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor)
-{
-    vtkNew<vtkStructuredGrid> structuredGrid;
-    vtkNew<vtkNamedColors> colors;
-    vtkNew<vtkPoints> points;
-    vtkNew<vtkLookupTable> lut;
 
-    auto numberOfCells = (nRows - 1) * (nCols - 1)  ;
-    vtkNew<vtkDoubleArray> cellValues;
-    cellValues->SetNumberOfTuples(numberOfCells);
-    for (size_t i = 0; i < numberOfCells; ++i)
-    {
-        cellValues->SetValue(i, i);
-    }
-
-    lut->SetNumberOfTableValues(numberOfCells);
-    lut->Build();
-    // Assign some specific colors in this case
-
-
-    for (int row = 0; row < nRows; row++)
-    {
-        for (int col = 0; col < nCols; col++)
-        {
-            points->InsertNextPoint(col, row, 1);
-
-        }
-    }
-
-    structuredGrid->SetDimensions(nCols, nRows, 1);
-    structuredGrid->SetPoints(points);
-    structuredGrid->GetCellData()->SetScalars(cellValues);
-
-    buidColor(lut,nCols-1,nRows-1,p);
-
-    vtkNew<vtkDataSetMapper> gridMapper;
-    gridMapper->UpdateDataObject();
-    gridMapper->SetInputData(structuredGrid);
-    gridMapper->SetLookupTable(lut);
-    gridMapper->SetScalarRange(0, numberOfCells - 1);
-    // gridMapper->ScalarVisibilityOn();
-
-    gridActor->SetMapper(gridMapper);
-    renderer->AddActor(gridActor);
-
-}
-
-template <class T>
-void Visualizer<T>::refreshWindowsVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines, vtkSmartPointer<vtkActor> gridActor)
-{
-    vtkLookupTable* lut =(vtkLookupTable*)gridActor->GetMapper()->GetLookupTable();
-
-    // dynamic_cast<vtkLookupTable*>(gridActor->GetMapper()->GetLookupTable());
-
-    buidColor(lut,nCols-1,nRows-1,p);
-    gridActor->GetMapper()->SetLookupTable(lut);
-    gridActor->GetMapper()->Update();
-
-}
 
 
 template <class T>
@@ -472,6 +413,67 @@ size_t Visualizer<T>::generalPorpouseGetline(char **lineptr, size_t *n, FILE *st
 
     (*lineptr)[pos] = '\0';
     return pos;
+}
+
+template <class T>
+void Visualizer<T>::drawWithVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines, string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor)
+{
+    vtkNew<vtkStructuredGrid> structuredGrid;
+    vtkNew<vtkNamedColors> colors;
+    vtkNew<vtkPoints> points;
+    vtkNew<vtkLookupTable> lut;
+
+    auto numberOfCells = (nRows - 1) * (nCols - 1)  ;
+    vtkNew<vtkDoubleArray> cellValues;
+    cellValues->SetNumberOfTuples(numberOfCells);
+    for (size_t i = 0; i < numberOfCells; ++i)
+    {
+        cellValues->SetValue(i, i);
+    }
+
+    lut->SetNumberOfTableValues(numberOfCells);
+   // lut->Build();
+    // Assign some specific colors in this case
+
+
+    for (int row = 0; row < nRows; row++)
+    {
+        for (int col = 0; col < nCols; col++)
+        {
+            points->InsertNextPoint(col, row, 1);
+
+        }
+    }
+
+    structuredGrid->SetDimensions(nCols, nRows, 1);
+    structuredGrid->SetPoints(points);
+    structuredGrid->GetCellData()->SetScalars(cellValues);
+
+    buidColor(lut,nCols-1,nRows-1,p);
+
+    vtkNew<vtkDataSetMapper> gridMapper;
+    gridMapper->UpdateDataObject();
+    gridMapper->SetInputData(structuredGrid);
+    gridMapper->SetLookupTable(lut);
+    gridMapper->SetScalarRange(0, numberOfCells - 1);
+    // gridMapper->ScalarVisibilityOn();
+
+    gridActor->SetMapper(gridMapper);
+    renderer->AddActor(gridActor);
+
+}
+
+template <class T>
+void Visualizer<T>::refreshWindowsVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines, vtkSmartPointer<vtkActor> gridActor)
+{
+    vtkLookupTable* lut =(vtkLookupTable*)gridActor->GetMapper()->GetLookupTable();
+
+    // dynamic_cast<vtkLookupTable*>(gridActor->GetMapper()->GetLookupTable());
+
+    buidColor(lut,nCols-1,nRows-1,p);
+//    gridActor->GetMapper()->SetLookupTable(lut);
+//    gridActor->GetMapper()->Update();
+
 }
 
 template <class T>
