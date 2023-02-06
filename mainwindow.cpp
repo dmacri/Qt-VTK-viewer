@@ -8,7 +8,7 @@
 
 #include <vtkDataSetReader.h>
 
-#include "arrowpad.h"
+#include "ArrowPad.h"
 
 
 MainWindow::MainWindow(QWidget* parent, int argc, char *argv[]) : QMainWindow(parent), ui(new Ui::MainWindow)
