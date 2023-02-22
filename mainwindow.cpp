@@ -4,6 +4,7 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QIntValidator>
 
 #include <vtkDataSetReader.h>
 
@@ -51,20 +52,20 @@ void MainWindow::showVisualizerWindows(int argc, char* argv[]){
 
 void MainWindow::on_pushButton_clicked()
 {
-   // ui->sceneWidget->increaseCountUp();
 }
-
 
 void MainWindow::on_pushButton_2_clicked()
 {
-   ui->sceneWidget->decreaseCountDown();
+    ui->sceneWidget->decreaseCountDown();
 }
 
 
 void MainWindow::on_pushButton_3_clicked()
 {
-  string textEdited = (string) ui->lineEdit->text().toUtf8().constData();
-  ui->sceneWidget->selectedStepParameter(textEdited);
+    QIntValidator *validator = new QIntValidator(ui->lineEdit);
+    ui->lineEdit->setValidator(validator);
+    string textEdited = (string) ui->lineEdit->text().toUtf8().constData();
+    ui->sceneWidget->selectedStepParameter(textEdited);
 }
 
 void MainWindow::on_lineEdit_returnPressed()
