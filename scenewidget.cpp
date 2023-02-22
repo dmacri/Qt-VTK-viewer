@@ -72,12 +72,6 @@ SceneWidget::SceneWidget(QWidget* parent, int argc, char *argv[])
 
 }
 
-
-void SceneWidget::addDataSet(vtkSmartPointer<vtkDataSet> dataSet)
-{
-
-
-}
 void SceneWidget::addVisualizer(int argc, char* argv[])
 {
     if (argc == 1)
@@ -181,39 +175,16 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
 
     renderWindow_=renderWindow();
     interactor_=interactor();
-    //  settingParameter->step++;
     delete[] lines;
 
     // Render
     // settingRenderParameter->renderWindow= RenderWindow();
     renderWindow()->Render();
     interactor()->Initialize();
-    // interactor()->CreateRepeatingTimer(1);
     interactor()->Start();
 
 
 
-}
-
-void SceneWidget::removeDataSet()
-{
-    vtkActor* actor = settingRenderParameter->m_renderer->GetActors()->GetLastActor();
-    if (actor != nullptr) {
-        settingRenderParameter->m_renderer->RemoveActor(actor);
-    }
-
-    renderWindow()->Render();
-}
-
-void SceneWidget::zoomToExtent()
-{
-    // Zoom to extent of last added actor
-    vtkSmartPointer<vtkActor> actor = settingRenderParameter->m_renderer->GetActors()->GetLastActor();
-    if (actor != nullptr) {
-        settingRenderParameter->m_renderer->ResetCamera(actor->GetBounds());
-    }
-
-    renderWindow()->Render();
 }
 
 void SceneWidget:: increaseCountUp()
@@ -246,46 +217,14 @@ void SceneWidget::decreaseCountDown()
 
 void SceneWidget::selectedStepParameter(string parameterInsertedInTextEdit)
 {
-    if (parameterInsertedInTextEdit.compare("s")==0)
-    {
-        settingParameter->step = 98;
-        settingParameter->changed = true;
-    }
-    if (parameterInsertedInTextEdit.compare("d")==0)
-    {
-        settingParameter->step = 99;
-        settingParameter->changed = true;
-    }
-    if (parameterInsertedInTextEdit.compare("f")==0)
-    {
-        settingParameter->step  = 198;
-        settingParameter->changed = true;
-    }
-    if (parameterInsertedInTextEdit.compare("g")==0)
-    {
-        settingParameter->step  = 199;
-        settingParameter->changed = true;
-    }
-    if (parameterInsertedInTextEdit.compare("h")==0)
-    {
-        settingParameter->step = 298;
-        settingParameter->changed = true;
-    }
-    if (parameterInsertedInTextEdit.compare("j")==0)
-    {
-        settingParameter->step = 299;
-        settingParameter->changed = true;
-    }
-    if (parameterInsertedInTextEdit.compare("k")==0)
-    {
-        settingParameter->step  = 398;
-        settingParameter->changed = true;
-    }
-    if (parameterInsertedInTextEdit.compare("l")==0)
-    {
-        settingParameter->step  = 400;
-        settingParameter->changed = true;
-    }
+
+    int step = stoi(parameterInsertedInTextEdit);
+
+
+    settingParameter->step = step;
+    settingParameter->changed = true;
+
+
     auto beginMethod = std::chrono::high_resolution_clock::now();
     SceneWidget::upgradeModelInCentralPanel();
     auto endMethod = std::chrono::high_resolution_clock::now();
@@ -339,7 +278,7 @@ void SceneWidget::upgradeModelInCentralPanel(){
         settingParameter->changed = false;
         //  cout << cam-> step << endl;
         delete[] lines;
-       renderWindow_->Render();
+        renderWindow_->Render();
     }
 
 }
@@ -459,9 +398,7 @@ void KeypressCallbackFunction(vtkObject* caller,
         }
         catch(const std::exception& ex)
         {
-            // speciffic handling for all exceptions extending std::exception, except
-            // std::runtime_error which is handled explicitly
-            std::cerr << "Error occurred: " << ex.what() << std::endl;
+                std::cerr << "Error occurred: " << ex.what() << std::endl;
         }
         renderWindow_->Render();
         cam->firstTime = false;

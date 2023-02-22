@@ -174,8 +174,8 @@ FILE* Visualizer<T>::giveMeLocalColAndRowFromStep(int step, char *fileName, int 
 
     fseek(fp, fPos, SEEK_SET);
     //printMatrixFromStepByUser(hashmap, stepUser);
-    generalPorpouseGetline(&line, &len, fp);
-    //  getline(&line, &len, fp);
+   // generalPorpouseGetline(&line, &len, fp);
+    getline(&line, &len, fp);
     char *pch;
     pch = strtok(line, "-");
     nLocalCols = atoi(pch);
@@ -249,10 +249,6 @@ void Visualizer<T>::getElementMatrix(int step, T **&m, int nGlobalCols, int nGlo
             }
         }
 
-        // cout << "Node " << node<< endl;
-        // cout << "nLocalCols=" << nLocalCols << " nLocalRows=" << nLocalRows << endl;
-        //cout << "offsetX=" << offsetX << " offsetY=" << offsetY << endl;
-
         Line *lineTmp = new Line(offsetX, offsetY, offsetX + nLocalCols, offsetY);
         Line *lineTmp2 = new Line(offsetX, offsetY, offsetX, offsetY + nLocalRows);
 
@@ -266,8 +262,8 @@ void Visualizer<T>::getElementMatrix(int step, T **&m, int nGlobalCols, int nGlo
 
         while (row < nLocalRows)
         {
-            generalPorpouseGetline(&line, &len, fp);
-            // getline(&line, &len, fp);
+           // generalPorpouseGetline(&line, &len, fp);
+            getline(&line, &len, fp);
             int col = 0;
             //m[row]=new T[nLocalCols];
             while (col < nLocalCols)

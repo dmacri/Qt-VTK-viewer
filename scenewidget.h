@@ -40,14 +40,6 @@ class SceneWidget : public QVTKOpenGLNativeWidget {
     Q_OBJECT
 public:
     explicit SceneWidget(QWidget* parent = nullptr,int argc=0, char* argv[]=nullptr);
-    //! Add a data set to the scene
-    /*!
-    \param[in] dataSet The data set to add
-  */
-    void addDataSet(vtkSmartPointer<vtkDataSet> dataSet);
-
-    //! Remove the data set from the scene
-    void removeDataSet();
 
     void addVisualizer(int argc, char* argv[]);
 
@@ -56,13 +48,8 @@ public:
     void selectedStepParameter(string parameterInsertedInTextEdit);
 
 public slots:
-    //! Zoom to the extent of the data set in the scene
-    void zoomToExtent();
     void increaseCountUp();
     void decreaseCountDown();
-
-
-
 };
 
 #endif // SCENEWIDGET_H

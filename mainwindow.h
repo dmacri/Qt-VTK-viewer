@@ -6,7 +6,7 @@
 namespace Ui {
 class MainWindow;
 }
-class ArrowPad;
+
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -25,13 +25,6 @@ public slots:
     //! Show the 'Open visualizer' dialog
     void showVisualizerWindows(int argc, char *argv[]);
 
-protected:
-    //! Open a file
-    /*!
-    \param[in] fileName The name of the file including the path
-  */
-    void openFile(const QString& fileName);
-
 private slots:
     void on_pushButton_clicked();
 
@@ -39,9 +32,11 @@ private slots:
 
     void on_pushButton_3_clicked();
 
+    void on_lineEdit_returnPressed();
+
 private:
     Ui::MainWindow* ui;
-    ArrowPad *arrowPad;
+
 };
 
 #endif // MAINWINDOW_H
