@@ -12,8 +12,7 @@
 MainWindow::MainWindow(QWidget* parent, int argc, char *argv[]) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    ui->sceneWidget->addVisualizer(argc,argv);
-
+    ui->sceneWidget->addVisualizer(argc, argv);
 
 
 }
@@ -46,7 +45,6 @@ void MainWindow::showOpenFileDialog()
 
 
 void MainWindow::showVisualizerWindows(int argc, char* argv[]){
-    ui->sceneWidget->addVisualizer(argc,argv);
 }
 
 
@@ -68,8 +66,5 @@ void MainWindow::on_pushButton_3_clicked()
     ui->sceneWidget->selectedStepParameter(textEdited);
 }
 
-void MainWindow::on_lineEdit_returnPressed()
-{
 
-}
 

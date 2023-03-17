@@ -20,7 +20,6 @@ int main(int argc, char* argv[])
     QWidget* parent = nullptr;
 
     MainWindow *w=new MainWindow(parent, argc,  argv);
-
     w->show();
     return a.exec();
 }

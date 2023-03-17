@@ -2,6 +2,7 @@
 #define VISUALIZER_H
 
 
+#include "vtkTextMapper.h"
 #include <iostream>
 #include <cstdlib>
 #include <unordered_map>
@@ -19,7 +20,6 @@
 
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
-#include <scenewidget.h>
 
 
 
@@ -64,17 +64,15 @@ extern int *maxStepVisited;
 extern unordered_map<int, long int> *hashMap;
 extern Line *lines;
 
-
-
-
 template <class T>
 class Visualizer
 {
 
 public:
-    Visualizer(){};
+    T**  p;
+    Visualizer(){
+    };
 public:
-    SettingRenderParameter *initVTKDimension(int _bSchermo, int _hSchermo);
     long int gotoStep(int step, FILE *fp, int node);
     void stampa(long int fPos);
     char *giveMeFileName(char *fileName, int node);
@@ -92,7 +90,10 @@ public:
     vtkNew<vtkActor2D> buildStepText(int step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer);
     void refreshBuildStepText(int step,vtkActor2D* stepLineTextActor);
 
+
 };
+
+
 
 #endif // VISUALIZER_H
 

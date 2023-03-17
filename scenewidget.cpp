@@ -1,5 +1,6 @@
 #include "scenewidget.h"
 
+
 #include <vtkCamera.h>
 #include <vtkDataSetMapper.h>
 #include <vtkGenericOpenGLRenderWindow.h>
@@ -29,27 +30,22 @@
 #include <vtkXMLPolyDataReader.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
-
+#include <vtkTextProperty.h>
+#include <vtkActor2D.h>
 #include <chrono>
 
-
+#include <Visualizer.hpp>
 using namespace std;
 
 
 #include <sstream>      // std::wostringstream
-
-#include "Parameter.h"
-#include "Visualizer.cpp"
-
 
 
 int pixelsQuadrato;
 int *maxStepVisited;
 unordered_map<int, long int> *hashMap;
 Line *lines;
-Parameter **p;
-SettingParameter* settingParameter =new SettingParameter();
-Visualizer<Parameter> *vis= new Visualizer<Parameter>();
+
 vtkNew<vtkNamedColors> colors;
 vtkNew<vtkActor> gridActor;
 vtkNew<vtkActor2D> actorBuildLine;
@@ -69,8 +65,12 @@ vtkSmartPointer<vtkRenderWindowInteractor> interactor_;
 SceneWidget::SceneWidget(QWidget* parent, int argc, char *argv[])
     : QVTKOpenGLNativeWidget(parent)
 {
+    sceneWidgetVisualizerProxy=new SceneWidgetVisualizerProxy();
+    settingParameter =new SettingParameter();
+    settingParameter->sceneWidgetVisualizerProxy=sceneWidgetVisualizerProxy;
 
 }
+
 
 void SceneWidget::addVisualizer(int argc, char* argv[])
 {
@@ -91,7 +91,7 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     char *firstS = new char[256];
     std::strcpy(firstS, tmpString.c_str());
 
-    vis->readConfigurationFile(filename, infoFromFile, settingParameter->outputFileName);
+    sceneWidgetVisualizerProxy->vis->readConfigurationFile(filename, infoFromFile, settingParameter->outputFileName);
 
     strcat(firstS, settingParameter->outputFileName);
     strcpy(settingParameter->outputFileName, firstS);
@@ -132,11 +132,8 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     settingParameter->firstTime = true;
     settingParameter->insertAction = false;
 
-    p = new Parameter *[settingParameter->dimY];
-    for (int i = 0; i < settingParameter->dimY; i++)
-    {
-        p[i] = new Parameter[settingParameter->dimX];
-    }
+    sceneWidgetVisualizerProxy->p = sceneWidgetVisualizerProxy->getAllocatedParametersMatrix(settingParameter->dimX,settingParameter->dimY);
+    settingParameter->sceneWidgetVisualizerProxy->p=sceneWidgetVisualizerProxy->p;
     cout << settingParameter->dimX << " " <<settingParameter-> dimY << endl;
 
     //settingRenderParameter= vis->initVTKDimension(settingParameter->dimX * pixelsQuadrato, (settingParameter->dimY + 10) * pixelsQuadrato);
@@ -156,7 +153,7 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
 
 
 
-    vis->loadHashmapFromFile(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
+    sceneWidgetVisualizerProxy->vis->loadHashmapFromFile(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
 
     vtkNew<vtkCallbackCommand> keypressCallback;
     keypressCallback->SetCallback(KeypressCallbackFunction);
@@ -165,13 +162,13 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
 
     lines = new Line[settingParameter->numberOfLines];
 
-    vis->getElementMatrix(settingParameter->step, p,settingParameter-> dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, lines);
+    sceneWidgetVisualizerProxy->vis->getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p,settingParameter-> dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, lines);
 
-    vis->drawWithVTK(p,settingParameter-> dimY+1, settingParameter->dimX+1, settingParameter->step, lines, settingParameter->numberOfLines, settingParameter->edittext,settingRenderParameter->m_renderer,gridActor);
+    sceneWidgetVisualizerProxy->vis->drawWithVTK(sceneWidgetVisualizerProxy->p,settingParameter-> dimY+1, settingParameter->dimX+1, settingParameter->step, lines, settingParameter->numberOfLines, settingParameter->edittext,settingRenderParameter->m_renderer,gridActor);
 
-    vis->buildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY,settingParameter->dimX,pts,cellLines,grid,colors,settingRenderParameter->m_renderer,actorBuildLine);
+    sceneWidgetVisualizerProxy->vis->buildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY,settingParameter->dimX,pts,cellLines,grid,colors,settingRenderParameter->m_renderer,actorBuildLine);
 
-    buildStepActor= vis->buildStepText(settingParameter->step,settingParameter->font_size,colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
+    buildStepActor= sceneWidgetVisualizerProxy->vis->buildStepText(settingParameter->step,settingParameter->font_size,colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
 
     renderWindow_=renderWindow();
     interactor_=interactor();
@@ -243,25 +240,25 @@ void SceneWidget::upgradeModelInCentralPanel(){
         try
         {
             auto beginMatrix = std::chrono::high_resolution_clock::now();
-            vis->getElementMatrix(settingParameter->step, p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, lines);
+            sceneWidgetVisualizerProxy->vis->getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, lines);
             auto endMatrix = std::chrono::high_resolution_clock::now();
             auto elapsedMatrix = std::chrono::duration_cast<std::chrono::nanoseconds>(endMatrix - beginMatrix);
             std::cout << "Time measured getElementMatrix: %.3f seconds.\n"<< elapsedMatrix.count()* 1e-9<< std::endl;;
             // std::cout << "Sono al passo dopo getElementMatrix: " << cam->step << std::endl;
             auto begin = std::chrono::high_resolution_clock::now();
-            vis->refreshWindowsVTK(p, settingParameter->dimY+1, settingParameter->dimX+1, settingParameter->step, lines, settingParameter->numberOfLines,gridActor);
+            sceneWidgetVisualizerProxy->vis->refreshWindowsVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY+1, settingParameter->dimX+1, settingParameter->step, lines, settingParameter->numberOfLines,gridActor);
             auto end = std::chrono::high_resolution_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
             std::cout << "Time measured Refresh Windows: %.3f seconds.\n"<< elapsed.count() * 1e-9<< std::endl;;
             auto beginLoad = std::chrono::high_resolution_clock::now();
 
-            vis->refreshBuildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,actorBuildLine,colors);
+            sceneWidgetVisualizerProxy->vis->refreshBuildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,actorBuildLine,colors);
             auto endLoad = std::chrono::high_resolution_clock::now();
             auto elapsedLoad = std::chrono::duration_cast<std::chrono::nanoseconds>(endLoad - beginLoad);
             std::cout << "Time measured elapsedLoad: %.3f seconds.\n"<< elapsedLoad.count() * 1e-9<< std::endl;;
 
             // vis->refreshBuildStepText(settingParameter->step,buildStepActor);
-            vis->buildStepLine(settingParameter->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
+            sceneWidgetVisualizerProxy->vis->buildStepLine(settingParameter->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
 
         }catch(const std::runtime_error& re)
         {
@@ -357,11 +354,11 @@ void KeypressCallbackFunction(vtkObject* caller,
     }
     if (keyPressed.compare("Escape")==0)
     {
-        for (int i = 0; i < settingParameter->nNodeY; i++)
+        for (int i = 0; i < cam->nNodeY; i++)
         {
-            delete p[i];
+            delete cam->sceneWidgetVisualizerProxy->p[i];
         }
-        delete[] p;
+        delete[] cam->sceneWidgetVisualizerProxy->p;
         delete[] hashMap;
         delete[] maxStepVisited;
 
@@ -381,16 +378,16 @@ void KeypressCallbackFunction(vtkObject* caller,
         //  std::cout << "Sono al passo prima getElementMatrix: " << cam->step << std::endl;
         try
         {
-            vis->getElementMatrix(cam->step, p, cam->dimX, cam->dimY, cam->nNodeX, cam->nNodeY, cam->outputFileName, lines);
+            cam->sceneWidgetVisualizerProxy->vis->getElementMatrix(cam->step, cam->sceneWidgetVisualizerProxy->p, cam->dimX, cam->dimY, cam->nNodeX, cam->nNodeY, cam->outputFileName, lines);
             // std::cout << "Sono al passo dopo getElementMatrix: " << cam->step << std::endl;
             auto begin = std::chrono::high_resolution_clock::now();
-            vis->refreshWindowsVTK(p, cam->dimY+1, cam->dimX+1, cam->step, lines, cam->numberOfLines,gridActor);
+            cam->sceneWidgetVisualizerProxy->vis->refreshWindowsVTK(cam->sceneWidgetVisualizerProxy->p, cam->dimY+1, cam->dimX+1, cam->step, lines, cam->numberOfLines,gridActor);
             auto end = std::chrono::high_resolution_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
             std::cout << "Time measured Refresh windows: %.3f seconds.\n"<< elapsed.count() * 1e-9<< std::endl;;
-            vis->refreshBuildLoadBalanceLine(lines,cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors);
+            cam->sceneWidgetVisualizerProxy->vis->refreshBuildLoadBalanceLine(lines,cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors);
             // vis->refreshBuildStepText(settingParameter->step,buildStepActor);
-            vis->buildStepLine(settingParameter->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
+            cam->sceneWidgetVisualizerProxy-> vis->buildStepLine(cam->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
 
         }catch(const std::runtime_error& re)
         {
@@ -398,7 +395,7 @@ void KeypressCallbackFunction(vtkObject* caller,
         }
         catch(const std::exception& ex)
         {
-                std::cerr << "Error occurred: " << ex.what() << std::endl;
+            std::cerr << "Error occurred: " << ex.what() << std::endl;
         }
         renderWindow_->Render();
         cam->firstTime = false;

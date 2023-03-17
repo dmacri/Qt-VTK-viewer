@@ -3,27 +3,21 @@
 
 #define NUMBER_OF_OUTFLOWS 4
 
-
 #include <iostream>
 #include <cstdlib>
 #include "Element.h"
 
 using namespace std;
 
-rgb outputCol(0, 0, 0);
-
 class Parameter : public Element
 {
-
 private:
     int state;
     int move;
+    rgb outputCol{0, 0, 0};
 
 public:
     Parameter(){}
-
-
-
     Parameter(int state, int move)
     {
         this->state = state;
@@ -72,7 +66,7 @@ public:
         return zstr;
     }
 
-    rgb* outputValue()
+     rgb* outputValue()
     {
         if (state == 0)
             outputCol = rgb(1, 1, 1);

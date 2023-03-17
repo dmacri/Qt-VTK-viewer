@@ -8,7 +8,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
 # List source files & resources
-file (GLOB Sources *.cpp)
+file (GLOB Sources *.cpp *.hpp)
 file (GLOB Headers *.h)
 file (GLOB Resources *.qrc)
 file (GLOB UIs *.ui)

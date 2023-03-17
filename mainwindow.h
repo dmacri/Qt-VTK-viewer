@@ -32,7 +32,6 @@ private slots:
 
     void on_pushButton_3_clicked();
 
-    void on_lineEdit_returnPressed();
 
 private:
     Ui::MainWindow* ui;

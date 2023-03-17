@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <unordered_map>
+#include "SceneWidgetVisualizerProxy.h"
 
 using namespace std;
 
@@ -26,7 +27,7 @@ struct  SettingParameter {
     int numberOfLines ;
     int font_size=18;
     string edittext;// an empty string for editting
- //   vtkSmartPointer<vtkRenderer> renderer=  vtkSmartPointer<vtkRenderer>::New();
+    SceneWidgetVisualizerProxy* sceneWidgetVisualizerProxy;
 };
 
 class  SettingRenderParameter : public QVTKOpenGLNativeWidget{
@@ -41,6 +42,8 @@ class SceneWidget : public QVTKOpenGLNativeWidget {
 public:
     explicit SceneWidget(QWidget* parent = nullptr,int argc=0, char* argv[]=nullptr);
 
+    SettingParameter* settingParameter;
+
     void addVisualizer(int argc, char* argv[]);
 
     void upgradeModelInCentralPanel();
@@ -50,6 +53,10 @@ public:
 public slots:
     void increaseCountUp();
     void decreaseCountDown();
+
+private:
+    SceneWidgetVisualizerProxy* sceneWidgetVisualizerProxy;
+
 };
 
 #endif // SCENEWIDGET_H
