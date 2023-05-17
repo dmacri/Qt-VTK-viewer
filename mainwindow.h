@@ -1,7 +1,10 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "qcommonstyle.h"
+#include "ui_mainwindow.h"
 #include <QMainWindow>
+#include <QTimer>
 
 namespace Ui {
 class MainWindow;
@@ -14,6 +17,7 @@ class MainWindow : public QMainWindow {
 public:
     explicit MainWindow(QWidget* parent = 0,int argc=0, char* argv[]=nullptr);
     ~MainWindow();
+    QStringList readNLinesFromFile(const QString& filePath);
 
 public slots:
     //! Show the 'About this application' dialog
@@ -22,8 +26,8 @@ public slots:
     //! Show the 'Open file...' dialog
     void showOpenFileDialog();
 
-    //! Show the 'Open visualizer' dialog
-    void showVisualizerWindows(int argc, char *argv[]);
+    void togglePlay(int numStep);
+
 
 private slots:
     void on_pushButton_clicked();
@@ -33,8 +37,18 @@ private slots:
     void on_pushButton_3_clicked();
 
 
+
+
 private:
     Ui::MainWindow* ui;
+    QTimer timer;
+    QCommonStyle style;
+    QString const styleSheet = "QPushButton {"
+                         "  color: black;"          // Colore del testo
+                         "  font-size: 16px;"     // Dimensione del testo
+                         "  font-weight: bold;"   // Grassetto del testo
+                         "}";
+
 
 };
 

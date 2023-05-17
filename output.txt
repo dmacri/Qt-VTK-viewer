@@ -1,4 +1,8 @@
 ERROR: In /home/davide/vtk-v9.1.0/GUISupport/Qt/QVTKInteractor.cxx, line 149
-QVTKInteractor (0x560b4bbfe5e0): QVTKInteractor cannot control the event loop.
+QVTKInteractor (0x55d9a44ff0c0): QVTKInteractor cannot control the event loop.
+
+
+ERROR: In /home/davide/vtk-v9.1.0/Common/DataModel/vtkDataSet.cxx, line 625
+vtkStructuredGrid (0x55d9a4522d60): Cell array  with 1 components, has only 0 tuples but there are 1 cells
 
 

@@ -576,12 +576,7 @@ void buidColor(vtkLookupTable* lut, int nCols, int nRows,T **p)
     for (int r = 0; r < nRows; ++r)
         for (int c = 0; c < nCols; ++c){
             rgb *color=p[r][c].outputValue();
-
-            if (p[r][c].getState() == 0)
                 lut->SetTableValue((nRows-1-r)*nCols+c,color->getRed(),color->getGreen(),color->getBlue());
-            else
-                lut->SetTableValue((nRows-1-r)*nCols+c,color->getRed(),color->getGreen(),color->getBlue());
-
         }
 
 }

@@ -44,11 +44,21 @@ public:
 
     SettingParameter* settingParameter;
 
+    SettingRenderParameter* settingRenderParameter;
+
     void addVisualizer(int argc, char* argv[]);
 
     void upgradeModelInCentralPanel();
 
     void selectedStepParameter(string parameterInsertedInTextEdit);
+
+    void setupVtkScene();
+
+    void renderVtkScene();
+
+    void cleanup();
+
+
 
 public slots:
     void increaseCountUp();
@@ -56,6 +66,7 @@ public slots:
 
 private:
     SceneWidgetVisualizerProxy* sceneWidgetVisualizerProxy;
+
 
 };
 

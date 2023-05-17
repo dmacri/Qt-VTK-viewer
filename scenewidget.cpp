@@ -1,4 +1,5 @@
 #include "scenewidget.h"
+#include "qapplication.h"
 
 
 #include <vtkCamera.h>
@@ -56,7 +57,7 @@ vtkSmartPointer<vtkCellArray> cellLines=vtkSmartPointer<vtkCellArray>::New();
 vtkSmartPointer<vtkPolyData> grid=vtkSmartPointer<vtkPolyData>::New();
 vtkSmartPointer<vtkTextMapper> singleLineTextStep=vtkSmartPointer<vtkTextMapper>::New();
 vtkSmartPointer<vtkTextProperty> singleLineTextPropStep=vtkSmartPointer<vtkTextProperty>::New();
-SettingRenderParameter* settingRenderParameter;
+
 
 vtkSmartPointer<vtkRenderWindow>renderWindow_;
 vtkSmartPointer<vtkRenderWindowInteractor> interactor_;
@@ -68,6 +69,7 @@ SceneWidget::SceneWidget(QWidget* parent, int argc, char *argv[])
     sceneWidgetVisualizerProxy=new SceneWidgetVisualizerProxy();
     settingParameter =new SettingParameter();
     settingParameter->sceneWidgetVisualizerProxy=sceneWidgetVisualizerProxy;
+    settingRenderParameter = new SettingRenderParameter();
 
 }
 
@@ -79,7 +81,6 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
         cout << " no pixel size " << endl;
         return;
     }
-    // std::string str = "C:\Progetti-VTK\QtVktVisualizer\Configuration.txt";
     char *filename = argv[1];
     pixelsQuadrato = atoi(argv[2]);
     int infoFromFile[8];
@@ -114,6 +115,24 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     cout << "nNodeY " <<settingParameter-> nNodeY << endl;
     cout << "outputFileName " << settingParameter->outputFileName << endl;
 
+
+    setupVtkScene();
+
+    renderVtkScene();
+
+    // Render
+    renderWindow()->Render();
+    interactor()->Initialize();
+    interactor()->Start();
+}
+
+
+
+
+
+
+void SceneWidget::setupVtkScene()
+{
     vtkNew<vtkFileOutputWindow> fileOutputWindow;
     fileOutputWindow->SetFileName("output.txt");
     // Note that the SetInstance function is a static member of vtkOutputWindow.
@@ -122,7 +141,6 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     // will be written to the file output.txt
     //    vtkNew<vtkXMLPolyDataReader> reader;
     //    reader->Update();
-
 
     hashMap = new unordered_map<int, long int>[settingParameter->nNodeX * settingParameter->nNodeY];
     maxStepVisited = new int[settingParameter->nNodeX * settingParameter->nNodeY];
@@ -136,23 +154,22 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     settingParameter->sceneWidgetVisualizerProxy->p=sceneWidgetVisualizerProxy->p;
     cout << settingParameter->dimX << " " <<settingParameter-> dimY << endl;
 
-    //settingRenderParameter= vis->initVTKDimension(settingParameter->dimX * pixelsQuadrato, (settingParameter->dimY + 10) * pixelsQuadrato);
 
-
-    SettingRenderParameter* settingRenderParameter = new SettingRenderParameter();
     renderWindow()->AddRenderer(settingRenderParameter->m_renderer);
-
     interactor()->SetRenderWindow(renderWindow());
     settingRenderParameter->m_renderer->SetBackground( settingRenderParameter->colors->GetColor3d("Silver").GetData());
     renderWindow()->SetSize(settingParameter->dimX * pixelsQuadrato, (settingParameter->dimY + 10) * pixelsQuadrato);
     // An interactor
     /* With this style you can block only rotation, but not blocking zoom.You can use NULL value in SetInteractorStyle if you want block evreth   */
+#ifdef ENABLE_FEATURE
     vtkNew<vtkInteractorStyleImage> style;
     interactor()->SetInteractorStyle(style);
-    renderWindow()->SetWindowName("QtVtkVisualizer");
+#endif
+    renderWindow()->SetWindowName("Visualizer");
+}
 
-
-
+void SceneWidget::renderVtkScene()
+{
     sceneWidgetVisualizerProxy->vis->loadHashmapFromFile(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
 
     vtkNew<vtkCallbackCommand> keypressCallback;
@@ -173,15 +190,20 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     renderWindow_=renderWindow();
     interactor_=interactor();
     delete[] lines;
+}
 
-    // Render
-    // settingRenderParameter->renderWindow= RenderWindow();
-    renderWindow()->Render();
-    interactor()->Initialize();
-    interactor()->Start();
+void SceneWidget::cleanup()
+{
+    renderWindow_ = nullptr;
+    interactor_ = nullptr;
 
+    delete[] hashMap;
+    delete[] maxStepVisited;
 
+    delete[] settingParameter->outputFileName;
+    delete settingParameter;
 
+    delete settingRenderParameter;
 }
 
 void SceneWidget:: increaseCountUp()
@@ -190,11 +212,11 @@ void SceneWidget:: increaseCountUp()
         settingParameter->step += 1;
         settingParameter->changed = true;
     }
-    auto beginMethod = std::chrono::high_resolution_clock::now();
+    //   auto beginMethod = std::chrono::high_resolution_clock::now();
     SceneWidget::upgradeModelInCentralPanel();
-    auto endMethod = std::chrono::high_resolution_clock::now();
-    auto elapsedMethod = std::chrono::duration_cast<std::chrono::nanoseconds>(endMethod - beginMethod);
-    std::cout << "Time measured Method in increase phase: %.3f seconds.\n"<< elapsedMethod.count() * 1e-9<< std::endl;
+    //   auto endMethod = std::chrono::high_resolution_clock::now();
+    //    auto elapsedMethod = std::chrono::duration_cast<std::chrono::nanoseconds>(endMethod - beginMethod);
+    //    std::cout << "Time measured Method in increase phase: %.3f seconds.\n"<< elapsedMethod.count() * 1e-9<< std::endl;
 }
 
 
@@ -205,11 +227,11 @@ void SceneWidget::decreaseCountDown()
         settingParameter->changed = true;
     }
 
-    auto beginMethod = std::chrono::high_resolution_clock::now();
+    //   auto beginMethod = std::chrono::high_resolution_clock::now();
     SceneWidget::upgradeModelInCentralPanel();
-    auto endMethod = std::chrono::high_resolution_clock::now();
-    auto elapsedMethod = std::chrono::duration_cast<std::chrono::nanoseconds>(endMethod - beginMethod);
-    std::cout << "Time measured Method in decrease phase: %.3f seconds.\n"<< elapsedMethod.count() * 1e-9<< std::endl;
+    //   auto endMethod = std::chrono::high_resolution_clock::now();
+    //   auto elapsedMethod = std::chrono::duration_cast<std::chrono::nanoseconds>(endMethod - beginMethod);
+    //   std::cout << "Time measured Method in decrease phase: %.3f seconds.\n"<< elapsedMethod.count() * 1e-9<< std::endl;
 }
 
 void SceneWidget::selectedStepParameter(string parameterInsertedInTextEdit)
@@ -222,11 +244,11 @@ void SceneWidget::selectedStepParameter(string parameterInsertedInTextEdit)
     settingParameter->changed = true;
 
 
-    auto beginMethod = std::chrono::high_resolution_clock::now();
+    // auto beginMethod = std::chrono::high_resolution_clock::now();
     SceneWidget::upgradeModelInCentralPanel();
-    auto endMethod = std::chrono::high_resolution_clock::now();
-    auto elapsedMethod = std::chrono::duration_cast<std::chrono::nanoseconds>(endMethod - beginMethod);
-    std::cout << "Time measured Method: %.3f seconds.\n"<< elapsedMethod.count() * 1e-9<< std::endl;
+    // auto endMethod = std::chrono::high_resolution_clock::now();
+    // auto elapsedMethod = std::chrono::duration_cast<std::chrono::nanoseconds>(endMethod - beginMethod);
+    // std::cout << "Time measured Method: %.3f seconds.\n"<< elapsedMethod.count() * 1e-9<< std::endl;
 }
 
 
@@ -236,27 +258,12 @@ void SceneWidget::upgradeModelInCentralPanel(){
     if (settingParameter->changed==true || settingParameter->firstTime==true )
     {
         lines = new Line[settingParameter->numberOfLines];
-        //  std::cout << "Sono al passo prima getElementMatrix: " << cam->step << std::endl;
         try
         {
-            auto beginMatrix = std::chrono::high_resolution_clock::now();
             sceneWidgetVisualizerProxy->vis->getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, lines);
-            auto endMatrix = std::chrono::high_resolution_clock::now();
-            auto elapsedMatrix = std::chrono::duration_cast<std::chrono::nanoseconds>(endMatrix - beginMatrix);
-            std::cout << "Time measured getElementMatrix: %.3f seconds.\n"<< elapsedMatrix.count()* 1e-9<< std::endl;;
-            // std::cout << "Sono al passo dopo getElementMatrix: " << cam->step << std::endl;
-            auto begin = std::chrono::high_resolution_clock::now();
             sceneWidgetVisualizerProxy->vis->refreshWindowsVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY+1, settingParameter->dimX+1, settingParameter->step, lines, settingParameter->numberOfLines,gridActor);
-            auto end = std::chrono::high_resolution_clock::now();
-            auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
-            std::cout << "Time measured Refresh Windows: %.3f seconds.\n"<< elapsed.count() * 1e-9<< std::endl;;
-            auto beginLoad = std::chrono::high_resolution_clock::now();
 
             sceneWidgetVisualizerProxy->vis->refreshBuildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,actorBuildLine,colors);
-            auto endLoad = std::chrono::high_resolution_clock::now();
-            auto elapsedLoad = std::chrono::duration_cast<std::chrono::nanoseconds>(endLoad - beginLoad);
-            std::cout << "Time measured elapsedLoad: %.3f seconds.\n"<< elapsedLoad.count() * 1e-9<< std::endl;;
-
             // vis->refreshBuildStepText(settingParameter->step,buildStepActor);
             sceneWidgetVisualizerProxy->vis->buildStepLine(settingParameter->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
 
@@ -266,16 +273,14 @@ void SceneWidget::upgradeModelInCentralPanel(){
         }
         catch(const std::exception& ex)
         {
-            // speciffic handling for all exceptions extending std::exception, except
-            // std::runtime_error which is handled explicitly
             std::cerr << "Error occurred: " << ex.what() << std::endl;
         }
 
         settingParameter->firstTime = false;
         settingParameter->changed = false;
-        //  cout << cam-> step << endl;
         delete[] lines;
         renderWindow_->Render();
+        QApplication::processEvents();
     }
 
 }
@@ -287,7 +292,6 @@ void KeypressCallbackFunction(vtkObject* caller,
                               void* clientData,
                               void* callData)
 {
-    //std::cout << "Keypress callback" << std::endl;
     vtkRenderWindowInteractor* key =
             static_cast<vtkRenderWindowInteractor*>(caller);
 
@@ -380,11 +384,11 @@ void KeypressCallbackFunction(vtkObject* caller,
         {
             cam->sceneWidgetVisualizerProxy->vis->getElementMatrix(cam->step, cam->sceneWidgetVisualizerProxy->p, cam->dimX, cam->dimY, cam->nNodeX, cam->nNodeY, cam->outputFileName, lines);
             // std::cout << "Sono al passo dopo getElementMatrix: " << cam->step << std::endl;
-            auto begin = std::chrono::high_resolution_clock::now();
+            //    auto begin = std::chrono::high_resolution_clock::now();
             cam->sceneWidgetVisualizerProxy->vis->refreshWindowsVTK(cam->sceneWidgetVisualizerProxy->p, cam->dimY+1, cam->dimX+1, cam->step, lines, cam->numberOfLines,gridActor);
-            auto end = std::chrono::high_resolution_clock::now();
-            auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
-            std::cout << "Time measured Refresh windows: %.3f seconds.\n"<< elapsed.count() * 1e-9<< std::endl;;
+            //    auto end = std::chrono::high_resolution_clock::now();
+            //    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
+            //    std::cout << "Time measured Refresh windows: %.3f seconds.\n"<< elapsed.count() * 1e-9<< std::endl;;
             cam->sceneWidgetVisualizerProxy->vis->refreshBuildLoadBalanceLine(lines,cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors);
             // vis->refreshBuildStepText(settingParameter->step,buildStepActor);
             cam->sceneWidgetVisualizerProxy-> vis->buildStepLine(cam->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
@@ -400,7 +404,6 @@ void KeypressCallbackFunction(vtkObject* caller,
         renderWindow_->Render();
         cam->firstTime = false;
         cam->changed = false;
-        //  cout << cam-> step << endl;
         delete[] lines;
     }
 }
