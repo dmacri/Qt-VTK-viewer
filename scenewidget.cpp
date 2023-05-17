@@ -126,11 +126,6 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     interactor()->Start();
 }
 
-
-
-
-
-
 void SceneWidget::setupVtkScene()
 {
     vtkNew<vtkFileOutputWindow> fileOutputWindow;
@@ -192,19 +187,6 @@ void SceneWidget::renderVtkScene()
     delete[] lines;
 }
 
-void SceneWidget::cleanup()
-{
-    renderWindow_ = nullptr;
-    interactor_ = nullptr;
-
-    delete[] hashMap;
-    delete[] maxStepVisited;
-
-    delete[] settingParameter->outputFileName;
-    delete settingParameter;
-
-    delete settingRenderParameter;
-}
 
 void SceneWidget:: increaseCountUp()
 {

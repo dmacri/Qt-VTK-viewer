@@ -56,8 +56,6 @@ public:
 
     void renderVtkScene();
 
-    void cleanup();
-
 
 
 public slots:
