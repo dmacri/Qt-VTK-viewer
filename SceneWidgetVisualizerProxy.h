@@ -1,7 +1,7 @@
 #ifndef SCENEWIDGETPROXY_H
 #define SCENEWIDGETPROXY_H
 #include "Visualizer.h"
-#include "/home/davide/progetti-vtk/OOpenCAL/Base/Models/Ball_New/Parameter.h"
+#include "/home/davide/progetti-vtk/OOpenCAL/Base/Models/SciddicaT/Parameter.h"
 using namespace std;
 class SceneWidgetVisualizerProxy {
 public:
