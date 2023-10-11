@@ -53,6 +53,27 @@ private:
     bool isIterating = false;
     bool isPlaying=false ;
     bool isBacking = false;
+
+    void configureUIElements(int argc, char* argv[]);
+    void setupConnections();
+    void configureLineEdit();
+    void configureButtons();
+    void configureButton(QPushButton* button, QStyle::StandardPixmap icon, const QString& styleSheet);
+    void configureSliders();
+    void initializeSceneWidget(int argc, char* argv[]);
+    void setTotalStepsFromConfiguration(const char* configurationFile);
+    void connectButtons();
+    void connectButton(QPushButton* button);
+    void connectSliders();
+
+    void loadStrings();
+    QString noSelectionMessage;
+    QString directorySelectionMessage;
+    QString compilationSuccessfulMessage;
+    QString compilationFailedMessage;
+    QString deleteSuccessfulMessage;
+    QString deleteFailedMessage;
+
     QString const styleButtonGotoStep="QPushButton {"
                                       "    color: black;"
                                       "    font-size: 16px;"
