@@ -28,18 +28,12 @@ public slots:
 
     void togglePlay();
 
-
-
-
-
 private slots:
-    void on_pushButton_clicked();
-
-    void on_pushButton_2_clicked();
-
-    void on_pushButton_3_clicked();
-
+    void handleGoToStep();
     void handleButtonClick();
+    void handlePlayButton();
+    void handleBackButton();
+    void handleStopButton();
 
     void updateSleepDuration(int value);
 
@@ -66,7 +60,8 @@ private:
     void connectButton(QPushButton* button);
     void connectSliders();
 
-    void loadStrings();
+
+
     QString noSelectionMessage;
     QString directorySelectionMessage;
     QString compilationSuccessfulMessage;
@@ -79,22 +74,22 @@ private:
                                       "    font-size: 16px;"
                                       "    font-weight: bold;"
                                       "    margin: 5px;"  // Aggiungi uno spazio di 5px tra i bottoni
-                                      "    background-color: #c0c0c0;"
-                                      "    border: none;"
-                                      "    border-radius: 20px;"
-                                      "    padding: 10px 20px;"
-                                      "}"
-                                      "QPushButton:hover {"
-                                      "    background-color: #a0a0a0;"
-                                      "}"
-                                      "QPushButton:pressed {"
-                                      "    background-color: #888888;"
-                                      "}";
+            "    background-color: #c0c0c0;"
+            "    border: none;"
+            "    border-radius: 20px;"
+            "    padding: 10px 20px;"
+            "}"
+            "QPushButton:hover {"
+            "    background-color: #a0a0a0;"
+            "}"
+            "QPushButton:pressed {"
+            "    background-color: #888888;"
+            "}";
     QString const styleSheet = "QPushButton {"
-                                       "    color: black;"
-                                       "    font-size: 16px;"
-                                       "    font-weight: bold;"
-                                       "    margin: 5px;"  // Aggiungi uno spazio di 5px tra i bottoni
+                               "    color: black;"
+                               "    font-size: 16px;"
+                               "    font-weight: bold;"
+                               "    margin: 5px;"  // Aggiungi uno spazio di 5px tra i bottoni
             "}"
             "QPushButton:hover {"
             "    background-color: #c0c0c0;"

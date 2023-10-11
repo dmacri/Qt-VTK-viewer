@@ -223,6 +223,7 @@
     <signal>click()</signal>
     <slot>zoomToExtent()</slot>
     <slot>increaseCountUp()</slot>
+    <slot>handleGoToStep()</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -263,18 +264,18 @@
    </hints>
   </connection>
   <connection>
-   <sender>pushButton</sender>
+   <sender>pushButton_3</sender>
    <signal>clicked()</signal>
-   <receiver>sceneWidget</receiver>
-   <slot>increaseCountUp()</slot>
+   <receiver>MainWindow</receiver>
+   <slot>handleGoToStep()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>39</x>
-     <y>269</y>
+     <x>51</x>
+     <y>51</y>
     </hint>
     <hint type="destinationlabel">
-     <x>449</x>
-     <y>330</y>
+     <x>399</x>
+     <y>299</y>
     </hint>
    </hints>
   </connection>
@@ -282,15 +283,15 @@
    <sender>lineEdit</sender>
    <signal>returnPressed()</signal>
    <receiver>MainWindow</receiver>
-   <slot>on_pushButton_3_clicked()</slot>
+   <slot>handleGoToStep()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>170</x>
-     <y>81</y>
+     <x>451</x>
+     <y>51</y>
     </hint>
     <hint type="destinationlabel">
-     <x>40</x>
-     <y>145</y>
+     <x>399</x>
+     <y>299</y>
     </hint>
    </hints>
   </connection>
@@ -298,6 +299,6 @@
  <slots>
   <slot>showOpenFileDialog()</slot>
   <slot>showAboutDialog()</slot>
-  <slot>on_pushButton_3_clicked()</slot>
+  <slot>handleGoToStep()</slot>
  </slots>
 </ui>
