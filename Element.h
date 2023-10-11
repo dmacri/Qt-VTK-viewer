@@ -41,7 +41,7 @@ public:
 		
 		virtual char* stringEncoding() = 0;
 		
-		virtual rgb* outputValue() = 0;
+        virtual rgb* outputValue() = 0;
 
 		virtual void startStep(int step) = 0;
 	

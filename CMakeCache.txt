@@ -300,8 +300,8 @@ QtVtkViewer_IS_TOP_LEVEL:STATIC=ON
 //Value Computed by CMake
 QtVtkViewer_SOURCE_DIR:STATIC=/home/davide/progetti-vtk/Qt-VTK-viewer
 
-//No help, variable specified on the command line.
-VTK_DIR:UNINITIALIZED=/home/davide/vtk-v9.1.0/build/
+//The directory containing a CMake configuration file for VTK.
+VTK_DIR:PATH=/home/davide/vtk-v9.1.0/build
 
 //Path to a program.
 Vulkan_GLSLANG_VALIDATOR_EXECUTABLE:FILEPATH=Vulkan_GLSLANG_VALIDATOR_EXECUTABLE-NOTFOUND

@@ -11,7 +11,10 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Qt VTK Viewer</string>
+   <string>Viewer</string>
+  </property>
+  <property name="toolButtonStyle">
+   <enum>Qt::ToolButtonTextBesideIcon</enum>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -30,52 +33,115 @@
     <property name="spacing">
      <number>0</number>
     </property>
-    <item row="1" column="1">
-     <widget class="QLineEdit" name="lineEdit">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="9" column="0">
-     <widget class="QPushButton" name="pushButton">
-      <property name="text">
-       <string>Increment steps</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0">
+    <item row="0" column="1">
      <widget class="QPushButton" name="pushButton_3">
       <property name="text">
        <string>Go to Step</string>
       </property>
      </widget>
     </item>
-    <item row="0" column="0">
-     <spacer name="verticalSpacer">
+    <item row="0" column="3">
+     <widget class="QLineEdit" name="lineEdit">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="3" rowspan="11">
+     <widget class="SceneWidget" name="sceneWidget"/>
+    </item>
+    <item row="15" column="3">
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QPushButton" name="backButton">
+        <property name="text">
+         <string>Back</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="stopButton">
+        <property name="text">
+         <string>Stop</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="playButton">
+        <property name="text">
+         <string>Start</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="10" column="1">
+     <widget class="QPushButton" name="pushButton_2">
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+    <item row="12" column="2">
+     <spacer name="horizontalSpacer">
       <property name="orientation">
-       <enum>Qt::Vertical</enum>
+       <enum>Qt::Horizontal</enum>
       </property>
       <property name="sizeType">
        <enum>QSizePolicy::Fixed</enum>
       </property>
       <property name="sizeHint" stdset="0">
        <size>
-        <width>0</width>
+        <width>10</width>
         <height>20</height>
        </size>
       </property>
      </spacer>
     </item>
-    <item row="5" column="1" rowspan="13">
-     <widget class="SceneWidget" name="sceneWidget"/>
-    </item>
-    <item row="11" column="0">
-     <widget class="QPushButton" name="pushButton_2">
+    <item row="8" column="1">
+     <widget class="QPushButton" name="pushButton">
       <property name="text">
-       <string>Decrease steps</string>
+       <string/>
       </property>
      </widget>
+    </item>
+    <item row="12" column="1">
+     <widget class="QSlider" name="sleepSlider">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>100</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="tickPosition">
+       <enum>QSlider::TicksBelow</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="12" column="0">
+     <spacer name="horizontalSpacer_2">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::Fixed</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>10</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
     </item>
    </layout>
   </widget>

@@ -190,30 +190,6 @@ QtVtkViewer_autogen/mocs_compilation.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/QtVtkViewer.dir/build.make CMakeFiles/QtVtkViewer.dir/QtVtkViewer_autogen/mocs_compilation.cpp.s
 .PHONY : QtVtkViewer_autogen/mocs_compilation.cpp.s
 
-Visualizer.o: Visualizer.cpp.o
-.PHONY : Visualizer.o
-
-# target to build an object file
-Visualizer.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/QtVtkViewer.dir/build.make CMakeFiles/QtVtkViewer.dir/Visualizer.cpp.o
-.PHONY : Visualizer.cpp.o
-
-Visualizer.i: Visualizer.cpp.i
-.PHONY : Visualizer.i
-
-# target to preprocess a source file
-Visualizer.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/QtVtkViewer.dir/build.make CMakeFiles/QtVtkViewer.dir/Visualizer.cpp.i
-.PHONY : Visualizer.cpp.i
-
-Visualizer.s: Visualizer.cpp.s
-.PHONY : Visualizer.s
-
-# target to generate assembly for a file
-Visualizer.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/QtVtkViewer.dir/build.make CMakeFiles/QtVtkViewer.dir/Visualizer.cpp.s
-.PHONY : Visualizer.cpp.s
-
 main.o: main.cpp.o
 .PHONY : main.o
 
@@ -302,9 +278,6 @@ help:
 	@echo "... QtVtkViewer_autogen/mocs_compilation.o"
 	@echo "... QtVtkViewer_autogen/mocs_compilation.i"
 	@echo "... QtVtkViewer_autogen/mocs_compilation.s"
-	@echo "... Visualizer.o"
-	@echo "... Visualizer.i"
-	@echo "... Visualizer.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

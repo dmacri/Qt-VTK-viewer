@@ -1,4 +1,0 @@
-ERROR: In /home/davide/vtk-v9.1.0/GUISupport/Qt/QVTKInteractor.cxx, line 149
-QVTKInteractor (0x560b4bbfe5e0): QVTKInteractor cannot control the event loop.
-
-
