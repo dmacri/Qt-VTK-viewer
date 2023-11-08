@@ -59,10 +59,6 @@ public:
     // }
 };
 
-extern int pixelsQuadrato;
-extern int *maxStepVisited;
-extern unordered_map<int, long int> *hashMap;
-extern Line *lines;
 
 template <class T>
 class Visualizer
@@ -72,7 +68,6 @@ public:
     T**  p;
     Visualizer(){
     };
-public:
     long int gotoStep(int step, FILE *fp, int node);
     void stampa(long int fPos);
     char *giveMeFileName(char *fileName, int node);
@@ -90,6 +85,10 @@ public:
     vtkNew<vtkActor2D> buildStepText(int step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer);
     void refreshBuildStepText(int step,vtkActor2D* stepLineTextActor);
 
+    int pixelsQuadrato;
+    int *maxStepVisited;
+    unordered_map<int, long int> *hashMap;
+    Line *lines;
 
 };
 

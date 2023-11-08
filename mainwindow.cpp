@@ -30,7 +30,7 @@ MainWindow::~MainWindow() { delete ui; }
 void MainWindow::configureUIElements(int argc, char* argv[]) {
     configureLineEdit();
     configureButtons();
-    configureSliders();
+    SliderConfigurator::configureSliders(ui->sleepSlider, 0, 100, 50, styleSheetSleep);
     SceneWidgetInitializer::initializeSceneWidget(ui, argc, argv);
     setTotalStepsFromConfiguration(argv[1]);
 }
@@ -46,12 +46,12 @@ void MainWindow::configureLineEdit() {
 }
 
 void MainWindow::configureButtons() {
-    configureButton(ui->pushButton, QStyle::SP_ArrowRight, styleSheetButtonLeftColumn);
-    configureButton(ui->pushButton_2, QStyle::SP_ArrowLeft, styleSheetButtonLeftColumn);
-    configureButton(ui->pushButton_3, QStyle::SP_MediaPlay, styleButtonGotoStep);
-    configureButton(ui->playButton, QStyle::SP_MediaSeekForward, styleSheet);
-    configureButton(ui->stopButton, QStyle::SP_MediaStop, styleSheet);
-    configureButton(ui->backButton, QStyle::SP_MediaSkipBackward, styleSheet);
+    ButtonConfigurator::configureButton(ui->pushButton, QStyle::SP_ArrowRight, styleSheetButtonLeftColumn);
+    ButtonConfigurator::configureButton(ui->pushButton_2, QStyle::SP_ArrowLeft, styleSheetButtonLeftColumn);
+    ButtonConfigurator::configureButton(ui->pushButton_3, QStyle::SP_MediaPlay, styleButtonGotoStep);
+    ButtonConfigurator::configureButton(ui->playButton, QStyle::SP_MediaSeekForward, styleSheet);
+    ButtonConfigurator::configureButton(ui->stopButton, QStyle::SP_MediaStop, styleSheet);
+    ButtonConfigurator::configureButton(ui->backButton, QStyle::SP_MediaSkipBackward, styleSheet);
 }
 
 void MainWindow::configureButton(QPushButton* button, QStyle::StandardPixmap icon, const QString& styleSheet) {
@@ -61,15 +61,10 @@ void MainWindow::configureButton(QPushButton* button, QStyle::StandardPixmap ico
     button->setStyleSheet(styleSheet);
 }
 
-void MainWindow::configureSliders() {
-    ui->sleepSlider->setMinimum(0);
-    ui->sleepSlider->setMaximum(100);
-    ui->sleepSlider->setValue(50);
-    ui->sleepSlider->setStyleSheet(styleSheetSleep);
-}
 
 void MainWindow::setTotalStepsFromConfiguration(const char* configurationFile) {
-    QStringList listParameterFromConfiguration = readNLinesFromFile(configurationFile);
+    ConfigurationReader reader;
+    QStringList listParameterFromConfiguration = reader.readNLinesFromFile(configurationFile);
     QString stringNumStep = listParameterFromConfiguration[7];
     QStringList step = stringNumStep.split(":");
     totalSteps = step[1].toInt();

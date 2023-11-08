@@ -7,7 +7,7 @@
 class SliderConfigurator
 {
 public:
-    static void configureSlider(QSlider* slider, const QString& styleSheet);
+    static void configureSliders(QSlider *slider, int min, int max, int value, const QString &styleSheet);
 };
 
 #endif // SLIDERCONFIGURATOR_H

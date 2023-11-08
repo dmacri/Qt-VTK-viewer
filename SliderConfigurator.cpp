@@ -2,10 +2,10 @@
 #include "SliderConfigurator.h"
 
 
-void SliderConfigurator::configureSlider(QSlider* slider, const QString& styleSheet)
+void SliderConfigurator::configureSliders(QSlider *slider, int min, int max, int value, const QString &styleSheet)
 {
-    slider->setMinimum(0);
-    slider->setMaximum(100);
-    slider->setValue(50);
+    slider->setMinimum(min);
+    slider->setMaximum(max);
+    slider->setValue(value);
     slider->setStyleSheet(styleSheet);
 }
