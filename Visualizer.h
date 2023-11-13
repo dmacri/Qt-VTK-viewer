@@ -49,15 +49,11 @@ public:
     {
     }
 
-    // Line& operator=(const Line& other) // copy assignment
-    // {
-    //     x1 = other.x1;
-    //     y1 = other.y1;
-    //     x2 = other.x2;
-    //     y2 = other.y2;
-    //     return *this;
-    // }
 };
+
+extern unordered_map<int, long int> *hashMap;
+extern int *maxStepVisited;
+extern Line *lines;
 
 
 template <class T>
@@ -87,7 +83,7 @@ public:
 
     int pixelsQuadrato;
     int *maxStepVisited;
-    unordered_map<int, long int> *hashMap;
+
     Line *lines;
 
 };

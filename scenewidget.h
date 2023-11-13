@@ -10,10 +10,6 @@
 #include <cstdlib>
 #include <unordered_map>
 #include "SceneWidgetVisualizerProxy.h"
-#include <vtkTextProperty.h>
-#include <vtkProperty.h>
-#include <vtkRenderWindow.h>
-#include <vtkActor2D.h>
 
 using namespace std;
 
@@ -32,19 +28,6 @@ struct  SettingParameter {
     int font_size=18;
     string edittext;// an empty string for editting
     SceneWidgetVisualizerProxy* sceneWidgetVisualizerProxy;
-    vtkNew<vtkActor> gridActor;
-    vtkNew<vtkNamedColors> colors;
-    vtkNew<vtkActor2D> actorBuildLine;
-    vtkSmartPointer<vtkActor2D> buildStepActor;
-    vtkSmartPointer<vtkTextMapper> singleLineTextStep=vtkSmartPointer<vtkTextMapper>::New();
-    vtkSmartPointer<vtkTextProperty> singleLineTextPropStep=vtkSmartPointer<vtkTextProperty>::New();
-
-    vtkSmartPointer<vtkRenderWindow>renderWindow_;
-    vtkSmartPointer<vtkRenderWindowInteractor> interactor_;
-    unordered_map<int, long int> *hashMap;
-    int *maxStepVisited;
-    Line *lines;
-
 };
 
 class  SettingRenderParameter : public QVTKOpenGLNativeWidget{
@@ -72,12 +55,6 @@ public:
     void setupVtkScene();
 
     void renderVtkScene();
-    int pixelsQuadrato;
-
-    //Per la generazione delle linee del load balancing
-    vtkSmartPointer<vtkPoints> pts=vtkSmartPointer<vtkPoints>::New();
-    vtkSmartPointer<vtkCellArray> cellLines=vtkSmartPointer<vtkCellArray>::New();
-    vtkSmartPointer<vtkPolyData> grid=vtkSmartPointer<vtkPolyData>::New();
 
 
 
