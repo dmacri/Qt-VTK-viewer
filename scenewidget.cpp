@@ -37,9 +37,7 @@
 
 #include <Visualizer.hpp>
 using namespace std;
-
-
-#include <sstream>      // std::wostringstream
+#include <sstream>
 
 
 int pixelsQuadrato;
@@ -194,11 +192,8 @@ void SceneWidget:: increaseCountUp()
         settingParameter->step += 1;
         settingParameter->changed = true;
     }
-    //   auto beginMethod = std::chrono::high_resolution_clock::now();
     SceneWidget::upgradeModelInCentralPanel();
-    //   auto endMethod = std::chrono::high_resolution_clock::now();
-    //    auto elapsedMethod = std::chrono::duration_cast<std::chrono::nanoseconds>(endMethod - beginMethod);
-    //    std::cout << "Time measured Method in increase phase: %.3f seconds.\n"<< elapsedMethod.count() * 1e-9<< std::endl;
+
 }
 
 
@@ -209,28 +204,17 @@ void SceneWidget::decreaseCountDown()
         settingParameter->changed = true;
     }
 
-    //   auto beginMethod = std::chrono::high_resolution_clock::now();
     SceneWidget::upgradeModelInCentralPanel();
-    //   auto endMethod = std::chrono::high_resolution_clock::now();
-    //   auto elapsedMethod = std::chrono::duration_cast<std::chrono::nanoseconds>(endMethod - beginMethod);
-    //   std::cout << "Time measured Method in decrease phase: %.3f seconds.\n"<< elapsedMethod.count() * 1e-9<< std::endl;
+
 }
 
 void SceneWidget::selectedStepParameter(string parameterInsertedInTextEdit)
 {
-
     int step = stoi(parameterInsertedInTextEdit);
-
-
     settingParameter->step = step;
     settingParameter->changed = true;
-
-
-    // auto beginMethod = std::chrono::high_resolution_clock::now();
     SceneWidget::upgradeModelInCentralPanel();
-    // auto endMethod = std::chrono::high_resolution_clock::now();
-    // auto elapsedMethod = std::chrono::duration_cast<std::chrono::nanoseconds>(endMethod - beginMethod);
-    // std::cout << "Time measured Method: %.3f seconds.\n"<< elapsedMethod.count() * 1e-9<< std::endl;
+
 }
 
 
@@ -243,10 +227,11 @@ void SceneWidget::upgradeModelInCentralPanel(){
         try
         {
             sceneWidgetVisualizerProxy->vis->getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, lines);
+
             sceneWidgetVisualizerProxy->vis->refreshWindowsVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY+1, settingParameter->dimX+1, settingParameter->step, lines, settingParameter->numberOfLines,gridActor);
 
             sceneWidgetVisualizerProxy->vis->refreshBuildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,actorBuildLine,colors);
-            // vis->refreshBuildStepText(settingParameter->step,buildStepActor);
+
             sceneWidgetVisualizerProxy->vis->buildStepLine(settingParameter->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
 
         }catch(const std::runtime_error& re)
@@ -274,10 +259,8 @@ void KeypressCallbackFunction(vtkObject* caller,
                               void* clientData,
                               void* callData)
 {
-    vtkRenderWindowInteractor* key =
-            static_cast<vtkRenderWindowInteractor*>(caller);
+    vtkRenderWindowInteractor* key = static_cast<vtkRenderWindowInteractor*>(caller);
 
-    //  std::cout << "Pressed: " << key->GetKeySym() << std::endl;
     string keyPressed=key->GetKeySym();
     SettingParameter* cam = (SettingParameter*) clientData;
     if (keyPressed.compare("Up")==0)
@@ -365,14 +348,11 @@ void KeypressCallbackFunction(vtkObject* caller,
         try
         {
             cam->sceneWidgetVisualizerProxy->vis->getElementMatrix(cam->step, cam->sceneWidgetVisualizerProxy->p, cam->dimX, cam->dimY, cam->nNodeX, cam->nNodeY, cam->outputFileName, lines);
-            // std::cout << "Sono al passo dopo getElementMatrix: " << cam->step << std::endl;
-            //    auto begin = std::chrono::high_resolution_clock::now();
+
             cam->sceneWidgetVisualizerProxy->vis->refreshWindowsVTK(cam->sceneWidgetVisualizerProxy->p, cam->dimY+1, cam->dimX+1, cam->step, lines, cam->numberOfLines,gridActor);
-            //    auto end = std::chrono::high_resolution_clock::now();
-            //    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
-            //    std::cout << "Time measured Refresh windows: %.3f seconds.\n"<< elapsed.count() * 1e-9<< std::endl;;
+
             cam->sceneWidgetVisualizerProxy->vis->refreshBuildLoadBalanceLine(lines,cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors);
-            // vis->refreshBuildStepText(settingParameter->step,buildStepActor);
+
             cam->sceneWidgetVisualizerProxy-> vis->buildStepLine(cam->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
 
         }catch(const std::runtime_error& re)
