@@ -65,7 +65,7 @@ void MainWindow::configureSliders()
 {
     ui->sleepSlider->setMinimum(0);
     ui->sleepSlider->setMaximum(100);
-    ui->sleepSlider->setValue(50);
+    ui->sleepSlider->setValue(0);
     ui->sleepSlider->setStyleSheet(styleSheetSleep);
 }
 
