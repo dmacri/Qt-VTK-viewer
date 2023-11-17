@@ -1,20 +1,20 @@
 #ifndef SCENEWIDGETPROXY_H
 #define SCENEWIDGETPROXY_H
 #include "Visualizer.h"
-#include "/home/davide/progetti-vtk/OOpenCAL/Base/Models/SciddicaT/Parameter.h"
+#include "/home/dmacri80/Progetto-Visualizer/OOpenCAL/models/Ball/ballCell.h"
 using namespace std;
 class SceneWidgetVisualizerProxy {
 public:
-Parameter** p;
-    Visualizer<Parameter> *vis;
+BallCell** p;
+    Visualizer<BallCell> *vis;
     SceneWidgetVisualizerProxy() {
-        vis = new Visualizer<Parameter>;
+        vis = new Visualizer<BallCell>;
     }
-    Parameter** getAllocatedParametersMatrix(int dimX, int dimY)
+    BallCell** getAllocatedParametersMatrix(int dimX, int dimY)
     {
-        Parameter** p = new Parameter*[dimY];
+        BallCell** p = new BallCell*[dimY];
         for (int i = 0; i < dimY; i++) {
-            p[i] = new Parameter[dimX];
+            p[i] = new BallCell[dimX];
         }
         return p;
     }

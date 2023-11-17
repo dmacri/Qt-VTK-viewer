@@ -49,6 +49,8 @@ private:
     int totalSteps = 0;
     int currentStep = 1;
     int sleepDuration = 100;
+    int cursorValue = 0;
+    bool movingSlider=false;
     QCommonStyle style;
     bool isIterating = false;
     bool isPlaying=false ;

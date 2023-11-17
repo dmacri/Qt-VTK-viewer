@@ -59,71 +59,12 @@ typedef intptr_t ssize_t;
 template <class T>
 long int Visualizer<T>::gotoStep(int step, FILE *fp, int node)
 {
-
-    // if (step>maxStepVisited[node]){
-
-    //     if (maxStepVisited[node]>-1)
-    //         fseek(fp, hashMap[node][maxStepVisited[node]], SEEK_SET);
-    //     while (step!=maxStepVisited[node]) {
-    //         char* line = NULL;
-    //         size_t len = 0;
-    //         // converte il char * line in string
-
-    //         getline(&line, &len, fp);
-    //         string str(line);
-    //         //cout << line << endl;
-    //         //crea espressione regolare
-    //         regex regex("----[0-9]+-------------------------------\n");
-    //         // Se la linea nel file match con l'espressione regolare la memorizza
-    //         if(regex_match(str, regex)){
-    //             string sstep;
-    //             for(int i = 0; i< str.size(); i++){
-    //                 if(isdigit(str[i]))
-    //                     sstep.push_back(str[i]);
-    //             }
-
-    //             //cout << "s=" << sstep << endl;
-    //             maxStepVisited[node] = stoi(sstep);
-
-    //             long int nbytes = ftell(fp);
-    //             cout << "step " << maxStepVisited[node] << " --> " << nbytes << endl;
-
-    //             //inserisce una coppia formata dal numero dell'iterazione e il numero di bytes dall'inzio del file, all'interno dall'hashMap
-    //             std::pair<int, long int> p(maxStepVisited[node],nbytes);
-    //             hashMap[node].insert(p);
-
-    //         }
-
-    //     }
-
-    // }
     return hashMap[node][step];
 }
 template <class T>
 void Visualizer<T>::stampa(long int fPos)
 {
-    // char* line = NULL;
-    // size_t len = 0;
-
-    // fseek(fp, fPos, SEEK_SET);
-
-    // //printMatrixFromStepByUser(hashmap, stepUser);
-    // getline(&line, &len, fp);
-    // //cout << line << endl;nicola procopio
-    // char * pch;
-    // pch = strtok (line,"-");
-    // int nCols =atoi(pch);
-    // pch = strtok (NULL, "-");
-    // int nRows =atoi(pch);
-
-    // cout << "nCols = " << nCols << ", nRows =  " << nRows << endl;
-    // int row=0;
-    // while (row <= nRows){
-    //     getline(&line, &len, fp);
-    //     cout << line << endl;
-    //     row++;
-    // }
-}
+   }
 template <class T>
 char* Visualizer<T>::giveMeFileName(char *fileName, int node)
 {
