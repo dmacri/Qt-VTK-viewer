@@ -49,6 +49,8 @@ private:
     int totalSteps = 0;
     int currentStep = 1;
     int sleepDuration = 100;
+    int cursorValue = 0;
+    bool movingSlider=false;
     QCommonStyle style;
     bool isIterating = false;
     bool isPlaying=false ;
@@ -130,9 +132,7 @@ private:
                                     "QSlider::groove {"
                                     "    border: 1px solid #bbb;"
                                     "    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,"
-                                    "                                  stop:0 green, stop:0.3 green,"
-                                    "                                  stop:0.3 green, stop:0.7 green,"
-                                    "                                  stop:0.7 red, stop:1 red);"
+                                    "                                  stop:0 #aaffaa, stop:1 #006600);"
                                     "    margin: 0px 10px;"
                                     "}"
                                     "QSlider::handle {"

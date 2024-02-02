@@ -63,9 +63,9 @@ void MainWindow::configureButton(QPushButton* button, QStyle::StandardPixmap ico
 
 void MainWindow::configureSliders()
 {
-    ui->sleepSlider->setMinimum(0);
+    ui->sleepSlider->setMinimum(1);
     ui->sleepSlider->setMaximum(100);
-    ui->sleepSlider->setValue(50);
+    ui->sleepSlider->setValue(0);
     ui->sleepSlider->setStyleSheet(styleSheetSleep);
 }
 
@@ -104,9 +104,9 @@ void MainWindow::loadStrings() {
     QSettings settings(iniFilePath, QSettings::IniFormat);
     qDebug() <<"Il file path è" <<settings.fileName();
 
-    noSelectionMessage = settings.value("Messages/noSelectionWarning").toString();
+                                    noSelectionMessage = settings.value("Messages/noSelectionWarning").toString();
     qDebug() <<"Il messaggio  è" <<  noSelectionMessage;
-    directorySelectionMessage = settings.value("Messages/directorySelectionWarning").toString();
+            directorySelectionMessage = settings.value("Messages/directorySelectionWarning").toString();
     compilationSuccessfulMessage = settings.value("Messages/compilationSuccessful").toString();
     compilationFailedMessage = settings.value("Messages/compilationFailed").toString();
     deleteSuccessfulMessage = settings.value("Messages/deleteSuccessful").toString();
@@ -119,8 +119,8 @@ void MainWindow::showAboutDialog()
 {
 
     QMessageBox::information(
-                this, "About",
-                "By Davide Macri.\n Configurator for  visualizer");
+        this, "About",
+        "By Davide Macri.\n Configurator for  visualizer");
 }
 
 void MainWindow::showOpenFileDialog()
@@ -128,11 +128,10 @@ void MainWindow::showOpenFileDialog()
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open file"), "",
                                                     "VTK Files (*.vtk)");
 
-    // Open file
     QFile file(fileName);
+
     file.open(QIODevice::ReadOnly);
 
-    // Return on Cancel
     if (!file.exists())
         return;
 
@@ -145,34 +144,27 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::togglePlay()
 {  int stepIncrement=0;
-    // Verifica quale tasto è stato premuto
     QPushButton* button = qobject_cast<QPushButton*>(sender());
     if (button == ui->playButton) {
-        // Tasto "Play" premuto
-        // Incrementa lo step corrente
         currentStep++;
         stepIncrement=+1;
     } else if (button == ui->backButton) {
-        // Tasto "Back" premuto
-        // Decrementa lo step corrente
         currentStep--;
         stepIncrement=-1;
     }
 
-    // Assicurati che currentStep sia compreso tra 0 e totalSteps
     currentStep = qBound(0, currentStep, totalSteps);
 
-    // Esegui l'iterazione
     for (int step = currentStep; step < totalSteps; step += stepIncrement) {
         ui->sceneWidget->selectedStepParameter(std::to_string(step));
-        QThread::msleep(sleepDuration);
+       // QThread::msleep(sleepDuration);
         currentStep=step;
-        // Aggiornamento grafico
+        if(movingSlider){
+            step = static_cast<int>(totalSteps * (cursorValue / 100.0)); // Assicurati di utilizzare la divisione tra numeri a virgola mobile.
+            movingSlider=false;
+        }
         QApplication::processEvents();
-
-
         if (!isPlaying||(isBacking && currentStep == 0)) {
-            // Se il testo del pulsante "Play" è stato premuto, interrompi l'iterazione
             break;
         }
     }
@@ -183,30 +175,20 @@ void MainWindow::handleButtonClick()
 {
     QPushButton* button = qobject_cast<QPushButton*>(sender());
 
-    // Verifica quale tasto è stato premuto
     if (button == ui->playButton) {
-        // Tasto "Play" premuto
         if (ui->playButton->text() == "Stop" && isPlaying) {
-            // Il tasto "Stop" è stato premuto
-            // Interrompi l'iterazione
             isPlaying = false;
         } else {
-            // Il tasto "Play" è stato premuto
-            // Esegui l'iterazione in avanti
             isPlaying = true;
-            isBacking = false;  // Resetta lo stato di "Back"
+            isBacking = false;
             togglePlay();
         }
     } else if (button == ui->backButton) {
-        // Tasto "Back" premuto
-        // Esegui l'iterazione all'indietro
         isPlaying = true;
-        isBacking = true;   // Imposta lo stato di "Back"
+        isBacking = true;
         togglePlay();
     } else if (button == ui->stopButton) {
-        // Tasto "Stop" premuto
-        isPlaying = false;  // Interrompi l'iterazione
-        // Aggiorna l'aspetto del pulsante "Play"
+        isPlaying = false;
         ui->playButton->setText("Play");
         ui->playButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
     }
@@ -238,7 +220,8 @@ void MainWindow::on_pushButton_3_clicked()
 void MainWindow::updateSleepDuration(int value)
 {
     sleepDuration = value;
-
+    cursorValue = value;
+    movingSlider=true;
 }
 
 
@@ -247,7 +230,6 @@ QStringList MainWindow::readNLinesFromFile(const QString& filePath)
 {
     QStringList lines;
 
-    // Apri il file in sola lettura
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
@@ -255,7 +237,6 @@ QStringList MainWindow::readNLinesFromFile(const QString& filePath)
         return lines;
     }
 
-    // Leggi il contenuto del file riga per riga
     QTextStream stream(&file);
     while (!stream.atEnd())
     {
@@ -263,7 +244,6 @@ QStringList MainWindow::readNLinesFromFile(const QString& filePath)
         lines.append(line);
     }
 
-    // Chiudi il file
     file.close();
 
     return lines;
