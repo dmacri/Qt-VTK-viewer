@@ -63,9 +63,9 @@ void MainWindow::configureButton(QPushButton* button, QStyle::StandardPixmap ico
 
 void MainWindow::configureSliders()
 {
-    ui->sleepSlider->setMinimum(0);
+    ui->sleepSlider->setMinimum(1);
     ui->sleepSlider->setMaximum(100);
-    ui->sleepSlider->setValue(50);
+    ui->sleepSlider->setValue(0);
     ui->sleepSlider->setStyleSheet(styleSheetSleep);
 }
 
@@ -104,9 +104,9 @@ void MainWindow::loadStrings() {
     QSettings settings(iniFilePath, QSettings::IniFormat);
     qDebug() <<"Il file path è" <<settings.fileName();
 
-    noSelectionMessage = settings.value("Messages/noSelectionWarning").toString();
+                                    noSelectionMessage = settings.value("Messages/noSelectionWarning").toString();
     qDebug() <<"Il messaggio  è" <<  noSelectionMessage;
-    directorySelectionMessage = settings.value("Messages/directorySelectionWarning").toString();
+            directorySelectionMessage = settings.value("Messages/directorySelectionWarning").toString();
     compilationSuccessfulMessage = settings.value("Messages/compilationSuccessful").toString();
     compilationFailedMessage = settings.value("Messages/compilationFailed").toString();
     deleteSuccessfulMessage = settings.value("Messages/deleteSuccessful").toString();
@@ -119,8 +119,8 @@ void MainWindow::showAboutDialog()
 {
 
     QMessageBox::information(
-                this, "About",
-                "By Davide Macri.\n Configurator for  visualizer");
+        this, "About",
+        "By Davide Macri.\n Configurator for  visualizer");
 }
 
 void MainWindow::showOpenFileDialog()
@@ -157,8 +157,12 @@ void MainWindow::togglePlay()
 
     for (int step = currentStep; step < totalSteps; step += stepIncrement) {
         ui->sceneWidget->selectedStepParameter(std::to_string(step));
-        QThread::msleep(sleepDuration);
+       // QThread::msleep(sleepDuration);
         currentStep=step;
+        if(movingSlider){
+            step = static_cast<int>(totalSteps * (cursorValue / 100.0)); // Assicurati di utilizzare la divisione tra numeri a virgola mobile.
+            movingSlider=false;
+        }
         QApplication::processEvents();
         if (!isPlaying||(isBacking && currentStep == 0)) {
             break;
@@ -216,7 +220,8 @@ void MainWindow::on_pushButton_3_clicked()
 void MainWindow::updateSleepDuration(int value)
 {
     sleepDuration = value;
-
+    cursorValue = value;
+    movingSlider=true;
 }
 
 
