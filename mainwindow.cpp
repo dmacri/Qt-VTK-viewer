@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "qcommonstyle.h"
 #include "QSettings"
+#include "qlabel.h"
 #include "qthread.h"
 #include "ui_mainwindow.h"
 
@@ -28,6 +29,7 @@ void MainWindow::configureUIElements(int argc, char* argv[])
     configureSliders();
     loadStrings();
     initializeSceneWidget(argc, argv);
+    configureStatusBarLabel(argv[1]);
     setTotalStepsFromConfiguration(argv[1]);
 }
 
@@ -35,6 +37,7 @@ void MainWindow::setupConnections()
 {
     connectButtons();
     connectSliders();
+    connectSliderForPosition();
 }
 
 void MainWindow::configureLineEdit()
@@ -45,20 +48,20 @@ void MainWindow::configureLineEdit()
 
 void MainWindow::configureButtons()
 {
-    configureButton(ui->pushButton, QStyle::SP_ArrowRight, styleSheetButtonLeftColumn);
-    configureButton(ui->pushButton_2, QStyle::SP_ArrowLeft, styleSheetButtonLeftColumn);
-    configureButton(ui->pushButton_3, QStyle::SP_MediaPlay, styleButtonGotoStep);
-    configureButton(ui->playButton, QStyle::SP_MediaSeekForward, styleSheet);
-    configureButton(ui->stopButton, QStyle::SP_MediaStop, styleSheet);
-    configureButton(ui->backButton, QStyle::SP_MediaSkipBackward, styleSheet);
+    configureButton(ui->pushButton, QStyle::SP_ArrowRight, NULL);
+    configureButton(ui->pushButton_2, QStyle::SP_ArrowLeft, NULL);
+    configureButton(ui->pushButton_3, QStyle::SP_MediaSkipForward, NULL);
+    configureButton(ui->playButton, QStyle::SP_MediaPlay, NULL);
+    configureButton(ui->stopButton, QStyle::SP_MediaStop, NULL);
+    configureButton(ui->backButton, QStyle::SP_BrowserReload, NULL);
 }
 
 void MainWindow::configureButton(QPushButton* button, QStyle::StandardPixmap icon, const QString& styleSheet)
 {
     button->setIcon(style.standardIcon(icon));
     button->setIconSize(QSize(32, 32));
-    button->setMinimumSize(QSize(100, 50));
-    button->setStyleSheet(styleSheet);
+    button->setMinimumSize(QSize(36, 32));
+    button->setStyleSheet(NULL);
 }
 
 void MainWindow::configureSliders()
@@ -66,7 +69,14 @@ void MainWindow::configureSliders()
     ui->sleepSlider->setMinimum(1);
     ui->sleepSlider->setMaximum(100);
     ui->sleepSlider->setValue(0);
-    ui->sleepSlider->setStyleSheet(styleSheetSleep);
+    // ui->sleepSlider->setStyleSheet(styleSheetSleep);
+
+}
+void MainWindow::configureStatusBarLabel(const QString& inputFilePath)
+{
+    const QString& inputfile="Input file: ";
+    QLabel *label = new QLabel(inputfile+inputFilePath);
+    ui->statusbar->addWidget(label);
 }
 
 void MainWindow::initializeSceneWidget(int argc, char* argv[])
@@ -99,6 +109,11 @@ void MainWindow::connectSliders()
     connect(ui->sleepSlider, &QSlider::valueChanged, this, &MainWindow::updateSleepDuration);
 }
 
+void MainWindow::connectSliderForPosition()
+{
+    connect(ui->delaysPositionSlider, &QSlider::valueChanged, this, &MainWindow::updatePosition);
+}
+
 void MainWindow::loadStrings() {
     QString iniFilePath = QApplication::applicationDirPath() + "/app_strings.ini";
     QSettings settings(iniFilePath, QSettings::IniFormat);
@@ -106,7 +121,8 @@ void MainWindow::loadStrings() {
 
                                     noSelectionMessage = settings.value("Messages/noSelectionWarning").toString();
     qDebug() <<"Il messaggio  è" <<  noSelectionMessage;
-            directorySelectionMessage = settings.value("Messages/directorySelectionWarning").toString();
+
+    directorySelectionMessage = settings.value("Messages/directorySelectionWarning").toString();
     compilationSuccessfulMessage = settings.value("Messages/compilationSuccessful").toString();
     compilationFailedMessage = settings.value("Messages/compilationFailed").toString();
     deleteSuccessfulMessage = settings.value("Messages/deleteSuccessful").toString();
@@ -157,11 +173,16 @@ void MainWindow::togglePlay()
 
     for (int step = currentStep; step < totalSteps; step += stepIncrement) {
         ui->sceneWidget->selectedStepParameter(std::to_string(step));
-       // QThread::msleep(sleepDuration);
         currentStep=step;
-        if(movingSlider){
-            step = static_cast<int>(totalSteps * (cursorValue / 100.0)); // Assicurati di utilizzare la divisione tra numeri a virgola mobile.
-            movingSlider=false;
+         ui->delaysPositionSlider->setValue(totalSteps * (cursorValue / 100.0));
+         if (movingCursorSleep){
+          //  int sleep=sleepDuration * (cursorValue / 100.0);
+            QThread::msleep(cursorValue*10);
+            //movingCursorSleep=false;
+        }
+        if(movingCursorPosition){
+            step = static_cast<int>(totalSteps * (cursorValue / 100.0));
+            movingCursorPosition=false;
         }
         QApplication::processEvents();
         if (!isPlaying||(isBacking && currentStep == 0)) {
@@ -189,7 +210,7 @@ void MainWindow::handleButtonClick()
         togglePlay();
     } else if (button == ui->stopButton) {
         isPlaying = false;
-        ui->playButton->setText("Play");
+        //ui->playButton->setText("Play");
         ui->playButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
     }
 }
@@ -217,11 +238,18 @@ void MainWindow::on_pushButton_3_clicked()
     } else {
         QMessageBox::critical(this, tr("Errore"), tr("Inserisci un valore numerico"));      }
 }
+
 void MainWindow::updateSleepDuration(int value)
 {
-    sleepDuration = value;
+    cursorValue=value;
+    movingCursorSleep=true;
+}
+
+void MainWindow::updatePosition(int value)
+{
     cursorValue = value;
-    movingSlider=true;
+    movingCursorPosition=true;
+    ui->sceneWidget->selectedStepParameter(std::to_string(static_cast<int>(totalSteps * (value / 100.0))));
 }
 
 

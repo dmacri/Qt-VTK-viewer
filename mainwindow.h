@@ -43,18 +43,22 @@ private slots:
 
     void updateSleepDuration(int value);
 
+    void updatePosition(int value);
+
 private:
     Ui::MainWindow* ui;
     QTimer timer;
     int totalSteps = 0;
     int currentStep = 1;
-    int sleepDuration = 100;
+    int sleepDuration = 1000;
     int cursorValue = 0;
-    bool movingSlider=false;
     QCommonStyle style;
     bool isIterating = false;
     bool isPlaying=false ;
     bool isBacking = false;
+    bool movingCursorPosition=false;
+    bool movingCursorSleep=false;
+
 
     void configureUIElements(int argc, char* argv[]);
     void setupConnections();
@@ -67,6 +71,8 @@ private:
     void connectButtons();
     void connectButton(QPushButton* button);
     void connectSliders();
+    void connectSliderForPosition();
+    void configureStatusBarLabel(const QString& inputFilePath);
 
     void loadStrings();
     QString noSelectionMessage;
@@ -96,7 +102,7 @@ private:
                                        "    color: black;"
                                        "    font-size: 16px;"
                                        "    font-weight: bold;"
-                                       "    margin: 5px;"  // Aggiungi uno spazio di 5px tra i bottoni
+                                       "    margin: 5px;"
             "}"
             "QPushButton:hover {"
             "    background-color: #c0c0c0;"
