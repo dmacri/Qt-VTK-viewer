@@ -53,7 +53,7 @@ void MainWindow::configureButtons()
     configureButton(ui->pushButton_3, QStyle::SP_MediaSkipForward, NULL);
     configureButton(ui->playButton, QStyle::SP_MediaPlay, NULL);
     configureButton(ui->stopButton, QStyle::SP_MediaStop, NULL);
-    configureButton(ui->backButton, QStyle::SP_BrowserReload, NULL);
+    configureButton(ui->backButton, QStyle::SP_MediaSeekBackward, NULL);
 }
 
 void MainWindow::configureButton(QPushButton* button, QStyle::StandardPixmap icon, const QString& styleSheet)
@@ -72,6 +72,14 @@ void MainWindow::configureSliders()
     // ui->sleepSlider->setStyleSheet(styleSheetSleep);
 
 }
+void MainWindow::configureCursorPosition()
+{
+    ui->updatePositionSlider->setMinimum(1);
+    ui->updatePositionSlider->setMaximum(100);
+    ui->updatePositionSlider->setValue(0);
+}
+
+
 void MainWindow::configureStatusBarLabel(const QString& inputFilePath)
 {
     const QString& inputfile="Input file: ";
@@ -111,7 +119,7 @@ void MainWindow::connectSliders()
 
 void MainWindow::connectSliderForPosition()
 {
-    connect(ui->delaysPositionSlider, &QSlider::valueChanged, this, &MainWindow::updatePosition);
+    connect(ui->updatePositionSlider, &QSlider::valueChanged, this, &MainWindow::updatePosition);
 }
 
 void MainWindow::loadStrings() {
@@ -174,14 +182,13 @@ void MainWindow::togglePlay()
     for (int step = currentStep; step < totalSteps; step += stepIncrement) {
         ui->sceneWidget->selectedStepParameter(std::to_string(step));
         currentStep=step;
-         ui->delaysPositionSlider->setValue(totalSteps * (cursorValue / 100.0));
-         if (movingCursorSleep){
-          //  int sleep=sleepDuration * (cursorValue / 100.0);
-            QThread::msleep(cursorValue*10);
+        ui->updatePositionSlider->setValue(totalSteps * (cursorValuePosition / 100.0));
+        if (movingCursorSleep){
+           QThread::msleep(cursorValueSleep * 10);
             //movingCursorSleep=false;
         }
         if(movingCursorPosition){
-            step = static_cast<int>(totalSteps * (cursorValue / 100.0));
+            step = static_cast<int>(totalSteps * (cursorValuePosition / 100.0));
             movingCursorPosition=false;
         }
         QApplication::processEvents();
@@ -195,6 +202,7 @@ void MainWindow::togglePlay()
 void MainWindow::handleButtonClick()
 {
     QPushButton* button = qobject_cast<QPushButton*>(sender());
+
 
     if (button == ui->playButton) {
         if (ui->playButton->text() == "Stop" && isPlaying) {
@@ -214,8 +222,6 @@ void MainWindow::handleButtonClick()
         ui->playButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
     }
 }
-
-
 
 
 void MainWindow::on_pushButton_2_clicked()
@@ -241,13 +247,13 @@ void MainWindow::on_pushButton_3_clicked()
 
 void MainWindow::updateSleepDuration(int value)
 {
-    cursorValue=value;
+    cursorValueSleep=value;
     movingCursorSleep=true;
 }
 
 void MainWindow::updatePosition(int value)
 {
-    cursorValue = value;
+    cursorValuePosition = value;
     movingCursorPosition=true;
     ui->sceneWidget->selectedStepParameter(std::to_string(static_cast<int>(totalSteps * (value / 100.0))));
 }

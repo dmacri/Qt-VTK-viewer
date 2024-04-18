@@ -1,7 +1,7 @@
 #ifndef SCENEWIDGETPROXY_H
 #define SCENEWIDGETPROXY_H
 #include "Visualizer.h"
-#include "/home/dmacri80/Progetto-Visualizer/OOpenCAL/models/Ball/ballCell.h"
+#include "/home/davide/progetti-vtk/OOpenCAL/models/Ball/ballCell.h"
 using namespace std;
 class SceneWidgetVisualizerProxy {
 public:

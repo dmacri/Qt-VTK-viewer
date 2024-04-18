@@ -51,7 +51,8 @@ private:
     int totalSteps = 0;
     int currentStep = 1;
     int sleepDuration = 1000;
-    int cursorValue = 0;
+    int cursorValueSleep = 0;
+    int cursorValuePosition = 0;
     QCommonStyle style;
     bool isIterating = false;
     bool isPlaying=false ;
@@ -66,6 +67,7 @@ private:
     void configureButtons();
     void configureButton(QPushButton* button, QStyle::StandardPixmap icon, const QString& styleSheet);
     void configureSliders();
+    void configureCursorPosition();
     void initializeSceneWidget(int argc, char* argv[]);
     void setTotalStepsFromConfiguration(const char* configurationFile);
     void connectButtons();

@@ -272,7 +272,7 @@
      </spacer>
     </item>
     <item row="14" column="12">
-     <widget class="QSlider" name="delaysPositionSlider">
+     <widget class="QSlider" name="updatePositionSlider">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
         <horstretch>0</horstretch>
