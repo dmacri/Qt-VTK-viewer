@@ -178,16 +178,15 @@ void MainWindow::togglePlay()
 
     currentStep = qBound(0, currentStep, totalSteps - 1);
 
-
     int stepIncrement = (button == ui->playButton) ? 1 : -1;
 
     for (int step = currentStep; step >= 0 && step < totalSteps; step += stepIncrement) {
         ui->sceneWidget->selectedStepParameter(std::to_string(step));
         currentStep = step;
-        double positionPercentage = (double)currentStep / totalSteps; // Calcola la percentuale di avanzamento
-        int sliderMaxValue = ui->updatePositionSlider->maximum(); // Ottieni il valore massimo del cursore
-        int sliderValue = positionPercentage * sliderMaxValue; // Calcola il valore del cursore basato sulla percentuale
-        ui->updatePositionSlider->setValue(sliderValue); // Imposta il valore del cursore
+        double positionPercentage = (double)currentStep / totalSteps;
+        int sliderMaxValue = ui->updatePositionSlider->maximum();
+        int sliderValue = positionPercentage * sliderMaxValue;
+        ui->updatePositionSlider->setValue(sliderValue);
 
         if (movingCursorSleep) {
             QThread::msleep(cursorValueSleep * 10);
@@ -198,10 +197,10 @@ void MainWindow::togglePlay()
         if (!isPlaying || (isBacking && currentStep == 0)) {
             break;
         }
+    }
 
-        if (step == totalSteps - 1) {
-            updateValueAndPositionWithStep = true;
-        }
+    if (currentStep == totalSteps - 1) {
+        updateValueAndPositionWithStep = true;
     }
 }
 
