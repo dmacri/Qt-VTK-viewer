@@ -127,7 +127,7 @@ void MainWindow::loadStrings() {
     QSettings settings(iniFilePath, QSettings::IniFormat);
     qDebug() <<"Il file path è" <<settings.fileName();
 
-                                    noSelectionMessage = settings.value("Messages/noSelectionWarning").toString();
+    noSelectionMessage = settings.value("Messages/noSelectionWarning").toString();
     qDebug() <<"Il messaggio  è" <<  noSelectionMessage;
 
     directorySelectionMessage = settings.value("Messages/directorySelectionWarning").toString();
@@ -143,8 +143,8 @@ void MainWindow::showAboutDialog()
 {
 
     QMessageBox::information(
-        this, "About",
-        "By Davide Macri.\n Configurator for  visualizer");
+                this, "About",
+                "By Davide Macri.\n Configurator for  visualizer");
 }
 
 void MainWindow::showOpenFileDialog()
@@ -166,39 +166,47 @@ void MainWindow::on_pushButton_clicked()
 {
 }
 
+
 void MainWindow::togglePlay()
-{  int stepIncrement=0;
+{
     QPushButton* button = qobject_cast<QPushButton*>(sender());
     if (button == ui->playButton) {
         currentStep++;
-        stepIncrement=+1;
     } else if (button == ui->backButton) {
         currentStep--;
-        stepIncrement=-1;
     }
 
-    currentStep = qBound(0, currentStep, totalSteps);
+    currentStep = qBound(0, currentStep, totalSteps - 1);
 
-    for (int step = currentStep; step < totalSteps; step += stepIncrement) {
+
+    int stepIncrement = (button == ui->playButton) ? 1 : -1;
+
+    for (int step = currentStep; step >= 0 && step < totalSteps; step += stepIncrement) {
         ui->sceneWidget->selectedStepParameter(std::to_string(step));
-        currentStep=step;
-        ui->updatePositionSlider->setValue(totalSteps * (cursorValuePosition / 100.0));
-        if (movingCursorSleep){
-           QThread::msleep(cursorValueSleep * 10);
+        currentStep = step;
+        double positionPercentage = (double)currentStep / totalSteps; // Calcola la percentuale di avanzamento
+        int sliderMaxValue = ui->updatePositionSlider->maximum(); // Ottieni il valore massimo del cursore
+        int sliderValue = positionPercentage * sliderMaxValue; // Calcola il valore del cursore basato sulla percentuale
+        ui->updatePositionSlider->setValue(sliderValue); // Imposta il valore del cursore
+
+        if (movingCursorSleep) {
+            QThread::msleep(cursorValueSleep * 10);
             //movingCursorSleep=false;
         }
-        if(movingCursorPosition){
-            step = static_cast<int>(totalSteps * (cursorValuePosition / 100.0));
-            movingCursorPosition=false;
-        }
+        updateValueAndPositionWithStep = false;
         QApplication::processEvents();
-        if (!isPlaying||(isBacking && currentStep == 0)) {
+        if (!isPlaying || (isBacking && currentStep == 0)) {
             break;
         }
+
+        if (step == totalSteps - 1) {
+            updateValueAndPositionWithStep = true;
+        }
     }
-
-
 }
+
+
+
 void MainWindow::handleButtonClick()
 {
     QPushButton* button = qobject_cast<QPushButton*>(sender());
@@ -218,7 +226,6 @@ void MainWindow::handleButtonClick()
         togglePlay();
     } else if (button == ui->stopButton) {
         isPlaying = false;
-        //ui->playButton->setText("Play");
         ui->playButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
     }
 }
@@ -254,8 +261,10 @@ void MainWindow::updateSleepDuration(int value)
 void MainWindow::updatePosition(int value)
 {
     cursorValuePosition = value;
-    movingCursorPosition=true;
-    ui->sceneWidget->selectedStepParameter(std::to_string(static_cast<int>(totalSteps * (value / 100.0))));
+    if(updateValueAndPositionWithStep){
+        movingCursorPosition=true;
+        ui->sceneWidget->selectedStepParameter(std::to_string(static_cast<int>(totalSteps * (value / 100.0))));
+    }
 }
 
 

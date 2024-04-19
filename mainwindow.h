@@ -52,13 +52,14 @@ private:
     int currentStep = 1;
     int sleepDuration = 1000;
     int cursorValueSleep = 0;
-    int cursorValuePosition = 0;
+    int cursorValuePosition = 1;
     QCommonStyle style;
     bool isIterating = false;
     bool isPlaying=false ;
     bool isBacking = false;
     bool movingCursorPosition=false;
     bool movingCursorSleep=false;
+    bool updateValueAndPositionWithStep=false;
 
 
     void configureUIElements(int argc, char* argv[]);
