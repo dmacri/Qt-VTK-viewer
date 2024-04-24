@@ -68,7 +68,7 @@ void MainWindow::configureSliders()
 {
     ui->sleepSlider->setMinimum(1);
     ui->sleepSlider->setMaximum(100);
-    ui->sleepSlider->setValue(0);
+    ui->sleepSlider->setValue(50);
     // ui->sleepSlider->setStyleSheet(styleSheetSleep);
 
 }
@@ -98,6 +98,7 @@ void MainWindow::setTotalStepsFromConfiguration(const char* configurationFile)
     QString stringNumStep = listParameterFromConfiguration[7];
     QStringList step = stringNumStep.split(":");
     totalSteps = step[1].toInt();
+    ui->totalStep->setText(QString("/") + QString::number(totalSteps));
 }
 
 void MainWindow::connectButtons()
@@ -178,7 +179,7 @@ void MainWindow::togglePlay()
 
     currentStep = qBound(0, currentStep, totalSteps - 1);
 
-    int stepIncrement = (button == ui->playButton) ? 1 : -1;
+     stepIncrement = (button == ui->playButton) ? 1 : -1;
 
     for (int step = currentStep; step >= 0 && step < totalSteps; step += stepIncrement) {
         ui->sceneWidget->selectedStepParameter(std::to_string(step));
@@ -188,9 +189,10 @@ void MainWindow::togglePlay()
         int sliderValue = positionPercentage * sliderMaxValue;
         ui->updatePositionSlider->setValue(sliderValue);
 
-        if (movingCursorSleep) {
-            QThread::msleep(cursorValueSleep * 10);
-            //movingCursorSleep=false;
+        ui->lineEdit->setText(QString::number(currentStep));
+        if (movingCursorSleep && sliderValue < 50) {
+           int sleep=50-cursorValueSleep;
+            QThread::msleep(sleep*5);
         }
         updateValueAndPositionWithStep = false;
         QApplication::processEvents();
@@ -253,8 +255,14 @@ void MainWindow::on_pushButton_3_clicked()
 
 void MainWindow::updateSleepDuration(int value)
 {
+    if (value > 50) {
+        int stepsRemaining = totalSteps - currentStep;
+        stepIncrement = (stepsRemaining > 0) ? stepsRemaining / (ui->updatePositionSlider->maximum() - 50) : 1;
+    }else{
+        movingCursorSleep=true;
+    }
     cursorValueSleep=value;
-    movingCursorSleep=true;
+
 }
 
 void MainWindow::updatePosition(int value)
@@ -263,6 +271,7 @@ void MainWindow::updatePosition(int value)
     if(updateValueAndPositionWithStep){
         movingCursorPosition=true;
         ui->sceneWidget->selectedStepParameter(std::to_string(static_cast<int>(totalSteps * (value / 100.0))));
+        ui->lineEdit->setText(QString::number(totalSteps * (value / 100.0)));
     }
 }
 

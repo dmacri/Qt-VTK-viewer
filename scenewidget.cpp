@@ -178,7 +178,7 @@ void SceneWidget::renderVtkScene()
 
     sceneWidgetVisualizerProxy->vis->buildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY,settingParameter->dimX,pts,cellLines,grid,colors,settingRenderParameter->m_renderer,actorBuildLine);
 
-    buildStepActor= sceneWidgetVisualizerProxy->vis->buildStepText(settingParameter->step,settingParameter->font_size,colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
+   // buildStepActor= sceneWidgetVisualizerProxy->vis->buildStepText(settingParameter->step,settingParameter->font_size,colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
 
     renderWindow_=renderWindow();
     interactor_=interactor();

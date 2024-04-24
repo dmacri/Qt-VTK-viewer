@@ -51,15 +51,16 @@ private:
     int totalSteps = 0;
     int currentStep = 1;
     int sleepDuration = 1000;
-    int cursorValueSleep = 0;
+    int cursorValueSleep = 1;
     int cursorValuePosition = 1;
+    int stepIncrement = 0;
     QCommonStyle style;
     bool isIterating = false;
     bool isPlaying=false ;
     bool isBacking = false;
     bool movingCursorPosition=false;
     bool movingCursorSleep=false;
-    bool updateValueAndPositionWithStep=false;
+    bool updateValueAndPositionWithStep=true;
 
 
     void configureUIElements(int argc, char* argv[]);
@@ -86,54 +87,54 @@ private:
     QString deleteFailedMessage;
 
     QString const styleButtonGotoStep="QPushButton {"
-                                      "    color: black;"
-                                      "    font-size: 16px;"
-                                      "    font-weight: bold;"
-                                      "    margin: 5px;"  // Aggiungi uno spazio di 5px tra i bottoni
-                                      "    background-color: #c0c0c0;"
-                                      "    border: none;"
-                                      "    border-radius: 20px;"
-                                      "    padding: 10px 20px;"
-                                      "}"
-                                      "QPushButton:hover {"
-                                      "    background-color: #a0a0a0;"
-                                      "}"
-                                      "QPushButton:pressed {"
-                                      "    background-color: #888888;"
-                                      "}";
+                                        "    color: black;"
+                                        "    font-size: 16px;"
+                                        "    font-weight: bold;"
+                                        "    margin: 5px;"  // Aggiungi uno spazio di 5px tra i bottoni
+                                        "    background-color: #c0c0c0;"
+                                        "    border: none;"
+                                        "    border-radius: 20px;"
+                                        "    padding: 10px 20px;"
+                                        "}"
+                                        "QPushButton:hover {"
+                                        "    background-color: #a0a0a0;"
+                                        "}"
+                                        "QPushButton:pressed {"
+                                        "    background-color: #888888;"
+                                        "}";
     QString const styleSheet = "QPushButton {"
-                                       "    color: black;"
-                                       "    font-size: 16px;"
-                                       "    font-weight: bold;"
-                                       "    margin: 5px;"
-            "}"
-            "QPushButton:hover {"
-            "    background-color: #c0c0c0;"
-            "    border: 1px solid #a0a0a0;"
-            "}"
-            "QPushButton:pressed {"
-            "    background-color: #a0a0a0;"
-            "    border: 1px solid #a0a0a0;"
-            "}";
+                               "    color: black;"
+                               "    font-size: 16px;"
+                               "    font-weight: bold;"
+                               "    margin: 5px;"
+                               "}"
+                               "QPushButton:hover {"
+                               "    background-color: #c0c0c0;"
+                               "    border: 1px solid #a0a0a0;"
+                               "}"
+                               "QPushButton:pressed {"
+                               "    background-color: #a0a0a0;"
+                               "    border: 1px solid #a0a0a0;"
+                               "}";
     QString const styleSheetButtonLeftColumn="QPushButton {"
-                                             "    color: black;"
-                                             "    font-size: 16px;"
-                                             "    font-weight: bold;"
-                                             "    padding-left: 30px;"
-                                             "    padding-right: 10px;"
-                                             "    text-align: left;"
-                                             "    background-color: transparent;"
-                                             "    border: 2px solid #808080;"  // Bordo con colore grigio (#808080)
-            "    border-radius: 25px;"  // Angoli arrotondati
-            "}"
-            "QPushButton:hover {"
-            "    background-color: #c0c0c0;"  // Sfondo grigio chiaro (#c0c0c0)
-            "    border-color: #a0a0a0;"  // Colore del bordo grigio scuro (#a0a0a0)
-            "}"
-            "QPushButton:pressed {"
-            "    background-color: #a0a0a0;"  // Sfondo grigio scuro (#a0a0a0)
-            "    border-color: #808080;"  // Colore del bordo grigio (#808080)
-            "}";
+                                               "    color: black;"
+                                               "    font-size: 16px;"
+                                               "    font-weight: bold;"
+                                               "    padding-left: 30px;"
+                                               "    padding-right: 10px;"
+                                               "    text-align: left;"
+                                               "    background-color: transparent;"
+                                               "    border: 2px solid #808080;"  // Bordo con colore grigio (#808080)
+                                               "    border-radius: 25px;"  // Angoli arrotondati
+                                               "}"
+                                               "QPushButton:hover {"
+                                               "    background-color: #c0c0c0;"  // Sfondo grigio chiaro (#c0c0c0)
+                                               "    border-color: #a0a0a0;"  // Colore del bordo grigio scuro (#a0a0a0)
+                                               "}"
+                                               "QPushButton:pressed {"
+                                               "    background-color: #a0a0a0;"  // Sfondo grigio scuro (#a0a0a0)
+                                               "    border-color: #808080;"  // Colore del bordo grigio (#808080)
+                                               "}";
 
     QString const styleSheetSleep = "QSlider {"
                                     "    min-height: 20px;"
