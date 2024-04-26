@@ -76,7 +76,7 @@ void MainWindow::configureCursorPosition()
 {
     ui->updatePositionSlider->setMinimum(1);
     ui->updatePositionSlider->setMaximum(100);
-    ui->updatePositionSlider->setValue(0);
+    ui->updatePositionSlider->setValue(1);
 }
 
 
@@ -127,11 +127,10 @@ void MainWindow::loadStrings() {
     QString iniFilePath = QApplication::applicationDirPath() + "/app_strings.ini";
     QSettings settings(iniFilePath, QSettings::IniFormat);
     qDebug() <<"Il file path è" <<settings.fileName();
-
-    noSelectionMessage = settings.value("Messages/noSelectionWarning").toString();
+                                    noSelectionMessage = settings.value("Messages/noSelectionWarning").toString();
     qDebug() <<"Il messaggio  è" <<  noSelectionMessage;
 
-    directorySelectionMessage = settings.value("Messages/directorySelectionWarning").toString();
+                directorySelectionMessage = settings.value("Messages/directorySelectionWarning").toString();
     compilationSuccessfulMessage = settings.value("Messages/compilationSuccessful").toString();
     compilationFailedMessage = settings.value("Messages/compilationFailed").toString();
     deleteSuccessfulMessage = settings.value("Messages/deleteSuccessful").toString();
@@ -144,8 +143,8 @@ void MainWindow::showAboutDialog()
 {
 
     QMessageBox::information(
-                this, "About",
-                "By Davide Macri.\n Configurator for  visualizer");
+        this, "About",
+        "By Davide Macri.\n Configurator for  visualizer");
 }
 
 void MainWindow::showOpenFileDialog()
@@ -179,9 +178,9 @@ void MainWindow::togglePlay()
 
     currentStep = qBound(0, currentStep, totalSteps - 1);
 
-     stepIncrement = (button == ui->playButton) ? 1 : -1;
+    stepIncrement = (button == ui->playButton) ? 1 : -1;
 
-    for (int step = currentStep; step >= 0 && step < totalSteps; step += stepIncrement) {
+    for (int step = currentStep; step >= 0 && step <= totalSteps; step += stepIncrement) {
         ui->sceneWidget->selectedStepParameter(std::to_string(step));
         currentStep = step;
         double positionPercentage = (double)currentStep / totalSteps;
@@ -191,17 +190,18 @@ void MainWindow::togglePlay()
 
         ui->lineEdit->setText(QString::number(currentStep));
         if (movingCursorSleep && sliderValue < 50) {
-           int sleep=50-cursorValueSleep;
+            int sleep=50-cursorValueSleep;
             QThread::msleep(sleep*5);
         }
         updateValueAndPositionWithStep = false;
         QApplication::processEvents();
         if (!isPlaying || (isBacking && currentStep == 0)) {
+            updateValueAndPositionWithStep = true;
             break;
         }
     }
 
-    if (currentStep == totalSteps - 1) {
+    if (currentStep == totalSteps ) {
         updateValueAndPositionWithStep = true;
     }
 }
@@ -254,11 +254,13 @@ void MainWindow::on_pushButton_3_clicked()
 }
 
 void MainWindow::updateSleepDuration(int value)
-{
-    if (value > 50) {
-        int stepsRemaining = totalSteps - currentStep;
-        stepIncrement = (stepsRemaining > 0) ? stepsRemaining / (ui->updatePositionSlider->maximum() - 50) : 1;
-    }else{
+{   int deltaStep = totalSteps / 10;
+    double positionPercentage = (double)currentStep / totalSteps;
+    int sliderMaxValue = ui->updatePositionSlider->maximum();
+    double sliderNormalizedPosition = positionPercentage * sliderMaxValue / sliderMaxValue;
+    if (value > 50 && value <= 100) {
+        stepIncrement = sliderNormalizedPosition * deltaStep;
+    } else {
         movingCursorSleep=true;
     }
     cursorValueSleep=value;
@@ -270,9 +272,16 @@ void MainWindow::updatePosition(int value)
     cursorValuePosition = value;
     if(updateValueAndPositionWithStep){
         movingCursorPosition=true;
+        qDebug()  << "il valore arriva a" << value;
+        qDebug() << "lo step arriva a"<<totalSteps * (value / 100.0);
         ui->sceneWidget->selectedStepParameter(std::to_string(static_cast<int>(totalSteps * (value / 100.0))));
         ui->lineEdit->setText(QString::number(totalSteps * (value / 100.0)));
+        if(value==99){
+            currentStep=totalSteps * (value / 100.0);
+        }
+
     }
+
 }
 
 
