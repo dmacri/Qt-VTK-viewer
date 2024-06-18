@@ -1,4 +1,5 @@
 #include "scenewidget.h"
+#include "Config.h"
 #include "qapplication.h"
 
 
@@ -79,8 +80,15 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
         cout << " no pixel size " << endl;
         return;
     }
+
+
     char *filename = argv[1];
-    pixelsQuadrato = atoi(argv[2]);
+
+    Config config(filename);
+    config.readConfigFile();
+
+    ExecutionContext* generalContext = config.getExecutionContext("general");
+    ExecutionContext* execContext = config.getExecutionContext("MPI2D");
     int infoFromFile[8];
     settingParameter->outputFileName = new char[256];
     string tmpString = filename;
@@ -91,18 +99,19 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     std::strcpy(firstS, tmpString.c_str());
 
     sceneWidgetVisualizerProxy->vis->readConfigurationFile(filename, infoFromFile, settingParameter->outputFileName);
+    settingParameter->outputFileName=(char*)generalContext->getConfigParameter("output_file_name")->getValue();
 
     strcat(firstS, settingParameter->outputFileName);
     strcpy(settingParameter->outputFileName, firstS);
 
-    settingParameter->dimX = infoFromFile[0]; //numero colonne
-    settingParameter->dimY = infoFromFile[1]; //numero righe
-    int borderSizeX = infoFromFile[2];
-    int borderSizeY = infoFromFile[3];
-    int numBorders = infoFromFile[4];
-    settingParameter-> nNodeX = infoFromFile[5];
-    settingParameter-> nNodeY = infoFromFile[6];
-    settingParameter->nsteps = infoFromFile[7];
+    settingParameter->dimX =(intptr_t) generalContext->getConfigParameter("number_of_columns")->getValue();
+    settingParameter->dimY = (intptr_t)generalContext->getConfigParameter("number_of_rows")->getValue();
+    int borderSizeX = (intptr_t)execContext->getConfigParameter("border_size_x")->getValue();
+    int borderSizeY =(intptr_t) execContext->getConfigParameter("border_size_y")->getValue();
+    int numBorders = 1;
+    settingParameter->nNodeX = (intptr_t) execContext->getConfigParameter("number_node_x")->getValue();
+    settingParameter->nNodeY = (intptr_t) execContext->getConfigParameter("number_node_y")->getValue();
+    settingParameter->nsteps = (intptr_t)generalContext->getConfigParameter("number_steps")->getValue();
 
     cout << "dimX " <<settingParameter-> dimX << endl;
     cout << "dimY " << settingParameter-> dimY << endl;
@@ -151,7 +160,7 @@ void SceneWidget::setupVtkScene()
     renderWindow()->AddRenderer(settingRenderParameter->m_renderer);
     interactor()->SetRenderWindow(renderWindow());
     settingRenderParameter->m_renderer->SetBackground( settingRenderParameter->colors->GetColor3d("Silver").GetData());
-    renderWindow()->SetSize(settingParameter->dimX * pixelsQuadrato, (settingParameter->dimY + 10) * pixelsQuadrato);
+    renderWindow()->SetSize(settingParameter->dimX , (settingParameter->dimY + 10) );
     // An interactor
     /* With this style you can block only rotation, but not blocking zoom.You can use NULL value in SetInteractorStyle if you want block evreth   */
 #ifdef ENABLE_FEATURE
@@ -178,7 +187,7 @@ void SceneWidget::renderVtkScene()
 
     sceneWidgetVisualizerProxy->vis->buildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY,settingParameter->dimX,pts,cellLines,grid,colors,settingRenderParameter->m_renderer,actorBuildLine);
 
-   // buildStepActor= sceneWidgetVisualizerProxy->vis->buildStepText(settingParameter->step,settingParameter->font_size,colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
+    // buildStepActor= sceneWidgetVisualizerProxy->vis->buildStepText(settingParameter->step,settingParameter->font_size,colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
 
     renderWindow_=renderWindow();
     interactor_=interactor();

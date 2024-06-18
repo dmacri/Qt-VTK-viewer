@@ -255,12 +255,14 @@ void MainWindow::on_pushButton_3_clicked()
 
 void MainWindow::updateSleepDuration(int value)
 {   int deltaStep = totalSteps / 10;
-    double positionPercentage = (double)currentStep / totalSteps;
-    int sliderMaxValue = ui->updatePositionSlider->maximum();
+    double positionPercentage = (double) ui->sleepSlider->value() / totalSteps;
+    int sliderMaxValue = ui->sleepSlider->maximum();
     double sliderNormalizedPosition = positionPercentage * sliderMaxValue / sliderMaxValue;
-    if (value > 50 && value <= 100) {
+    if (value > 50 && value <= 100 && isBacking == false) {
         stepIncrement = sliderNormalizedPosition * deltaStep;
-    } else {
+    } else if(value > 50 && value <= 100 && isBacking == true){
+        stepIncrement=-(sliderNormalizedPosition * deltaStep);
+    }else{
         movingCursorSleep=true;
     }
     cursorValueSleep=value;
