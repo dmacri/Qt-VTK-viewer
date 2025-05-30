@@ -114,6 +114,9 @@ void Visualizer<T>::getElementMatrix(int step, T **&m, int nGlobalCols, int nGlo
 {
     int *AlllocalCols = new int[(nNodeX * nNodeY)];
     int *AlllocalRows = new int[(nNodeX * nNodeY)];
+    
+    // Check if we need to use fallback step
+    int actualStep = step;
 
     // m = new T*[nGlobalRows];
     // for(int i = 0;i < nGlobalRows; i++){
@@ -127,11 +130,40 @@ void Visualizer<T>::getElementMatrix(int step, T **&m, int nGlobalCols, int nGlo
         char *line = NULL;
         size_t len = 0;
 
-        FILE *fp = giveMeLocalColAndRowFromStep(step, fileName, node, nLocalCols, nLocalRows, line, len);
+        FILE *fp = giveMeLocalColAndRowFromStep(actualStep, fileName, node, nLocalCols, nLocalRows, line, len);
+        
 
         AlllocalCols[node] = nLocalCols;
         AlllocalRows[node] = nLocalRows;
         fclose(fp);
+    }
+    
+    // Check if all nodes have empty data (step beyond simulation end)
+    bool allEmpty = true;
+    for (int node = 0; node < (nNodeX * nNodeY); node++) {
+        if (AlllocalCols[node] > 0 || AlllocalRows[node] > 0) {
+            allEmpty = false;
+            break;
+        }
+    }
+    
+    // If all nodes are empty and this is step 4000, use previous step
+    if (allEmpty && step == 4000) {
+        actualStep = 3999;
+        
+        // Reload data with fallback step
+        for (int node = 0; node < (nNodeX * nNodeY); node++)
+        {
+            int nLocalCols;
+            int nLocalRows;
+            char *line = NULL;
+            size_t len = 0;
+
+            FILE *fp = giveMeLocalColAndRowFromStep(actualStep, fileName, node, nLocalCols, nLocalRows, line, len);
+            AlllocalCols[node] = nLocalCols;
+            AlllocalRows[node] = nLocalRows;
+            fclose(fp);
+        }
     }
 
     bool startStepDone = false;
@@ -142,7 +174,7 @@ void Visualizer<T>::getElementMatrix(int step, T **&m, int nGlobalCols, int nGlo
         char *line = NULL;
         size_t len = 0;
 
-        FILE *fp = giveMeLocalColAndRowFromStep(step, fileName, node, nLocalCols, nLocalRows, line, len);
+        FILE *fp = giveMeLocalColAndRowFromStep(actualStep, fileName, node, nLocalCols, nLocalRows, line, len);
 
         // if (step == 4)
         //     cout << "node " << node << " cols = " << nLocalCols << " rows= " << nLocalRows << endl;
@@ -174,14 +206,15 @@ void Visualizer<T>::getElementMatrix(int step, T **&m, int nGlobalCols, int nGlo
             }
         }
 
+        
         Line *lineTmp = new Line(offsetX, offsetY, offsetX + nLocalCols, offsetY);
         Line *lineTmp2 = new Line(offsetX, offsetY, offsetX, offsetY + nLocalRows);
 
         lines[node * 2] = *lineTmp;
         lines[node * 2 + 1] = *lineTmp2;
 
-        // cout << " lineTmp.x1= " << lineTmp->x1 << " lineTmp.y1 " << lineTmp->y1 << " lineTmp.x2= " << lineTmp->x2 << " lineTmp.y2 " << lineTmp->y2<< endl;
-        // cout << " lineTmp2.x1= " << lineTmp2->x1 << " lineTmp2.y1 " << lineTmp2->y1 << " lineTmp2.x2= " << lineTmp2->x2 << " lineTmp2.y2 " << lineTmp2->y2<< endl;
+        // Debug output for line coordinates (commented for performance)
+        // cout << "Node " << node << " lineTmp.x1= " << lineTmp->x1 << " lineTmp.y1 " << lineTmp->y1 << " lineTmp.x2= " << lineTmp->x2 << " lineTmp.y2 " << lineTmp->y2<< endl;
 
         int row = 0;
 
@@ -344,15 +377,15 @@ void Visualizer<T>::drawWithVTK(T **p, int nRows, int nCols, int step, Line *lin
     vtkNew<vtkPoints> points;
     vtkNew<vtkLookupTable> lut;
 
-    auto numberOfCells = (nRows - 1) * (nCols - 1)  ;
-    vtkNew<vtkDoubleArray> cellValues;
-    cellValues->SetNumberOfTuples(numberOfCells);
-    for (size_t i = 0; i < numberOfCells; ++i)
+    auto numberOfPoints = nRows * nCols;
+    vtkNew<vtkDoubleArray> pointValues;
+    pointValues->SetNumberOfTuples(numberOfPoints);
+    for (size_t i = 0; i < numberOfPoints; ++i)
     {
-        cellValues->SetValue(i, i);
+        pointValues->SetValue(i, i);
     }
 
-    lut->SetNumberOfTableValues(numberOfCells);
+    lut->SetNumberOfTableValues(numberOfPoints);
    // lut->Build();
     // Assign some specific colors in this case
 
@@ -368,15 +401,15 @@ void Visualizer<T>::drawWithVTK(T **p, int nRows, int nCols, int step, Line *lin
 
     structuredGrid->SetDimensions(nCols, nRows, 1);
     structuredGrid->SetPoints(points);
-    structuredGrid->GetCellData()->SetScalars(cellValues);
+    structuredGrid->GetPointData()->SetScalars(pointValues);
 
-    buidColor(lut,nCols-1,nRows-1,p);
+    buidColor(lut,nCols,nRows,p);
 
     vtkNew<vtkDataSetMapper> gridMapper;
     gridMapper->UpdateDataObject();
     gridMapper->SetInputData(structuredGrid);
     gridMapper->SetLookupTable(lut);
-    gridMapper->SetScalarRange(0, numberOfCells - 1);
+    gridMapper->SetScalarRange(0, numberOfPoints - 1);
     // gridMapper->ScalarVisibilityOn();
 
     gridActor->SetMapper(gridMapper);
@@ -391,21 +424,21 @@ void Visualizer<T>::refreshWindowsVTK(T **p, int nRows, int nCols, int step, Lin
 
     // dynamic_cast<vtkLookupTable*>(gridActor->GetMapper()->GetLookupTable());
 
-    buidColor(lut,nCols-1,nRows-1,p);
-//    gridActor->GetMapper()->SetLookupTable(lut);
-//    gridActor->GetMapper()->Update();
+    buidColor(lut,nCols,nRows,p);
+    gridActor->GetMapper()->SetLookupTable(lut);
+    gridActor->GetMapper()->Update();
 
 }
 
 template <class T>
-void Visualizer<T>::buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows,vtkSmartPointer<vtkPoints> pts,vtkSmartPointer<vtkCellArray> cellLines,vtkSmartPointer<vtkPolyData> grid,vtkSmartPointer<vtkNamedColors> colors,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor2D> actorBuildLine)
+    void Visualizer<T>::buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows,vtkSmartPointer<vtkPoints> pts,vtkSmartPointer<vtkCellArray> cellLines,vtkSmartPointer<vtkPolyData> grid,vtkSmartPointer<vtkNamedColors> colors,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor2D> actorBuildLine)
 {
 
     for (int i = 0; i < dimLines; i++)
     {
-        //  cout << lines[i].x1 << "  " << lines[i].y1 << "  " <<lines[i].x2 << "  " <<lines[i].y2 << endl;
-        pts->InsertNextPoint((lines[i].x1 * pixelsQuadrato), ( nCols-1-lines[i].y1 * pixelsQuadrato), 0.0);
-        pts->InsertNextPoint((lines[i].x2 * pixelsQuadrato), ( nCols-1-lines[i].y2 * pixelsQuadrato), 0.0);
+          cout << lines[i].x1 << "  " << lines[i].y1 << "  " <<lines[i].x2 << "  " <<lines[i].y2 << endl;
+        pts->InsertNextPoint((lines[i].x1 * 1), ( nCols-1-lines[i].y1 * 1), 0.0);
+        pts->InsertNextPoint((lines[i].x2 * 1), ( nCols-1-lines[i].y2 * 1), 0.0);
         cellLines->InsertNextCell(2);
         cellLines->InsertCellPoint(i*2);
         cellLines->InsertCellPoint(i*2+1);
@@ -424,12 +457,14 @@ void Visualizer<T>::buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int
 
     actorBuildLine->SetMapper(mapper);
     actorBuildLine->GetMapper()->Update();
-    actorBuildLine->GetProperty()->SetColor(colors->GetColor3d("Black").GetData());
+    actorBuildLine->GetProperty()->SetColor(colors->GetColor3d("Red").GetData());
+   // actorBuildLine->GetProperty()->SetLineWidth(1.5);
     renderer->AddActor2D(actorBuildLine);
+
 }
 
 template <class T>
-void Visualizer<T>::refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows,vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors)
+void Visualizer<T>::refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows, vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors)
 {
     vtkPolyDataMapper2D* mapper = (vtkPolyDataMapper2D*) lineActor->GetMapper();
     mapper->Update();
@@ -439,13 +474,11 @@ void Visualizer<T>::refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nC
 
     for (int i = 0; i < dimLines; i++)
     {
-        // cout << lines[i].x1 << "  " << lines[i].y1 << "  " <<lines[i].x2 << "  " <<lines[i].y2 << endl;
-        pts->InsertNextPoint((lines[i].x1 * pixelsQuadrato), ( nCols-1-lines[i].y1 * pixelsQuadrato), 0.0);
-        pts->InsertNextPoint((lines[i].x2 * pixelsQuadrato), ( nCols-1-lines[i].y2 * pixelsQuadrato), 0.0);
+        pts->InsertNextPoint((lines[i].x1 * 1), ( nCols-1-lines[i].y1 * 1), 0.0);
+        pts->InsertNextPoint((lines[i].x2 * 1), ( nCols-1-lines[i].y2 * 1), 0.0);
         cellLines->InsertNextCell(2);
         cellLines->InsertCellPoint(i*2);
         cellLines->InsertCellPoint(i*2+1);
-
     }
 
     grid->SetPoints(pts);
@@ -457,11 +490,39 @@ void Visualizer<T>::refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nC
     mapper->SetInputData(grid);
     mapper->Update();
     mapper->SetTransformCoordinate(normCoords);
+    
+    lineActor->SetMapper(mapper);
+    lineActor->GetMapper()->Update();
 
 }
 
 template <class T>
-vtkNew<vtkActor2D> Visualizer<T>::buildStepText(int step,int font_size,vtkSmartPointer<vtkNamedColors> colors,vtkSmartPointer<vtkTextProperty> singleLineTextProp,vtkSmartPointer<vtkTextMapper> stepLineTextMapper,vtkSmartPointer<vtkRenderer> renderer)
+void Visualizer<T>::refreshBuildStepText(int step,vtkActor2D* stepLineTextActor)
+{
+    vtkTextMapper* stepLineTextMapper = (vtkTextMapper*) stepLineTextActor->GetMapper();
+    std::string stepText = "Step " + std::to_string(step);
+    stepLineTextMapper->SetInput(stepText.c_str());
+    stepLineTextMapper->Update();
+
+}
+
+template <class T>
+vtkTextProperty* Visualizer<T>:: buildStepLine(int step,vtkSmartPointer<vtkTextMapper> singleLineTextB,vtkSmartPointer<vtkTextProperty> singleLineTextProp,vtkSmartPointer<vtkNamedColors> colors,string color)
+{
+    std::string stepText = "Step " + std::to_string(step);
+    singleLineTextB->SetInput(stepText.c_str());
+    singleLineTextB->Update();
+    vtkTextProperty* tprop = singleLineTextB->GetTextProperty();
+    tprop->ShallowCopy(singleLineTextProp);
+    tprop->SetVerticalJustificationToBottom();
+    tprop->SetColor(colors->GetColor3d(color).GetData());
+    return tprop;
+
+}
+
+
+template <class T>
+vtkNew<vtkActor2D> Visualizer<T>::buildStepText(int step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer)
 {
     singleLineTextProp->SetFontSize(font_size);
     singleLineTextProp->SetFontFamilyToArial();
@@ -488,37 +549,15 @@ vtkNew<vtkActor2D> Visualizer<T>::buildStepText(int step,int font_size,vtkSmartP
 }
 
 template <class T>
-void Visualizer<T>::refreshBuildStepText(int step,vtkActor2D* stepLineTextActor)
-{
-    vtkTextMapper* stepLineTextMapper = (vtkTextMapper*) stepLineTextActor->GetMapper();
-    std::string stepText = "Step " + std::to_string(step);
-    stepLineTextMapper->SetInput(stepText.c_str());
-    stepLineTextMapper->Update();
-
-}
-
-template <class T>
-vtkTextProperty* Visualizer<T>:: buildStepLine(int step,vtkSmartPointer<vtkTextMapper> singleLineTextB,vtkSmartPointer<vtkTextProperty> singleLineTextProp,vtkSmartPointer<vtkNamedColors> colors,string color)
-{
-    std::string stepText = "Step " + std::to_string(step);
-    singleLineTextB->SetInput(stepText.c_str());
-    vtkTextProperty* tprop = singleLineTextB->GetTextProperty();
-    tprop->ShallowCopy(singleLineTextProp);
-    tprop->SetVerticalJustificationToBottom();
-    tprop->SetColor(colors->GetColor3d(color).GetData());
-    return tprop;
-
-}
-
-
-template <class T>
 void buidColor(vtkLookupTable* lut, int nCols, int nRows,T **p)
 {
     for (int r = 0; r < nRows; ++r)
         for (int c = 0; c < nCols; ++c){
             rgb *color=p[r][c].outputValue();
-                lut->SetTableValue((nRows-1-r)*nCols+c,color->getRed(),color->getGreen(),color->getBlue());
+           // lut->SetTableValue(r*nCols+c,(double)color->getRed(),(double)color->getGreen(),(double)color->getBlue());
+                lut->SetTableValue((nRows-1-r)*nCols+c,(double)color->getRed(),(double)color->getGreen(),(double)color->getBlue());
         }
 
 }
 #endif // VISUALIZER_HPP
+

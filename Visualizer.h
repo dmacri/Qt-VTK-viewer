@@ -59,7 +59,7 @@ public:
     // }
 };
 
-extern int pixelsQuadrato;
+// extern int pixelsQuadrato; // Not needed for VTK
 extern int *maxStepVisited;
 extern unordered_map<int, long int> *hashMap;
 extern Line *lines;

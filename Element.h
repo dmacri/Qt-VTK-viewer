@@ -8,11 +8,17 @@
 
 using namespace std;
 
+#ifdef __CUDACC__
+  #define OPENCALF __host__ __device__ 
+#else	
+  #define OPENCALF inline
+#endif
+
 class rgb{
 	int red, green, blue, alpha;
 
 	public:
-    rgb(int red, int green, int blue, int alpha=0):red(red),green(green),blue(blue),alpha(alpha){
+	rgb(int red, int green, int blue, int alpha=0):red(red),green(green),blue(blue),alpha(alpha){
 
 	}
 	int getRed(){
@@ -31,9 +37,7 @@ class rgb{
 
 class Element{
 	
-public:
-    Element(){}
-
+	
 
 	public:
 		
@@ -41,7 +45,7 @@ public:
 		
 		virtual char* stringEncoding() = 0;
 		
-        virtual rgb* outputValue() = 0;
+		virtual rgb* outputValue() = 0;
 
 		virtual void startStep(int step) = 0;
 	

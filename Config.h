@@ -9,8 +9,8 @@ using namespace std;
 class ConfigParameter{
 
 private:
-    char* name;
-    char* defaultValue;
+    const char* name;
+    const char* defaultValue;
     int type;
 
 public:
@@ -18,7 +18,7 @@ public:
     static const int double_par = 1;
     static const int string_par = 2;
 
-    ConfigParameter(char* name, char* defaultValue, int type)
+    ConfigParameter(const char* name, const char* defaultValue, int type)
     {
         this->name         = name;
         this->defaultValue = defaultValue;
@@ -46,17 +46,17 @@ public:
         }
     }
 
-    char* getName()
+    const char* getName()
     {
         return name;
     }
 
-    char* getDefaultValue()
+    const char* getDefaultValue()
     {
         return defaultValue;
     }
 
-    void setDefaultValue(char* value)
+    void setDefaultValue(const char* value)
     {
         defaultValue = value;
     }
@@ -67,15 +67,15 @@ public:
     }
 };
 
-class ExecutionContext{
+class ConfigCategory{
 
 private:
-    char* name;
+    const char* name;
     ConfigParameter** configParameters;
     int size;
 
 public:
-    ExecutionContext(char* name, ConfigParameter** configParameters, const int& size)
+    ConfigCategory(const char* name, ConfigParameter** configParameters, const int& size)
     {
         this->name             = name;
         this->configParameters = configParameters;
@@ -87,7 +87,7 @@ public:
         //...
     }
 
-    char* getName()
+    const char* getName()
     {
         return name;
     }
@@ -102,7 +102,7 @@ public:
         return configParameters;
     }
 
-    void setConfigParameterValue(char* name, char* value)
+    void setConfigParameterValue(const char* name, const char* value)
     {
         for(int i = 0; i < size; i++)
         {
@@ -135,15 +135,15 @@ class Config{
 
 private:
     char* configuration_path;
-    static const int executionContextSize = 9;
-    ExecutionContext* executionContext[executionContextSize];
+    static const int configCategorySize = 5;
+    ConfigCategory* configCategory[configCategorySize];
 
 public:
     Config( char* configuration_path)
     {
         this->configuration_path =  configuration_path;
 
-        //2D
+        //GENERAL
         const int size2D = 4;
         ConfigParameter** configParameters = new ConfigParameter*[size2D];
         configParameters[0] = new ConfigParameter("number_of_columns", "610"          , ConfigParameter::int_par   );
@@ -151,9 +151,9 @@ public:
         configParameters[2] = new ConfigParameter("number_steps"     , "4000"         , ConfigParameter::int_par   );
         configParameters[3] = new ConfigParameter("output_file_name" , "sciddicaTout" , ConfigParameter::string_par);
 
-        ExecutionContext* general = new ExecutionContext("general", configParameters, size2D);
+        ConfigCategory* GENERAL = new ConfigCategory("GENERAL", configParameters, size2D);
 
-        //2D MPI
+        //DISTRIBUTED
         static const int MPI2DSize = 4;
         ConfigParameter** configParameters_MPI2D = new ConfigParameter*[MPI2DSize];
         configParameters_MPI2D[0] = new ConfigParameter("border_size_x", "1", ConfigParameter::int_par   );
@@ -161,52 +161,59 @@ public:
         configParameters_MPI2D[2] = new ConfigParameter("number_node_x", "4", ConfigParameter::int_par   );
         configParameters_MPI2D[3] = new ConfigParameter("number_node_y", "4", ConfigParameter::int_par);
 
-        ExecutionContext* MPI2D = new ExecutionContext("MPI2D", configParameters_MPI2D, MPI2DSize);
+        ConfigCategory* DISTRIBUTED = new ConfigCategory("DISTRIBUTED", configParameters_MPI2D, MPI2DSize);
 
-        //2D MPI LB
+        //LOAD_BALANCING
         static const int MPI2DLBSize = 2;
         ConfigParameter** configParameters_MPI2DLB = new ConfigParameter*[MPI2DLBSize];
         configParameters_MPI2DLB[0] = new ConfigParameter("firstLB", "100", ConfigParameter::int_par   );
         configParameters_MPI2DLB[1] = new ConfigParameter("stepLB" , "100", ConfigParameter::int_par   );
-        ExecutionContext* MPI2DLB = new ExecutionContext("MPI2DLB", configParameters_MPI2DLB, MPI2DLBSize);
+        ConfigCategory* LOAD_BALANCING = new ConfigCategory("LOAD_BALANCING", configParameters_MPI2DLB, MPI2DLBSize);
 
-        //2D MPI LB2
-        static const int MPI2DLB2DNaiveSize = 0;
-        ExecutionContext*  MPI2DLB2DNaive = new ExecutionContext("MPI2DLB2DNaive", NULL, MPI2DLB2DNaiveSize);
+        // //2D MPI LB2
+        // static const int MPI2DLB2DNaiveSize = 0;
+        // ConfigCategory*  MPI2DLB2DNaive = new ConfigCategory("MPI2DLB2DNaive", NULL, MPI2DLB2DNaiveSize);
 
-        //2D MPI LB3
-        static const int MPI2DLB2DHierarchicalSize = 0;
-        ExecutionContext* MPI2DLB2DHierarchical = new ExecutionContext("MPI2DLB2DHierarchical", NULL, MPI2DLB2DHierarchicalSize);
+        // //2D MPI LB3
+        // static const int MPI2DLB2DHierarchicalSize = 0;
+        // ConfigCategory* MPI2DLB2DHierarchical = new ConfigCategory("MPI2DLB2DHierarchical", NULL, MPI2DLB2DHierarchicalSize);
 
-        //2D MPI SMART
-        static const int MPI2DSMARTSize = 0;
-        ExecutionContext* MPI2DSMART = new ExecutionContext("MPI2DSMART", NULL, MPI2DSMARTSize);
+        // //2D MPI SMART
+        // static const int MPI2DSMARTSize = 0;
+        // ConfigCategory* MPI2DSMART = new ConfigCategory("MPI2DSMART", NULL, MPI2DSMARTSize);
 
-        //2D CUDA
-        static const int CUDA2DSize = 0;
-        ExecutionContext* CUDA2D = new ExecutionContext("CUDA2D", NULL, CUDA2DSize);
+        // //2D CUDA
+        // static const int CUDA2DSize = 0;
+        // ConfigCategory* CUDA2D = new ConfigCategory("CUDA2D", NULL, CUDA2DSize);
 
-        //2D MULTICUDA
+        //MULTICUDA
         static const int MULTICUDA2DSize = 1;
         ConfigParameter** configParameters_MULTICUDA2D = new ConfigParameter*[MULTICUDA2DSize];
         configParameters_MULTICUDA2D[0] = new ConfigParameter("number_of_gpus_per_node", "2", ConfigParameter::int_par   );
 
-        ExecutionContext* MULTICUDA2D = new ExecutionContext("MULTICUDA2D", configParameters_MULTICUDA2D, MULTICUDA2DSize);
+        ConfigCategory* MULTICUDA = new ConfigCategory("MULTICUDA", configParameters_MULTICUDA2D, MULTICUDA2DSize);
 
-        //2D MULTICUDASMART
-        static const int MULTICUDA2DSMARTSize = 0;
-        ExecutionContext* MULTICUDA2DSMART = new ExecutionContext("MULTICUDA2DSMART", NULL, MULTICUDA2DSMARTSize);
+        // //2D MULTICUDASMART
+        // static const int MULTICUDA2DSMARTSize = 0;
+        // ConfigCategory* MULTICUDA2DSMART = new ConfigCategory("MULTICUDA2DSMART", NULL, MULTICUDA2DSMARTSize);
 
+        //SHARED
+        static const int SHAREDSize = 1;
+        ConfigParameter** configParameters_SHARED = new ConfigParameter*[SHAREDSize];
+        configParameters_SHARED[0] = new ConfigParameter("chunk_size", "1", ConfigParameter::int_par   );
 
-        executionContext[0] = general;
-        executionContext[1] = MPI2D;
-        executionContext[2] = MPI2DLB;
-        executionContext[3] = MPI2DLB2DNaive;
-        executionContext[4] = MPI2DLB2DHierarchical;
-        executionContext[5] = MPI2DSMART;
-        executionContext[6] = CUDA2D;
-        executionContext[7] = MULTICUDA2D;
-        executionContext[8] = MULTICUDA2DSMART;
+        ConfigCategory* SHARED = new ConfigCategory("SHARED", configParameters_SHARED, SHAREDSize);
+
+        configCategory[0] = GENERAL;
+        configCategory[1] = DISTRIBUTED;
+        configCategory[2] = LOAD_BALANCING;
+        // configCategory[3] = MPI2DLB2DNaive;
+        // configCategory[4] = MPI2DLB2DHierarchical;
+        // configCategory[5] = MPI2DSMART;
+        // configCategory[6] = CUDA2D;
+        configCategory[3] = MULTICUDA;
+        // configCategory[8] = MULTICUDA2DSMART;
+        configCategory[4] = SHARED;
 
     }
 
@@ -221,28 +228,28 @@ public:
 
         fptr = fopen(configuration_path, "w");
         // cout <<  executionContextSize << endl;
-        for(int i = 0; i < executionContextSize; i++)
+        for(int i = 0; i < configCategorySize; i++)
         {
-            if (executionContext[i]->getSize() > 0)
+            if (configCategory[i]->getSize() > 0)
             {
-                fprintf(fptr, "%s:\n", executionContext[i]->getName() );
+                fprintf(fptr, "%s:\n", configCategory[i]->getName() );
                 // cout <<  executionContext[i]->getSize() << endl;
-                for(int p = 0; p <  executionContext[i]->getSize(); p++)
+                for(int p = 0; p <  configCategory[i]->getSize(); p++)
                 {
                     //    cout << executionContext[i]->getConfigParameters()[p]->getName() << " " << executionContext[i]->getConfigParameters()[p]->getDefaultValue() << endl;
-                    fprintf(fptr, "\t%s=%s\n", executionContext[i]->getConfigParameters()[p]->getName(), executionContext[i]->getConfigParameters()[p]->getDefaultValue());
+                    fprintf(fptr, "\t%s=%s\n", configCategory[i]->getConfigParameters()[p]->getName(), configCategory[i]->getConfigParameters()[p]->getDefaultValue());
                 }
             }
         }
         fclose(fptr);
     }
 
-    ExecutionContext* getExecutionContext(char* name)
+    ConfigCategory* getConfigCategory(char* name)
     {
-        for(int i = 0; i < executionContextSize; i++)
+        for(int i = 0; i < configCategorySize; i++)
         {
-            if(strcmp(name, executionContext[i]->getName()) == 0)
-                return  executionContext[i];
+            if(strcmp(name, configCategory[i]->getName()) == 0)
+                return  configCategory[i];
         }
         return NULL;
     }
@@ -274,20 +281,19 @@ public:
         while ((read = getline(&line, &len, fptr)) != -1) {
             if(line[read-2] != ':')
             {
-                printf("ERROR: first line must have : ");
+                printf("ERROR: Category name must end with the ':' character ");
                 exit(EXIT_FAILURE);
             }else
             {
+
                 char* contName = new char[read-1];
-                for (int i = 0; i < read-1; ++i) {
-                    contName[i]=0;
-                }
                 strncpy(contName, line, read-2);
-                ExecutionContext* executionContext = getExecutionContext(contName);
+                contName[read-2]=0;
+                ConfigCategory* configCategory = getConfigCategory(contName);
                 // printf("getContextName %s \n", executionContext->getName());
                 // printf("getContextSize %d \n", executionContext->getSize());
                 // printf("\n");
-                for(int i = 0; i < executionContext->getSize(); i++)
+                for(int i = 0; i < configCategory->getSize(); i++)
                 {
                     read = getline(&line, &len, fptr);
                     char* parName  = strtok (line,"=");
@@ -299,7 +305,7 @@ public:
                     // printf("parName |%s| \n", parName);
                     // printf("valueStr |%s| \n", vStr);
 
-                    executionContext->setConfigParameterValue(parName, vStr);
+                    configCategory->setConfigParameterValue(parName, vStr);
                 }
                 // printf("\n");
             }
@@ -307,6 +313,7 @@ public:
             //printf("%s", line);
         }
         fclose(fptr);
+
     }
 
 };

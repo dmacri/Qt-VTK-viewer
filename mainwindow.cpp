@@ -4,6 +4,7 @@
 #include "qlabel.h"
 #include "qthread.h"
 #include "ui_mainwindow.h"
+#include "Config.h"
 
 #include <QFile>
 #include <QFileDialog>
@@ -92,12 +93,17 @@ void MainWindow::initializeSceneWidget(int argc, char* argv[])
     ui->sceneWidget->addVisualizer(argc, argv);
 }
 
-void MainWindow::setTotalStepsFromConfiguration(const char* configurationFile)
+void MainWindow::setTotalStepsFromConfiguration(char* configurationFile)
 {
-    QStringList listParameterFromConfiguration = readNLinesFromFile(configurationFile);
-    QString stringNumStep = listParameterFromConfiguration[7];
-    QStringList step = stringNumStep.split(":");
-    totalSteps = step[1].toInt();
+
+    Config config(configurationFile);
+    config.readConfigFile();
+    ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
+
+   // QStringList listParameterFromConfiguration = readNLinesFromFile(configurationFile);
+   //QString stringNumStep = listParameterFromConfiguration[7];
+   //QStringList step = stringNumStep.split(":");
+    totalSteps = (intptr_t) generalContext->getConfigParameter("number_steps")->getValue();
     ui->totalStep->setText(QString("/") + QString::number(totalSteps));
 }
 
@@ -130,7 +136,7 @@ void MainWindow::loadStrings() {
                                     noSelectionMessage = settings.value("Messages/noSelectionWarning").toString();
     qDebug() <<"Il messaggio  è" <<  noSelectionMessage;
 
-                directorySelectionMessage = settings.value("Messages/directorySelectionWarning").toString();
+    directorySelectionMessage = settings.value("Messages/directorySelectionWarning").toString();
     compilationSuccessfulMessage = settings.value("Messages/compilationSuccessful").toString();
     compilationFailedMessage = settings.value("Messages/compilationFailed").toString();
     deleteSuccessfulMessage = settings.value("Messages/deleteSuccessful").toString();
@@ -274,14 +280,20 @@ void MainWindow::updatePosition(int value)
     cursorValuePosition = value;
     if(updateValueAndPositionWithStep){
         movingCursorPosition=true;
-        qDebug()  << "il valore arriva a" << value;
-        qDebug() << "lo step arriva a"<<totalSteps * (value / 100.0);
-        ui->sceneWidget->selectedStepParameter(std::to_string(static_cast<int>(totalSteps * (value / 100.0))));
-        ui->lineEdit->setText(QString::number(totalSteps * (value / 100.0)));
-        if(value==99){
-            currentStep=totalSteps * (value / 100.0);
+       // qDebug()  << "il valore arriva a" << value;
+        
+        int step;
+        if(value >= 100) {
+            step = totalSteps;
+        } else {
+            step = static_cast<int>((totalSteps * value) / 100.0);
         }
-
+        
+       // qDebug() << "lo step arriva a" << step;
+        ui->sceneWidget->selectedStepParameter(std::to_string(step));
+        qDebug()<<"Step è "<<QString::number(step);
+        ui->lineEdit->setText(QString::number(step));
+        currentStep = step;
     }
 
 }

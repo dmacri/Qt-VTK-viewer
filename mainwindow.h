@@ -71,7 +71,7 @@ private:
     void configureSliders();
     void configureCursorPosition();
     void initializeSceneWidget(int argc, char* argv[]);
-    void setTotalStepsFromConfiguration(const char* configurationFile);
+    void setTotalStepsFromConfiguration(char *configurationFile);
     void connectButtons();
     void connectButton(QPushButton* button);
     void connectSliders();
