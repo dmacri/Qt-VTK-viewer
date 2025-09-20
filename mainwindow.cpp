@@ -7,6 +7,7 @@
 #include "Config.h"
 
 #include <QFile>
+#include <QDebug>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QIntValidator>
