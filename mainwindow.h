@@ -28,10 +28,6 @@ public slots:
 
     void togglePlay();
 
-
-
-
-
 private slots:
     void on_pushButton_clicked();
 

@@ -7,6 +7,7 @@
 #include "Config.h"
 
 #include <QFile>
+#include <QDebug>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QIntValidator>
@@ -49,9 +50,9 @@ void MainWindow::configureLineEdit()
 
 void MainWindow::configureButtons()
 {
-    configureButton(ui->pushButton, QStyle::SP_ArrowRight, NULL);
-    configureButton(ui->pushButton_2, QStyle::SP_ArrowLeft, NULL);
-    configureButton(ui->pushButton_3, QStyle::SP_MediaSkipForward, NULL);
+    configureButton(ui->rightButton, QStyle::SP_ArrowRight, NULL);
+    configureButton(ui->leftButton, QStyle::SP_ArrowLeft, NULL);
+    configureButton(ui->skipForwardButton, QStyle::SP_MediaSkipForward, NULL);
     configureButton(ui->playButton, QStyle::SP_MediaPlay, NULL);
     configureButton(ui->stopButton, QStyle::SP_MediaStop, NULL);
     configureButton(ui->backButton, QStyle::SP_MediaSeekBackward, NULL);

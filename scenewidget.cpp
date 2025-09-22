@@ -11,6 +11,7 @@
 
 
 #include <stdio.h>
+#include <cstring>
 #include <iostream>
 #include <stdlib.h>
 #include <unordered_map>
