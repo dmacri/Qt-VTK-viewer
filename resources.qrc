@@ -4,5 +4,6 @@
         <file>icons/zoom_to.png</file>
         <file>icons/quit.png</file>
         <file>icons/about.png</file>
+        <file>icons/application.png</file>
     </qresource>
 </RCC>

@@ -109,3 +109,5 @@ QtVtkViewer_autogen/include/ui_mainwindow.h
 QtVtkViewer_autogen/moc_predefs.h
 
 QtVtkViewer_autogen/mocs_compilation.cpp
+
+build/
