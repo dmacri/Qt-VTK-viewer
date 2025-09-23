@@ -1,10 +1,10 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "qcommonstyle.h"
-#include "ui_mainwindow.h"
+#include <QCommonStyle>
 #include <QMainWindow>
 #include <QTimer>
+#include <QPushButton>
 
 namespace Ui {
 class MainWindow;
@@ -29,8 +29,6 @@ public slots:
     void togglePlay();
 
 private slots:
-    void on_pushButton_clicked();
-
     void on_pushButton_2_clicked();
 
     void on_pushButton_3_clicked();
@@ -42,23 +40,6 @@ private slots:
     void updatePosition(int value);
 
 private:
-    Ui::MainWindow* ui;
-    QTimer timer;
-    int totalSteps = 0;
-    int currentStep = 1;
-    int sleepDuration = 1000;
-    int cursorValueSleep = 1;
-    int cursorValuePosition = 1;
-    int stepIncrement = 0;
-    QCommonStyle style;
-    bool isIterating = false;
-    bool isPlaying=false ;
-    bool isBacking = false;
-    bool movingCursorPosition=false;
-    bool movingCursorSleep=false;
-    bool updateValueAndPositionWithStep=true;
-
-
     void configureUIElements(int argc, char* argv[]);
     void setupConnections();
     void configureLineEdit();
@@ -75,6 +56,24 @@ private:
     void configureStatusBarLabel(const QString& inputFilePath);
 
     void loadStrings();
+
+
+    Ui::MainWindow* ui;
+    QTimer timer;
+    int totalSteps = 0;
+    int currentStep = 1;
+    int sleepDuration = 1000;
+    int cursorValueSleep = 1;
+    int cursorValuePosition = 1;
+    int stepIncrement = 0;
+    QCommonStyle style;
+    bool isIterating = false;
+    bool isPlaying=false ;
+    bool isBacking = false;
+    bool movingCursorPosition=false;
+    bool movingCursorSleep=false;
+    bool updateValueAndPositionWithStep=true;
+
     QString noSelectionMessage;
     QString directorySelectionMessage;
     QString compilationSuccessfulMessage;
