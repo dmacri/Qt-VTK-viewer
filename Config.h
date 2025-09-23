@@ -1,8 +1,9 @@
 #ifndef CONFIG_H
 #define CONFIG_H
+
+#include <cctype> // isspace()
 #include <stdlib.h>
 #include <stdio.h>
-#include <iostream>
 #include <string.h>
 using namespace std;
 
@@ -31,7 +32,6 @@ public:
         {
         case int_par:
             return (void*) (atoi(defaultValue));
-            break;
 
             // case double_par:
             //     return (void*) (atof(defaultValue));
@@ -39,14 +39,13 @@ public:
 
         case string_par:
             return (void*) (defaultValue);
-            break;
 
         default:
-            break;
+            return nullptr;
         }
     }
 
-    const char* getName()
+    const char* getName() const
     {
         return name;
     }
@@ -61,7 +60,7 @@ public:
         defaultValue = value;
     }
 
-    int getType()
+    int getType() const
     {
         return type;
     }
@@ -87,12 +86,12 @@ public:
         //...
     }
 
-    const char* getName()
+    const char* getName() const
     {
         return name;
     }
 
-    int getSize()
+    int getSize() const
     {
         return size;
     }
@@ -119,7 +118,7 @@ public:
         }
     }
 
-    ConfigParameter* getConfigParameter(char* name)
+    ConfigParameter* getConfigParameter(const char* name)
     {
         for(int i = 0; i < size; i++)
         {
@@ -128,6 +127,7 @@ public:
                 return configParameters[i];
             }
         }
+        return nullptr;
     }
 };
 
@@ -139,7 +139,7 @@ private:
     ConfigCategory* configCategory[configCategorySize];
 
 public:
-    Config( char* configuration_path)
+    Config(char* configuration_path)
     {
         this->configuration_path =  configuration_path;
 
@@ -244,7 +244,7 @@ public:
         fclose(fptr);
     }
 
-    ConfigCategory* getConfigCategory(char* name)
+    ConfigCategory* getConfigCategory(const char* name)
     {
         for(int i = 0; i < configCategorySize; i++)
         {
@@ -254,13 +254,23 @@ public:
         return NULL;
     }
 
-    void remove_spaces(char* s) {
-        char* d = s;
-        do {
-            while (*d == ' ' || *d == '\t' || *d == '\n') {
-                ++d;
+    void remove_spaces(char* s)
+    {
+        if (!s)
+            return;
+
+        char* source = s;
+        char* destination = s;
+
+        while (*source)
+        {
+            if (! isspace(static_cast<unsigned char>(*source)))
+            {
+                *destination++ = *source;
             }
-        } while (*s++ = *d++);
+            ++source;
+        }
+        *destination = '\0';
     }
 
     void readConfigFile()

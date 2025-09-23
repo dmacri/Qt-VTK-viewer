@@ -1,17 +1,17 @@
-#include "mainwindow.h"
-#include "qcommonstyle.h"
-#include "QSettings"
-#include "qlabel.h"
-#include "qthread.h"
-#include "ui_mainwindow.h"
-#include "Config.h"
-
+#include <QCommonStyle>
+#include <QSettings>
+#include <QLabel>
+#include <QThread>
 #include <QFile>
 #include <QDebug>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QIntValidator>
 #include <QPushButton>
+
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include "Config.h"
 
 #include <vtkDataSetReader.h>
 #include <Visualizer.hpp>
@@ -72,7 +72,6 @@ void MainWindow::configureSliders()
     ui->sleepSlider->setMaximum(100);
     ui->sleepSlider->setValue(50);
     // ui->sleepSlider->setStyleSheet(styleSheetSleep);
-
 }
 void MainWindow::configureCursorPosition()
 {
@@ -96,7 +95,6 @@ void MainWindow::initializeSceneWidget(int argc, char* argv[])
 
 void MainWindow::setTotalStepsFromConfiguration(char* configurationFile)
 {
-
     Config config(configurationFile);
     config.readConfigFile();
     ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
@@ -167,10 +165,6 @@ void MainWindow::showOpenFileDialog()
         return;
 
 
-}
-
-void MainWindow::on_pushButton_clicked()
-{
 }
 
 
