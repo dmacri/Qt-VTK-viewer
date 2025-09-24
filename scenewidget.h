@@ -6,10 +6,7 @@
 #include <vtkRenderer.h>
 #include <vtkSmartPointer.h>
 #include <vtkNamedColors.h>
-#include <iostream>
-#include <cstdlib>
-#include <unordered_map>
-#include "SceneWidgetVisualizerProxy.h"
+#include "visualiserProxy/SceneWidgetVisualizerProxyDefault.h"
 
 using namespace std;
 
@@ -64,8 +61,6 @@ public slots:
 
 private:
     SceneWidgetVisualizerProxy* sceneWidgetVisualizerProxy;
-
-
 };
 
 #endif // SCENEWIDGET_H

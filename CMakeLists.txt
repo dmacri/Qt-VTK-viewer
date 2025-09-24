@@ -8,10 +8,10 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
 # List source files & resources
-file (GLOB Sources *.cpp *.hpp)
-file (GLOB Headers *.h)
-file (GLOB Resources *.qrc)
-file (GLOB UIs *.ui)
+file(GLOB Sources *.cpp *.hpp)
+file(GLOB_RECURSE Headers *.h)
+file(GLOB Resources *.qrc)
+file(GLOB UIs *.ui)
 
 # Use Qt
 #set(CMAKE_AUTOMOC ON)
@@ -24,32 +24,46 @@ set(CMAKE_AUTOMOC "YES")
 set(CMAKE_AUTOUIC "YES")
 
 # Find package VTK
-    find_package(VTK COMPONENTS
-        CommonColor
-        CommonCore
-        CommonDataModel
-        FiltersSources
-        InteractionStyle
-        RenderingContextOpenGL2
-        RenderingCore
-        vtkGUISupportQt
-        RenderingFreeType
-        RenderingGL2PSOpenGL2
-        RenderingOpenGL2
-        IOXML
-        REQUIRED
-            GUISupportQt
-            IOLegacy
-    )
-
+find_package(VTK COMPONENTS
+    CommonColor
+    CommonCore
+    CommonDataModel
+    FiltersSources
+    InteractionStyle
+    RenderingContextOpenGL2
+    RenderingCore
+    vtkGUISupportQt
+    RenderingFreeType
+    RenderingGL2PSOpenGL2
+    RenderingOpenGL2
+    IOXML
+    REQUIRED
+        GUISupportQt
+        IOLegacy
+)
 
 # Build executable
-add_executable(QtVtkViewer MACOSX_BUNDLE ${Sources} ${Headers} ${Resources} ${UIs})
+add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${Sources} ${Headers} ${Resources} ${UIs})
 
-#target_link_libraries(QtVtkViewer PRIVATE Qt5::Widgets Qt5::OpenGL VTK::GUISupportQt VTK::IOLegacy)
 
-target_link_libraries(QtVtkViewer PRIVATE ${VTK_LIBRARIES})
+# ============================================
+# Option to change OOpenCAL directory
+# ============================================
+set(OOPENCAL_DIR "/home/dmacri80/Progetto-Visualizer/" CACHE PATH "Path to the base directory of OOpenCAL sources")
+
+if(OOPENCAL_DIR)
+    message(STATUS "Using OOpenCAL include directory: ${OOPENCAL_DIR}")
+    target_include_directories(${PROJECT_NAME} PRIVATE ${OOPENCAL_DIR})
+else()
+    message(WARNING "OOPENCAL_DIR not set! Includes like <OOpenCAL/...> may not work.")
+endif()
+
+
+# Linking
+#target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Widgets Qt5::OpenGL VTK::GUISupportQt VTK::IOLegacy)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${VTK_LIBRARIES})
 
 vtk_module_autoinit(
-    TARGETS QtVtkViewer
-    MODULES VTK::GUISupportQt VTK::IOLegacy)
+    TARGETS ${PROJECT_NAME}
+    MODULES VTK::GUISupportQt VTK::IOLegacy
+)

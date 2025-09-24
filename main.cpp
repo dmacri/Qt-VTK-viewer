@@ -1,22 +1,20 @@
 #include "mainwindow.h"
 
 #include <QApplication>
+#include <QStyleFactory>
 #include <QSurfaceFormat>
-
 #include <QVTKOpenGLNativeWidget.h>
 #include <vtkGenericOpenGLRenderWindow.h>
-#include <QtGui>
+
 
 int main(int argc, char* argv[])
 {
    // vtkObject::GlobalWarningDisplayOff();
 
-
-
     QSurfaceFormat::setDefaultFormat(QVTKOpenGLNativeWidget::defaultFormat());
 
     QApplication a(argc, argv);
-    QApplication::setStyle("fusion");
+    QApplication::setStyle(QStyleFactory::create("Fusion"));
 
     QString styleSheet = "QWidget {"
                          "    background-color: #f2f2f2;"
@@ -39,17 +37,8 @@ int main(int argc, char* argv[])
                          "    background-color: #666666;"
                          "}";
 
-
-
-
-    QWidget* parent = nullptr;
-
-    MainWindow *mainWindow=new MainWindow(parent, argc,  argv);
-   // mainWindow->setStyleSheet(styleSheet);
-    mainWindow->show();
+    MainWindow mainWindow(/*parent=*/nullptr, argc,  argv);
+    // mainWindow->setStyleSheet(styleSheet);
+    mainWindow.show();
     return a.exec();
 }
-
-
-
-

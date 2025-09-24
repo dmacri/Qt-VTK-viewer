@@ -10,13 +10,10 @@
 #include <vtkRenderWindowInteractor.h>
 
 
-#include <stdio.h>
 #include <cstring>
 #include <iostream>
 #include <stdlib.h>
 #include <unordered_map>
-#include <regex>
-#include <climits>
 
 #include <vtkNamedColors.h>
 #include <vtkCallbackCommand.h>
@@ -35,11 +32,9 @@
 #include <vtkRenderWindowInteractor.h>
 #include <vtkTextProperty.h>
 #include <vtkActor2D.h>
-#include <chrono>
 
 #include <Visualizer.hpp>
 using namespace std;
-#include <sstream>
 
 
 // int pixelsQuadrato = 10; // Not needed for VTK, was for old Allegro version
@@ -67,9 +62,9 @@ vtkSmartPointer<vtkRenderer> globalRenderer_;
 SceneWidget::SceneWidget(QWidget* parent, int argc, char *argv[])
     : QVTKOpenGLNativeWidget(parent)
 {
-    sceneWidgetVisualizerProxy=new SceneWidgetVisualizerProxy();
-    settingParameter =new SettingParameter();
-    settingParameter->sceneWidgetVisualizerProxy=sceneWidgetVisualizerProxy;
+    sceneWidgetVisualizerProxy = new SceneWidgetVisualizerProxy;
+    settingParameter = new SettingParameter();
+    settingParameter->sceneWidgetVisualizerProxy = sceneWidgetVisualizerProxy;
     settingRenderParameter = new SettingRenderParameter();
 
 }
@@ -100,7 +95,7 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     char *firstS = new char[256];
     std::strcpy(firstS, tmpString.c_str());
 
-    sceneWidgetVisualizerProxy->vis->readConfigurationFile(filename, infoFromFile, settingParameter->outputFileName);
+    sceneWidgetVisualizerProxy->vis.readConfigurationFile(filename, infoFromFile, settingParameter->outputFileName);
     settingParameter->outputFileName=(char*)generalContext->getConfigParameter("output_file_name")->getValue();
 
     strcat(firstS, settingParameter->outputFileName);
@@ -179,7 +174,7 @@ void SceneWidget::renderVtkScene()
 {
     cout << "DEBUG: Starting renderVtkScene" << endl;
     cout << "DEBUG: Loading hashmap from file..." << endl;
-    sceneWidgetVisualizerProxy->vis->loadHashmapFromFile(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
+    sceneWidgetVisualizerProxy->vis.loadHashmapFromFile(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
     cout << "DEBUG: Hashmap loaded successfully" << endl;
 
     vtkNew<vtkCallbackCommand> keypressCallback;
@@ -191,18 +186,18 @@ void SceneWidget::renderVtkScene()
     cout << "DEBUG: Allocated lines array" << endl;
 
     cout << "DEBUG: Calling getElementMatrix..." << endl;
-    sceneWidgetVisualizerProxy->vis->getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p,settingParameter-> dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, lines);
+    sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p,settingParameter-> dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, lines);
     cout << "DEBUG: getElementMatrix completed" << endl;
 
     cout << "DEBUG: Calling drawWithVTK..." << endl;
-    sceneWidgetVisualizerProxy->vis->drawWithVTK(sceneWidgetVisualizerProxy->p,settingParameter-> dimY, settingParameter->dimX, settingParameter->step, lines, settingParameter->numberOfLines, settingParameter->edittext,settingRenderParameter->m_renderer,gridActor);
+    sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p,settingParameter-> dimY, settingParameter->dimX, settingParameter->step, lines, settingParameter->numberOfLines, settingParameter->edittext,settingRenderParameter->m_renderer,gridActor);
     cout << "DEBUG: drawWithVTK completed" << endl;
     
     cout << "DEBUG: Calling buildLoadBalanceLine..." << endl;
-    sceneWidgetVisualizerProxy->vis->buildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,pts,cellLines,grid,colors,settingRenderParameter->m_renderer,actorBuildLine);
+    sceneWidgetVisualizerProxy->vis.buildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,pts,cellLines,grid,colors,settingRenderParameter->m_renderer,actorBuildLine);
     cout << "DEBUG: buildLoadBalanceLine completed" << endl;
 
-    buildStepActor= sceneWidgetVisualizerProxy->vis->buildStepText(settingParameter->step,settingParameter->font_size,colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
+    buildStepActor= sceneWidgetVisualizerProxy->vis.buildStepText(settingParameter->step,settingParameter->font_size,colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
 
     renderWindow_=renderWindow();
     interactor_=interactor();
@@ -251,17 +246,17 @@ void SceneWidget::upgradeModelInCentralPanel(){
         lines = new Line[settingParameter->numberOfLines];
         try
         {   cout <<"CurrentStep--->>" <<settingParameter->step << endl;
-            sceneWidgetVisualizerProxy->vis->getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, lines);
+            sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, lines);
 
-            sceneWidgetVisualizerProxy->vis->refreshWindowsVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, lines, settingParameter->numberOfLines,gridActor);
+            sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, lines, settingParameter->numberOfLines,gridActor);
                   cout <<"Number of lines--->>" << settingParameter->numberOfLines << endl;
             if (settingParameter->numberOfLines > 0) {
-                sceneWidgetVisualizerProxy->vis->refreshBuildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,actorBuildLine,colors);
+                sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,actorBuildLine,colors);
             }
             // Force renderer update
             settingRenderParameter->m_renderer->Modified();
 
-            sceneWidgetVisualizerProxy->vis->buildStepLine(settingParameter->step,singleLineTextStep,singleLineTextPropStep,colors,"White");
+            sceneWidgetVisualizerProxy->vis.buildStepLine(settingParameter->step,singleLineTextStep,singleLineTextPropStep,colors,"White");
 
         }catch(const std::runtime_error& re)
         {
@@ -376,17 +371,17 @@ void KeypressCallbackFunction(vtkObject* caller,
         //  std::cout << "Sono al passo prima getElementMatrix: " << cam->step << std::endl;
         try
         {
-            cam->sceneWidgetVisualizerProxy->vis->getElementMatrix(cam->step, cam->sceneWidgetVisualizerProxy->p, cam->dimX, cam->dimY, cam->nNodeX, cam->nNodeY, cam->outputFileName, lines);
+            cam->sceneWidgetVisualizerProxy->vis.getElementMatrix(cam->step, cam->sceneWidgetVisualizerProxy->p, cam->dimX, cam->dimY, cam->nNodeX, cam->nNodeY, cam->outputFileName, lines);
 
-            cam->sceneWidgetVisualizerProxy->vis->refreshWindowsVTK(cam->sceneWidgetVisualizerProxy->p, cam->dimY, cam->dimX, cam->step, lines, cam->numberOfLines,gridActor);
+            cam->sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(cam->sceneWidgetVisualizerProxy->p, cam->dimY, cam->dimX, cam->step, lines, cam->numberOfLines,gridActor);
 
             //cam->sceneWidgetVisualizerProxy->vis->refreshBuildLoadBalanceLine(lines,cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors,pts,cellLines,grid);
             
-            cam->sceneWidgetVisualizerProxy->vis->refreshBuildLoadBalanceLine(lines,cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors);
+            cam->sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(lines,cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors);
             // Force renderer update for keyboard callback too
             renderWindow_->Modified();
 
-            cam->sceneWidgetVisualizerProxy->vis->buildStepLine(cam->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
+            cam->sceneWidgetVisualizerProxy->vis.buildStepLine(cam->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
 
         }catch(const std::runtime_error& re)
         {
