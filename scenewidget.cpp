@@ -226,9 +226,9 @@ void SceneWidget::decreaseCountDown()
     SceneWidget::upgradeModelInCentralPanel();
 }
 
-void SceneWidget::selectedStepParameter(string parameterInsertedInTextEdit) // TODO: GB: why we are using string?
+void SceneWidget::selectedStepParameter(int stepNumber)
 {
-    settingParameter->step = stoi(parameterInsertedInTextEdit);
+    settingParameter->step = stepNumber;
     settingParameter->changed = true;
     SceneWidget::upgradeModelInCentralPanel();
 }

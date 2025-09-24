@@ -184,7 +184,7 @@ void MainWindow::togglePlay()
     stepIncrement = (button == ui->playButton) ? 1 : -1;
 
     for (int step = currentStep; step >= 0 && step <= totalSteps; step += stepIncrement) {
-        ui->sceneWidget->selectedStepParameter(std::to_string(step));
+        ui->sceneWidget->selectedStepParameter(step);
         currentStep = step;
 
         const int sliderMaxValue = ui->updatePositionSlider->maximum();
@@ -258,12 +258,14 @@ void MainWindow::onRightButtonClicked()
     setPositionOnWidgets(currentStep);
 }
 
-void MainWindow::setPositionOnWidgets(int stepPosition)
-{
-    QSignalBlocker sliderBlocker(ui->updatePositionSlider);
-
-    ui->updatePositionSlider->setValue(stepPosition);
-    ui->sceneWidget->selectedStepParameter(std::to_string(stepPosition));
+void MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
+{    
+    if (updateSlider)
+    {
+        QSignalBlocker sliderBlocker(ui->updatePositionSlider);
+        ui->updatePositionSlider->setValue(stepPosition);
+    }
+    ui->sceneWidget->selectedStepParameter(stepPosition);
     ui->positionLineEdit->setText(QString::number(stepPosition));
 }
 
@@ -277,7 +279,7 @@ void MainWindow::onStepNumberInputed()
         int step = text.toInt(&conversionOk);
         if (conversionOk)
         {
-            ui->sceneWidget->selectedStepParameter(std::to_string(step));
+            ui->sceneWidget->selectedStepParameter(step);
             currentStep = step;
             setPositionOnWidgets(currentStep);
         }
@@ -321,18 +323,20 @@ void MainWindow::updatePosition(int value)
     {
        // qDebug()  << "il valore arriva a" << value;
         
-        int step;
-        if(value >= 100) {
-            step = totalSteps;
-        } else {
-            step = static_cast<int>((totalSteps * value) / 100.0);
-        }
+        // int step;
+        // if(value >= 100) {
+        //     step = totalSteps;
+        // } else {
+        //     step = static_cast<int>((totalSteps * value) / 100.0);
+        // }
         
        // qDebug() << "lo step arriva a" << step;
-        ui->sceneWidget->selectedStepParameter(std::to_string(step));
-        qDebug()<<"Step è "<<QString::number(step);
-        ui->positionLineEdit->setText(QString::number(step));
-        currentStep = step;
+        ui->sceneWidget->selectedStepParameter(value);
+        qDebug()<<"Step è "<<QString::number(value);
+        ui->positionLineEdit->setText(QString::number(value));
+        currentStep = value;
+
+        setPositionOnWidgets(value, /*updateSlider=*/false);
     }
 }
 

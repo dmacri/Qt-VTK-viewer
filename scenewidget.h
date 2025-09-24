@@ -37,7 +37,7 @@ public:
 class SceneWidget : public QVTKOpenGLNativeWidget {
     Q_OBJECT
 public:
-    explicit SceneWidget(QWidget* parent = nullptr,int argc=0, char* argv[]=nullptr);
+    explicit SceneWidget(QWidget* parent = nullptr, int argc=0, char* argv[]=nullptr);
 
     SettingParameter* settingParameter;
 
@@ -47,12 +47,11 @@ public:
 
     void upgradeModelInCentralPanel();
 
-    void selectedStepParameter(string parameterInsertedInTextEdit);
+    void selectedStepParameter(int stepNumber);
 
     void setupVtkScene();
 
     void renderVtkScene();
-
 
 
 public slots:

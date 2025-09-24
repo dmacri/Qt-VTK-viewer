@@ -58,7 +58,7 @@ private:
 
     void loadStrings();
 
-    void setPositionOnWidgets(int stepPosition);
+    void setPositionOnWidgets(int stepPosition, bool updateSlider=true);
 
 
     Ui::MainWindow* ui;
