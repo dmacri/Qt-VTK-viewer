@@ -6,7 +6,7 @@
 #include <vtkRenderer.h>
 #include <vtkSmartPointer.h>
 #include <vtkNamedColors.h>
-#include "visualiserProxy/SceneWidgetVisualiserProxyDefault.h"
+#include "visualiserProxy/SceneWidgetVisualizerProxyDefault.h"
 
 using namespace std;
 
