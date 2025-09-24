@@ -6,10 +6,7 @@
 #include <vtkRenderer.h>
 #include <vtkSmartPointer.h>
 #include <vtkNamedColors.h>
-#include <iostream>
-#include <cstdlib>
-#include <unordered_map>
-#include "SceneWidgetVisualizerProxy.h"
+#include "visualiserProxy/SceneWidgetVisualizerProxyBall.h"
 
 using namespace std;
 
@@ -27,7 +24,7 @@ struct  SettingParameter {
     int numberOfLines ;
     int font_size=18;
     string edittext;// an empty string for editting
-    SceneWidgetVisualizerProxy* sceneWidgetVisualizerProxy;
+    SceneWidgetVisualizerProxyBall* sceneWidgetVisualizerProxy;
 };
 
 class  SettingRenderParameter : public QVTKOpenGLNativeWidget{
@@ -63,9 +60,7 @@ public slots:
     void decreaseCountDown();
 
 private:
-    SceneWidgetVisualizerProxy* sceneWidgetVisualizerProxy;
-
-
+    SceneWidgetVisualizerProxyBall* sceneWidgetVisualizerProxy;
 };
 
 #endif // SCENEWIDGET_H
