@@ -40,7 +40,7 @@ private slots:
 
     void updateSleepDuration(int value);
 
-    void updatePosition(int value);
+    void onUpdatePositionOnSlider(int value);
 
 private:
     void configureUIElements(int argc, char* argv[]);
@@ -70,7 +70,6 @@ private:
     bool isPlaying = false ;
     bool isBacking = false;
     bool movingCursorSleep = false;
-    bool updateValueAndPositionWithStep = true;
 
     QString noSelectionMessage;
     QString directorySelectionMessage;

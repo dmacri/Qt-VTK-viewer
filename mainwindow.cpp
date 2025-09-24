@@ -119,7 +119,7 @@ void MainWindow::connectButtons()
 void MainWindow::connectSliders()
 {
     connect(ui->sleepSlider, &QSlider::valueChanged, this, &MainWindow::updateSleepDuration);
-    connect(ui->updatePositionSlider, &QSlider::valueChanged, this, &MainWindow::updatePosition);
+    connect(ui->updatePositionSlider, &QSlider::valueChanged, this, &MainWindow::onUpdatePositionOnSlider);
 }
 
 void MainWindow::loadStrings()
@@ -173,44 +173,45 @@ void MainWindow::showOpenFileDialog()
 void MainWindow::togglePlay()
 {
     QPushButton* button = qobject_cast<QPushButton*>(sender());
-    if (button == ui->playButton) {
+    if (button == ui->playButton)
+    {
         currentStep++;
-    } else if (button == ui->backButton) {
+    }
+    else if (button == ui->backButton)
+    {
         currentStep--;
     }
 
     currentStep = std::clamp(currentStep, 0, totalSteps - 1);
-
     stepIncrement = (button == ui->playButton) ? 1 : -1;
 
-    for (int step = currentStep; step >= 0 && step <= totalSteps; step += stepIncrement) {
+    for (int step = currentStep; step >= 0 && step <= totalSteps; step += stepIncrement)
+    {
         ui->sceneWidget->selectedStepParameter(step);
         currentStep = step;
 
-        const int sliderMaxValue = ui->updatePositionSlider->maximum();
-        ui->updatePositionSlider->setValue(currentStep);
+        {
+            QSignalBlocker blockSlider(ui->updatePositionSlider); // to prevent calling updatePosition()
 
-        ui->positionLineEdit->setText(QString::number(currentStep));
-        if (movingCursorSleep && currentStep < sliderMaxValue/2) {
-            int sleep = sliderMaxValue/2 - cursorValueSleep;
-            QThread::msleep(sleep*5);
+            const int sliderMaxValue = ui->updatePositionSlider->maximum();
+            ui->updatePositionSlider->setValue(currentStep);
+            ui->positionLineEdit->setText(QString::number(currentStep));
+
+            if (movingCursorSleep && currentStep < sliderMaxValue / 2)
+            {
+                int sleep = sliderMaxValue / 2 - cursorValueSleep;
+                QThread::msleep(sleep * 5);
+            }
         }
-        updateValueAndPositionWithStep = false;
 
         QApplication::processEvents();
 
-        if (!isPlaying || (isBacking && currentStep == 0))
+        if (! isPlaying || (isBacking && currentStep == 0))
         {
-            updateValueAndPositionWithStep = true;
             break;
         }
     }
-
-    if (currentStep == totalSteps ) {
-        updateValueAndPositionWithStep = true;
-    }
 }
-
 
 void MainWindow::onPlayButtonClicked()
 {
@@ -317,27 +318,18 @@ void MainWindow::updateSleepDuration(int value)
     ui->sleepSlider->setToolTip("Current sleeping value " + QString::number(cursorValueSleep));
 }
 
-void MainWindow::updatePosition(int value)
+void MainWindow::onUpdatePositionOnSlider(int value)
 {
-    if(updateValueAndPositionWithStep)
-    {
-       // qDebug()  << "il valore arriva a" << value;
-        
-        // int step;
-        // if(value >= 100) {
-        //     step = totalSteps;
-        // } else {
-        //     step = static_cast<int>((totalSteps * value) / 100.0);
-        // }
-        
-       // qDebug() << "lo step arriva a" << step;
-        ui->sceneWidget->selectedStepParameter(value);
-        qDebug()<<"Step è "<<QString::number(value);
-        ui->positionLineEdit->setText(QString::number(value));
-        currentStep = value;
+    qDebug() << "Step is " << value;
 
-        setPositionOnWidgets(value, /*updateSlider=*/false);
+    {
+        QSignalBlocker blockLineEdit(ui->positionLineEdit);
+        ui->positionLineEdit->setText(QString::number(value));
     }
+
+    currentStep = value;
+
+    setPositionOnWidgets(value, /*updateSlider=*/false);
 }
 
 QStringList MainWindow::readNLinesFromFile(const QString& filePath)
