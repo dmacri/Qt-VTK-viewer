@@ -230,7 +230,8 @@ void MainWindow::onStopButtonClicked()
 
 void MainWindow::onSkipForwardButtonClicked()
 {
-    QMessageBox::warning(this, "Question", "What the button should do?");
+    currentStep = totalSteps();
+    setPositionOnWidgets(currentStep);
 }
 
 void MainWindow::onBackButtonClicked()
@@ -275,7 +276,6 @@ void MainWindow::onStepNumberInputed()
         int step = text.toInt(&conversionOk);
         if (conversionOk)
         {
-            ui->sceneWidget->selectedStepParameter(step);
             currentStep = step;
             setPositionOnWidgets(currentStep);
         }
