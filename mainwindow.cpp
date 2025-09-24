@@ -101,9 +101,19 @@ void MainWindow::setTotalStepsFromConfiguration(char* configurationFile)
    // QStringList listParameterFromConfiguration = readNLinesFromFile(configurationFile);
    //QString stringNumStep = listParameterFromConfiguration[7];
    //QStringList step = stringNumStep.split(":");
-    totalSteps = (intptr_t) generalContext->getConfigParameter("number_steps")->getValue();
-    ui->totalStep->setText(QString("/") + QString::number(totalSteps));
-    ui->updatePositionSlider->setMaximum(totalSteps);
+    const auto totalSteps = (intptr_t) generalContext->getConfigParameter("number_steps")->getValue();
+    setTotalSteps(totalSteps);
+}
+
+void MainWindow::setTotalSteps(int totalStepsValue)
+{
+    ui->totalStep->setText(QString("/") + QString::number(totalStepsValue));
+    ui->updatePositionSlider->setMaximum(totalStepsValue);
+}
+
+int MainWindow::totalSteps() const
+{
+    return ui->updatePositionSlider->maximum();
 }
 
 void MainWindow::connectButtons()
@@ -182,10 +192,10 @@ void MainWindow::togglePlay()
         currentStep--;
     }
 
-    currentStep = std::clamp(currentStep, 0, totalSteps - 1);
+    currentStep = std::clamp(currentStep, 0, totalSteps() - 1);
     stepIncrement = (button == ui->playButton) ? 1 : -1;
 
-    for (int step = currentStep; step >= 0 && step <= totalSteps; step += stepIncrement)
+    for (int step = currentStep; step >= 0 && step <= totalSteps(); step += stepIncrement)
     {
         ui->sceneWidget->selectedStepParameter(step);
         currentStep = step;
@@ -255,7 +265,7 @@ void MainWindow::onLeftButtonClicked()
 void MainWindow::onRightButtonClicked()
 {
     ui->sceneWidget->increaseCountUp();
-    currentStep = std::min(currentStep + 1, totalSteps - 1);
+    currentStep = std::min(currentStep + 1, totalSteps() - 1);
     setPositionOnWidgets(currentStep);
 }
 
@@ -297,8 +307,8 @@ void MainWindow::onStepNumberInputed()
 
 void MainWindow::updateSleepDuration(int value)
 {
-    const int deltaStep = totalSteps / 10;
-    const double positionPercentage = (double) ui->sleepSlider->value() / totalSteps;
+    const int deltaStep = totalSteps() / 10;
+    const double positionPercentage = (double) ui->sleepSlider->value() / totalSteps();
     const int sliderMaxValue = ui->sleepSlider->maximum();
     const int sliderHalve = sliderMaxValue / 2;
     const double sliderNormalizedPosition = positionPercentage * sliderMaxValue / sliderMaxValue;

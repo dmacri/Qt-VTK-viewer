@@ -60,10 +60,12 @@ private:
 
     void setPositionOnWidgets(int stepPosition, bool updateSlider=true);
 
+    void setTotalSteps(int totalStepsValue);
+    int totalSteps() const;
+
 
     Ui::MainWindow* ui;
 
-    int totalSteps = 0;
     int currentStep = 1;
     int cursorValueSleep = 1;
     int stepIncrement = 0;
