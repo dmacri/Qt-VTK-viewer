@@ -26,8 +26,6 @@ public slots:
     //! Show the 'Open file...' dialog
     void showOpenFileDialog();
 
-    void togglePlay();
-
 private slots:
     void onStepNumberInputed();
 
@@ -62,6 +60,8 @@ private:
 
     void setTotalSteps(int totalStepsValue);
     int totalSteps() const;
+
+    void playingRequested(int direction); // direction: +1 = forward, -1 = backward
 
 
     Ui::MainWindow* ui;

@@ -179,49 +179,34 @@ void MainWindow::showOpenFileDialog()
     // TODO: GB: Should this function do something? Or it is to remove?
 }
 
-
-void MainWindow::togglePlay()
+void MainWindow::playingRequested(int direction)
 {
-    QPushButton* button = qobject_cast<QPushButton*>(sender());
-    if (button == ui->playButton)
-    {
-        currentStep++;
-    }
-    else if (button == ui->backButton)
-    {
-        currentStep--;
-    }
+    currentStep = std::clamp(currentStep + direction, 0, totalSteps() - 1);
 
-    currentStep = std::clamp(currentStep, 0, totalSteps() - 1);
-    stepIncrement = (button == ui->playButton) ? 1 : -1;
-
-    for (int step = currentStep; step >= 0 && step <= totalSteps(); step += stepIncrement)
+    for (int step = currentStep; step >= 0 && step <= totalSteps(); step += direction)
     {
-        ui->sceneWidget->selectedStepParameter(step);
         currentStep = step;
 
         {
-            QSignalBlocker blockSlider(ui->updatePositionSlider); // to prevent calling updatePosition()
+            QSignalBlocker blockSlider(ui->updatePositionSlider);
+            setPositionOnWidgets(currentStep);
+        }
 
-            const int sliderMaxValue = ui->updatePositionSlider->maximum();
-            ui->updatePositionSlider->setValue(currentStep);
-            ui->positionLineEdit->setText(QString::number(currentStep));
-
-            if (movingCursorSleep && currentStep < sliderMaxValue / 2)
-            {
-                int sleep = sliderMaxValue / 2 - cursorValueSleep;
-                QThread::msleep(sleep * 5);
-            }
+        if (movingCursorSleep && currentStep < totalSteps() / 2)
+        {
+            int sleep = totalSteps() / 2 - cursorValueSleep;
+            QThread::msleep(sleep * 5);
         }
 
         QApplication::processEvents();
 
-        if (! isPlaying || (isBacking && currentStep == 0))
+        if (!isPlaying || (direction < 0 && currentStep == 0))
         {
             break;
         }
     }
 }
+
 
 void MainWindow::onPlayButtonClicked()
 {
@@ -233,7 +218,7 @@ void MainWindow::onPlayButtonClicked()
     {
         isPlaying = true;
         isBacking = false;
-        togglePlay();
+        playingRequested(+1);
     }
 }
 
@@ -252,7 +237,7 @@ void MainWindow::onBackButtonClicked()
 {
     isPlaying = true;
     isBacking = true;
-    togglePlay();
+    playingRequested(-1);
 }
 
 void MainWindow::onLeftButtonClicked()
