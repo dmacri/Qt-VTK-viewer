@@ -62,7 +62,7 @@ vtkSmartPointer<vtkRenderer> globalRenderer_;
 SceneWidget::SceneWidget(QWidget* parent, int argc, char *argv[])
     : QVTKOpenGLNativeWidget(parent)
 {
-    sceneWidgetVisualizerProxy = new SceneWidgetVisualizerProxyBall;
+    sceneWidgetVisualizerProxy = new SceneWidgetVisualizerProxy;
     settingParameter = new SettingParameter();
     settingParameter->sceneWidgetVisualizerProxy = sceneWidgetVisualizerProxy;
     settingRenderParameter = new SettingRenderParameter();
