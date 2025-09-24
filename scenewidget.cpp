@@ -35,7 +35,6 @@
 #include <vtkActor2D.h>
 
 #include <Visualizer.hpp>
-using namespace std;
 
 
 // int pixelsQuadrato = 10; // Not needed for VTK, was for old Allegro version
@@ -67,7 +66,6 @@ SceneWidget::SceneWidget(QWidget* parent, int argc, char *argv[])
     settingParameter = new SettingParameter();
     settingParameter->sceneWidgetVisualizerProxy = sceneWidgetVisualizerProxy;
     settingRenderParameter = new SettingRenderParameter();
-
 }
 
 
@@ -185,38 +183,36 @@ void SceneWidget::renderVtkScene()
     keypressCallback->SetClientData(settingParameter);
     interactor()->AddObserver(vtkCommand::KeyPressEvent,keypressCallback);
 
-    lines = new Line[settingParameter->numberOfLines];
+    std::vector<Line> lines;
+    lines.resize(settingParameter->numberOfLines);
     cout << "DEBUG: Allocated lines array" << endl;
 
     cout << "DEBUG: Calling getElementMatrix..." << endl;
-    sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p,settingParameter-> dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, lines);
+    sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p,settingParameter-> dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
     cout << "DEBUG: getElementMatrix completed" << endl;
 
     cout << "DEBUG: Calling drawWithVTK..." << endl;
-    sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p,settingParameter-> dimY, settingParameter->dimX, settingParameter->step, lines, settingParameter->numberOfLines, settingParameter->edittext,settingRenderParameter->m_renderer,gridActor);
+    sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p,settingParameter-> dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingParameter->numberOfLines, settingParameter->edittext,settingRenderParameter->m_renderer,gridActor);
     cout << "DEBUG: drawWithVTK completed" << endl;
     
     cout << "DEBUG: Calling buildLoadBalanceLine..." << endl;
-    sceneWidgetVisualizerProxy->vis.buildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,pts,cellLines,grid,colors,settingRenderParameter->m_renderer,actorBuildLine);
+    sceneWidgetVisualizerProxy->vis.buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,pts,cellLines,grid,colors,settingRenderParameter->m_renderer,actorBuildLine);
     cout << "DEBUG: buildLoadBalanceLine completed" << endl;
 
     buildStepActor= sceneWidgetVisualizerProxy->vis.buildStepText(settingParameter->step,settingParameter->font_size,colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
 
     renderWindow_=renderWindow();
     interactor_=interactor();
-    delete[] lines;
 }
 
 
-void SceneWidget:: increaseCountUp()
+void SceneWidget::increaseCountUp()
 {
     if (settingParameter->step < settingParameter->nsteps * 2){
         settingParameter->step += 1;
         settingParameter->changed = true;
     }
     SceneWidget::upgradeModelInCentralPanel();
-
-
 }
 
 
@@ -228,19 +224,14 @@ void SceneWidget::decreaseCountDown()
     }
 
     SceneWidget::upgradeModelInCentralPanel();
-
 }
 
-void SceneWidget::selectedStepParameter(string parameterInsertedInTextEdit)
+void SceneWidget::selectedStepParameter(string parameterInsertedInTextEdit) // TODO: GB: why we are using string?
 {
-    int step = stoi(parameterInsertedInTextEdit);
-    settingParameter->step = step;
+    settingParameter->step = stoi(parameterInsertedInTextEdit);
     settingParameter->changed = true;
     SceneWidget::upgradeModelInCentralPanel();
-
 }
-
-
 
 
 void SceneWidget::upgradeModelInCentralPanel(){

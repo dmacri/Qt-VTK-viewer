@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
     QApplication a(argc, argv);
     QApplication::setStyle(QStyleFactory::create("Fusion"));
 
-    MainWindow mainWindow(/*parent=*/nullptr, argc,  argv);
+    MainWindow mainWindow(argc, argv);
 
     if (QFile styleFile("style.qss"); styleFile.open(QFile::ReadOnly))
     {
