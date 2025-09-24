@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 
 #include <QApplication>
+#include <QFile>
 #include <QStyleFactory>
 #include <QSurfaceFormat>
 #include <QVTKOpenGLNativeWidget.h>
@@ -9,6 +10,12 @@
 
 int main(int argc, char* argv[])
 {
+    if (1 == argc)
+    {
+        std::cerr << "Usage: " << argv[0] << " <configurationFilePath>";
+        return 1;
+    }
+
    // vtkObject::GlobalWarningDisplayOff();
 
     QSurfaceFormat::setDefaultFormat(QVTKOpenGLNativeWidget::defaultFormat());
@@ -16,29 +23,14 @@ int main(int argc, char* argv[])
     QApplication a(argc, argv);
     QApplication::setStyle(QStyleFactory::create("Fusion"));
 
-    QString styleSheet = "QWidget {"
-                         "    background-color: #f2f2f2;"
-                         "    color: #333333;"
-                         "    font-family: Arial, sans-serif;"
-                         "}"
-                         "QMenuBar {"
-                         "    background-color: #444444;"
-                         "    color: #ffffff;"
-                         "}"
-                         "QStatusBar {"
-                         "    background-color: #444444;"
-                         "    color: #ffffff;"
-                         "}"
-                         "QMenuBar::item {"
-                         "    background-color: #444444;"
-                         "   "
-                         "}"
-                         "QMenuBar::item:selected {"
-                         "    background-color: #666666;"
-                         "}";
-
     MainWindow mainWindow(/*parent=*/nullptr, argc,  argv);
-    // mainWindow->setStyleSheet(styleSheet);
+
+    if (QFile styleFile("style.qss"); styleFile.open(QFile::ReadOnly))
+    {
+        QString styleSheet = QLatin1String(styleFile.readAll());
+        mainWindow.setStyleSheet(styleSheet);
+    }
+
     mainWindow.show();
     return a.exec();
 }

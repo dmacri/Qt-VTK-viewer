@@ -14,6 +14,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <unordered_map>
+#include <filesystem>
 
 #include <vtkNamedColors.h>
 #include <vtkCallbackCommand.h>
@@ -74,12 +75,14 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
 {
     if (argc == 1)
     {
-        cout << " no pixel size " << endl;
-        return;
+        throw std::invalid_argument("Missing arguments");
     }
 
-
     char *filename = argv[1];
+    if (! std::filesystem::exists(filename))
+    {
+        throw std::invalid_argument("File '"s + filename + "' does not exist!");
+    }
 
     Config config(filename);
     config.readConfigFile();
