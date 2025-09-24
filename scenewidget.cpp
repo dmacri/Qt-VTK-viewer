@@ -88,19 +88,18 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
     ConfigCategory* execContext = config.getConfigCategory("DISTRIBUTED");
     int infoFromFile[8];
-    settingParameter->outputFileName = new char[256];
-    string tmpString = filename;
-    std::size_t found = tmpString.find_last_of("/\\");
-    tmpString = tmpString.substr(0, found);
-    tmpString += "/Output/";
-    char *firstS = new char[256];
-    std::strcpy(firstS, tmpString.c_str());
+
+    const size_t outputFileNameLength = 256;
+    settingParameter->outputFileName = new char[outputFileNameLength];
+    string tmpFileName = filename;
+    std::size_t positionOfLastPathSeparatorIfFound = tmpFileName.find_last_of("/\\");
+    tmpFileName = tmpFileName.substr(0, positionOfLastPathSeparatorIfFound) + "/Output/";
 
     sceneWidgetVisualizerProxy->vis.readConfigurationFile(filename, infoFromFile, settingParameter->outputFileName);
     settingParameter->outputFileName=(char*)generalContext->getConfigParameter("output_file_name")->getValue();
 
-    strcat(firstS, settingParameter->outputFileName);
-    strcpy(settingParameter->outputFileName, firstS);
+    tmpFileName += settingParameter->outputFileName;
+    tmpFileName.copy(settingParameter->outputFileName, outputFileNameLength);
 
     settingParameter->dimX =(intptr_t) generalContext->getConfigParameter("number_of_columns")->getValue();
     settingParameter->dimY = (intptr_t)generalContext->getConfigParameter("number_of_rows")->getValue();

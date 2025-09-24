@@ -266,8 +266,8 @@ void MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
         QSignalBlocker sliderBlocker(ui->updatePositionSlider);
         ui->updatePositionSlider->setValue(stepPosition);
     }
-    ui->sceneWidget->selectedStepParameter(stepPosition);
     ui->positionLineEdit->setText(QString::number(stepPosition));
+    ui->sceneWidget->selectedStepParameter(stepPosition);
 }
 
 void MainWindow::onStepNumberInputed()
