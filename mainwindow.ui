@@ -170,7 +170,8 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset theme="QIcon::ThemeIcon::MediaSkipForward"/>
+         <iconset theme="QIcon::ThemeIcon::MediaSkipForward">
+          <normaloff>.</normaloff>.</iconset>
         </property>
        </widget>
       </item>
@@ -208,7 +209,7 @@
          </size>
         </property>
         <property name="text">
-         <string>0</string>
+         <string>1</string>
         </property>
        </widget>
       </item>
@@ -253,7 +254,8 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset theme="QIcon::ThemeIcon::MediaPlaybackStart"/>
+         <iconset theme="QIcon::ThemeIcon::MediaPlaybackStart">
+          <normaloff>.</normaloff>.</iconset>
         </property>
        </widget>
       </item>
@@ -285,7 +287,8 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset theme="QIcon::ThemeIcon::MediaPlaybackStop"/>
+         <iconset theme="QIcon::ThemeIcon::MediaPlaybackStop">
+          <normaloff>.</normaloff>.</iconset>
         </property>
        </widget>
       </item>
@@ -317,7 +320,8 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset theme="QIcon::ThemeIcon::MediaSeekBackward"/>
+         <iconset theme="QIcon::ThemeIcon::MediaSeekBackward">
+          <normaloff>.</normaloff>.</iconset>
         </property>
        </widget>
       </item>
@@ -547,16 +551,16 @@
   <connection>
    <sender>rightButton</sender>
    <signal>clicked()</signal>
-   <receiver>sceneWidget</receiver>
-   <slot>increaseCountUp()</slot>
+   <receiver>MainWindow</receiver>
+   <slot>on_pushButton_3_clicked()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>39</x>
      <y>269</y>
     </hint>
     <hint type="destinationlabel">
-     <x>449</x>
-     <y>330</y>
+     <x>406</x>
+     <y>299</y>
     </hint>
    </hints>
   </connection>

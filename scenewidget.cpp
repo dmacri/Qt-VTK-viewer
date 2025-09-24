@@ -218,6 +218,7 @@ void SceneWidget:: increaseCountUp()
     }
     SceneWidget::upgradeModelInCentralPanel();
 
+
 }
 
 
