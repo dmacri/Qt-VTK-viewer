@@ -1,144 +1,17 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#pragma once
 
 #include <cctype> // isspace()
-#include <stdexcept>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <string>
+
+#include "ConfigParameter.h"
+#include "ConfigCategory.h"
+
 using namespace std;
 
-class ConfigParameter{
-
-private:
-    const char* name;
-    const char* defaultValue;
-    int type;
-
-public:
-    static const int int_par    = 0;
-    static const int double_par = 1;
-    static const int string_par = 2;
-
-    ConfigParameter(const char* name, const char* defaultValue, int type)
-    {
-        this->name         = name;
-        this->defaultValue = defaultValue;
-        this->type         = type;
-    }
-
-    template<typename RetVal>
-    RetVal getValue() const;
-
-    const char* getName() const
-    {
-        return name;
-    }
-
-    const char* getDefaultValue()
-    {
-        return defaultValue;
-    }
-
-    void setDefaultValue(const char* value)
-    {
-        defaultValue = value;
-    }
-
-    int getType() const
-    {
-        return type;
-    }
-};
-
-template<>
-inline int ConfigParameter::getValue() const
+class Config
 {
-    if (int_par == type)
-        return std::stoi(defaultValue);
-
-    throw std::runtime_error("Type does not match!");
-}
-
-template<>
-inline const char* ConfigParameter::getValue() const
-{
-    if (string_par == type)
-        return defaultValue;
-
-    throw std::runtime_error("Type does not match!");
-}
-
-
-class ConfigCategory{
-
-private:
-    const char* name;
-    ConfigParameter** configParameters;
-    int size;
-
-public:
-    ConfigCategory(const char* name, ConfigParameter** configParameters, const int& size)
-    {
-        this->name             = name;
-        this->configParameters = configParameters;
-        this->size             = size;
-    }
-
-    void readFile(char* name, char* configuration_path)
-    {
-        //...
-    }
-
-    const char* getName() const
-    {
-        return name;
-    }
-
-    int getSize() const
-    {
-        return size;
-    }
-
-    ConfigParameter** getConfigParameters()
-    {
-        return configParameters;
-    }
-
-    void setConfigParameterValue(const char* name, const char* value)
-    {
-        for(int i = 0; i < size; i++)
-        {
-            //   printf("Controllo |%s| == |%s| \n ", name, configParameters[i]->getName());
-            if(strcmp(name, configParameters[i]->getName()) == 0)
-            {
-                //  printf("Sono uguali %s == %s \n ", name, configParameters[i]->getName());
-                //  printf("inserisco %s \n ", value);
-                configParameters[i]->setDefaultValue(value);
-                //  printf("getDefaultValue ho inserito %s \n ", configParameters[i]->getDefaultValue());
-                //  printf("getValue ho inserito %d \n ", configParameters[i]->getValue());
-
-            }
-        }
-    }
-
-    ConfigParameter* getConfigParameter(const char* name)
-    {
-        for(int i = 0; i < size; i++)
-        {
-            if(strcmp(name, configParameters[i]->getName()) == 0)
-            {
-                return configParameters[i];
-            }
-        }
-        return nullptr;
-    }
-};
-
-class Config{
-
-private:
     char* configuration_path;
     static const int configCategorySize = 5;
     ConfigCategory* configCategory[configCategorySize];
@@ -219,7 +92,6 @@ public:
         configCategory[3] = MULTICUDA;
         // configCategory[8] = MULTICUDA2DSMART;
         configCategory[4] = SHARED;
-
     }
 
     void setConfiguration_path(char* value)
@@ -330,6 +202,3 @@ public:
         fclose(fptr);
     }
 };
-
-
-#endif
