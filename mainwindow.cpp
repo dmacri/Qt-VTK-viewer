@@ -17,7 +17,7 @@
 #include <Visualizer.hpp>
 
 
-MainWindow::MainWindow(QWidget* parent, int argc, char* argv[]) : QMainWindow(parent), ui(new Ui::MainWindow)
+MainWindow::MainWindow(int argc, char* argv[], QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     configureUIElements(argc,argv);
@@ -26,41 +26,50 @@ MainWindow::MainWindow(QWidget* parent, int argc, char* argv[]) : QMainWindow(pa
 
 void MainWindow::configureUIElements(int argc, char* argv[])
 {
-    configureLineEdit();
+    addValidatorForPositionInputWidget();
     configureButtons();
     configureSliders();
     loadStrings();
     initializeSceneWidget(argc, argv);
-    configureStatusBarLabel(argv[1]);
+    showInputFilePathOnBarLabel(argv[1]);
     setTotalStepsFromConfiguration(argv[1]);
 }
 
 void MainWindow::setupConnections()
 {
+    connectMenuActions();
+
     connectButtons();
     connectSliders();
-    connectSliderForPosition();
+
+    connect(ui->positionLineEdit, &QLineEdit::returnPressed, this, &MainWindow::onStepNumberInputed);
 }
 
-void MainWindow::configureLineEdit()
+void MainWindow::connectMenuActions()
 {
-    QIntValidator* validator = new QIntValidator(ui->lineEdit);
-    ui->lineEdit->setValidator(validator);
+    connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
+    connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::showAboutThisApplicationDialog);
+}
+
+void MainWindow::addValidatorForPositionInputWidget()
+{
+    QIntValidator* validator = new QIntValidator(ui->positionLineEdit);
+    ui->positionLineEdit->setValidator(validator);
 }
 
 void MainWindow::configureButtons()
 {
-    configureButton(ui->rightButton, QStyle::SP_ArrowRight, NULL);
-    configureButton(ui->leftButton, QStyle::SP_ArrowLeft, NULL);
-    configureButton(ui->skipForwardButton, QStyle::SP_MediaSkipForward, NULL);
-    configureButton(ui->playButton, QStyle::SP_MediaPlay, NULL);
-    configureButton(ui->stopButton, QStyle::SP_MediaStop, NULL);
-    configureButton(ui->backButton, QStyle::SP_MediaSeekBackward, NULL);
+    configureButton(ui->rightButton, QStyle::SP_ArrowRight);
+    configureButton(ui->leftButton, QStyle::SP_ArrowLeft);
+    configureButton(ui->skipForwardButton, QStyle::SP_MediaSkipForward);
+    configureButton(ui->playButton, QStyle::SP_MediaPlay);
+    configureButton(ui->stopButton, QStyle::SP_MediaStop);
+    configureButton(ui->backButton, QStyle::SP_MediaSeekBackward);
 }
 
-void MainWindow::configureButton(QPushButton* button, QStyle::StandardPixmap icon, const QString& styleSheet)
+void MainWindow::configureButton(QPushButton* button, QStyle::StandardPixmap icon)
 {
-    button->setIcon(style.standardIcon(icon));
+    button->setIcon(QCommonStyle().standardIcon(icon));
     button->setIconSize(QSize(32, 32));
     button->setMinimumSize(QSize(36, 32));
     button->setStyleSheet(NULL);
@@ -81,11 +90,9 @@ void MainWindow::configureCursorPosition()
 }
 
 
-void MainWindow::configureStatusBarLabel(const QString& inputFilePath)
+void MainWindow::showInputFilePathOnBarLabel(const QString& inputFilePath)
 {
-    const QString& inputfile="Input file: ";
-    QLabel *label = new QLabel(inputfile+inputFilePath);
-    ui->statusbar->addWidget(label);
+    ui->inputFilePathLabel->setText(tr("Input file: ") + inputFilePath);
 }
 
 void MainWindow::initializeSceneWidget(int argc, char* argv[])
@@ -99,41 +106,44 @@ void MainWindow::setTotalStepsFromConfiguration(char* configurationFile)
     config.readConfigFile();
     ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
 
-   // QStringList listParameterFromConfiguration = readNLinesFromFile(configurationFile);
-   //QString stringNumStep = listParameterFromConfiguration[7];
-   //QStringList step = stringNumStep.split(":");
-    totalSteps = (intptr_t) generalContext->getConfigParameter("number_steps")->getValue();
-    ui->totalStep->setText(QString("/") + QString::number(totalSteps));
+    const auto totalSteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
+    setTotalSteps(totalSteps);
+}
+
+void MainWindow::setTotalSteps(int totalStepsValue)
+{
+    ui->totalStep->setText(QString("/") + QString::number(totalStepsValue));
+    ui->updatePositionSlider->setMaximum(totalStepsValue);
+}
+
+int MainWindow::totalSteps() const
+{
+    return ui->updatePositionSlider->maximum();
 }
 
 void MainWindow::connectButtons()
 {
-    connectButton(ui->playButton);
-    connectButton(ui->backButton);
-    connectButton(ui->stopButton);
-}
-
-void MainWindow::connectButton(QPushButton* button)
-{
-    connect(button, &QPushButton::clicked, this, &MainWindow::handleButtonClick);
+    connect(ui->playButton, &QPushButton::clicked, this, &MainWindow::onPlayButtonClicked);
+    connect(ui->stopButton, &QPushButton::clicked, this, &MainWindow::onStopButtonClicked);
+    connect(ui->skipForwardButton, &QPushButton::clicked, this, &MainWindow::onSkipForwardButtonClicked);
+    connect(ui->backButton, &QPushButton::clicked, this, &MainWindow::onBackButtonClicked);
+    connect(ui->leftButton, &QPushButton::clicked, this, &MainWindow::onLeftButtonClicked);
+    connect(ui->rightButton, &QPushButton::clicked, this, &MainWindow::onRightButtonClicked);
 }
 
 void MainWindow::connectSliders()
 {
     connect(ui->sleepSlider, &QSlider::valueChanged, this, &MainWindow::updateSleepDuration);
+    connect(ui->updatePositionSlider, &QSlider::valueChanged, this, &MainWindow::onUpdatePositionOnSlider);
 }
 
-void MainWindow::connectSliderForPosition()
+void MainWindow::loadStrings()
 {
-    connect(ui->updatePositionSlider, &QSlider::valueChanged, this, &MainWindow::updatePosition);
-}
-
-void MainWindow::loadStrings() {
     QString iniFilePath = QApplication::applicationDirPath() + "/app_strings.ini";
     QSettings settings(iniFilePath, QSettings::IniFormat);
-    qDebug() <<"Il file path è" <<settings.fileName();
-                                    noSelectionMessage = settings.value("Messages/noSelectionWarning").toString();
-    qDebug() <<"Il messaggio  è" <<  noSelectionMessage;
+    qDebug() <<"Il file path è" << settings.fileName();
+    noSelectionMessage = settings.value("Messages/noSelectionWarning").toString();
+    qDebug() <<"Il messaggio  è" << noSelectionMessage;
 
     directorySelectionMessage = settings.value("Messages/directorySelectionWarning").toString();
     compilationSuccessfulMessage = settings.value("Messages/compilationSuccessful").toString();
@@ -142,181 +152,162 @@ void MainWindow::loadStrings() {
     deleteFailedMessage = settings.value("Messages/deleteFailed").toString();
 }
 
-MainWindow::~MainWindow() { delete ui; }
-
-void MainWindow::showAboutDialog()
+MainWindow::~MainWindow()
 {
-
-    QMessageBox::information(
-        this, "About",
-        "By Davide Macri.\n Configurator for  visualizer");
+    delete ui;
 }
 
-void MainWindow::showOpenFileDialog()
+void MainWindow::showAboutThisApplicationDialog()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open file"), "",
-                                                    "VTK Files (*.vtk)");
-
-    QFile file(fileName);
-
-    file.open(QIODevice::ReadOnly);
-
-    if (!file.exists())
-        return;
-
-
+    QMessageBox::information(this, "About",
+                             "By Davide Macri.\n"
+                             "Configurator for visualizer");
 }
 
-
-void MainWindow::togglePlay()
+void MainWindow::playingRequested(int direction)
 {
-    QPushButton* button = qobject_cast<QPushButton*>(sender());
-    if (button == ui->playButton) {
-        currentStep++;
-    } else if (button == ui->backButton) {
-        currentStep--;
-    }
+    currentStep = std::clamp(currentStep + direction, 0, totalSteps() - 1);
 
-    currentStep = qBound(0, currentStep, totalSteps - 1);
-
-    stepIncrement = (button == ui->playButton) ? 1 : -1;
-
-    for (int step = currentStep; step >= 0 && step <= totalSteps; step += stepIncrement) {
-        ui->sceneWidget->selectedStepParameter(std::to_string(step));
+    for (int step = currentStep; step >= 0 && step <= totalSteps(); step += direction)
+    {
         currentStep = step;
-        double positionPercentage = (double)currentStep / totalSteps;
-        int sliderMaxValue = ui->updatePositionSlider->maximum();
-        int sliderValue = positionPercentage * sliderMaxValue;
-        ui->updatePositionSlider->setValue(sliderValue);
 
-        ui->lineEdit->setText(QString::number(currentStep));
-        if (movingCursorSleep && sliderValue < 50) {
-            int sleep=50-cursorValueSleep;
-            QThread::msleep(sleep*5);
+        {
+            QSignalBlocker blockSlider(ui->updatePositionSlider);
+            setPositionOnWidgets(currentStep);
         }
-        updateValueAndPositionWithStep = false;
+
+        if (movingCursorSleep && currentStep < totalSteps() / 2)
+        {
+            int sleep = totalSteps() / 2 - cursorValueSleep;
+            QThread::msleep(sleep * 5);
+        }
+
         QApplication::processEvents();
-        if (!isPlaying || (isBacking && currentStep == 0)) {
-            updateValueAndPositionWithStep = true;
+
+        if (!isPlaying || (direction < 0 && currentStep == 0))
+        {
             break;
         }
     }
-
-    if (currentStep == totalSteps ) {
-        updateValueAndPositionWithStep = true;
-    }
 }
 
 
-
-void MainWindow::handleButtonClick()
+void MainWindow::onPlayButtonClicked()
 {
-    QPushButton* button = qobject_cast<QPushButton*>(sender());
-
-
-    if (button == ui->playButton) {
-        if (ui->playButton->text() == "Stop" && isPlaying) {
-            isPlaying = false;
-        } else {
-            isPlaying = true;
-            isBacking = false;
-            togglePlay();
-        }
-    } else if (button == ui->backButton) {
-        isPlaying = true;
-        isBacking = true;
-        togglePlay();
-    } else if (button == ui->stopButton) {
+    if (isPlaying)
+    {
         isPlaying = false;
-        ui->playButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
+    }
+    else
+    {
+        isPlaying = true;
+        isBacking = false;
+        playingRequested(+1);
     }
 }
 
+void MainWindow::onStopButtonClicked()
+{
+    isPlaying = false;
+    ui->playButton->setIcon(QCommonStyle().standardIcon(QStyle::SP_MediaPlay));
+}
 
-void MainWindow::on_pushButton_2_clicked()
+void MainWindow::onSkipForwardButtonClicked()
+{
+    currentStep = totalSteps();
+    setPositionOnWidgets(currentStep);
+}
+
+void MainWindow::onBackButtonClicked()
+{
+    isPlaying = true;
+    isBacking = true;
+    playingRequested(-1);
+}
+
+void MainWindow::onLeftButtonClicked()
 {
     ui->sceneWidget->decreaseCountDown();
+    currentStep = std::max(currentStep - 1, 0);
+    setPositionOnWidgets(currentStep);
 }
 
-
-void MainWindow::on_pushButton_3_clicked()
+void MainWindow::onRightButtonClicked()
 {
-    QString text = ui->lineEdit->text();
-    if (!text.isEmpty()) {
+    ui->sceneWidget->increaseCountUp();
+    currentStep = std::min(currentStep + 1, totalSteps() - 1);
+    setPositionOnWidgets(currentStep);
+}
+
+void MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
+{    
+    if (updateSlider)
+    {
+        QSignalBlocker sliderBlocker(ui->updatePositionSlider);
+        ui->updatePositionSlider->setValue(stepPosition);
+    }
+    ui->positionLineEdit->setText(QString::number(stepPosition));
+    ui->sceneWidget->selectedStepParameter(stepPosition);
+}
+
+void MainWindow::onStepNumberInputed()
+{
+    // TODO: GB: Why not to use SpinBox instead of LineEdit?
+    QString text = ui->positionLineEdit->text();
+    if (!text.isEmpty())
+    {
         bool conversionOk;
         int step = text.toInt(&conversionOk);
-        if (conversionOk) {
-            ui->sceneWidget->selectedStepParameter(std::to_string(step));
+        if (conversionOk)
+        {
             currentStep = step;
-        } else {
-            QMessageBox::critical(this, tr("Errore"), tr("Problemi con il numero che hai inserito"));        }
-    } else {
-        QMessageBox::critical(this, tr("Errore"), tr("Inserisci un valore numerico"));      }
+            setPositionOnWidgets(currentStep);
+        }
+        else
+        {
+            QMessageBox::critical(this, tr("Errore"), tr("Problemi con il numero che hai inserito"));
+        }
+    }
+    else
+    {
+        QMessageBox::critical(this, tr("Errore"), tr("Inserisci un valore numerico"));
+    }
 }
 
 void MainWindow::updateSleepDuration(int value)
-{   int deltaStep = totalSteps / 10;
-    double positionPercentage = (double) ui->sleepSlider->value() / totalSteps;
-    int sliderMaxValue = ui->sleepSlider->maximum();
-    double sliderNormalizedPosition = positionPercentage * sliderMaxValue / sliderMaxValue;
-    if (value > 50 && value <= 100 && isBacking == false) {
+{
+    const int deltaStep = totalSteps() / 10;
+    const double positionPercentage = (double) ui->sleepSlider->value() / totalSteps();
+    const int sliderMaxValue = ui->sleepSlider->maximum();
+    const int sliderHalve = sliderMaxValue / 2;
+    const double sliderNormalizedPosition = positionPercentage * sliderMaxValue / sliderMaxValue;
+    if (value > sliderHalve && value <= sliderMaxValue && isBacking == false)
+    {
         stepIncrement = sliderNormalizedPosition * deltaStep;
-    } else if(value > 50 && value <= 100 && isBacking == true){
-        stepIncrement=-(sliderNormalizedPosition * deltaStep);
-    }else{
-        movingCursorSleep=true;
     }
-    cursorValueSleep=value;
-
-}
-
-void MainWindow::updatePosition(int value)
-{
-    cursorValuePosition = value;
-    if(updateValueAndPositionWithStep){
-        movingCursorPosition=true;
-       // qDebug()  << "il valore arriva a" << value;
-        
-        int step;
-        if(value >= 100) {
-            step = totalSteps;
-        } else {
-            step = static_cast<int>((totalSteps * value) / 100.0);
-        }
-        
-       // qDebug() << "lo step arriva a" << step;
-        ui->sceneWidget->selectedStepParameter(std::to_string(step));
-        qDebug()<<"Step è "<<QString::number(step);
-        ui->lineEdit->setText(QString::number(step));
-        currentStep = step;
-    }
-
-}
-
-
-
-QStringList MainWindow::readNLinesFromFile(const QString& filePath)
-{
-    QStringList lines;
-
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    else if(value > sliderHalve && value <= sliderMaxValue && isBacking == true)
     {
-        qDebug() << "Impossibile aprire il file" << filePath;
-        return lines;
+        stepIncrement = - sliderNormalizedPosition * deltaStep;
     }
-
-    QTextStream stream(&file);
-    while (!stream.atEnd())
+    else
     {
-        QString line = stream.readLine();
-        lines.append(line);
+        movingCursorSleep = true;
     }
-
-    file.close();
-
-    return lines;
+    cursorValueSleep = value;
+    ui->sleepSlider->setToolTip("Current sleeping value " + QString::number(cursorValueSleep));
 }
 
+void MainWindow::onUpdatePositionOnSlider(int value)
+{
+    qDebug() << "Step is " << value;
 
+    {
+        QSignalBlocker blockLineEdit(ui->positionLineEdit);
+        ui->positionLineEdit->setText(QString::number(value));
+    }
 
+    currentStep = value;
+
+    setPositionOnWidgets(value, /*updateSlider=*/false);
+}

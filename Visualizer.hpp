@@ -35,8 +35,6 @@
 #include <string>
 #include <sstream>
 #include <unordered_map>
-#include <regex>
-#include <climits>
 #include <string>
 
 #include "Visualizer.h"
@@ -257,7 +255,7 @@ void Visualizer<T>::getElementMatrix(int step, T **&m, int nGlobalCols, int nGlo
 
 
 template <class T>
-void Visualizer<T>::readConfigurationFile(char *filename, int infoFromFile[8], char *outputFileName)
+void Visualizer<T>::readConfigurationFile(const char *filename, int infoFromFile[8], char *outputFileName)
 {
     char str[999];
     int n = 0;

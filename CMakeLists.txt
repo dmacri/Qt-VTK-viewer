@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(QtVtkViewer)
 
@@ -11,7 +11,10 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 file(GLOB Sources *.cpp *.hpp)
 file(GLOB_RECURSE Headers *.h)
 file(GLOB Resources *.qrc)
+file(GLOB Styles *.qss)
 file(GLOB UIs *.ui)
+file(GLOB_RECURSE Docs *.md)
+
 
 # Use Qt
 #set(CMAKE_AUTOMOC ON)
@@ -32,7 +35,7 @@ find_package(VTK COMPONENTS
     InteractionStyle
     RenderingContextOpenGL2
     RenderingCore
-    vtkGUISupportQt
+    GUISupportQt # instead of deprecated vtkGUISupportQt
     RenderingFreeType
     RenderingGL2PSOpenGL2
     RenderingOpenGL2
@@ -43,7 +46,7 @@ find_package(VTK COMPONENTS
 )
 
 # Build executable
-add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${Sources} ${Headers} ${Resources} ${UIs})
+add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${Sources} ${Headers} ${Resources} ${UIs} ${Styles} ${Docs} LICENSE)
 
 
 # ============================================
@@ -52,7 +55,7 @@ add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${Sources} ${Headers} ${Resources} 
 set(OOPENCAL_DIR "/home/dmacri80/Progetto-Visualizer/" CACHE PATH "Path to the base directory of OOpenCAL sources")
 
 if(OOPENCAL_DIR)
-    message(STATUS "Using OOpenCAL include directory: ${OOPENCAL_DIR}")
+    message(STATUS "Using OOpenCAL directory: ${OOPENCAL_DIR}")
     target_include_directories(${PROJECT_NAME} PRIVATE ${OOPENCAL_DIR})
 else()
     message(WARNING "OOPENCAL_DIR not set! Includes like <OOpenCAL/...> may not work.")

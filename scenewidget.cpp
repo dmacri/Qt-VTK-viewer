@@ -14,6 +14,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <unordered_map>
+#include <filesystem>
 
 #include <vtkNamedColors.h>
 #include <vtkCallbackCommand.h>
@@ -34,7 +35,6 @@
 #include <vtkActor2D.h>
 
 #include <Visualizer.hpp>
-using namespace std;
 
 
 // int pixelsQuadrato = 10; // Not needed for VTK, was for old Allegro version
@@ -66,7 +66,6 @@ SceneWidget::SceneWidget(QWidget* parent, int argc, char *argv[])
     settingParameter = new SettingParameter();
     settingParameter->sceneWidgetVisualizerProxy = sceneWidgetVisualizerProxy;
     settingRenderParameter = new SettingRenderParameter();
-
 }
 
 
@@ -74,12 +73,14 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
 {
     if (argc == 1)
     {
-        cout << " no pixel size " << endl;
-        return;
+        throw std::invalid_argument("Missing arguments");
     }
 
-
     char *filename = argv[1];
+    if (! std::filesystem::exists(filename))
+    {
+        throw std::invalid_argument("File '"s + filename + "' does not exist!");
+    }
 
     Config config(filename);
     config.readConfigFile();
@@ -87,28 +88,25 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
     ConfigCategory* execContext = config.getConfigCategory("DISTRIBUTED");
     int infoFromFile[8];
-    settingParameter->outputFileName = new char[256];
-    string tmpString = filename;
-    std::size_t found = tmpString.find_last_of("/\\");
-    tmpString = tmpString.substr(0, found);
-    tmpString += "/Output/";
-    char *firstS = new char[256];
-    std::strcpy(firstS, tmpString.c_str());
+
+    constexpr size_t outputFileNameLength = 256;
+    settingParameter->outputFileName = new char[outputFileNameLength]{};
+    string tmpFileName = filename;
+    std::size_t positionOfLastPathSeparatorIfFound = tmpFileName.find_last_of("/\\");
+    tmpFileName = tmpFileName.substr(0, positionOfLastPathSeparatorIfFound) + "/Output/";
 
     sceneWidgetVisualizerProxy->vis.readConfigurationFile(filename, infoFromFile, settingParameter->outputFileName);
-    settingParameter->outputFileName=(char*)generalContext->getConfigParameter("output_file_name")->getValue();
+    tmpFileName += generalContext->getConfigParameter("output_file_name")->getValue<const char*>();
+    tmpFileName.copy(settingParameter->outputFileName, outputFileNameLength);
 
-    strcat(firstS, settingParameter->outputFileName);
-    strcpy(settingParameter->outputFileName, firstS);
-
-    settingParameter->dimX =(intptr_t) generalContext->getConfigParameter("number_of_columns")->getValue();
-    settingParameter->dimY = (intptr_t)generalContext->getConfigParameter("number_of_rows")->getValue();
-    int borderSizeX = (intptr_t)execContext->getConfigParameter("border_size_x")->getValue();
-    int borderSizeY =(intptr_t) execContext->getConfigParameter("border_size_y")->getValue();
+    settingParameter->dimX = generalContext->getConfigParameter("number_of_columns")->getValue<int>();
+    settingParameter->dimY = generalContext->getConfigParameter("number_of_rows")->getValue<int>();
+    int borderSizeX = execContext->getConfigParameter("border_size_x")->getValue<int>();
+    int borderSizeY = execContext->getConfigParameter("border_size_y")->getValue<int>();
     int numBorders = 1;
-    settingParameter->nNodeX = (intptr_t) execContext->getConfigParameter("number_node_x")->getValue();
-    settingParameter->nNodeY = (intptr_t) execContext->getConfigParameter("number_node_y")->getValue();
-    settingParameter->nsteps = (intptr_t)generalContext->getConfigParameter("number_steps")->getValue();
+    settingParameter->nNodeX = execContext->getConfigParameter("number_node_x")->getValue<int>();
+    settingParameter->nNodeY = execContext->getConfigParameter("number_node_y")->getValue<int>();
+    settingParameter->nsteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
 
     cout << "dimX " <<settingParameter-> dimX << endl;
     cout << "dimY " << settingParameter-> dimY << endl;
@@ -182,38 +180,36 @@ void SceneWidget::renderVtkScene()
     keypressCallback->SetClientData(settingParameter);
     interactor()->AddObserver(vtkCommand::KeyPressEvent,keypressCallback);
 
-    lines = new Line[settingParameter->numberOfLines];
+    std::vector<Line> lines;
+    lines.resize(settingParameter->numberOfLines);
     cout << "DEBUG: Allocated lines array" << endl;
 
     cout << "DEBUG: Calling getElementMatrix..." << endl;
-    sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p,settingParameter-> dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, lines);
+    sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p,settingParameter-> dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
     cout << "DEBUG: getElementMatrix completed" << endl;
 
     cout << "DEBUG: Calling drawWithVTK..." << endl;
-    sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p,settingParameter-> dimY, settingParameter->dimX, settingParameter->step, lines, settingParameter->numberOfLines, settingParameter->edittext,settingRenderParameter->m_renderer,gridActor);
+    sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p,settingParameter-> dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingParameter->numberOfLines, settingParameter->edittext,settingRenderParameter->m_renderer,gridActor);
     cout << "DEBUG: drawWithVTK completed" << endl;
     
     cout << "DEBUG: Calling buildLoadBalanceLine..." << endl;
-    sceneWidgetVisualizerProxy->vis.buildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,pts,cellLines,grid,colors,settingRenderParameter->m_renderer,actorBuildLine);
+    sceneWidgetVisualizerProxy->vis.buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,pts,cellLines,grid,colors,settingRenderParameter->m_renderer,actorBuildLine);
     cout << "DEBUG: buildLoadBalanceLine completed" << endl;
 
     buildStepActor= sceneWidgetVisualizerProxy->vis.buildStepText(settingParameter->step,settingParameter->font_size,colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
 
     renderWindow_=renderWindow();
     interactor_=interactor();
-    delete[] lines;
 }
 
 
-void SceneWidget:: increaseCountUp()
+void SceneWidget::increaseCountUp()
 {
     if (settingParameter->step < settingParameter->nsteps * 2){
         settingParameter->step += 1;
         settingParameter->changed = true;
     }
     SceneWidget::upgradeModelInCentralPanel();
-
-
 }
 
 
@@ -225,19 +221,14 @@ void SceneWidget::decreaseCountDown()
     }
 
     SceneWidget::upgradeModelInCentralPanel();
-
 }
 
-void SceneWidget::selectedStepParameter(string parameterInsertedInTextEdit)
+void SceneWidget::selectedStepParameter(int stepNumber)
 {
-    int step = stoi(parameterInsertedInTextEdit);
-    settingParameter->step = step;
+    settingParameter->step = stepNumber;
     settingParameter->changed = true;
     SceneWidget::upgradeModelInCentralPanel();
-
 }
-
-
 
 
 void SceneWidget::upgradeModelInCentralPanel(){
