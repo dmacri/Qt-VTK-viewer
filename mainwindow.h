@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QCommonStyle>
 #include <QMainWindow>
+#include <QStyle>
 
 namespace Ui {
 class MainWindow;
@@ -10,17 +10,17 @@ class MainWindow;
 class QPushButton;
 
 
-class MainWindow : public QMainWindow {
+class MainWindow : public QMainWindow
+{
     Q_OBJECT
 
 public:
     explicit MainWindow(int argc, char* argv[], QWidget* parent = nullptr);
     ~MainWindow();
 
-public slots:
-    void showAboutThisApplicationDialog();
-
 private slots:
+
+    void showAboutThisApplicationDialog();
     void onStepNumberChanged();
 
     void onPlayButtonClicked();
@@ -35,6 +35,14 @@ private slots:
     void onUpdatePositionOnSlider(int value);
 
 private:
+    enum class PlayingDirection
+    {
+        Forward = +1,
+        Backward = -1
+    };
+
+    void playingRequested(PlayingDirection direction);
+
     void configureUIElements(int argc, char* argv[]);
     void setupConnections();
     void configureButtons();
@@ -54,14 +62,6 @@ private:
 
     void setTotalSteps(int totalStepsValue);
     int totalSteps() const;
-
-    enum class PlayingDirection
-    {
-        Forward = +1,
-        Backward = -1
-    };
-
-    void playingRequested(PlayingDirection direction); // direction: +1 = forward, -1 = backward
 
     void changeWhichButtonsAreEnabled();
 

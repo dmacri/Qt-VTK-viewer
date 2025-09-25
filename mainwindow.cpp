@@ -275,7 +275,7 @@ void MainWindow::updateSleepDuration(int value)
     }
     else
     {
-        movingCursorSleep = true;
+        movingCursorSleep = true; // TODO: GB: It is set to "true" only here, should it be somewhere set to false?
     }
     cursorValueSleep = value;
     ui->sleepSlider->setToolTip("Current sleeping value " + QString::number(cursorValueSleep));
