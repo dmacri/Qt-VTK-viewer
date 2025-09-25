@@ -61,11 +61,21 @@ vtkSmartPointer<vtkRenderer> globalRenderer_;
 
 SceneWidget::SceneWidget(QWidget* parent, int argc, char *argv[])
     : QVTKOpenGLNativeWidget(parent)
+    , m_toolTipTimer(new QTimer(this))
+    , m_lastMousePos()
 {
     sceneWidgetVisualizerProxy = new SceneWidgetVisualizerProxy;
     settingParameter = new SettingParameter();
     settingParameter->sceneWidgetVisualizerProxy = sceneWidgetVisualizerProxy;
     settingRenderParameter = new SettingRenderParameter();
+    
+    // Set up tooltip timer
+    m_toolTipTimer->setSingleShot(true);
+    m_toolTipTimer->setInterval(1000); // 1 second delay before showing tooltip
+    connect(m_toolTipTimer, &QTimer::timeout, this, &SceneWidget::showToolTip);
+    
+    // Enable mouse tracking
+    setMouseTracking(true);
 }
 
 
@@ -221,9 +231,44 @@ void SceneWidget::decreaseCountDown()
     if (settingParameter->step  > 1){
         settingParameter->step  -= 1;
         settingParameter->changed = true;
+        settingParameter->firstTime = true;
     }
 
+    renderVtkScene();
     SceneWidget::upgradeModelInCentralPanel();
+}
+
+void SceneWidget::mouseMoveEvent(QMouseEvent* event)
+{
+    QVTKOpenGLNativeWidget::mouseMoveEvent(event);
+    
+    // Update the last mouse position
+    m_lastMousePos = event->pos();
+    
+    // Restart the tooltip timer
+    m_toolTipTimer->stop();
+    m_toolTipTimer->start();
+    // TODO: GB: Ask what should we display, what position?
+    // Optionally, you can show the coordinates immediately in the status bar or elsewhere
+    // statusBar()->showMessage(QString("X: %1, Y: %2").arg(event->x()).arg(event->y()));
+}
+
+void SceneWidget::leaveEvent(QEvent* event)
+{
+    QVTKOpenGLNativeWidget::leaveEvent(event);
+    m_toolTipTimer->stop();
+    QToolTip::hideText();
+}
+
+void SceneWidget::showToolTip()
+{
+    // Show tooltip at the current mouse position
+    QPoint globalPos = mapToGlobal(m_lastMousePos);
+    QToolTip::showText(globalPos, 
+                      QString("X: %1, Y: %2").arg(m_lastMousePos.x()).arg(m_lastMousePos.y()),
+                      this, 
+                      QRect(m_lastMousePos, QSize(1, 1)), 
+                      2000); // Show for 2 seconds
 }
 
 void SceneWidget::selectedStepParameter(int stepNumber)

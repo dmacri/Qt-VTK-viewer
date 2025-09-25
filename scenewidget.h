@@ -2,6 +2,9 @@
 #define SCENEWIDGET_H
 
 #include <QVTKOpenGLNativeWidget.h>
+#include <QTimer>
+#include <QMouseEvent>
+#include <QToolTip>
 #include <vtkDataSet.h>
 #include <vtkRenderer.h>
 #include <vtkSmartPointer.h>
@@ -63,8 +66,17 @@ public slots:
     void increaseCountUp();
     void decreaseCountDown();
 
+private slots:
+    void showToolTip();
+
+protected:
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void leaveEvent(QEvent* event) override;
+
 private:
     SceneWidgetVisualizerProxy* sceneWidgetVisualizerProxy;
+    QTimer* m_toolTipTimer;
+    QPoint m_lastMousePos;
 };
 
 #endif // SCENEWIDGET_H
