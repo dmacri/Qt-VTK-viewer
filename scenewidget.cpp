@@ -89,26 +89,24 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     ConfigCategory* execContext = config.getConfigCategory("DISTRIBUTED");
     int infoFromFile[8];
 
-    const size_t outputFileNameLength = 256;
-    settingParameter->outputFileName = new char[outputFileNameLength];
+    constexpr size_t outputFileNameLength = 256;
+    settingParameter->outputFileName = new char[outputFileNameLength]{};
     string tmpFileName = filename;
     std::size_t positionOfLastPathSeparatorIfFound = tmpFileName.find_last_of("/\\");
     tmpFileName = tmpFileName.substr(0, positionOfLastPathSeparatorIfFound) + "/Output/";
 
     sceneWidgetVisualizerProxy->vis.readConfigurationFile(filename, infoFromFile, settingParameter->outputFileName);
-    settingParameter->outputFileName=(char*)generalContext->getConfigParameter("output_file_name")->getValue();
-
-    tmpFileName += settingParameter->outputFileName;
+    tmpFileName += generalContext->getConfigParameter("output_file_name")->getValue<const char*>();
     tmpFileName.copy(settingParameter->outputFileName, outputFileNameLength);
 
-    settingParameter->dimX =(intptr_t) generalContext->getConfigParameter("number_of_columns")->getValue();
-    settingParameter->dimY = (intptr_t)generalContext->getConfigParameter("number_of_rows")->getValue();
-    int borderSizeX = (intptr_t)execContext->getConfigParameter("border_size_x")->getValue();
-    int borderSizeY =(intptr_t) execContext->getConfigParameter("border_size_y")->getValue();
+    settingParameter->dimX = generalContext->getConfigParameter("number_of_columns")->getValue<int>();
+    settingParameter->dimY = generalContext->getConfigParameter("number_of_rows")->getValue<int>();
+    int borderSizeX = execContext->getConfigParameter("border_size_x")->getValue<int>();
+    int borderSizeY = execContext->getConfigParameter("border_size_y")->getValue<int>();
     int numBorders = 1;
-    settingParameter->nNodeX = (intptr_t) execContext->getConfigParameter("number_node_x")->getValue();
-    settingParameter->nNodeY = (intptr_t) execContext->getConfigParameter("number_node_y")->getValue();
-    settingParameter->nsteps = (intptr_t)generalContext->getConfigParameter("number_steps")->getValue();
+    settingParameter->nNodeX = execContext->getConfigParameter("number_node_x")->getValue<int>();
+    settingParameter->nNodeY = execContext->getConfigParameter("number_node_y")->getValue<int>();
+    settingParameter->nsteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
 
     cout << "dimX " <<settingParameter-> dimX << endl;
     cout << "dimY " << settingParameter-> dimY << endl;

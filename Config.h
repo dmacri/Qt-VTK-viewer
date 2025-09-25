@@ -2,9 +2,11 @@
 #define CONFIG_H
 
 #include <cctype> // isspace()
+#include <stdexcept>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <string>
 using namespace std;
 
 class ConfigParameter{
@@ -26,24 +28,8 @@ public:
         this->type         = type;
     }
 
-    void* getValue()
-    {
-        switch (type)
-        {
-        case int_par:
-            return (void*) (atoi(defaultValue));
-
-            // case double_par:
-            //     return (void*) (atof(defaultValue));
-            //     break;
-
-        case string_par:
-            return (void*) (defaultValue);
-
-        default:
-            return nullptr;
-        }
-    }
+    template<typename RetVal>
+    RetVal getValue() const;
 
     const char* getName() const
     {
@@ -65,6 +51,25 @@ public:
         return type;
     }
 };
+
+template<>
+inline int ConfigParameter::getValue() const
+{
+    if (int_par == type)
+        return std::stoi(defaultValue);
+
+    throw std::runtime_error("Type does not match!");
+}
+
+template<>
+inline const char* ConfigParameter::getValue() const
+{
+    if (string_par == type)
+        return defaultValue;
+
+    throw std::runtime_error("Type does not match!");
+}
+
 
 class ConfigCategory{
 
@@ -323,14 +328,8 @@ public:
             //printf("%s", line);
         }
         fclose(fptr);
-
     }
-
 };
-
-
-
-
 
 
 #endif

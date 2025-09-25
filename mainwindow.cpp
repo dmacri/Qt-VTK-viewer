@@ -101,7 +101,7 @@ void MainWindow::setTotalStepsFromConfiguration(char* configurationFile)
    // QStringList listParameterFromConfiguration = readNLinesFromFile(configurationFile);
    //QString stringNumStep = listParameterFromConfiguration[7];
    //QStringList step = stringNumStep.split(":");
-    const auto totalSteps = (intptr_t) generalContext->getConfigParameter("number_steps")->getValue();
+    const auto totalSteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
     setTotalSteps(totalSteps);
 }
 
