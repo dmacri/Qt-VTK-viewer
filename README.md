@@ -4,7 +4,7 @@ A CMake/C++ project for embedding a VTK 3D view in a Qt window.
 ![Qt VTK Viewer on Windows](doc/screenshot.png)
 
 ## Prerequisites
-- Qt 5.x downloaded.
+- Qt 6.x downloaded.
 - VTK 9.x source downloaded & compiled. See [Build-VTK.md](doc/Build-VTK.md) for a guide to compile VTK.
 - **OOpenCAL source code available locally.**  
   The project uses headers from the OOpenCAL library.  

@@ -18,9 +18,9 @@ public:
         this->size             = size;
     }
 
-    void readFile(char* name, char* configuration_path) // TODO: GB: Not used
+    void readFile(char* name, char* configuration_path)
     {
-        //...
+        #warning "Ask Alessio or Andrea about the function - how it should be implemented, or should it be removed?"
     }
 
     const char* getName() const

@@ -37,10 +37,18 @@ void MainWindow::configureUIElements(int argc, char* argv[])
 
 void MainWindow::setupConnections()
 {
+    connectMenuActions();
+
     connectButtons();
     connectSliders();
 
     connect(ui->positionLineEdit, &QLineEdit::returnPressed, this, &MainWindow::onStepNumberInputed);
+}
+
+void MainWindow::connectMenuActions()
+{
+    connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
+    connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::showAboutThisApplicationDialog);
 }
 
 void MainWindow::addValidatorForPositionInputWidget()
@@ -98,9 +106,6 @@ void MainWindow::setTotalStepsFromConfiguration(char* configurationFile)
     config.readConfigFile();
     ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
 
-   // QStringList listParameterFromConfiguration = readNLinesFromFile(configurationFile);
-   //QString stringNumStep = listParameterFromConfiguration[7];
-   //QStringList step = stringNumStep.split(":");
     const auto totalSteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
     setTotalSteps(totalSteps);
 }
@@ -152,31 +157,11 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::showAboutDialog()
+void MainWindow::showAboutThisApplicationDialog()
 {
     QMessageBox::information(this, "About",
                              "By Davide Macri.\n"
                              "Configurator for visualizer");
-}
-
-void MainWindow::showOpenFileDialog()
-{
-    QString fileName = QFileDialog::getOpenFileName(
-        this, /*caption=*/tr("Open file"), /*dir=*/"", /*filter=*/"VTK Files (*.vtk)");
-
-    QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly))
-    {
-        QMessageBox::warning(this, "File can not be opened!", "The file '" + fileName + "' can not be opened!");
-        return;
-    }
-
-    if (!file.exists())
-    {
-        QMessageBox::warning(this, "File does not exist!", "The file '" + fileName + "' does not exist!");
-        return;
-    }
-    // TODO: GB: Should this function do something? Or it is to remove?
 }
 
 void MainWindow::playingRequested(int direction)
@@ -325,23 +310,4 @@ void MainWindow::onUpdatePositionOnSlider(int value)
     currentStep = value;
 
     setPositionOnWidgets(value, /*updateSlider=*/false);
-}
-
-QStringList MainWindow::readNLinesFromFile(const QString& filePath)
-{
-    QFile file(filePath);
-    if (! file.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        qDebug() << "Unable to open file '" << filePath << "'";
-        return {};
-    }
-
-    QStringList lines;
-    for (QTextStream stream(&file); !stream.atEnd(); )
-    {
-        QString line = stream.readLine();
-        lines.append(line);
-    }
-
-    return lines;
 }
