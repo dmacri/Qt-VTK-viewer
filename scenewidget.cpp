@@ -165,6 +165,9 @@ void SceneWidget::setupVtkScene()
     vtkNew<vtkInteractorStyleImage> style;
     interactor()->SetInteractorStyle(style);
 
+    // Set the scene widget pointer in the settings
+    settingParameter->sceneWidget = this;
+
     renderWindow()->SetWindowName("Visualizer");
 }
 
@@ -277,26 +280,32 @@ void KeypressCallbackFunction(vtkObject* caller,
     vtkRenderWindowInteractor* key = static_cast<vtkRenderWindowInteractor*>(caller);
 
     string keyPressed=key->GetKeySym();
-    SettingParameter* cam = (SettingParameter*) clientData;
-    if (keyPressed.compare("Up")==0)
+    SettingParameter* cam = static_cast<SettingParameter*>(clientData);
+    
+    if (keyPressed == "Up")
     {
         if (cam->step < cam->nsteps * 2)
             cam->step += 1;
         cam->changed = true;
 
+        if (cam->sceneWidget)
+            cam->sceneWidget->changedStepNumberWithKeyboardKeys(cam->step);
     }
 
-    if (keyPressed.compare("Down")==0)
+    if (keyPressed == "Down")
     {
         if (cam->step  > 1)
             cam->step  -= 1;
         cam->changed = true;
+
+        if (cam->sceneWidget)
+            cam->sceneWidget->changedStepNumberWithKeyboardKeys(cam->step);
     }
     if (keyPressed.compare("i")==0)
     {
         cam->insertAction = true;
     }
-    if (keyPressed.compare("s")==0)
+    if (keyPressed.compare("s")==0) // TODO: GB: Why that magic numbers?
     {
         cam->step = 98;
         cam->changed = true;

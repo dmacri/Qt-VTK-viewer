@@ -7,26 +7,24 @@
 #include "Config.h"
 
 
-Config::Config(char *configuration_path)
+Config::Config(const char *configuration_path): configuration_path{configuration_path}
 {
-    this->configuration_path =  configuration_path;
-
     //GENERAL
     const int size2D = 4;
     ConfigParameter** configParameters = new ConfigParameter*[size2D];
-    configParameters[0] = new ConfigParameter("number_of_columns", "610"          , ConfigParameter::int_par   );
-    configParameters[1] = new ConfigParameter("number_of_rows"   , "496"          , ConfigParameter::int_par   );
-    configParameters[2] = new ConfigParameter("number_steps"     , "4000"         , ConfigParameter::int_par   );
-    configParameters[3] = new ConfigParameter("output_file_name" , "sciddicaTout" , ConfigParameter::string_par);
+    configParameters[0] = new ConfigParameter("number_of_columns", "610"         , ConfigParameter::int_par   );
+    configParameters[1] = new ConfigParameter("number_of_rows"   , "496"         , ConfigParameter::int_par   );
+    configParameters[2] = new ConfigParameter("number_steps"     , "4000"        , ConfigParameter::int_par   );
+    configParameters[3] = new ConfigParameter("output_file_name" , "sciddicaTout", ConfigParameter::string_par);
 
     ConfigCategory* GENERAL = new ConfigCategory("GENERAL", configParameters, size2D);
 
     //DISTRIBUTED
     static const int MPI2DSize = 4;
     ConfigParameter** configParameters_MPI2D = new ConfigParameter*[MPI2DSize];
-    configParameters_MPI2D[0] = new ConfigParameter("border_size_x", "1", ConfigParameter::int_par   );
-    configParameters_MPI2D[1] = new ConfigParameter("border_size_y", "1", ConfigParameter::int_par   );
-    configParameters_MPI2D[2] = new ConfigParameter("number_node_x", "4", ConfigParameter::int_par   );
+    configParameters_MPI2D[0] = new ConfigParameter("border_size_x", "1", ConfigParameter::int_par);
+    configParameters_MPI2D[1] = new ConfigParameter("border_size_y", "1", ConfigParameter::int_par);
+    configParameters_MPI2D[2] = new ConfigParameter("number_node_x", "4", ConfigParameter::int_par);
     configParameters_MPI2D[3] = new ConfigParameter("number_node_y", "4", ConfigParameter::int_par);
 
     ConfigCategory* DISTRIBUTED = new ConfigCategory("DISTRIBUTED", configParameters_MPI2D, MPI2DSize);
@@ -34,8 +32,8 @@ Config::Config(char *configuration_path)
     //LOAD_BALANCING
     static const int MPI2DLBSize = 2;
     ConfigParameter** configParameters_MPI2DLB = new ConfigParameter*[MPI2DLBSize];
-    configParameters_MPI2DLB[0] = new ConfigParameter("firstLB", "100", ConfigParameter::int_par   );
-    configParameters_MPI2DLB[1] = new ConfigParameter("stepLB" , "100", ConfigParameter::int_par   );
+    configParameters_MPI2DLB[0] = new ConfigParameter("firstLB", "100", ConfigParameter::int_par);
+    configParameters_MPI2DLB[1] = new ConfigParameter("stepLB" , "100", ConfigParameter::int_par);
     ConfigCategory* LOAD_BALANCING = new ConfigCategory("LOAD_BALANCING", configParameters_MPI2DLB, MPI2DLBSize);
 
     // //2D MPI LB2

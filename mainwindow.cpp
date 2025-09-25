@@ -38,6 +38,7 @@ void MainWindow::setupConnections()
     connectSliders();
 
     connect(ui->positionSpinBox, &QSpinBox::editingFinished, this, &MainWindow::onStepNumberChanged);
+    connect(ui->sceneWidget, &SceneWidget::changedStepNumberWithKeyboardKeys, ui->updatePositionSlider, &QSlider::setValue);
 }
 
 void MainWindow::connectMenuActions()

@@ -5,12 +5,12 @@
 
 class Config
 {
-    char* configuration_path;
+    const char* configuration_path;
     static constexpr int configCategorySize = 5;
     ConfigCategory* configCategory[configCategorySize];
 
 public:
-    Config(char* configuration_path);
+    Config(const char* configuration_path);
 
     void setConfiguration_path(char* value)
     {

@@ -8,7 +8,8 @@
 #include <vtkNamedColors.h>
 #include "visualiserProxy/SceneWidgetVisualizerProxyDefault.h"
 
-using namespace std;
+
+class SceneWidget;
 
 struct  SettingParameter {
     int step;
@@ -25,6 +26,7 @@ struct  SettingParameter {
     int font_size=18;
     string edittext;// an empty string for editting
     SceneWidgetVisualizerProxy* sceneWidgetVisualizerProxy;
+    SceneWidget* sceneWidget;
 };
 
 class  SettingRenderParameter : public QVTKOpenGLNativeWidget{
@@ -34,7 +36,8 @@ public:
     vtkSmartPointer<vtkGenericOpenGLRenderWindow>renderWindow;
 };
 
-class SceneWidget : public QVTKOpenGLNativeWidget {
+class SceneWidget : public QVTKOpenGLNativeWidget
+{
     Q_OBJECT
 public:
     explicit SceneWidget(QWidget* parent = nullptr, int argc=0, char* argv[]=nullptr);
@@ -53,6 +56,8 @@ public:
 
     void renderVtkScene();
 
+signals:
+    void changedStepNumberWithKeyboardKeys(int stepNumber);
 
 public slots:
     void increaseCountUp();
