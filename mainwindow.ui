@@ -107,24 +107,21 @@
        </spacer>
       </item>
       <item>
-       <widget class="QLineEdit" name="positionLineEdit">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>50</horstretch>
-          <verstretch>100</verstretch>
-         </sizepolicy>
-        </property>
+       <widget class="QSpinBox" name="positionSpinBox">
         <property name="maximumSize">
          <size>
-          <width>50</width>
+          <width>80</width>
           <height>16777215</height>
          </size>
         </property>
-        <property name="text">
-         <string>1</string>
+        <property name="buttonSymbols">
+         <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+        </property>
+        <property name="prefix">
+         <string>step: </string>
+        </property>
+        <property name="minimum">
+         <number>1</number>
         </property>
        </widget>
       </item>

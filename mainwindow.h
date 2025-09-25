@@ -37,7 +37,6 @@ private slots:
 private:
     void configureUIElements(int argc, char* argv[]);
     void setupConnections();
-    void addValidatorForPositionInputWidget();
     void configureButtons();
     void configureButton(QPushButton* button, QStyle::StandardPixmap icon);
     void configureSliders();

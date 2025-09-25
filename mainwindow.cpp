@@ -26,7 +26,6 @@ MainWindow::MainWindow(int argc, char* argv[], QWidget* parent) : QMainWindow(nu
 
 void MainWindow::configureUIElements(int argc, char* argv[])
 {
-    addValidatorForPositionInputWidget();
     configureButtons();
     configureSliders();
     loadStrings();
@@ -42,19 +41,13 @@ void MainWindow::setupConnections()
     connectButtons();
     connectSliders();
 
-    connect(ui->positionLineEdit, &QLineEdit::returnPressed, this, &MainWindow::onStepNumberInputed);
+    connect(ui->positionSpinBox, &QSpinBox::editingFinished, this, &MainWindow::onStepNumberInputed);
 }
 
 void MainWindow::connectMenuActions()
 {
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::showAboutThisApplicationDialog);
-}
-
-void MainWindow::addValidatorForPositionInputWidget()
-{
-    QIntValidator* validator = new QIntValidator(ui->positionLineEdit);
-    ui->positionLineEdit->setValidator(validator);
 }
 
 void MainWindow::configureButtons()
@@ -80,7 +73,6 @@ void MainWindow::configureSliders()
     ui->sleepSlider->setMinimum(1);
     ui->sleepSlider->setMaximum(100);
     ui->sleepSlider->setValue(50);
-    // ui->sleepSlider->setStyleSheet(styleSheetSleep);
 }
 void MainWindow::configureCursorPosition()
 {
@@ -114,6 +106,7 @@ void MainWindow::setTotalSteps(int totalStepsValue)
 {
     ui->totalStep->setText(QString("/") + QString::number(totalStepsValue));
     ui->updatePositionSlider->setMaximum(totalStepsValue);
+    ui->positionSpinBox->setMaximum(totalStepsValue);
 }
 
 int MainWindow::totalSteps() const
@@ -138,7 +131,7 @@ void MainWindow::connectSliders()
 }
 
 void MainWindow::loadStrings()
-{
+{ // TODO: GB: Maybe we can move the file content here and make them ready for translation (surrount text with `tr(...)`)?
     QString iniFilePath = QApplication::applicationDirPath() + "/app_strings.ini";
     QSettings settings(iniFilePath, QSettings::IniFormat);
     qDebug() <<"Il file path è" << settings.fileName();
@@ -182,8 +175,6 @@ void MainWindow::playingRequested(int direction)
             int sleep = totalSteps() / 2 - cursorValueSleep;
             QThread::msleep(sleep * 5);
         }
-
-        QApplication::processEvents();
 
         if (!isPlaying || (direction < 0 && currentStep == 0))
         {
@@ -247,31 +238,17 @@ void MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
         QSignalBlocker sliderBlocker(ui->updatePositionSlider);
         ui->updatePositionSlider->setValue(stepPosition);
     }
-    ui->positionLineEdit->setText(QString::number(stepPosition));
+    ui->positionSpinBox->setValue(stepPosition);
     ui->sceneWidget->selectedStepParameter(stepPosition);
 }
 
 void MainWindow::onStepNumberInputed()
 {
-    // TODO: GB: Why not to use SpinBox instead of LineEdit?
-    QString text = ui->positionLineEdit->text();
-    if (!text.isEmpty())
+    auto step = ui->positionSpinBox->value();
+    if (step != currentStep)
     {
-        bool conversionOk;
-        int step = text.toInt(&conversionOk);
-        if (conversionOk)
-        {
-            currentStep = step;
-            setPositionOnWidgets(currentStep);
-        }
-        else
-        {
-            QMessageBox::critical(this, tr("Errore"), tr("Problemi con il numero che hai inserito"));
-        }
-    }
-    else
-    {
-        QMessageBox::critical(this, tr("Errore"), tr("Inserisci un valore numerico"));
+        currentStep = step;
+        setPositionOnWidgets(currentStep);
     }
 }
 
@@ -303,8 +280,8 @@ void MainWindow::onUpdatePositionOnSlider(int value)
     qDebug() << "Step is " << value;
 
     {
-        QSignalBlocker blockLineEdit(ui->positionLineEdit);
-        ui->positionLineEdit->setText(QString::number(value));
+        QSignalBlocker blockSpinBox(ui->positionSpinBox);
+        ui->positionSpinBox->setValue(value);
     }
 
     currentStep = value;
