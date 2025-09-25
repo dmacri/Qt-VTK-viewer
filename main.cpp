@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
 {
     if (1 == argc)
     {
-        std::cerr << "Usage: " << argv[0] << " <configurationFilePath>";
+        std::cerr << "Usage: " << argv[0] << " <configurationFilePath>" << std::endl;
         return 1;
     }
 
