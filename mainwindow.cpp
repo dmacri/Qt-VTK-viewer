@@ -1,20 +1,14 @@
 #include <QCommonStyle>
 #include <QSettings>
-#include <QLabel>
-#include <QThread>
-#include <QFile>
+#include <QThread> // QThread::msleep
 #include <QDebug>
-#include <QFileDialog>
 #include <QMessageBox>
-#include <QIntValidator>
 #include <QPushButton>
+#include <utility> // std::to_underlying, requires C++23
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "Config.h"
-
-#include <vtkDataSetReader.h>
-#include <Visualizer.hpp>
 
 
 MainWindow::MainWindow(int argc, char* argv[], QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow)
@@ -32,6 +26,8 @@ void MainWindow::configureUIElements(int argc, char* argv[])
     initializeSceneWidget(argc, argv);
     showInputFilePathOnBarLabel(argv[1]);
     setTotalStepsFromConfiguration(argv[1]);
+
+    changeWhichButtonsAreEnabled();
 }
 
 void MainWindow::setupConnections()
@@ -41,7 +37,7 @@ void MainWindow::setupConnections()
     connectButtons();
     connectSliders();
 
-    connect(ui->positionSpinBox, &QSpinBox::editingFinished, this, &MainWindow::onStepNumberInputed);
+    connect(ui->positionSpinBox, &QSpinBox::editingFinished, this, &MainWindow::onStepNumberChanged);
 }
 
 void MainWindow::connectMenuActions()
@@ -157,11 +153,11 @@ void MainWindow::showAboutThisApplicationDialog()
                              "Configurator for visualizer");
 }
 
-void MainWindow::playingRequested(int direction)
+void MainWindow::playingRequested(PlayingDirection direction)
 {
-    currentStep = std::clamp(currentStep + direction, 0, totalSteps() - 1);
+    currentStep = std::clamp(currentStep + std::to_underlying(direction), 0, totalSteps() - 1);
 
-    for (int step = currentStep; step >= 0 && step <= totalSteps(); step += direction)
+    for (int step = currentStep; step >= 0 && step <= totalSteps(); step += std::to_underlying(direction))
     {
         currentStep = step;
 
@@ -176,7 +172,7 @@ void MainWindow::playingRequested(int direction)
             QThread::msleep(sleep * 5);
         }
 
-        if (!isPlaying || (direction < 0 && currentStep == 0))
+        if (!isPlaying || (std::to_underlying(direction) < 0 && currentStep == 0))
         {
             break;
         }
@@ -194,7 +190,7 @@ void MainWindow::onPlayButtonClicked()
     {
         isPlaying = true;
         isBacking = false;
-        playingRequested(+1);
+        playingRequested(PlayingDirection::Forward);
     }
 }
 
@@ -214,13 +210,13 @@ void MainWindow::onBackButtonClicked()
 {
     isPlaying = true;
     isBacking = true;
-    playingRequested(-1);
+    playingRequested(PlayingDirection::Backward);
 }
 
 void MainWindow::onLeftButtonClicked()
 {
     ui->sceneWidget->decreaseCountDown();
-    currentStep = std::max(currentStep - 1, 0);
+    currentStep = std::max(currentStep - 1, 0); // TODO: GB: What is minimum acceptable step nr? is it 0 or 1?
     setPositionOnWidgets(currentStep);
 }
 
@@ -240,9 +236,19 @@ void MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
     }
     ui->positionSpinBox->setValue(stepPosition);
     ui->sceneWidget->selectedStepParameter(stepPosition);
+
+    changeWhichButtonsAreEnabled();
 }
 
-void MainWindow::onStepNumberInputed()
+void MainWindow::changeWhichButtonsAreEnabled()
+{
+    ui->rightButton->setDisabled(currentStep == totalSteps());
+    ui->playButton->setDisabled(currentStep == totalSteps());
+    ui->leftButton->setDisabled(currentStep <= 1);
+    ui->backButton->setDisabled(currentStep <= 1);
+}
+
+void MainWindow::onStepNumberChanged()
 {
     auto step = ui->positionSpinBox->value();
     if (step != currentStep)

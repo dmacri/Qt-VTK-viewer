@@ -21,7 +21,7 @@ public slots:
     void showAboutThisApplicationDialog();
 
 private slots:
-    void onStepNumberInputed();
+    void onStepNumberChanged();
 
     void onPlayButtonClicked();
     void onStopButtonClicked();
@@ -55,7 +55,15 @@ private:
     void setTotalSteps(int totalStepsValue);
     int totalSteps() const;
 
-    void playingRequested(int direction); // direction: +1 = forward, -1 = backward
+    enum class PlayingDirection
+    {
+        Forward = +1,
+        Backward = -1
+    };
+
+    void playingRequested(PlayingDirection direction); // direction: +1 = forward, -1 = backward
+
+    void changeWhichButtonsAreEnabled();
 
 
     Ui::MainWindow* ui;

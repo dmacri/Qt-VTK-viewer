@@ -5,7 +5,8 @@ project(QtVtkViewer)
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # List source files & resources
 file(GLOB Sources *.cpp *.hpp)
