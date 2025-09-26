@@ -13,24 +13,8 @@
 
 
 class SceneWidget;
+class SettingParameter;
 
-struct  SettingParameter {
-    int step;
-    int nsteps;
-    bool changed;
-    bool firstTime;
-    bool insertAction;
-    int dimX;
-    int dimY;
-    int nNodeX;
-    int nNodeY;
-    char *outputFileName;
-    int numberOfLines ;
-    int font_size=18;
-    string edittext;// an empty string for editting
-    SceneWidgetVisualizerProxy* sceneWidgetVisualizerProxy;
-    SceneWidget* sceneWidget;
-};
 
 class  SettingRenderParameter : public QVTKOpenGLNativeWidget{
 public:
