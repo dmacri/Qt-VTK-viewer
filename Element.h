@@ -1,12 +1,4 @@
-#ifndef ELEMENT_H
-#define ELEMENT_H
-
-#include <iostream>
-#include <string.h>
-#include <stdio.h>
-#include <unordered_map>
-
-using namespace std;
+#pragma once
 
 #ifdef __CUDACC__
   #define OPENCALF __host__ __device__ 
@@ -14,41 +6,15 @@ using namespace std;
   #define OPENCALF inline
 #endif
 
-class rgb{
-	int red, green, blue, alpha;
-
-	public:
-	rgb(int red, int green, int blue, int alpha=0):red(red),green(green),blue(blue),alpha(alpha){
-
-	}
-	int getRed(){
-		return this->red;
-	}
-	int getGreen(){
-		return this->green;
-	}
-	int getBlue(){
-		return this->blue;
-	}
-	int getAlpha(){
-		return this->alpha;
-	}
-};
-
-class Element{
-	
-	
-
-	public:
+// TODO: GB: OOpenCal has the class, can we remove its from here?
+// class Element
+// {
+// 	public:
+// 		virtual void composeElement(char* str) = 0;
 		
-		virtual void composeElement(char* str) = 0;
+// 		virtual char* stringEncoding() = 0;
 		
-		virtual char* stringEncoding() = 0;
-		
-		virtual rgb* outputValue() = 0;
+//         virtual Color* outputValue() = 0;
 
-		virtual void startStep(int step) = 0;
-	
-};
-
-#endif
+// 		virtual void startStep(int step) = 0;
+// };
