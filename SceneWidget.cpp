@@ -99,7 +99,7 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     tmpFileName = tmpFileName.substr(0, positionOfLastPathSeparatorIfFound) + "/Output/";
 
     sceneWidgetVisualizerProxy->vis.readConfigurationFile(filename, infoFromFile, settingParameter->outputFileName);
-    tmpFileName += generalContext->getConfigParameter("output_file_name")->getValue<const char*>();
+    tmpFileName += generalContext->getConfigParameter("output_file_name")->getValue<string>();
     tmpFileName.copy(settingParameter->outputFileName, outputFileNameLength);
 
     settingParameter->dimX = generalContext->getConfigParameter("number_of_columns")->getValue<int>();

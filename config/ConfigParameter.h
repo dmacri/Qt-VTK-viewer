@@ -30,7 +30,7 @@ public:
         return name;
     }
 
-    const auto& getDefaultValue()
+    const auto& getDefaultValue() const
     {
         return defaultValue;
     }
@@ -61,10 +61,10 @@ inline int ConfigParameter::getValue() const
 }
 
 template<>
-inline const char* ConfigParameter::getValue() const
+inline std::string ConfigParameter::getValue() const
 {
     if (string_par == type)
-        return defaultValue.c_str();
+        return defaultValue;
 
     throw std::runtime_error("Type does not match!");
 }

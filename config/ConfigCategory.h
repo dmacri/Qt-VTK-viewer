@@ -55,4 +55,9 @@ public:
             configParameter->setDefaultValue(value);
         }
     }
+
+    bool operator==(const std::string& name) const
+    {
+        return getName() == name;
+    }
 };

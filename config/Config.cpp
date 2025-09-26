@@ -127,14 +127,13 @@ void Config::writeConfigFile() const
         throw std::runtime_error(std::string("Can not open file: '") + configuration_path + "' for writing!");
     }
 
-    for (int i = 0; i < configCategories.size(); ++i)
+    for (auto& configCategory : configCategories)
     {
-        if (configCategories[i].getSize() > 0)
+        if (configCategory.getSize() > 0)
         {
-            file << configCategories[i].getName() << ":\n";
-            for (int p = 0; p < configCategories[i].getSize(); ++p)
+            file << configCategory.getName() << ":\n";
+            for (auto& configParameter: configCategory.getConfigParameters())
             {
-                auto configParameter = configCategories[i].getConfigParameters()[p];
                 file << '\t'
                      << configParameter.getName() << '='
                      << configParameter.getDefaultValue()
@@ -146,10 +145,10 @@ void Config::writeConfigFile() const
 
 ConfigCategory *Config::getConfigCategory(const std::string& name)
 {
-    for(int i = 0; i < configCategories.size(); i++)
+    auto it = std::find(begin(configCategories), end(configCategories), name);
+    if (it != end(configCategories))
     {
-        if(configCategories[i].getName() == name)
-            return &configCategories[i];
+        return &(*it);
     }
     return nullptr;
 }
