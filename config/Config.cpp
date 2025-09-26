@@ -127,12 +127,12 @@ void Config::writeConfigFile() const
         throw std::runtime_error(std::string("Can not open file: '") + configuration_path + "' for writing!");
     }
 
-    for (auto& configCategory : configCategories)
+    for (const auto& configCategory : configCategories)
     {
         if (configCategory.getSize() > 0)
         {
             file << configCategory.getName() << ":\n";
-            for (auto& configParameter: configCategory.getConfigParameters())
+            for (const auto& configParameter: configCategory.getConfigParameters())
             {
                 file << '\t'
                      << configParameter.getName() << '='
