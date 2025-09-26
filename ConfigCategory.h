@@ -1,56 +1,58 @@
 #pragma once
 
-#include <cstring>
+#include <string>
+#include <vector>
+#include <algorithm>
 #include "ConfigParameter.h"
 
 
 class ConfigCategory
 {
-    const char* name;
-    ConfigParameter** configParameters;
-    int size;
+    std::string name;
+    std::vector<ConfigParameter> configParameters;
 
 public:
-    ConfigCategory(const char* name, ConfigParameter** configParameters, int size)
-        : name{name}, configParameters{configParameters}, size{size}
+    ConfigCategory(std::string name, std::vector<ConfigParameter> params)
+        : name{std::move(name)}, configParameters{std::move(params)}
     {}
 
-    void readFile(char* name, char* configuration_path)
+    void readFile(char* /*name*/, char* /*configuration_path*/)
     {
         #warning "Ask Alessio or Andrea about the function - how it should be implemented, or should it be removed?"
     }
 
-    const char* getName() const
+    const std::string& getName() const
     {
         return name;
     }
 
-    int getSize() const
+    auto getSize() const
     {
-        return size;
+        return configParameters.size();
     }
 
-    ConfigParameter** getConfigParameters()
+    std::vector<ConfigParameter>& getConfigParameters()
     {
         return configParameters;
     }
 
-    ConfigParameter* getConfigParameter(const char* name)
+    const std::vector<ConfigParameter>& getConfigParameters() const
     {
-        for(int i = 0; i < size; i++)
-        {
-            if(configParameters[i]->getName() == name)
-            {
-                return configParameters[i];
-            }
-        }
-        return nullptr;
+        return configParameters;
     }
 
-    void setConfigParameterValue(const char* name, const char* value)
+    ConfigParameter* getConfigParameter(const std::string& paramName)
     {
-        ConfigParameter* configParameter = getConfigParameter(name);
-        if (configParameter)
+        auto it = std::find_if(configParameters.begin(), configParameters.end(),
+                               [&](const ConfigParameter& p) { return p.getName() == paramName; });
+        return (it != configParameters.end()) ? &*it : nullptr;
+    }
+
+    void setConfigParameterValue(const std::string& paramName, const std::string& value)
+    {
+        if (auto* configParameter = getConfigParameter(paramName))
+        {
             configParameter->setDefaultValue(value);
+        }
     }
 };

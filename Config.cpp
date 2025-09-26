@@ -1,8 +1,8 @@
 #include <algorithm>
 #include <cctype> // isspace()
 #include <iostream>
-#include <qdebug.h>
-#include <qglobal.h>
+#include <QDebug>
+#include <QtGlobal>
 #include <stdexcept> // std::runtime_error
 #include <string>
 #include <fstream>
@@ -52,79 +52,72 @@ void remove_spaces(std::string& s)
 } // namespace
 
 
-Config::Config(const char *configuration_path): configuration_path{configuration_path}
+Config::Config(const std::string& configuration_path)
+    : configuration_path{configuration_path}
 {
-    //GENERAL
-    const int size2D = 4;
-    ConfigParameter** configParameters = new ConfigParameter*[size2D];
-    configParameters[0] = new ConfigParameter("number_of_columns", "610"         , ConfigParameter::int_par   );
-    configParameters[1] = new ConfigParameter("number_of_rows"   , "496"         , ConfigParameter::int_par   );
-    configParameters[2] = new ConfigParameter("number_steps"     , "4000"        , ConfigParameter::int_par   );
-    configParameters[3] = new ConfigParameter("output_file_name" , "sciddicaTout", ConfigParameter::string_par);
+    configCategories.push_back(ConfigCategory{
+        "GENERAL",
+        {
+            {"number_of_columns", "610",  ConfigParameter::int_par},
+            {"number_of_rows",    "496",  ConfigParameter::int_par},
+            {"number_steps",      "4000", ConfigParameter::int_par},
+            {"output_file_name",  "sciddicaTout", ConfigParameter::string_par}
+        }
+    });
+    configCategories.push_back(ConfigCategory{
+        "DISTRIBUTED",
+        {
+            {"border_size_x", "1", ConfigParameter::int_par},
+            {"border_size_y", "1", ConfigParameter::int_par},
+            {"number_node_x", "4", ConfigParameter::int_par},
+            {"number_node_y", "4", ConfigParameter::int_par}
+        }
+    });
 
-    ConfigCategory* GENERAL = new ConfigCategory("GENERAL", configParameters, size2D);
+    configCategories.push_back(ConfigCategory{
+        "LOAD_BALANCING",
+        {
+            {"firstLB", "100", ConfigParameter::int_par},
+            {"stepLB",  "100", ConfigParameter::int_par}
+        }
+    });
 
-    //DISTRIBUTED
-    static const int MPI2DSize = 4;
-    ConfigParameter** configParameters_MPI2D = new ConfigParameter*[MPI2DSize];
-    configParameters_MPI2D[0] = new ConfigParameter("border_size_x", "1", ConfigParameter::int_par);
-    configParameters_MPI2D[1] = new ConfigParameter("border_size_y", "1", ConfigParameter::int_par);
-    configParameters_MPI2D[2] = new ConfigParameter("number_node_x", "4", ConfigParameter::int_par);
-    configParameters_MPI2D[3] = new ConfigParameter("number_node_y", "4", ConfigParameter::int_par);
+    // configCategories.push_back(ConfigCategory{
+    //     "MPI2DLB2DNaive",
+    //     {}
+    // });
+    // configCategories.push_back(ConfigCategory{
+    //     "MPI2DLB2DHierarchical",
+    //     {}
+    // });
+    // configCategories.push_back(ConfigCategory{
+    //     "MPI2DSMART",
+    //     {}
+    // });
+    // configCategories.push_back(ConfigCategory{
+    //     "CUDA2D",
+    //     {}
+    // });
 
-    ConfigCategory* DISTRIBUTED = new ConfigCategory("DISTRIBUTED", configParameters_MPI2D, MPI2DSize);
 
-    //LOAD_BALANCING
-    static const int MPI2DLBSize = 2;
-    ConfigParameter** configParameters_MPI2DLB = new ConfigParameter*[MPI2DLBSize];
-    configParameters_MPI2DLB[0] = new ConfigParameter("firstLB", "100", ConfigParameter::int_par);
-    configParameters_MPI2DLB[1] = new ConfigParameter("stepLB" , "100", ConfigParameter::int_par);
-    ConfigCategory* LOAD_BALANCING = new ConfigCategory("LOAD_BALANCING", configParameters_MPI2DLB, MPI2DLBSize);
+    configCategories.push_back(ConfigCategory{
+        "MULTICUDA",
+        {
+            {"number_of_gpus_per_node", "2", ConfigParameter::int_par}
+        }
+    });
 
-    // //2D MPI LB2
-    // static const int MPI2DLB2DNaiveSize = 0;
-    // ConfigCategory*  MPI2DLB2DNaive = new ConfigCategory("MPI2DLB2DNaive", NULL, MPI2DLB2DNaiveSize);
+    // configCategories.push_back(ConfigCategory{
+    //     "MULTICUDA2DSMART",
+    //     {}
+    // });
 
-    // //2D MPI LB3
-    // static const int MPI2DLB2DHierarchicalSize = 0;
-    // ConfigCategory* MPI2DLB2DHierarchical = new ConfigCategory("MPI2DLB2DHierarchical", NULL, MPI2DLB2DHierarchicalSize);
-
-    // //2D MPI SMART
-    // static const int MPI2DSMARTSize = 0;
-    // ConfigCategory* MPI2DSMART = new ConfigCategory("MPI2DSMART", NULL, MPI2DSMARTSize);
-
-    // //2D CUDA
-    // static const int CUDA2DSize = 0;
-    // ConfigCategory* CUDA2D = new ConfigCategory("CUDA2D", NULL, CUDA2DSize);
-
-    //MULTICUDA
-    static const int MULTICUDA2DSize = 1;
-    ConfigParameter** configParameters_MULTICUDA2D = new ConfigParameter*[MULTICUDA2DSize];
-    configParameters_MULTICUDA2D[0] = new ConfigParameter("number_of_gpus_per_node", "2", ConfigParameter::int_par   );
-
-    ConfigCategory* MULTICUDA = new ConfigCategory("MULTICUDA", configParameters_MULTICUDA2D, MULTICUDA2DSize);
-
-    // //2D MULTICUDASMART
-    // static const int MULTICUDA2DSMARTSize = 0;
-    // ConfigCategory* MULTICUDA2DSMART = new ConfigCategory("MULTICUDA2DSMART", NULL, MULTICUDA2DSMARTSize);
-
-    //SHARED
-    static const int SHAREDSize = 1;
-    ConfigParameter** configParameters_SHARED = new ConfigParameter*[SHAREDSize];
-    configParameters_SHARED[0] = new ConfigParameter("chunk_size", "1", ConfigParameter::int_par   );
-
-    ConfigCategory* SHARED = new ConfigCategory("SHARED", configParameters_SHARED, SHAREDSize);
-
-    configCategory[0] = GENERAL;
-    configCategory[1] = DISTRIBUTED;
-    configCategory[2] = LOAD_BALANCING;
-    // configCategory[3] = MPI2DLB2DNaive;
-    // configCategory[4] = MPI2DLB2DHierarchical;
-    // configCategory[5] = MPI2DSMART;
-    // configCategory[6] = CUDA2D;
-    configCategory[3] = MULTICUDA;
-    // configCategory[8] = MULTICUDA2DSMART;
-    configCategory[4] = SHARED;
+    configCategories.push_back(ConfigCategory{
+        "SHARED",
+        {
+            {"chunk_size", "1", ConfigParameter::int_par}
+        }
+    });
 }
 
 void Config::writeConfigFile() const
@@ -135,29 +128,29 @@ void Config::writeConfigFile() const
         throw std::runtime_error(std::string("Can not open file: '") + configuration_path + "' for writing!");
     }
 
-    for (int i = 0; i < configCategorySize; ++i)
+    for (int i = 0; i < configCategories.size(); ++i)
     {
-        if (configCategory[i]->getSize() > 0)
+        if (configCategories[i].getSize() > 0)
         {
-            file << configCategory[i]->getName() << ":\n";
-            for (int p = 0; p < configCategory[i]->getSize(); ++p)
+            file << configCategories[i].getName() << ":\n";
+            for (int p = 0; p < configCategories[i].getSize(); ++p)
             {
-                auto* configParameter = configCategory[i]->getConfigParameters()[p];
+                auto configParameter = configCategories[i].getConfigParameters()[p];
                 file << '\t'
-                     << configParameter->getName() << '='
-                     << configParameter->getDefaultValue()
+                     << configParameter.getName() << '='
+                     << configParameter.getDefaultValue()
                      << '\n';
             }
         }
     }
 }
 
-ConfigCategory *Config::getConfigCategory(const char *name)
+ConfigCategory *Config::getConfigCategory(const std::string& name)
 {
-    for(int i = 0; i < configCategorySize; i++)
+    for(int i = 0; i < configCategories.size(); i++)
     {
-        if(strcmp(name, configCategory[i]->getName()) == 0)
-            return configCategory[i];
+        if(configCategories[i].getName() == name)
+            return &configCategories[i];
     }
     return nullptr;
 }
@@ -216,6 +209,20 @@ void Config::readConfigFile()
             char* valueStr_cstr = new char[valueStr.size() + 1]{};
             valueStr.copy(valueStr_cstr, valueStr.size() + 1);
 
+            // std::cout << "-----:" << parName_cstr << "=" << valueStr_cstr << ":" << std::endl;
+            // {
+            //     const size_t charactersForName = pos + 1;
+            //     char* parName_cstr = new char[charactersForName]{};
+            //     line.copy(parName_cstr, charactersForName, 0);
+            //     remove_spaces(parName_cstr);
+
+            //     const size_t charactersForValue = line.size() - pos + 1 + 10;
+            //     char* valueStr_cstr = new char[charactersForValue]{};
+            //     line.copy(valueStr_cstr, charactersForValue, pos + 1);
+            //     remove_spaces(valueStr_cstr);
+
+            //     std::cout << "2----:" << parName_cstr << "=" << valueStr_cstr << ":" << std::endl;
+            // }
 
             configCategory->setConfigParameterValue(parName_cstr, valueStr_cstr);
         }

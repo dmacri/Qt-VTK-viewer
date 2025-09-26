@@ -7,7 +7,7 @@
 class ConfigParameter
 {
     const std::string name;
-    const char* defaultValue;
+    std::string defaultValue;
     const int type;
 
 public:
@@ -18,7 +18,7 @@ public:
         string_par = 2
     };
 
-    ConfigParameter(const std::string& name, const char* defaultValue, int type)
+    ConfigParameter(const std::string& name, const std::string& defaultValue, int type)
         : name{name}, defaultValue{defaultValue}, type{type}
     {}
 
@@ -30,12 +30,12 @@ public:
         return name;
     }
 
-    const char* getDefaultValue()
+    const auto& getDefaultValue()
     {
         return defaultValue;
     }
 
-    void setDefaultValue(const char* value)
+    void setDefaultValue(const std::string& value)
     {
         defaultValue = value;
     }
@@ -64,7 +64,7 @@ template<>
 inline const char* ConfigParameter::getValue() const
 {
     if (string_par == type)
-        return defaultValue;
+        return defaultValue.c_str();
 
     throw std::runtime_error("Type does not match!");
 }

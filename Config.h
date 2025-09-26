@@ -5,14 +5,13 @@
 
 class Config
 {
-    const char* configuration_path;
-    static constexpr int configCategorySize = 5;
-    ConfigCategory* configCategory[configCategorySize];
+    std::string configuration_path;
+    std::vector<ConfigCategory> configCategories;
 
 public:
-    Config(const char* configuration_path);
+    Config(const std::string& configuration_path);
 
-    void setConfiguration_path(char* value)
+    void setConfiguration_path(const std::string& value)
     {
         configuration_path = value;
     }
@@ -20,9 +19,5 @@ public:
     void writeConfigFile() const;
     void readConfigFile();
 
-    ConfigCategory* getConfigCategory(const std::string& name)
-    {
-        return getConfigCategory(name.c_str());
-    }
-    ConfigCategory* getConfigCategory(const char* name);
+    ConfigCategory* getConfigCategory(const std::string &name);
 };
