@@ -27,6 +27,7 @@
 #include "visualiser/Line.h"
 #include "visualiser/Visualizer.hpp"
 #include "visualiser/SettingParameter.h"
+#include "visualiser/SettingRenderParameter.h"
 
 
 // int pixelsQuadrato = 10; // Not needed for VTK, was for old Allegro version

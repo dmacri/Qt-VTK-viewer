@@ -1,5 +1,4 @@
-#ifndef SCENEWIDGET_H
-#define SCENEWIDGET_H
+#pragma once
 
 #include <QVTKOpenGLNativeWidget.h>
 #include <QTimer>
@@ -14,14 +13,7 @@
 
 class SceneWidget;
 class SettingParameter;
-
-
-class  SettingRenderParameter : public QVTKOpenGLNativeWidget{
-public:
-    vtkNew<vtkNamedColors> colors;
-    vtkSmartPointer<vtkRenderer>  m_renderer = vtkSmartPointer<vtkRenderer>::New();
-    vtkSmartPointer<vtkGenericOpenGLRenderWindow>renderWindow;
-};
+class SettingRenderParameter;
 
 class SceneWidget : public QVTKOpenGLNativeWidget
 {
@@ -62,5 +54,3 @@ private:
     QTimer* m_toolTipTimer;
     QPoint m_lastMousePos;
 };
-
-#endif // SCENEWIDGET_H
