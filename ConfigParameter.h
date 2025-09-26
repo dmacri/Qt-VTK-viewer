@@ -6,9 +6,9 @@
 
 class ConfigParameter
 {
-    const char* name;
+    const std::string name;
     const char* defaultValue;
-    int type;
+    const int type;
 
 public:
     enum ParamType
@@ -18,17 +18,14 @@ public:
         string_par = 2
     };
 
-    ConfigParameter(const char* name, const char* defaultValue, int type)
-    {
-        this->name         = name;
-        this->defaultValue = defaultValue;
-        this->type         = type;
-    }
+    ConfigParameter(const std::string& name, const char* defaultValue, int type)
+        : name{name}, defaultValue{defaultValue}, type{type}
+    {}
 
     template<typename RetVal>
     RetVal getValue() const;
 
-    const char* getName() const
+    const auto& getName() const
     {
         return name;
     }
@@ -46,6 +43,11 @@ public:
     int getType() const
     {
         return type;
+    }
+
+    bool operator<(const ConfigParameter& configParameter) const
+    {
+        return name < configParameter.name;
     }
 };
 

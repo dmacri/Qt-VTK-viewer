@@ -17,7 +17,7 @@ public:
         configuration_path = value;
     }
 
-    void writeConfigFile();
+    void writeConfigFile() const;
 
     ConfigCategory* getConfigCategory(const char* name);
 

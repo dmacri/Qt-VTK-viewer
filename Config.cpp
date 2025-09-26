@@ -1,7 +1,8 @@
-#include <cctype> // isspace()
-#include <cstdio> // FILE, printf()
+#include <cctype>    // isspace()
+#include <cstdio>    // FILE, printf()
 #include <stdexcept> // std::runtime_error
 #include <string>
+#include <fstream>
 
 #include "ConfigParameter.h"
 #include "Config.h"
@@ -82,29 +83,29 @@ Config::Config(const char *configuration_path): configuration_path{configuration
     configCategory[4] = SHARED;
 }
 
-void Config::writeConfigFile()
+void Config::writeConfigFile() const
 {
-    FILE *fptr = fopen(configuration_path, "w");
-    if (! fptr)
+    std::ofstream file(configuration_path);
+    if (! file.is_open())
     {
         throw std::runtime_error(std::string("Can not open file: '") + configuration_path + "' for writing!");
     }
 
-    // cout <<  executionContextSize << endl;
-    for(int i = 0; i < configCategorySize; i++)
+    for (int i = 0; i < configCategorySize; ++i)
     {
         if (configCategory[i]->getSize() > 0)
         {
-            fprintf(fptr, "%s:\n", configCategory[i]->getName() );
-            // cout <<  executionContext[i]->getSize() << endl;
-            for(int p = 0; p <  configCategory[i]->getSize(); p++)
+            file << configCategory[i]->getName() << ":\n";
+            for (int p = 0; p < configCategory[i]->getSize(); ++p)
             {
-                //    cout << executionContext[i]->getConfigParameters()[p]->getName() << " " << executionContext[i]->getConfigParameters()[p]->getDefaultValue() << endl;
-                fprintf(fptr, "\t%s=%s\n", configCategory[i]->getConfigParameters()[p]->getName(), configCategory[i]->getConfigParameters()[p]->getDefaultValue());
+                auto* configParameter = configCategory[i]->getConfigParameters()[p];
+                file << '\t'
+                     << configParameter->getName() << '='
+                     << configParameter->getDefaultValue()
+                     << '\n';
             }
         }
     }
-    fclose(fptr);
 }
 
 ConfigCategory *Config::getConfigCategory(const char *name)
@@ -112,9 +113,9 @@ ConfigCategory *Config::getConfigCategory(const char *name)
     for(int i = 0; i < configCategorySize; i++)
     {
         if(strcmp(name, configCategory[i]->getName()) == 0)
-            return  configCategory[i];
+            return configCategory[i];
     }
-    return NULL;
+    return nullptr;
 }
 
 void Config::remove_spaces(char *s)
@@ -138,20 +139,21 @@ void Config::remove_spaces(char *s)
 
 void Config::readConfigFile()
 {
-    printf("READING...\n");
-    FILE *fptr;
-    fptr = fopen(configuration_path, "r");
+    printf("READING '%s'...\n", configuration_path);
+    FILE *fptr = fopen(configuration_path, "r");
     if (fptr == NULL)
     {
-        printf("%s does not exist", configuration_path);
+        printf("Can not open file '%s' for reading!", configuration_path);
         exit(EXIT_FAILURE);
     }
+
     char * line = NULL;
     size_t len = 0;
     int read;
     bool head = true;
 
-    while ((read = getline(&line, &len, fptr)) != -1) {
+    while ((read = getline(&line, &len, fptr)) != -1)
+    {
         if(line[read-2] != ':')
         {
             printf("ERROR: Category name must end with the ':' character ");
