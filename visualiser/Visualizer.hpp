@@ -35,8 +35,8 @@
 #include <cerrno>
 #include <cstdint>
 
-#include "visualiser/Visualizer.h"
-#include "visualiser/Line.h"
+#include "Visualizer.h"
+#include "Line.h"
 #include "OOpenCAL/base/Element.h" // rgb
 
 // if typedef doesn't exist (msvc, blah)

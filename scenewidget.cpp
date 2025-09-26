@@ -1,21 +1,13 @@
-#include "scenewidget.h"
-#include "config/Config.h"
-#include "qapplication.h"
-
-
+#include <cstring>
+#include <iostream>
+#include <cstdlib>
+#include <filesystem>
+#include <unordered_map>
 #include <vtkCamera.h>
 #include <vtkDataSetMapper.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkProperty.h>
 #include <vtkRenderWindowInteractor.h>
-
-
-#include <cstring>
-#include <iostream>
-#include <stdlib.h>
-#include <unordered_map>
-#include <filesystem>
-
 #include <vtkNamedColors.h>
 #include <vtkCallbackCommand.h>
 #include <vtkNew.h>
@@ -25,7 +17,7 @@
 #include <vtkProperty.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
-#include<vtkInteractorStyleImage.h>
+#include <vtkInteractorStyleImage.h>
 #include <vtkFileOutputWindow.h>
 #include <vtkNew.h>
 #include <vtkXMLPolyDataReader.h>
@@ -33,8 +25,11 @@
 #include <vtkRenderWindowInteractor.h>
 #include <vtkTextProperty.h>
 #include <vtkActor2D.h>
+#include "scenewidget.h"
+#include "config/Config.h"
+#include "qapplication.h"
 
-#include <Visualizer.hpp>
+#include "visualiser/Visualizer.hpp"
 
 
 // int pixelsQuadrato = 10; // Not needed for VTK, was for old Allegro version
