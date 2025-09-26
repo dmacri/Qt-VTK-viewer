@@ -178,7 +178,7 @@ void Config::readConfigFile()
         remove_spaces(line);
 
         ConfigCategory* configCategory = getConfigCategory(line);
-        if (!configCategory)
+        if (! configCategory)
         {
             throw std::runtime_error(std::format("Unknown config category '{}'", line));
         }
@@ -202,28 +202,7 @@ void Config::readConfigFile()
             remove_spaces(parName);
             remove_spaces(valueStr);
 
-            char* parName_cstr = new char[parName.size() + 1]{};
-            parName.copy(parName_cstr, parName.size() + 1);
-
-            char* valueStr_cstr = new char[valueStr.size() + 1]{};
-            valueStr.copy(valueStr_cstr, valueStr.size() + 1);
-
-            // std::cout << "-----:" << parName_cstr << "=" << valueStr_cstr << ":" << std::endl;
-            // {
-            //     const size_t charactersForName = pos + 1;
-            //     char* parName_cstr = new char[charactersForName]{};
-            //     line.copy(parName_cstr, charactersForName, 0);
-            //     remove_spaces(parName_cstr);
-
-            //     const size_t charactersForValue = line.size() - pos + 1 + 10;
-            //     char* valueStr_cstr = new char[charactersForValue]{};
-            //     line.copy(valueStr_cstr, charactersForValue, pos + 1);
-            //     remove_spaces(valueStr_cstr);
-
-            //     std::cout << "2----:" << parName_cstr << "=" << valueStr_cstr << ":" << std::endl;
-            // }
-
-            configCategory->setConfigParameterValue(parName_cstr, valueStr_cstr);
+            configCategory->setConfigParameterValue(parName, valueStr);
         }
     }
 }
