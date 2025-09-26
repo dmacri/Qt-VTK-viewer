@@ -1,15 +1,17 @@
-#include <cstring>
-#include <iostream>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
+#include <iostream>
+#include <QApplication>
 #include <unordered_map>
+#include <vtkActor2D.h>
+#include <vtkCallbackCommand.h>
 #include <vtkCamera.h>
 #include <vtkDataSetMapper.h>
+#include <vtkFileOutputWindow.h>
 #include <vtkGenericOpenGLRenderWindow.h>
-#include <vtkProperty.h>
-#include <vtkRenderWindowInteractor.h>
+#include <vtkInteractorStyleImage.h>
 #include <vtkNamedColors.h>
-#include <vtkCallbackCommand.h>
 #include <vtkNew.h>
 #include <vtkObjectFactory.h>
 #include <vtkPolyData.h>
@@ -17,18 +19,12 @@
 #include <vtkProperty.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
-#include <vtkInteractorStyleImage.h>
-#include <vtkFileOutputWindow.h>
-#include <vtkNew.h>
-#include <vtkXMLPolyDataReader.h>
-#include <vtkGenericOpenGLRenderWindow.h>
-#include <vtkRenderWindowInteractor.h>
 #include <vtkTextProperty.h>
-#include <vtkActor2D.h>
-#include "scenewidget.h"
+#include <vtkXMLPolyDataReader.h>
+#include "SceneWidget.h"
 #include "config/Config.h"
-#include "qapplication.h"
 
+#include "visualiser/Line.h"
 #include "visualiser/Visualizer.hpp"
 
 
