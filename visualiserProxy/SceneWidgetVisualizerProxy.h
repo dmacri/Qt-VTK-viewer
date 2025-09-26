@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Visualizer.h"
+#include "visualiser/Visualizer.h"
 
 template<typename Cell>
 struct SceneWidgetVisualizerTemplate
