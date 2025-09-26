@@ -8,7 +8,7 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "Config.h"
+#include "config/Config.h"
 
 
 MainWindow::MainWindow(int argc, char* argv[], QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow)

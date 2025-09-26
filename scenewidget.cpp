@@ -1,5 +1,5 @@
 #include "scenewidget.h"
-#include "Config.h"
+#include "config/Config.h"
 #include "qapplication.h"
 
 

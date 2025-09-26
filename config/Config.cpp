@@ -7,7 +7,6 @@
 #include <string>
 #include <fstream>
 
-#include "ConfigParameter.h"
 #include "Config.h"
 
 

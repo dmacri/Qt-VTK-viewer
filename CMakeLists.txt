@@ -9,8 +9,9 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # List source files & resources
-file(GLOB Sources *.cpp *.hpp)
 file(GLOB_RECURSE Headers *.h)
+file(GLOB Sources *.cpp *.hpp)
+list(APPEND Sources config/Config.cpp)
 file(GLOB Resources *.qrc)
 file(GLOB Styles *.qss)
 file(GLOB UIs *.ui)
