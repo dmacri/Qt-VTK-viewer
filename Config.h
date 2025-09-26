@@ -18,10 +18,11 @@ public:
     }
 
     void writeConfigFile() const;
-
-    ConfigCategory* getConfigCategory(const char* name);
-
-    static void remove_spaces(char* s);
-
     void readConfigFile();
+
+    ConfigCategory* getConfigCategory(const std::string& name)
+    {
+        return getConfigCategory(name.c_str());
+    }
+    ConfigCategory* getConfigCategory(const char* name);
 };

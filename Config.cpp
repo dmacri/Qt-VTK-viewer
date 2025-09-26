@@ -1,11 +1,55 @@
-#include <cctype>    // isspace()
-#include <cstdio>    // FILE, printf()
+#include <algorithm>
+#include <cctype> // isspace()
+#include <iostream>
+#include <qdebug.h>
+#include <qglobal.h>
 #include <stdexcept> // std::runtime_error
 #include <string>
 #include <fstream>
 
 #include "ConfigParameter.h"
 #include "Config.h"
+
+
+namespace
+{
+void remove_spaces(char *s)
+{
+    if (!s)
+        return;
+
+    char* source = s;
+    char* destination = s;
+
+    while (*source)
+    {
+        if (! isspace(static_cast<unsigned char>(*source)))
+        {
+            *destination++ = *source;
+        }
+        ++source;
+    }
+    *destination = '\0';
+}
+
+/**
+ * @brief Removes all whitespace characters from a std::string.
+ *
+ * This function erases all characters for which std::isspace() returns true,
+ * such as spaces, tabs, newlines, and other locale-defined whitespace.
+ * It works in-place and automatically selects a ranges-based implementation
+ * if supported by the compiler, otherwise falls back to classic erase–remove idiom.
+ *
+ * @param s Reference to the std::string to be modified in place.
+ */
+void remove_spaces(std::string& s)
+{
+    auto removingRange = std::ranges::remove_if(s, [](unsigned char ch) {
+        return std::isspace(ch);
+    });
+    s.erase(removingRange.begin(), removingRange.end());
+}
+} // namespace
 
 
 Config::Config(const char *configuration_path): configuration_path{configuration_path}
@@ -118,74 +162,62 @@ ConfigCategory *Config::getConfigCategory(const char *name)
     return nullptr;
 }
 
-void Config::remove_spaces(char *s)
-{
-    if (!s)
-        return;
-
-    char* source = s;
-    char* destination = s;
-
-    while (*source)
-    {
-        if (! isspace(static_cast<unsigned char>(*source)))
-        {
-            *destination++ = *source;
-        }
-        ++source;
-    }
-    *destination = '\0';
-}
-
 void Config::readConfigFile()
 {
-    printf("READING '%s'...\n", configuration_path);
-    FILE *fptr = fopen(configuration_path, "r");
-    if (fptr == NULL)
+    std::cout << std::format("READING '{}'...\n", configuration_path);
+    std::ifstream file(configuration_path);
+    if (! file.is_open())
     {
-        printf("Can not open file '%s' for reading!", configuration_path);
-        exit(EXIT_FAILURE);
+        throw std::runtime_error(std::format("Cannot open file '{}' for reading!", configuration_path));
     }
 
-    char * line = NULL;
-    size_t len = 0;
-    int read;
-    bool head = true;
-
-    while ((read = getline(&line, &len, fptr)) != -1)
+    std::string line;
+    while (std::getline(file, line))
     {
-        if(line[read-2] != ':')
-        {
-            printf("ERROR: Category name must end with the ':' character ");
-            exit(EXIT_FAILURE);
-        }else
-        {
+        if (line.empty())
+            continue;
 
-            char* contName = new char[read-1];
-            strncpy(contName, line, read-2);
-            contName[read-2]=0;
-            ConfigCategory* configCategory = getConfigCategory(contName);
-            // printf("getContextName %s \n", executionContext->getName());
-            // printf("getContextSize %d \n", executionContext->getSize());
-            // printf("\n");
-            for(int i = 0; i < configCategory->getSize(); i++)
-            {
-                read = getline(&line, &len, fptr);
-                char* parName  = strtok (line,"=");
-                char* valueStr = strtok (NULL,"=");
-                remove_spaces(parName);
-                remove_spaces(valueStr);
-                char* vStr = new char[strlen(valueStr)];
-                strcpy(vStr, valueStr);
-                // printf("parName |%s| \n", parName);
-                // printf("valueStr |%s| \n", vStr);
-
-                configCategory->setConfigParameterValue(parName, vStr);
-            }
-            // printf("\n");
+        if (line.back() != ':')
+        {
+            throw std::runtime_error("ERROR: Category name must end with the ':' character, line is: " + line);
         }
-        //printf("Retrieved line of length %d:\n", read);
-        //printf("%s", line);
+
+        line.pop_back(); // removing ':' from the end
+        remove_spaces(line);
+
+        ConfigCategory* configCategory = getConfigCategory(line);
+        if (!configCategory)
+        {
+            throw std::runtime_error(std::format("Unknown config category '{}'", line));
+        }
+
+        for (int i{}; i < configCategory->getSize(); ++i)
+        {
+            if (! std::getline(file, line))
+            {
+                throw std::runtime_error("Unexpected end of file while reading parameters");
+            }
+
+            auto pos = line.find('=');
+            if (pos == std::string::npos)
+            {
+                throw std::runtime_error(std::format("Invalid parameter line: '{}'", line));
+            }
+
+            std::string parName  = line.substr(0, pos);
+            std::string valueStr = line.substr(pos + 1);
+
+            remove_spaces(parName);
+            remove_spaces(valueStr);
+
+            char* parName_cstr = new char[parName.size() + 1]{};
+            parName.copy(parName_cstr, parName.size() + 1);
+
+            char* valueStr_cstr = new char[valueStr.size() + 1]{};
+            valueStr.copy(valueStr_cstr, valueStr.size() + 1);
+
+
+            configCategory->setConfigParameterValue(parName_cstr, valueStr_cstr);
+        }
     }
-    fclose(fptr);
 }
