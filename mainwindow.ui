@@ -522,7 +522,7 @@
   <customwidget>
    <class>SceneWidget</class>
    <extends>QOpenGLWidget</extends>
-   <header location="global">scenewidget.h</header>
+   <header location="global">SceneWidget.h</header>
    <slots>
     <signal>click()</signal>
     <slot>zoomToExtent()</slot>
