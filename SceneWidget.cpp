@@ -329,7 +329,6 @@ void KeypressCallbackFunction(vtkObject* caller,
         if (cam->sceneWidget)
             cam->sceneWidget->changedStepNumberWithKeyboardKeys(cam->step);
     }
-
     if (keyPressed == "Down")
     {
         if (cam->step  > 1)
@@ -339,51 +338,11 @@ void KeypressCallbackFunction(vtkObject* caller,
         if (cam->sceneWidget)
             cam->sceneWidget->changedStepNumberWithKeyboardKeys(cam->step);
     }
-    if (keyPressed.compare("i")==0)
+    if (keyPressed == "i")
     {
         cam->insertAction = true;
     }
-    if (keyPressed.compare("s")==0) // TODO: GB: Why that magic numbers?
-    {
-        cam->step = 98;
-        cam->changed = true;
-    }
-    if (keyPressed.compare("d")==0)
-    {
-        cam->step = 99;
-        cam->changed = true;
-    }
-    if (keyPressed.compare("f")==0)
-    {
-        cam->step  = 198;
-        cam->changed = true;
-    }
-    if (keyPressed.compare("g")==0)
-    {
-        cam->step  = 199;
-        cam->changed = true;
-    }
-    if (keyPressed.compare("h")==0)
-    {
-        cam->step = 298;
-        cam->changed = true;
-    }
-    if (keyPressed.compare("j")==0)
-    {
-        cam->step = 299;
-        cam->changed = true;
-    }
-    if (keyPressed.compare("k")==0)
-    {
-        cam->step  = 398;
-        cam->changed = true;
-    }
-    if (keyPressed.compare("l")==0)
-    {
-        cam->step  = 400;
-        cam->changed = true;
-    }
-    if (keyPressed.compare("Escape")==0)
+    if (keyPressed == "Escape")
     {
         for (int i = 0; i < cam->nNodeY; i++)
         {
@@ -400,7 +359,6 @@ void KeypressCallbackFunction(vtkObject* caller,
         // Stop the interactor
         iren->TerminateApp();
         std::cout << "Closing window..." << std::endl;
-
     }
 
     if (cam->changed==true || cam->firstTime==true )
