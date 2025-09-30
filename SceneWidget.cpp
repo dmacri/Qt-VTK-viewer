@@ -31,7 +31,6 @@
 
 
 // int pixelsQuadrato = 10; // Not needed for VTK, was for old Allegro version
-int *maxStepVisited;
 unordered_map<int, long int> *hashMap;
 
 vtkNew<vtkNamedColors> colors;
@@ -155,7 +154,7 @@ void SceneWidget::setupVtkScene()
     //    reader->Update();
 
     hashMap = new unordered_map<int, long int>[settingParameter->nNodeX * settingParameter->nNodeY];
-    maxStepVisited = new int[settingParameter->nNodeX * settingParameter->nNodeY];
+    maxStepVisited.resize(settingParameter->nNodeX * settingParameter->nNodeY);
     settingParameter->numberOfLines = 2 * (settingParameter->nNodeX * settingParameter->nNodeY);
     settingParameter->step = 1;
     settingParameter->changed = false;
@@ -361,7 +360,6 @@ void KeypressCallbackFunction(vtkObject* caller,
         }
         delete[] cam->sceneWidgetVisualizerProxy->p;
         delete[] hashMap;
-        delete[] maxStepVisited;
 
         auto iren = static_cast<vtkRenderWindowInteractor*>(caller);
         // Close the window

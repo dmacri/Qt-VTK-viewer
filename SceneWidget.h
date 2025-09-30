@@ -55,4 +55,6 @@ private:
 
     QTimer m_toolTipTimer;
     QPoint m_lastMousePos;
+
+    std::vector<int> maxStepVisited;
 };

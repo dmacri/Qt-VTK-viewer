@@ -44,8 +44,6 @@ using ssize_t = intptr_t;
 #endif
 
 
-// extern int pixelsQuadrato; // Not needed for VTK
-extern int *maxStepVisited;
 extern std::unordered_map<int, long int> *hashMap;
 
 
