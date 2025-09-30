@@ -148,7 +148,7 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename)
     settingParameter->firstTime = true;
     settingParameter->insertAction = false;
 
-    sceneWidgetVisualizerProxy->p = sceneWidgetVisualizerProxy->getAllocatedParametersMatrix(settingParameter->dimX, settingParameter->dimY);
+    sceneWidgetVisualizerProxy->initMatrix(settingParameter->dimX, settingParameter->dimY);
     settingParameter->sceneWidgetVisualizerProxy->p = sceneWidgetVisualizerProxy->p;
 
     settingRenderParameter->m_renderer->SetBackground(settingRenderParameter->colors->GetColor3d("Silver").GetData());
@@ -198,14 +198,14 @@ void SceneWidget::renderVtkScene()
     DEBUG << "DEBUG: getElementMatrix completed" << endl;
 
     DEBUG << "DEBUG: Calling drawWithVTK..." << endl;
-    sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p,settingParameter-> dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingParameter->numberOfLines, settingParameter->edittext,settingRenderParameter->m_renderer,gridActor);
+    sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingParameter->numberOfLines, settingParameter->edittext, settingRenderParameter->m_renderer, gridActor);
     DEBUG << "DEBUG: drawWithVTK completed" << endl;
     
     DEBUG << "DEBUG: Calling buildLoadBalanceLine..." << endl;
     sceneWidgetVisualizerProxy->vis.buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,pts,cellLines,grid,settingRenderParameter->colors,settingRenderParameter->m_renderer,actorBuildLine);
     DEBUG << "DEBUG: buildLoadBalanceLine completed" << endl;
 
-    sceneWidgetVisualizerProxy->vis.buildStepText(settingParameter->step,settingParameter->font_size,settingRenderParameter->colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
+    sceneWidgetVisualizerProxy->vis.buildStepText(settingParameter->step, settingParameter->font_size, settingRenderParameter->colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
 
     // Render
     renderWindow()->Render();

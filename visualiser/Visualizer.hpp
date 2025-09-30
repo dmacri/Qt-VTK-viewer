@@ -60,9 +60,12 @@ public:
 
     FILE *giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows, char *&line, size_t &len);
     std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, char *&line, size_t &len);
-    void getElementMatrix(int step, T **&m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, char *fileName, Line *lines);
-    void drawWithVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines, std::string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
-    void refreshWindowsVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
+    template<class Matrix>
+    void getElementMatrix(int step, Matrix& m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, char *fileName, Line *lines);
+    template<class Matrix>
+    void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines, std::string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
+    template<class Matrix>
+    void refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
     void readConfigurationFile(const char *filename, int infoFromFile[8], char *outputFileName);
     void loadHashmapFromFile(int nNodeX, int nNodeY, const std::string &filename);
     void buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows,vtkSmartPointer<vtkPoints> pts,vtkSmartPointer<vtkCellArray> cellLines,vtkSmartPointer<vtkPolyData> grid,vtkSmartPointer<vtkNamedColors> colors,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor2D> actorBuildLine);
@@ -163,8 +166,9 @@ bool Visualizer<T>::allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, 
     return true;
 }
 
-template <class T>
-void Visualizer<T>::getElementMatrix(int step, T **&m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, char *fileName, Line *lines)
+template<class T>
+template<class Matrix>
+void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, char *fileName, Line *lines)
 {
     std::vector<int> AlllocalCols, AlllocalRows;
     AlllocalCols.resize(nNodeX * nNodeY);
@@ -398,7 +402,8 @@ size_t Visualizer<T>::generalPorpouseGetline(char **lineptr, size_t *n, FILE *st
 }
 
 template <class T>
-void Visualizer<T>::drawWithVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines, std::string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor)
+template <class Matrix>
+void Visualizer<T>::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines, std::string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor)
 {
     vtkNew<vtkStructuredGrid> structuredGrid;
     vtkNew<vtkNamedColors> colors;
@@ -446,25 +451,24 @@ void Visualizer<T>::drawWithVTK(T **p, int nRows, int nCols, int step, Line *lin
 }
 
 template <class T>
-void Visualizer<T>::refreshWindowsVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines, vtkSmartPointer<vtkActor> gridActor)
+template <class Matrix>
+void Visualizer<T>::refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines, vtkSmartPointer<vtkActor> gridActor)
 {
     vtkLookupTable* lut =(vtkLookupTable*)gridActor->GetMapper()->GetLookupTable();
 
     // dynamic_cast<vtkLookupTable*>(gridActor->GetMapper()->GetLookupTable());
 
-    buidColor(lut,nCols,nRows,p);
+    buidColor(lut, nCols, nRows, p);
     gridActor->GetMapper()->SetLookupTable(lut);
     gridActor->GetMapper()->Update();
-
 }
 
 template <class T>
-    void Visualizer<T>::buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows,vtkSmartPointer<vtkPoints> pts,vtkSmartPointer<vtkCellArray> cellLines,vtkSmartPointer<vtkPolyData> grid,vtkSmartPointer<vtkNamedColors> colors,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor2D> actorBuildLine)
+void Visualizer<T>::buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows,vtkSmartPointer<vtkPoints> pts,vtkSmartPointer<vtkCellArray> cellLines,vtkSmartPointer<vtkPolyData> grid,vtkSmartPointer<vtkNamedColors> colors,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor2D> actorBuildLine)
 {
-
     for (int i = 0; i < dimLines; i++)
     {
-          cout << lines[i].x1 << "  " << lines[i].y1 << "  " <<lines[i].x2 << "  " <<lines[i].y2 << endl;
+        cout << lines[i].x1 << "  " << lines[i].y1 << "  " <<lines[i].x2 << "  " <<lines[i].y2 << endl;
         pts->InsertNextPoint((lines[i].x1 * 1), ( nCols-1-lines[i].y1 * 1), 0.0);
         pts->InsertNextPoint((lines[i].x2 * 1), ( nCols-1-lines[i].y2 * 1), 0.0);
         cellLines->InsertNextCell(2);
@@ -575,14 +579,16 @@ vtkNew<vtkActor2D> Visualizer<T>::buildStepText(int step, int font_size, vtkSmar
     return stepLineTextActor;
 }
 
-template <class T>
-void buidColor(vtkLookupTable* lut, int nCols, int nRows,T **p)
+template <class Matrix>
+void buidColor(vtkLookupTable* lut, int nCols, int nRows, Matrix& p)
 {
     for (int r = 0; r < nRows; ++r)
-        for (int c = 0; c < nCols; ++c){
+    {
+        for (int c = 0; c < nCols; ++c)
+        {
             rgb *color=p[r][c].outputValue();
            // lut->SetTableValue(r*nCols+c,(double)color->getRed(),(double)color->getGreen(),(double)color->getBlue());
-                lut->SetTableValue((nRows-1-r)*nCols+c,(double)color->getRed(),(double)color->getGreen(),(double)color->getBlue());
+            lut->SetTableValue((nRows-1-r)*nCols+c,(double)color->getRed(),(double)color->getGreen(),(double)color->getBlue());
         }
-
+    }
 }
