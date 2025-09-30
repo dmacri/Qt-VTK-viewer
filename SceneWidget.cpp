@@ -224,10 +224,8 @@ void SceneWidget::decreaseCountDown()
     if (settingParameter->step  > 1){
         settingParameter->step  -= 1;
         settingParameter->changed = true;
-        settingParameter->firstTime = true;
     }
 
-    renderVtkScene();
     SceneWidget::upgradeModelInCentralPanel();
 }
 

@@ -11,7 +11,6 @@
 #include "visualiserProxy/SceneWidgetVisualizerProxyDefault.h"
 
 
-class SceneWidget;
 class SettingParameter;
 class SettingRenderParameter;
 
