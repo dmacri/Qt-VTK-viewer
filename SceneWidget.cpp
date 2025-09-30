@@ -53,6 +53,26 @@ vtkSmartPointer<vtkRenderer> globalRenderer_;
 namespace
 {
 void KeypressCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
+
+char* prepareOutputFileName(const std::string& configFile, const std::string& outputFileNameFromCfg)
+{
+    namespace fs = std::filesystem;
+
+    // Step 1: prepare output directory
+    fs::path configPath(configFile);
+    fs::path outputDir = configPath.parent_path() / "Output";
+    fs::create_directories(outputDir);  // ensure that directory exists
+
+    // Step 2: build full output file path
+    fs::path outputFilePath = outputDir / outputFileNameFromCfg;
+
+    // Step 3: copy to buffer
+    const size_t outputFileNameLength = outputFilePath.string().size() + 1;
+    char* buffer = new char[outputFileNameLength]{};
+    std::strncpy(buffer, outputFilePath.c_str(), outputFileNameLength - 1);
+
+    return buffer;
+}
 } // namespace
 
 
@@ -113,30 +133,23 @@ void SceneWidget::readSettingsFromConfigFile(const std::string& filename)
     Config config(filename);
     config.readConfigFile();
 
-    ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
-    ConfigCategory* execContext = config.getConfigCategory("DISTRIBUTED");
+    {
+        ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
+        const std::string outputFileNameFromCfg = generalContext->getConfigParameter("output_file_name")->getValue<std::string>();
+        settingParameter->outputFileName = prepareOutputFileName(filename, outputFileNameFromCfg);
+        settingParameter->dimX = generalContext->getConfigParameter("number_of_columns")->getValue<int>();
+        settingParameter->dimY = generalContext->getConfigParameter("number_of_rows")->getValue<int>();
+        settingParameter->nsteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
+    }
 
-    constexpr size_t outputFileNameLength = 256;
-    settingParameter->outputFileName = new char[outputFileNameLength]{};
-    string tmpFileName = filename;
-    std::size_t positionOfLastPathSeparatorIfFound = tmpFileName.find_last_of("/\\");
-    tmpFileName = tmpFileName.substr(0, positionOfLastPathSeparatorIfFound) + "/Output/";
-
-    int infoFromFile[8]; // TODO: GB: We are not reading this anywhere
-    sceneWidgetVisualizerProxy->vis.readConfigurationFile(filename.c_str(), infoFromFile, settingParameter->outputFileName);
-    tmpFileName += generalContext->getConfigParameter("output_file_name")->getValue<string>();
-
-    tmpFileName.copy(settingParameter->outputFileName, outputFileNameLength);
-
-    settingParameter->dimX = generalContext->getConfigParameter("number_of_columns")->getValue<int>();
-    settingParameter->dimY = generalContext->getConfigParameter("number_of_rows")->getValue<int>();
-    // int borderSizeX = execContext->getConfigParameter("border_size_x")->getValue<int>(); // not used
-    // int borderSizeY = execContext->getConfigParameter("border_size_y")->getValue<int>(); // not used
-    // int numBorders = 1; // not used
-    settingParameter->nNodeX = execContext->getConfigParameter("number_node_x")->getValue<int>();
-    settingParameter->nNodeY = execContext->getConfigParameter("number_node_y")->getValue<int>();
-    settingParameter->nsteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
-
+    {
+        ConfigCategory* execContext = config.getConfigCategory("DISTRIBUTED");
+        // int borderSizeX = execContext->getConfigParameter("border_size_x")->getValue<int>(); // not used
+        // int borderSizeY = execContext->getConfigParameter("border_size_y")->getValue<int>(); // not used
+        // int numBorders = 1; // not used
+        settingParameter->nNodeX = execContext->getConfigParameter("number_node_x")->getValue<int>();
+        settingParameter->nNodeY = execContext->getConfigParameter("number_node_y")->getValue<int>();
+    }
     cout << *settingParameter << endl;
 }
 
