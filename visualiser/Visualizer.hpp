@@ -1,46 +1,93 @@
 #pragma once
 
-#include <vtkCamera.h>
-#include <vtkCellArray.h>
-#include <vtkCoordinate.h>
-#include <vtkNamedColors.h>
-#include <vtkNew.h>
-#include <vtkPoints.h>
-#include <vtkPolyData.h>
-#include <vtkDataSetMapper.h>
-#include <vtkPointData.h>
-#include <vtkCellData.h>
-#include <vtkPointSource.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkPolyDataMapper2D.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkProperty2D.h>
-#include <vtkActor2D.h>
-#include <vtkRenderer.h>
-#include <vtkNamedColors.h>
-#include <vtkLine.h>
-#include <vtkLookupTable.h>
-#include <vtkStructuredGrid.h>
-#include <vtkInteractorStyleImage.h>
-#include <vtkProperty.h>
-#include <vtkTextMapper.h>
-#include <vtkTextProperty.h>
-#include <vtkDoubleArray.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <cstdio>
-#include <cstdlib>
-#include <cerrno>
-#include <cstdint>
+#include <unordered_map>
+#include <vtkActor2D.h>
+#include <vtkCallbackCommand.h>
+#include <vtkCamera.h>
+#include <vtkCellArray.h>
+#include <vtkCellData.h>
+#include <vtkCoordinate.h>
+#include <vtkDataSetMapper.h>
+#include <vtkDoubleArray.h>
+#include <vtkInteractorStyleImage.h>
+#include <vtkLine.h>
+#include <vtkLookupTable.h>
+#include <vtkNamedColors.h>
+#include <vtkNew.h>
+#include <vtkObjectFactory.h>
+#include <vtkPointData.h>
+#include <vtkPoints.h>
+#include <vtkPointSource.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkPolyDataMapper2D.h>
+#include <vtkProperty.h>
+#include <vtkProperty2D.h>
+#include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkStructuredGrid.h>
+#include <vtkTextMapper.h>
+#include <vtkTextProperty.h>
 
-#include "Visualizer.h"
 #include "Line.h"
 #include "OOpenCAL/base/Element.h" // rgb
 
-// if typedef doesn't exist (msvc, blah)
-typedef intptr_t ssize_t;
+#ifndef __ssize_t_defined
+using ssize_t = intptr_t;
+#endif
+
+
+namespace
+{
+void KeypressCallbackFunction(vtkObject* caller, long unsigned int eventId,
+                              void* clientData, void* callData);
+} // namespace
+
+
+// extern int pixelsQuadrato; // Not needed for VTK
+extern int *maxStepVisited;
+extern std::unordered_map<int, long int> *hashMap;
+extern Line *lines;
+
+
+template <class T>
+class Visualizer
+{
+public:
+    T** p;
+
+    Visualizer() = default;
+
+    long int gotoStep(int step, FILE *fp, int node);
+
+    std::string giveMeFileName(const std::string& fileName, int node) const;
+    std::string giveMeFileNameIndex(char *fileName, int node) const;
+
+    FILE *giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows, char *&line, size_t &len);
+    std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, char *&line, size_t &len);
+    void getElementMatrix(int step, T **&m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, char *fileName, Line *lines);
+    void drawWithVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines, std::string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
+    void refreshWindowsVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
+    void readConfigurationFile(const char *filename, int infoFromFile[8], char *outputFileName);
+    void loadHashmapFromFile(int nNodeX, int nNodeY, char *filename);
+    size_t generalPorpouseGetline(char **lineptr, size_t *n, FILE *stream);
+    void buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows,vtkSmartPointer<vtkPoints> pts,vtkSmartPointer<vtkCellArray> cellLines,vtkSmartPointer<vtkPolyData> grid,vtkSmartPointer<vtkNamedColors> colors,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor2D> actorBuildLine);
+    void refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows, vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors);
+    vtkTextProperty* buildStepLine(int step,vtkSmartPointer<vtkTextMapper> ,vtkSmartPointer<vtkTextProperty> singleLineTextProp,vtkSmartPointer<vtkNamedColors> colors, std::string color);
+    vtkNew<vtkActor2D> buildStepText(int step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer);
+    void refreshBuildStepText(int step,vtkActor2D* stepLineTextActor);
+
+private:
+    bool allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount);
+};
+
 
 
 template <class T>
@@ -114,7 +161,8 @@ std::pair<int,int> Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const s
     return {nLocalCols, nLocalRows};
 }
 
-bool allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount)
+template <class T>
+bool Visualizer<T>::allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount)
 {
     for (int node = 0; node < nodesCount; ++node)
     {
