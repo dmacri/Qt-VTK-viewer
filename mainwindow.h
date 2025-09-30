@@ -30,8 +30,6 @@ private slots:
     void onLeftButtonClicked();
     void onRightButtonClicked();
 
-    void updateSleepDuration(int value);
-
     void onUpdatePositionOnSlider(int value);
 
 private:
@@ -47,7 +45,6 @@ private:
     void setupConnections();
     void configureButtons();
     void configureButton(QPushButton* button, QStyle::StandardPixmap icon);
-    void configureSliders();
     void configureCursorPosition();
     void initializeSceneWidget(int argc, char* argv[]);
     void setTotalStepsFromConfiguration(char *configurationFile);
@@ -69,11 +66,8 @@ private:
     Ui::MainWindow* ui;
 
     int currentStep = 1;
-    int cursorValueSleep = 1;
-    int stepIncrement = 0;
     bool isPlaying = false ;
     bool isBacking = false;
-    bool movingCursorSleep = false;
 
     QString noSelectionMessage;
     QString directorySelectionMessage;

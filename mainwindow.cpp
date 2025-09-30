@@ -27,7 +27,6 @@ MainWindow::MainWindow(int argc, char* argv[], QWidget* parent) : QMainWindow(nu
 void MainWindow::configureUIElements(int argc, char* argv[])
 {
     configureButtons();
-    configureSliders();
     loadStrings();
     initializeSceneWidget(argc, argv);
     showInputFilePathOnBarLabel(argv[1]);
@@ -71,12 +70,6 @@ void MainWindow::configureButton(QPushButton* button, QStyle::StandardPixmap ico
     button->setStyleSheet(NULL);
 }
 
-void MainWindow::configureSliders()
-{
-    ui->sleepSlider->setMinimum(1);
-    ui->sleepSlider->setMaximum(100);
-    ui->sleepSlider->setValue(50);
-}
 void MainWindow::configureCursorPosition()
 {
     ui->updatePositionSlider->setMinimum(FIRST_STEP_NUMBER);
@@ -129,7 +122,6 @@ void MainWindow::connectButtons()
 
 void MainWindow::connectSliders()
 {
-    connect(ui->sleepSlider, &QSlider::valueChanged, this, &MainWindow::updateSleepDuration);
     connect(ui->updatePositionSlider, &QSlider::valueChanged, this, &MainWindow::onUpdatePositionOnSlider);
 }
 
@@ -159,7 +151,8 @@ void MainWindow::playingRequested(PlayingDirection direction)
 {
     currentStep = std::clamp(currentStep + std::to_underlying(direction), FIRST_STEP_NUMBER, totalSteps());
 
-    for (int step = currentStep; step >= 0 && step <= totalSteps(); step += std::to_underlying(direction))
+    for (int step = currentStep; step >= 0 && step <= totalSteps();
+         step += std::to_underlying(direction)*ui->speedSpinBox->value())
     {
         currentStep = step;
 
@@ -168,11 +161,7 @@ void MainWindow::playingRequested(PlayingDirection direction)
             setPositionOnWidgets(currentStep);
         }
 
-        if (movingCursorSleep && currentStep < totalSteps() / 2)
-        {
-            int sleep = totalSteps() / 2 - cursorValueSleep;
-            QThread::msleep(sleep * 5);
-        }
+        QThread::msleep(ui->sleepSpinBox->value());
 
         QApplication::processEvents();
 
@@ -260,29 +249,6 @@ void MainWindow::onStepNumberChanged()
         currentStep = step;
         setPositionOnWidgets(currentStep);
     }
-}
-
-void MainWindow::updateSleepDuration(int value)
-{
-    const int deltaStep = totalSteps() / 10;
-    const double positionPercentage = (double) ui->sleepSlider->value() / totalSteps();
-    const int sliderMaxValue = ui->sleepSlider->maximum();
-    const int sliderHalve = sliderMaxValue / 2;
-    const double sliderNormalizedPosition = positionPercentage * sliderMaxValue / sliderMaxValue;
-    if (value > sliderHalve && value <= sliderMaxValue && isBacking == false)
-    {
-        stepIncrement = sliderNormalizedPosition * deltaStep;
-    }
-    else if(value > sliderHalve && value <= sliderMaxValue && isBacking == true)
-    {
-        stepIncrement = - sliderNormalizedPosition * deltaStep;
-    }
-    else
-    {
-        movingCursorSleep = true; // TODO: It is better to have two separate sliders
-    }
-    cursorValueSleep = value;
-    ui->sleepSlider->setToolTip("Current sleeping value " + QString::number(cursorValueSleep));
 }
 
 void MainWindow::onUpdatePositionOnSlider(int value)
