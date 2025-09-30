@@ -202,10 +202,10 @@ void SceneWidget::renderVtkScene()
     DEBUG << "DEBUG: drawWithVTK completed" << endl;
     
     DEBUG << "DEBUG: Calling buildLoadBalanceLine..." << endl;
-    sceneWidgetVisualizerProxy->vis.buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,pts,cellLines,grid,colors,settingRenderParameter->m_renderer,actorBuildLine);
+    sceneWidgetVisualizerProxy->vis.buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,pts,cellLines,grid,settingRenderParameter->colors,settingRenderParameter->m_renderer,actorBuildLine);
     DEBUG << "DEBUG: buildLoadBalanceLine completed" << endl;
 
-    sceneWidgetVisualizerProxy->vis.buildStepText(settingParameter->step,settingParameter->font_size,colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
+    sceneWidgetVisualizerProxy->vis.buildStepText(settingParameter->step,settingParameter->font_size,settingRenderParameter->colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
 
     // Render
     renderWindow()->Render();
@@ -288,12 +288,12 @@ void SceneWidget::upgradeModelInCentralPanel(){
             sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingParameter->numberOfLines,gridActor);
                   cout <<"Number of lines--->>" << settingParameter->numberOfLines << endl;
             if (settingParameter->numberOfLines > 0) {
-                sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(&lines[0], settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,actorBuildLine,colors);
+                sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(&lines[0], settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,actorBuildLine,settingRenderParameter->colors);
             }
             // Force renderer update
             settingRenderParameter->m_renderer->Modified();
 
-            sceneWidgetVisualizerProxy->vis.buildStepLine(settingParameter->step,singleLineTextStep,singleLineTextPropStep,colors,"White");
+            sceneWidgetVisualizerProxy->vis.buildStepLine(settingParameter->step,singleLineTextStep,singleLineTextPropStep,settingRenderParameter->colors,"White");
 
         }catch(const std::runtime_error& re)
         {
@@ -312,77 +312,63 @@ void SceneWidget::upgradeModelInCentralPanel(){
 
 }
 
-namespace {
-
+namespace
+{
 void KeypressCallbackFunction(vtkObject* caller,
                               long unsigned int vtkNotUsed(eventId),
                               void* clientData,
                               void* callData)
 {
-    vtkRenderWindowInteractor* key = static_cast<vtkRenderWindowInteractor*>(caller);
+    vtkRenderWindowInteractor* interactor = static_cast<vtkRenderWindowInteractor*>(caller);
 
-    string keyPressed=key->GetKeySym();
-    SettingParameter* cam = static_cast<SettingParameter*>(clientData);
+    const string keyPressed = interactor->GetKeySym();
+    SettingParameter* sp = static_cast<SettingParameter*>(clientData);
+
+    SceneWidgetVisualizerProxy* visualiserProxy = sp->sceneWidgetVisualizerProxy;
     
     if (keyPressed == "Up")
     {
-        if (cam->step < cam->nsteps * 2)
-            cam->step += 1;
-        cam->changed = true;
+        if (sp->step < sp->nsteps * 2)
+            sp->step += 1;
+        sp->changed = true;
 
-        if (cam->sceneWidget)
-            cam->sceneWidget->changedStepNumberWithKeyboardKeys(cam->step);
+        if (sp->sceneWidget)
+            sp->sceneWidget->changedStepNumberWithKeyboardKeys(sp->step);
     }
     if (keyPressed == "Down")
     {
-        if (cam->step  > 1)
-            cam->step  -= 1;
-        cam->changed = true;
+        if (sp->step  > 1)
+            sp->step  -= 1;
+        sp->changed = true;
 
-        if (cam->sceneWidget)
-            cam->sceneWidget->changedStepNumberWithKeyboardKeys(cam->step);
+        if (sp->sceneWidget)
+            sp->sceneWidget->changedStepNumberWithKeyboardKeys(sp->step);
     }
     if (keyPressed == "i")
     {
-        cam->insertAction = true;
-    }
-    if (keyPressed == "Escape")
-    {
-        for (int i = 0; i < cam->nNodeY; i++)
-        {
-            delete cam->sceneWidgetVisualizerProxy->p[i];
-        }
-        delete[] cam->sceneWidgetVisualizerProxy->p;
-
-        auto iren = static_cast<vtkRenderWindowInteractor*>(caller);
-        // Close the window
-        iren->GetRenderWindow()->Finalize();
-
-        // Stop the interactor
-        iren->TerminateApp();
-        std::cout << "Closing window..." << std::endl;
+        sp->insertAction = true;
     }
 
-    if (cam->changed==true || cam->firstTime==true )
+    if (true == sp->changed || true == sp->firstTime )
     {
         std::vector<Line> lines;
-        lines.resize(cam->numberOfLines);
-        //  std::cout << "Sono al passo prima getElementMatrix: " << cam->step << std::endl;
+        lines.resize(sp->numberOfLines);
         try
         {
-            cam->sceneWidgetVisualizerProxy->vis.getElementMatrix(cam->step, cam->sceneWidgetVisualizerProxy->p, cam->dimX, cam->dimY, cam->nNodeX, cam->nNodeY, cam->outputFileName, &lines[0]);
+            visualiserProxy->vis.getElementMatrix(sp->step, visualiserProxy->p, sp->dimX, sp->dimY, sp->nNodeX, sp->nNodeY, sp->outputFileName, &lines[0]);
 
-            cam->sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(cam->sceneWidgetVisualizerProxy->p, cam->dimY, cam->dimX, cam->step, &lines[0], cam->numberOfLines,gridActor);
+            visualiserProxy->vis.refreshWindowsVTK(visualiserProxy->p, sp->dimY, sp->dimX, sp->step, &lines[0], sp->numberOfLines, gridActor);
 
-            //cam->sceneWidgetVisualizerProxy->vis->refreshBuildLoadBalanceLine(lines,cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors,pts,cellLines,grid);
+            //visualiserProxy->vis->refreshBuildLoadBalanceLine(lines, cam->numberOfLines, cam->dimY+1, cam->dimX+1, actorBuildLine, colors, pts, cellLines, grid);
             
-            cam->sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(&lines[0], cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors);
+            visualiserProxy->vis.refreshBuildLoadBalanceLine(&lines[0], sp->numberOfLines, sp->dimY+1, sp->dimX+1, actorBuildLine, colors);
             // Force renderer update for keyboard callback too
-            cam->sceneWidget->renderWindow()->Modified();
+            sp->sceneWidget->renderWindow()->Modified();
 
-            cam->sceneWidgetVisualizerProxy->vis.buildStepLine(cam->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
+            visualiserProxy->vis.buildStepLine(sp->step, singleLineTextStep, singleLineTextPropStep, colors, "Red");
 
-        }catch(const std::runtime_error& re)
+        }
+        catch(const std::runtime_error& re)
         {
             std::cerr << "Runtime error di getElementMatrix: " << re.what() << std::endl;
         }
@@ -390,9 +376,9 @@ void KeypressCallbackFunction(vtkObject* caller,
         {
             std::cerr << "Error occurred: " << ex.what() << std::endl;
         }
-        cam->sceneWidget->renderWindow()->Render();
-        cam->firstTime = false;
-        cam->changed = false;
+        sp->sceneWidget->renderWindow()->Render();
+        sp->firstTime = false;
+        sp->changed = false;
     }
 }
 } // namespace
