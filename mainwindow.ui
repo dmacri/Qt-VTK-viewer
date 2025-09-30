@@ -318,7 +318,7 @@
        <widget class="QSpinBox" name="speedSpinBox">
         <property name="maximumSize">
          <size>
-          <width>80</width>
+          <width>100</width>
           <height>16777215</height>
          </size>
         </property>
@@ -337,7 +337,7 @@
        <widget class="QSpinBox" name="sleepSpinBox">
         <property name="maximumSize">
          <size>
-          <width>120</width>
+          <width>140</width>
           <height>16777215</height>
          </size>
         </property>
@@ -346,6 +346,12 @@
         </property>
         <property name="maximum">
          <number>1000</number>
+        </property>
+        <property name="singleStep">
+         <number>10</number>
+        </property>
+        <property name="stepType">
+         <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
         </property>
        </widget>
       </item>

@@ -151,9 +151,10 @@ void MainWindow::playingRequested(PlayingDirection direction)
 {
     currentStep = std::clamp(currentStep + std::to_underlying(direction), FIRST_STEP_NUMBER, totalSteps());
 
-    for (int step = currentStep; step >= 0 && step <= totalSteps();
-         step += std::to_underlying(direction)*ui->speedSpinBox->value())
+    for (int step = currentStep; step >= FIRST_STEP_NUMBER; step += std::to_underlying(direction)*ui->speedSpinBox->value())
     {
+        step = std::min(totalSteps(), step);
+
         currentStep = step;
 
         {
@@ -166,6 +167,11 @@ void MainWindow::playingRequested(PlayingDirection direction)
         QApplication::processEvents();
 
         if (!isPlaying || (std::to_underlying(direction) < 0 && currentStep == 0))
+        {
+            break;
+        }
+
+        if (step == totalSteps())
         {
             break;
         }
