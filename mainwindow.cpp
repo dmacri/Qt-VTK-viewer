@@ -11,6 +11,12 @@
 #include "config/Config.h"
 
 
+namespace
+{
+constexpr int FIRST_STEP_NUMBER = 1;
+}
+
+
 MainWindow::MainWindow(int argc, char* argv[], QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
@@ -73,9 +79,9 @@ void MainWindow::configureSliders()
 }
 void MainWindow::configureCursorPosition()
 {
-    ui->updatePositionSlider->setMinimum(1);
+    ui->updatePositionSlider->setMinimum(FIRST_STEP_NUMBER);
     ui->updatePositionSlider->setMaximum(100);
-    ui->updatePositionSlider->setValue(1);
+    ui->updatePositionSlider->setValue(FIRST_STEP_NUMBER);
 }
 
 
@@ -128,18 +134,13 @@ void MainWindow::connectSliders()
 }
 
 void MainWindow::loadStrings()
-{ // TODO: GB: Maybe we can move the file content here and make them ready for translation (surrount text with `tr(...)`)?
-    QString iniFilePath = QApplication::applicationDirPath() + "/app_strings.ini";
-    QSettings settings(iniFilePath, QSettings::IniFormat);
-    qDebug() <<"Il file path è" << settings.fileName();
-    noSelectionMessage = settings.value("Messages/noSelectionWarning").toString();
-    qDebug() <<"Il messaggio  è" << noSelectionMessage;
-
-    directorySelectionMessage = settings.value("Messages/directorySelectionWarning").toString();
-    compilationSuccessfulMessage = settings.value("Messages/compilationSuccessful").toString();
-    compilationFailedMessage = settings.value("Messages/compilationFailed").toString();
-    deleteSuccessfulMessage = settings.value("Messages/deleteSuccessful").toString();
-    deleteFailedMessage = settings.value("Messages/deleteFailed").toString();
+{
+    noSelectionMessage = tr("Nessun elemento selezionato!");
+    directorySelectionMessage = tr("Nessun elemento selezionato!");
+    compilationSuccessfulMessage = tr("Compilation successful.");
+    compilationFailedMessage = tr("Compilation failed.");
+    deleteSuccessfulMessage = tr("Delete SceneWidgetVisualizerProxy.h successful.");
+    deleteFailedMessage = tr("Delete SceneWidgetVisualizerProxy.h failed.");
 }
 
 MainWindow::~MainWindow()
@@ -156,7 +157,7 @@ void MainWindow::showAboutThisApplicationDialog()
 
 void MainWindow::playingRequested(PlayingDirection direction)
 {
-    currentStep = std::clamp(currentStep + std::to_underlying(direction), 0, totalSteps() - 1);
+    currentStep = std::clamp(currentStep + std::to_underlying(direction), FIRST_STEP_NUMBER, totalSteps());
 
     for (int step = currentStep; step >= 0 && step <= totalSteps(); step += std::to_underlying(direction))
     {
@@ -172,6 +173,8 @@ void MainWindow::playingRequested(PlayingDirection direction)
             int sleep = totalSteps() / 2 - cursorValueSleep;
             QThread::msleep(sleep * 5);
         }
+
+        QApplication::processEvents();
 
         if (!isPlaying || (std::to_underlying(direction) < 0 && currentStep == 0))
         {
@@ -217,14 +220,14 @@ void MainWindow::onBackButtonClicked()
 void MainWindow::onLeftButtonClicked()
 {
     ui->sceneWidget->decreaseCountDown();
-    currentStep = std::max(currentStep - 1, 0); // TODO: GB: What is minimum acceptable step nr? is it 0 or 1?
+    currentStep = std::max(currentStep - 1, FIRST_STEP_NUMBER);
     setPositionOnWidgets(currentStep);
 }
 
 void MainWindow::onRightButtonClicked()
 {
     ui->sceneWidget->increaseCountUp();
-    currentStep = std::min(currentStep + 1, totalSteps() - 1);
+    currentStep = std::min(currentStep + 1, totalSteps());
     setPositionOnWidgets(currentStep);
 }
 
@@ -276,7 +279,7 @@ void MainWindow::updateSleepDuration(int value)
     }
     else
     {
-        movingCursorSleep = true; // TODO: GB: It is set to "true" only here, should it be somewhere set to false?
+        movingCursorSleep = true; // TODO: It is better to have two separate sliders
     }
     cursorValueSleep = value;
     ui->sleepSlider->setToolTip("Current sleeping value " + QString::number(cursorValueSleep));
