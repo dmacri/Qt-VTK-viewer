@@ -44,14 +44,12 @@ using ssize_t = intptr_t;
 #endif
 
 
-extern std::unordered_map<int, long int> *hashMap;
-
-
 template <class T>
 class Visualizer
 {
 public:
     T** p;
+    std::vector<std::unordered_map<int, long int>> hashMap;
 
     Visualizer() = default;
 

@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <iostream>
 #include <QApplication>
-#include <unordered_map>
 #include <vtkActor2D.h>
 #include <vtkCallbackCommand.h>
 #include <vtkCamera.h>
@@ -31,7 +30,6 @@
 
 
 // int pixelsQuadrato = 10; // Not needed for VTK, was for old Allegro version
-unordered_map<int, long int> *hashMap;
 
 vtkNew<vtkNamedColors> colors;
 vtkNew<vtkActor> gridActor;
@@ -47,7 +45,6 @@ vtkNew<vtkTextProperty> singleLineTextPropStep;
 
 vtkSmartPointer<vtkRenderWindow> renderWindow_;
 vtkSmartPointer<vtkRenderWindowInteractor> interactor_;
-vtkSmartPointer<vtkRenderer> globalRenderer_;
 
 
 namespace
@@ -103,7 +100,7 @@ void SceneWidget::enableToolTipWhenMouseAboveWidget()
 SceneWidget::~SceneWidget() = default;
 
 
-void SceneWidget::addVisualizer(int argc, char* argv[])
+void SceneWidget:: addVisualizer(int argc, char* argv[])
 {
     if (argc == 1)
     {
@@ -116,7 +113,7 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
         throw std::invalid_argument("File '"s + filename + "' does not exist!");
     }
 
-    readSettingsFromConfigFile(filename);
+    setupSettingParameters(filename);
 
     setupVtkScene();
 
@@ -128,7 +125,7 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     interactor()->Enable();
 }
 
-void SceneWidget::readSettingsFromConfigFile(const std::string& filename)
+void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
 {
     Config config(filename);
     config.readConfigFile();
@@ -150,48 +147,44 @@ void SceneWidget::readSettingsFromConfigFile(const std::string& filename)
         settingParameter->nNodeX = execContext->getConfigParameter("number_node_x")->getValue<int>();
         settingParameter->nNodeY = execContext->getConfigParameter("number_node_y")->getValue<int>();
     }
-    cout << *settingParameter << endl;
 }
 
-void SceneWidget::setupVtkScene()
+void SceneWidget::setupSettingParameters(const std::string & configFilename)
 {
-    //vtkNew<vtkFileOutputWindow> fileOutputWindow;
-    //fileOutputWindow->SetFileName("output.txt");
-    // Note that the SetInstance function is a static member of vtkOutputWindow.
-    //vtkOutputWindow::SetInstance(fileOutputWindow);
-    // This causes an error intentionally (file name not specified) - this error
-    // will be written to the file output.txt
-    //    vtkNew<vtkXMLPolyDataReader> reader;
-    //    reader->Update();
+    readSettingsFromConfigFile(configFilename);
 
-    hashMap = new unordered_map<int, long int>[settingParameter->nNodeX * settingParameter->nNodeY];
-    maxStepVisited.resize(settingParameter->nNodeX * settingParameter->nNodeY);
     settingParameter->numberOfLines = 2 * (settingParameter->nNodeX * settingParameter->nNodeY);
     settingParameter->step = 1;
     settingParameter->changed = false;
     settingParameter->firstTime = true;
     settingParameter->insertAction = false;
 
-    sceneWidgetVisualizerProxy->p = sceneWidgetVisualizerProxy->getAllocatedParametersMatrix(settingParameter->dimX,settingParameter->dimY);
+    sceneWidgetVisualizerProxy->p = sceneWidgetVisualizerProxy->getAllocatedParametersMatrix(settingParameter->dimX, settingParameter->dimY);
     settingParameter->sceneWidgetVisualizerProxy->p = sceneWidgetVisualizerProxy->p;
-    cout << settingParameter->dimX << " " <<settingParameter-> dimY << endl;
 
-
-    renderWindow()->AddRenderer(settingRenderParameter->m_renderer);
-    interactor()->SetRenderWindow(renderWindow());
-    settingRenderParameter->m_renderer->SetBackground( settingRenderParameter->colors->GetColor3d("Silver").GetData());
-    
-    // Initialize global renderer reference
-    globalRenderer_ = settingRenderParameter->m_renderer;
-    renderWindow()->SetSize(settingParameter->dimX , (settingParameter->dimY + 10) );
-    // An interactor
-    /* With this style you can block only rotation, but not blocking zoom.You can use NULL value in SetInteractorStyle if you want block evreth   */
-
-    vtkNew<vtkInteractorStyleImage> style;
-    interactor()->SetInteractorStyle(style);
+    settingRenderParameter->m_renderer->SetBackground(settingRenderParameter->colors->GetColor3d("Silver").GetData());
 
     // Set the scene widget pointer in the settings
     settingParameter->sceneWidget = this;
+
+    cout << *settingParameter << endl;
+}
+
+void SceneWidget::setupVtkScene()
+{
+    sceneWidgetVisualizerProxy->vis.hashMap.resize(settingParameter->nNodeX * settingParameter->nNodeY);
+
+    maxStepVisited.resize(settingParameter->nNodeX * settingParameter->nNodeY);
+
+    renderWindow()->AddRenderer(settingRenderParameter->m_renderer);
+    interactor()->SetRenderWindow(renderWindow());
+    
+    renderWindow()->SetSize(settingParameter->dimX, (settingParameter->dimY + 10));
+
+    // An interactor
+    /* With this style you can block only rotation, but not blocking zoom.You can use NULL value in SetInteractorStyle if you want block evreth   */
+    vtkNew<vtkInteractorStyleImage> style;
+    interactor()->SetInteractorStyle(style);
 
     renderWindow()->SetWindowName("Visualizer");
 }
@@ -206,7 +199,7 @@ void SceneWidget::renderVtkScene()
     vtkNew<vtkCallbackCommand> keypressCallback;
     keypressCallback->SetCallback(KeypressCallbackFunction);
     keypressCallback->SetClientData(settingParameter.get());
-    interactor()->AddObserver(vtkCommand::KeyPressEvent,keypressCallback);
+    interactor()->AddObserver(vtkCommand::KeyPressEvent, keypressCallback);
 
     std::vector<Line> lines;
     lines.resize(settingParameter->numberOfLines);
@@ -226,8 +219,8 @@ void SceneWidget::renderVtkScene()
 
     buildStepActor= sceneWidgetVisualizerProxy->vis.buildStepText(settingParameter->step,settingParameter->font_size,colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
 
-    renderWindow_=renderWindow();
-    interactor_=interactor();
+    renderWindow_ = renderWindow();
+    interactor_ = interactor();
 }
 
 
@@ -370,7 +363,6 @@ void KeypressCallbackFunction(vtkObject* caller,
             delete cam->sceneWidgetVisualizerProxy->p[i];
         }
         delete[] cam->sceneWidgetVisualizerProxy->p;
-        delete[] hashMap;
 
         auto iren = static_cast<vtkRenderWindowInteractor*>(caller);
         // Close the window

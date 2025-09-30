@@ -24,13 +24,7 @@ public:
 
     void addVisualizer(int argc, char* argv[]);
 
-    void upgradeModelInCentralPanel();
-
     void selectedStepParameter(int stepNumber);
-
-    void setupVtkScene();
-
-    void renderVtkScene();
 
 signals:
     void changedStepNumberWithKeyboardKeys(int stepNumber);
@@ -46,9 +40,16 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
     void leaveEvent(QEvent* event) override;
 
+    void renderVtkScene();
+
+    void upgradeModelInCentralPanel();
+
     void enableToolTipWhenMouseAboveWidget();
 
-    void readSettingsFromConfigFile(const string &filename);
+    void readSettingsFromConfigFile(const std::string &filename);
+
+    void setupVtkScene();
+    void setupSettingParameters(const std::string & configFilename);
 
 private:
     std::unique_ptr<SceneWidgetVisualizerProxy> sceneWidgetVisualizerProxy;
