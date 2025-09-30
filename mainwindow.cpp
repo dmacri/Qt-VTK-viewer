@@ -151,9 +151,9 @@ void MainWindow::playingRequested(PlayingDirection direction)
 {
     currentStep = std::clamp(currentStep + std::to_underlying(direction), FIRST_STEP_NUMBER, totalSteps());
 
-    for (int step = currentStep; step >= FIRST_STEP_NUMBER; step += std::to_underlying(direction)*ui->speedSpinBox->value())
+    for (int step = currentStep; ; step += std::to_underlying(direction)*ui->speedSpinBox->value())
     {
-        step = std::min(totalSteps(), step);
+        step = std::clamp(step, FIRST_STEP_NUMBER, totalSteps());
 
         currentStep = step;
 
@@ -171,7 +171,8 @@ void MainWindow::playingRequested(PlayingDirection direction)
             break;
         }
 
-        if (step == totalSteps())
+        if (PlayingDirection::Forward == direction && step == totalSteps()
+            || PlayingDirection::Backward == direction && step == FIRST_STEP_NUMBER)
         {
             break;
         }
