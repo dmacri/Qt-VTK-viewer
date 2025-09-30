@@ -1,4 +1,4 @@
-name: Build MyProject (Qt6 + VTK) [on push and release]
+name: Build Qt-VTK-viewer (Qt6 + VTK, AppImage + deb) [on push and release]
 
 on:
   push:
@@ -6,6 +6,9 @@ on:
       - '**'   # run on all branches
   release:
     types: [created]
+
+env:
+  PROJECT_NAME: Qt-VTK-viewer
 
 jobs:
   build:
@@ -34,6 +37,8 @@ jobs:
             qt6-tools-dev-tools \
             libvtk9-dev \
             libvtk9-qt-dev \
+            libfuse2 \
+            wget \
             software-properties-common
 
       - name: Install GCC 13
@@ -46,8 +51,17 @@ jobs:
 
       - name: Prepare application icon
         run: |
-          mkdir -p build/resources/icons
-          cp icons/application.png build/resources/icons/myproject.png
+          mkdir -p resources/icons
+          cp icons/application.png resources/icons/${PROJECT_NAME}.png
+
+      - name: Create .desktop file
+        run: |
+          echo "[Desktop Entry]
+          Name=${PROJECT_NAME}
+          Exec=${PROJECT_NAME}
+          Icon=${PROJECT_NAME}
+          Type=Application
+          Categories=Utility;Science;" > ${PROJECT_NAME}.desktop
 
       - name: Build application
         run: |
@@ -56,14 +70,76 @@ jobs:
           cmake .. -DOOPENCAL_DIR=${{ github.workspace }}/deps/OOpenCAL
           cmake --build . --parallel
 
-      - name: Upload build artifact
+      - name: Move desktop and icon into build dir
+        run: |
+          cp ${PROJECT_NAME}.desktop build/
+          cp resources/icons/${PROJECT_NAME}.png build/
+
+      - name: Download linuxdeployqt
+        run: |
+          wget https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
+          chmod +x linuxdeployqt-continuous-x86_64.AppImage
+
+      - name: Run linuxdeployqt (create AppImage)
+        run: |
+          export PATH=/usr/lib/qt6/bin:$PATH
+          ./linuxdeployqt-continuous-x86_64.AppImage build/${PROJECT_NAME}.desktop -appimage
+
+      - name: Rename AppImage
+        run: |
+          APPIMAGE=$(ls *.AppImage | head -n 1)
+          mv "$APPIMAGE" ${PROJECT_NAME}-x86_64.AppImage
+
+      - name: Build .deb package
+        run: |
+          mkdir -p deb/usr/bin
+          mkdir -p deb/DEBIAN
+          mkdir -p deb/usr/share/applications
+          mkdir -p deb/usr/share/icons/hicolor/256x256/apps
+
+          cp build/${PROJECT_NAME} deb/usr/bin/${PROJECT_NAME}
+          chmod +x deb/usr/bin/${PROJECT_NAME}
+
+          cp ${PROJECT_NAME}.desktop deb/usr/share/applications/
+          cp resources/icons/${PROJECT_NAME}.png deb/usr/share/icons/hicolor/256x256/apps/${PROJECT_NAME}.png
+
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION=$(echo "${GITHUB_REF_NAME}" | sed 's/^v//')
+          else
+            VERSION="0.0.1+git"
+          fi
+
+          printf "%s\n" "Package: ${PROJECT_NAME}" \
+            "Version: ${VERSION}" \
+            "Section: science" \
+            "Priority: optional" \
+            "Architecture: amd64" \
+            "Maintainer: YourName <your@email>" \
+            "Description: ${PROJECT_NAME} - Qt + VTK scientific viewer" \
+            > deb/DEBIAN/control
+
+          dpkg-deb --build deb ${PROJECT_NAME}.deb
+
+      - name: Upload AppImage artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MyProject-binaries
-          path: build/
+          name: ${PROJECT_NAME}-AppImage
+          path: ${PROJECT_NAME}-x86_64.AppImage
 
-      - name: Upload binaries to GitHub Release
+      - name: Upload .deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${PROJECT_NAME}-deb
+          path: ${PROJECT_NAME}.deb
+
+      - name: Upload AppImage to GitHub Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: build/*
+          files: ${PROJECT_NAME}-x86_64.AppImage
+
+      - name: Upload .deb to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${PROJECT_NAME}.deb
