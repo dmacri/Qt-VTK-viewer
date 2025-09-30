@@ -22,29 +22,23 @@
 #include <vtkXMLPolyDataReader.h>
 #include "SceneWidget.h"
 #include "config/Config.h"
-
 #include "visualiser/Line.h"
 #include "visualiser/Visualizer.hpp"
 #include "visualiser/SettingParameter.h"
 #include "visualiser/SettingRenderParameter.h"
 
-
-// int pixelsQuadrato = 10; // Not needed for VTK, was for old Allegro version
+constexpr bool DEBUG_LOGS_ENABLED = false;
+#define DEBUG if constexpr (DEBUG_LOGS_ENABLED) std::cout
 
 vtkNew<vtkNamedColors> colors;
 vtkNew<vtkActor> gridActor;
 vtkNew<vtkActor2D> actorBuildLine;
-vtkSmartPointer<vtkActor2D> buildStepActor;
 //Per la generazione delle linee del load balancing
 vtkNew<vtkPoints> pts;
 vtkNew<vtkCellArray> cellLines;
 vtkNew<vtkPolyData> grid;
 vtkNew<vtkTextMapper> singleLineTextStep;
 vtkNew<vtkTextProperty> singleLineTextPropStep;
-
-
-vtkSmartPointer<vtkRenderWindow> renderWindow_;
-vtkSmartPointer<vtkRenderWindowInteractor> interactor_;
 
 
 namespace
@@ -66,7 +60,7 @@ char* prepareOutputFileName(const std::string& configFile, const std::string& ou
     // Step 3: copy to buffer
     const size_t outputFileNameLength = outputFilePath.string().size() + 1;
     char* buffer = new char[outputFileNameLength]{};
-    std::strncpy(buffer, outputFilePath.c_str(), outputFileNameLength - 1);
+    outputFilePath.string().copy(buffer, outputFileNameLength);
 
     return buffer;
 }
@@ -118,11 +112,6 @@ void SceneWidget:: addVisualizer(int argc, char* argv[])
     setupVtkScene();
 
     renderVtkScene();
-
-    // Render
-    renderWindow()->Render();
-    interactor()->Initialize();
-    interactor()->Enable();
 }
 
 void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
@@ -181,8 +170,7 @@ void SceneWidget::setupVtkScene()
     
     renderWindow()->SetSize(settingParameter->dimX, (settingParameter->dimY + 10));
 
-    // An interactor
-    /* With this style you can block only rotation, but not blocking zoom.You can use NULL value in SetInteractorStyle if you want block evreth   */
+    /// An interactor with this style you can block only rotation, but not blocking zoom.You can use NULL value in SetInteractorStyle if you want block evreth
     vtkNew<vtkInteractorStyleImage> style;
     interactor()->SetInteractorStyle(style);
 
@@ -191,10 +179,10 @@ void SceneWidget::setupVtkScene()
 
 void SceneWidget::renderVtkScene()
 {
-    cout << "DEBUG: Starting renderVtkScene" << endl;
-    cout << "DEBUG: Loading hashmap from file..." << endl;
+    DEBUG << "DEBUG: Starting renderVtkScene" << endl;
+    DEBUG << "DEBUG: Loading hashmap from file..." << endl;
     sceneWidgetVisualizerProxy->vis.loadHashmapFromFile(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
-    cout << "DEBUG: Hashmap loaded successfully" << endl;
+    DEBUG << "DEBUG: Hashmap loaded successfully" << endl;
 
     vtkNew<vtkCallbackCommand> keypressCallback;
     keypressCallback->SetCallback(KeypressCallbackFunction);
@@ -203,24 +191,26 @@ void SceneWidget::renderVtkScene()
 
     std::vector<Line> lines;
     lines.resize(settingParameter->numberOfLines);
-    cout << "DEBUG: Allocated lines array" << endl;
+    DEBUG << "DEBUG: Allocated lines array" << endl;
 
-    cout << "DEBUG: Calling getElementMatrix..." << endl;
+    DEBUG << "DEBUG: Calling getElementMatrix..." << endl;
     sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p,settingParameter-> dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
-    cout << "DEBUG: getElementMatrix completed" << endl;
+    DEBUG << "DEBUG: getElementMatrix completed" << endl;
 
-    cout << "DEBUG: Calling drawWithVTK..." << endl;
+    DEBUG << "DEBUG: Calling drawWithVTK..." << endl;
     sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p,settingParameter-> dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingParameter->numberOfLines, settingParameter->edittext,settingRenderParameter->m_renderer,gridActor);
-    cout << "DEBUG: drawWithVTK completed" << endl;
+    DEBUG << "DEBUG: drawWithVTK completed" << endl;
     
-    cout << "DEBUG: Calling buildLoadBalanceLine..." << endl;
+    DEBUG << "DEBUG: Calling buildLoadBalanceLine..." << endl;
     sceneWidgetVisualizerProxy->vis.buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,pts,cellLines,grid,colors,settingRenderParameter->m_renderer,actorBuildLine);
-    cout << "DEBUG: buildLoadBalanceLine completed" << endl;
+    DEBUG << "DEBUG: buildLoadBalanceLine completed" << endl;
 
-    buildStepActor= sceneWidgetVisualizerProxy->vis.buildStepText(settingParameter->step,settingParameter->font_size,colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
+    sceneWidgetVisualizerProxy->vis.buildStepText(settingParameter->step,settingParameter->font_size,colors,singleLineTextPropStep,singleLineTextStep,settingRenderParameter->m_renderer);
 
-    renderWindow_ = renderWindow();
-    interactor_ = interactor();
+    // Render
+    renderWindow()->Render();
+    interactor()->Initialize();
+    interactor()->Enable();
 }
 
 
@@ -316,7 +306,7 @@ void SceneWidget::upgradeModelInCentralPanel(){
 
         settingParameter->firstTime = false;
         settingParameter->changed = false;
-        renderWindow_->Render();
+        renderWindow()->Render();
         QApplication::processEvents();
     }
 
@@ -388,7 +378,7 @@ void KeypressCallbackFunction(vtkObject* caller,
             
             cam->sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(&lines[0], cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors);
             // Force renderer update for keyboard callback too
-            renderWindow_->Modified();
+            cam->sceneWidget->renderWindow()->Modified();
 
             cam->sceneWidgetVisualizerProxy->vis.buildStepLine(cam->step,singleLineTextStep,singleLineTextPropStep,colors,"Red");
 
@@ -400,7 +390,7 @@ void KeypressCallbackFunction(vtkObject* caller,
         {
             std::cerr << "Error occurred: " << ex.what() << std::endl;
         }
-        renderWindow_->Render();
+        cam->sceneWidget->renderWindow()->Render();
         cam->firstTime = false;
         cam->changed = false;
     }
