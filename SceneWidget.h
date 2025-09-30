@@ -14,15 +14,13 @@
 class SettingParameter;
 class SettingRenderParameter;
 
+
 class SceneWidget : public QVTKOpenGLNativeWidget
 {
     Q_OBJECT
 public:
     explicit SceneWidget(QWidget* parent = nullptr, int argc=0, char* argv[]=nullptr);
-
-    SettingParameter* settingParameter;
-
-    SettingRenderParameter* settingRenderParameter;
+    ~SceneWidget();
 
     void addVisualizer(int argc, char* argv[]);
 
@@ -48,8 +46,13 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
     void leaveEvent(QEvent* event) override;
 
+    void enableToolTipWhenMouseAboveWidget();
+
 private:
-    SceneWidgetVisualizerProxy* sceneWidgetVisualizerProxy;
-    QTimer* m_toolTipTimer;
+    std::unique_ptr<SceneWidgetVisualizerProxy> sceneWidgetVisualizerProxy;
+    std::unique_ptr<SettingParameter> settingParameter;
+    std::unique_ptr<SettingRenderParameter> settingRenderParameter;
+
+    QTimer m_toolTipTimer;
     QPoint m_lastMousePos;
 };

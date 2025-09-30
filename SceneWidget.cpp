@@ -40,36 +40,42 @@ vtkNew<vtkActor> gridActor;
 vtkNew<vtkActor2D> actorBuildLine;
 vtkSmartPointer<vtkActor2D> buildStepActor;
 //Per la generazione delle linee del load balancing
-vtkSmartPointer<vtkPoints> pts=vtkSmartPointer<vtkPoints>::New();
-vtkSmartPointer<vtkCellArray> cellLines=vtkSmartPointer<vtkCellArray>::New();
-vtkSmartPointer<vtkPolyData> grid=vtkSmartPointer<vtkPolyData>::New();
-vtkSmartPointer<vtkTextMapper> singleLineTextStep=vtkSmartPointer<vtkTextMapper>::New();
-vtkSmartPointer<vtkTextProperty> singleLineTextPropStep=vtkSmartPointer<vtkTextProperty>::New();
+vtkNew<vtkPoints> pts;
+vtkNew<vtkCellArray> cellLines;
+vtkNew<vtkPolyData> grid;
+vtkNew<vtkTextMapper> singleLineTextStep;
+vtkNew<vtkTextProperty> singleLineTextPropStep;
 
 
-vtkSmartPointer<vtkRenderWindow>renderWindow_;
+vtkSmartPointer<vtkRenderWindow> renderWindow_;
 vtkSmartPointer<vtkRenderWindowInteractor> interactor_;
 vtkSmartPointer<vtkRenderer> globalRenderer_;
 
 
 SceneWidget::SceneWidget(QWidget* parent, int argc, char *argv[])
     : QVTKOpenGLNativeWidget(parent)
-    , m_toolTipTimer(new QTimer(this))
     , m_lastMousePos()
+    , sceneWidgetVisualizerProxy{std::make_unique<SceneWidgetVisualizerProxy>()}
+    , settingParameter{std::make_unique<SettingParameter>()}
+    , settingRenderParameter{std::make_unique<SettingRenderParameter>()}
 {
-    sceneWidgetVisualizerProxy = new SceneWidgetVisualizerProxy;
-    settingParameter = new SettingParameter();
-    settingParameter->sceneWidgetVisualizerProxy = sceneWidgetVisualizerProxy;
-    settingRenderParameter = new SettingRenderParameter();
-    
-    // Set up tooltip timer
-    m_toolTipTimer->setSingleShot(true);
-    m_toolTipTimer->setInterval(1000); // 1 second delay before showing tooltip
-    connect(m_toolTipTimer, &QTimer::timeout, this, &SceneWidget::showToolTip);
-    
-    // Enable mouse tracking
-    setMouseTracking(true);
+    settingParameter->sceneWidgetVisualizerProxy = sceneWidgetVisualizerProxy.get();
+
+    enableToolTipWhenMouseAboveWidget();
 }
+
+void SceneWidget::enableToolTipWhenMouseAboveWidget()
+{
+    m_toolTipTimer.setSingleShot(true);
+
+    constexpr int delayBeforeShowingToolTipInMs = 1'000;
+    m_toolTipTimer.setInterval(delayBeforeShowingToolTipInMs);
+    connect(&m_toolTipTimer, &QTimer::timeout, this, &SceneWidget::showToolTip);
+
+    setMouseTracking(/*enable=*/true);
+}
+
+SceneWidget::~SceneWidget() = default;
 
 
 void SceneWidget::addVisualizer(int argc, char* argv[])
@@ -151,7 +157,7 @@ void SceneWidget::setupVtkScene()
     settingParameter->insertAction = false;
 
     sceneWidgetVisualizerProxy->p = sceneWidgetVisualizerProxy->getAllocatedParametersMatrix(settingParameter->dimX,settingParameter->dimY);
-    settingParameter->sceneWidgetVisualizerProxy->p=sceneWidgetVisualizerProxy->p;
+    settingParameter->sceneWidgetVisualizerProxy->p = sceneWidgetVisualizerProxy->p;
     cout << settingParameter->dimX << " " <<settingParameter-> dimY << endl;
 
 
@@ -183,7 +189,7 @@ void SceneWidget::renderVtkScene()
 
     vtkNew<vtkCallbackCommand> keypressCallback;
     keypressCallback->SetCallback(KeypressCallbackFunction);
-    keypressCallback->SetClientData(settingParameter);
+    keypressCallback->SetClientData(settingParameter.get());
     interactor()->AddObserver(vtkCommand::KeyPressEvent,keypressCallback);
 
     std::vector<Line> lines;
@@ -237,8 +243,8 @@ void SceneWidget::mouseMoveEvent(QMouseEvent* event)
     m_lastMousePos = event->pos();
     
     // Restart the tooltip timer
-    m_toolTipTimer->stop();
-    m_toolTipTimer->start();
+    m_toolTipTimer.stop();
+    m_toolTipTimer.start();
     // TODO: GB: Ask what should we display, what position?
     // Optionally, you can show the coordinates immediately in the status bar or elsewhere
     // statusBar()->showMessage(QString("X: %1, Y: %2").arg(event->x()).arg(event->y()));
@@ -247,7 +253,7 @@ void SceneWidget::mouseMoveEvent(QMouseEvent* event)
 void SceneWidget::leaveEvent(QEvent* event)
 {
     QVTKOpenGLNativeWidget::leaveEvent(event);
-    m_toolTipTimer->stop();
+    m_toolTipTimer.stop();
     QToolTip::hideText();
 }
 
