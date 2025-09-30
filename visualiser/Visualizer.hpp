@@ -44,17 +44,9 @@ using ssize_t = intptr_t;
 #endif
 
 
-namespace
-{
-void KeypressCallbackFunction(vtkObject* caller, long unsigned int eventId,
-                              void* clientData, void* callData);
-} // namespace
-
-
 // extern int pixelsQuadrato; // Not needed for VTK
 extern int *maxStepVisited;
 extern std::unordered_map<int, long int> *hashMap;
-extern Line *lines;
 
 
 template <class T>
@@ -68,7 +60,7 @@ public:
     long int gotoStep(int step, FILE *fp, int node);
 
     std::string giveMeFileName(const std::string& fileName, int node) const;
-    std::string giveMeFileNameIndex(char *fileName, int node) const;
+    std::string giveMeFileNameIndex(const std::string &fileName, int node) const;
 
     FILE *giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows, char *&line, size_t &len);
     std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, char *&line, size_t &len);
@@ -76,13 +68,14 @@ public:
     void drawWithVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines, std::string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
     void refreshWindowsVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
     void readConfigurationFile(const char *filename, int infoFromFile[8], char *outputFileName);
-    void loadHashmapFromFile(int nNodeX, int nNodeY, char *filename);
-    size_t generalPorpouseGetline(char **lineptr, size_t *n, FILE *stream);
+    void loadHashmapFromFile(int nNodeX, int nNodeY, const std::string &filename);
     void buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows,vtkSmartPointer<vtkPoints> pts,vtkSmartPointer<vtkCellArray> cellLines,vtkSmartPointer<vtkPolyData> grid,vtkSmartPointer<vtkNamedColors> colors,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor2D> actorBuildLine);
     void refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows, vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors);
     vtkTextProperty* buildStepLine(int step,vtkSmartPointer<vtkTextMapper> ,vtkSmartPointer<vtkTextProperty> singleLineTextProp,vtkSmartPointer<vtkNamedColors> colors, std::string color);
     vtkNew<vtkActor2D> buildStepText(int step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer);
-    void refreshBuildStepText(int step,vtkActor2D* stepLineTextActor);
+
+    size_t generalPorpouseGetline(char **lineptr, size_t *n, FILE *stream); // TODO: GB: not used
+    void refreshBuildStepText(int step,vtkActor2D* stepLineTextActor); // TODO: GB: Not used
 
 private:
     bool allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount);
@@ -103,7 +96,7 @@ std::string Visualizer<T>::giveMeFileName(const std::string &fileName, int node)
     return std::format("{}{}.txt", fileName, node);
 }
 template <class T>
-std::string Visualizer<T>::giveMeFileNameIndex(char *fileName, int node) const
+std::string Visualizer<T>::giveMeFileNameIndex(const std::string &fileName, int node) const
 {
     return std::format("{}{}_index.txt", fileName, node);
 }
@@ -323,7 +316,7 @@ void Visualizer<T>::readConfigurationFile(const char *filename, int infoFromFile
 }
 
 template <class T>
-void Visualizer<T>::loadHashmapFromFile(int nNodeX, int nNodeY, char *filename)
+void Visualizer<T>::loadHashmapFromFile(int nNodeX, int nNodeY, const std::string& filename)
 {
     for (int node = 0; node < (nNodeX * nNodeY); node++)
     {
@@ -542,7 +535,6 @@ void Visualizer<T>::refreshBuildStepText(int step,vtkActor2D* stepLineTextActor)
     std::string stepText = "Step " + std::to_string(step);
     stepLineTextMapper->SetInput(stepText.c_str());
     stepLineTextMapper->Update();
-
 }
 
 template <class T>

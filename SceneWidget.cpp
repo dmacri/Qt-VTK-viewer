@@ -33,7 +33,6 @@
 // int pixelsQuadrato = 10; // Not needed for VTK, was for old Allegro version
 int *maxStepVisited;
 unordered_map<int, long int> *hashMap;
-Line *lines;
 
 vtkNew<vtkNamedColors> colors;
 vtkNew<vtkActor> gridActor;
@@ -50,6 +49,13 @@ vtkNew<vtkTextProperty> singleLineTextPropStep;
 vtkSmartPointer<vtkRenderWindow> renderWindow_;
 vtkSmartPointer<vtkRenderWindowInteractor> interactor_;
 vtkSmartPointer<vtkRenderer> globalRenderer_;
+
+
+namespace
+{
+void KeypressCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
+} // namespace
+
 
 
 SceneWidget::SceneWidget(QWidget* parent, int argc, char *argv[])
@@ -279,15 +285,17 @@ void SceneWidget::selectedStepParameter(int stepNumber)
 void SceneWidget::upgradeModelInCentralPanel(){
     if (settingParameter->changed==true || settingParameter->firstTime==true )
     {
-        lines = new Line[settingParameter->numberOfLines];
+        std::vector<Line> lines;
+        lines.resize(settingParameter->numberOfLines);
+
         try
         {   cout <<"CurrentStep--->>" <<settingParameter->step << endl;
-            sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, lines);
+            sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
 
-            sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, lines, settingParameter->numberOfLines,gridActor);
+            sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingParameter->numberOfLines,gridActor);
                   cout <<"Number of lines--->>" << settingParameter->numberOfLines << endl;
             if (settingParameter->numberOfLines > 0) {
-                sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(lines,settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,actorBuildLine,colors);
+                sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(&lines[0], settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,actorBuildLine,colors);
             }
             // Force renderer update
             settingRenderParameter->m_renderer->Modified();
@@ -305,7 +313,6 @@ void SceneWidget::upgradeModelInCentralPanel(){
 
         settingParameter->firstTime = false;
         settingParameter->changed = false;
-        delete[] lines;
         renderWindow_->Render();
         QApplication::processEvents();
     }
@@ -367,17 +374,18 @@ void KeypressCallbackFunction(vtkObject* caller,
 
     if (cam->changed==true || cam->firstTime==true )
     {
-        lines = new Line[cam->numberOfLines];
+        std::vector<Line> lines;
+        lines.resize(cam->numberOfLines);
         //  std::cout << "Sono al passo prima getElementMatrix: " << cam->step << std::endl;
         try
         {
-            cam->sceneWidgetVisualizerProxy->vis.getElementMatrix(cam->step, cam->sceneWidgetVisualizerProxy->p, cam->dimX, cam->dimY, cam->nNodeX, cam->nNodeY, cam->outputFileName, lines);
+            cam->sceneWidgetVisualizerProxy->vis.getElementMatrix(cam->step, cam->sceneWidgetVisualizerProxy->p, cam->dimX, cam->dimY, cam->nNodeX, cam->nNodeY, cam->outputFileName, &lines[0]);
 
-            cam->sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(cam->sceneWidgetVisualizerProxy->p, cam->dimY, cam->dimX, cam->step, lines, cam->numberOfLines,gridActor);
+            cam->sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(cam->sceneWidgetVisualizerProxy->p, cam->dimY, cam->dimX, cam->step, &lines[0], cam->numberOfLines,gridActor);
 
             //cam->sceneWidgetVisualizerProxy->vis->refreshBuildLoadBalanceLine(lines,cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors,pts,cellLines,grid);
             
-            cam->sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(lines,cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors);
+            cam->sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(&lines[0], cam->numberOfLines,cam->dimY+1,cam->dimX+1,actorBuildLine,colors);
             // Force renderer update for keyboard callback too
             renderWindow_->Modified();
 
@@ -394,9 +402,6 @@ void KeypressCallbackFunction(vtkObject* caller,
         renderWindow_->Render();
         cam->firstTime = false;
         cam->changed = false;
-        delete[] lines;
     }
 }
-}
-
-
+} // namespace
