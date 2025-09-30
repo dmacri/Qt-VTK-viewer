@@ -151,11 +151,9 @@ void MainWindow::playingRequested(PlayingDirection direction)
 {
     currentStep = std::clamp(currentStep + std::to_underlying(direction), FIRST_STEP_NUMBER, totalSteps());
 
-    for (int step = currentStep; ; step += std::to_underlying(direction)*ui->speedSpinBox->value())
+    while (true)
     {
-        step = std::clamp(step, FIRST_STEP_NUMBER, totalSteps());
-
-        currentStep = step;
+        currentStep = std::clamp(currentStep, FIRST_STEP_NUMBER, totalSteps());;
 
         {
             QSignalBlocker blockSlider(ui->updatePositionSlider);
@@ -171,11 +169,13 @@ void MainWindow::playingRequested(PlayingDirection direction)
             break;
         }
 
-        if (PlayingDirection::Forward == direction && step == totalSteps()
-            || PlayingDirection::Backward == direction && step == FIRST_STEP_NUMBER)
+        if (PlayingDirection::Forward == direction && currentStep == totalSteps()
+            || PlayingDirection::Backward == direction && currentStep == FIRST_STEP_NUMBER)
         {
             break;
         }
+
+        currentStep += std::to_underlying(direction)*ui->speedSpinBox->value();
     }
 }
 
