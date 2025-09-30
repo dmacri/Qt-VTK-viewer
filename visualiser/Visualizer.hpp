@@ -1,5 +1,4 @@
-#ifndef VISUALIZER_HPP
-#define VISUALIZER_HPP
+#pragma once
 
 #include <vtkCamera.h>
 #include <vtkCellArray.h>
@@ -23,35 +22,25 @@
 #include <vtkLine.h>
 #include <vtkLookupTable.h>
 #include <vtkStructuredGrid.h>
-#include<vtkInteractorStyleImage.h>
+#include <vtkInteractorStyleImage.h>
 #include <vtkProperty.h>
 #include <vtkTextMapper.h>
 #include <vtkTextProperty.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <vtkDoubleArray.h>
 #include <iostream>
-#include <stdlib.h>
-#include <string>
 #include <sstream>
-#include <unordered_map>
 #include <string>
+#include <cstdio>
+#include <cstdlib>
+#include <cerrno>
+#include <cstdint>
 
 #include "Visualizer.h"
-#include "Element.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <stdint.h>
+#include "Line.h"
+#include "OOpenCAL/base/Element.h" // rgb
 
 // if typedef doesn't exist (msvc, blah)
 typedef intptr_t ssize_t;
-
-
-
-
-
 
 
 template <class T>
@@ -59,10 +48,11 @@ long int Visualizer<T>::gotoStep(int step, FILE *fp, int node)
 {
     return hashMap[node][step];
 }
+
 template <class T>
 void Visualizer<T>::stampa(long int fPos)
 {
-   }
+}
 template <class T>
 char* Visualizer<T>::giveMeFileName(char *fileName, int node)
 {
@@ -368,7 +358,7 @@ size_t Visualizer<T>::generalPorpouseGetline(char **lineptr, size_t *n, FILE *st
 }
 
 template <class T>
-void Visualizer<T>::drawWithVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines, string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor)
+void Visualizer<T>::drawWithVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines, std::string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor)
 {
     vtkNew<vtkStructuredGrid> structuredGrid;
     vtkNew<vtkNamedColors> colors;
@@ -505,7 +495,7 @@ void Visualizer<T>::refreshBuildStepText(int step,vtkActor2D* stepLineTextActor)
 }
 
 template <class T>
-vtkTextProperty* Visualizer<T>:: buildStepLine(int step,vtkSmartPointer<vtkTextMapper> singleLineTextB,vtkSmartPointer<vtkTextProperty> singleLineTextProp,vtkSmartPointer<vtkNamedColors> colors,string color)
+vtkTextProperty* Visualizer<T>:: buildStepLine(int step,vtkSmartPointer<vtkTextMapper> singleLineTextB,vtkSmartPointer<vtkTextProperty> singleLineTextProp,vtkSmartPointer<vtkNamedColors> colors, std::string color)
 {
     std::string stepText = "Step " + std::to_string(step);
     singleLineTextB->SetInput(stepText.c_str());
@@ -557,5 +547,3 @@ void buidColor(vtkLookupTable* lut, int nCols, int nRows,T **p)
         }
 
 }
-#endif // VISUALIZER_HPP
-

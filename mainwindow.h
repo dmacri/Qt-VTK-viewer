@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QCommonStyle>
 #include <QMainWindow>
+#include <QStyle>
 
 namespace Ui {
 class MainWindow;
@@ -10,18 +10,18 @@ class MainWindow;
 class QPushButton;
 
 
-class MainWindow : public QMainWindow {
+class MainWindow : public QMainWindow
+{
     Q_OBJECT
 
 public:
     explicit MainWindow(int argc, char* argv[], QWidget* parent = nullptr);
     ~MainWindow();
 
-public slots:
-    void showAboutThisApplicationDialog();
-
 private slots:
-    void onStepNumberInputed();
+
+    void showAboutThisApplicationDialog();
+    void onStepNumberChanged();
 
     void onPlayButtonClicked();
     void onStopButtonClicked();
@@ -30,17 +30,21 @@ private slots:
     void onLeftButtonClicked();
     void onRightButtonClicked();
 
-    void updateSleepDuration(int value);
-
     void onUpdatePositionOnSlider(int value);
 
 private:
+    enum class PlayingDirection
+    {
+        Forward = +1,
+        Backward = -1
+    };
+
+    void playingRequested(PlayingDirection direction);
+
     void configureUIElements(int argc, char* argv[]);
     void setupConnections();
-    void addValidatorForPositionInputWidget();
     void configureButtons();
     void configureButton(QPushButton* button, QStyle::StandardPixmap icon);
-    void configureSliders();
     void configureCursorPosition();
     void initializeSceneWidget(int argc, char* argv[]);
     void setTotalStepsFromConfiguration(char *configurationFile);
@@ -56,17 +60,14 @@ private:
     void setTotalSteps(int totalStepsValue);
     int totalSteps() const;
 
-    void playingRequested(int direction); // direction: +1 = forward, -1 = backward
+    void changeWhichButtonsAreEnabled();
 
 
     Ui::MainWindow* ui;
 
     int currentStep = 1;
-    int cursorValueSleep = 1;
-    int stepIncrement = 0;
     bool isPlaying = false ;
     bool isBacking = false;
-    bool movingCursorSleep = false;
 
     QString noSelectionMessage;
     QString directorySelectionMessage;
