@@ -1,0 +1,69 @@
+name: Build MyProject (Qt6 + VTK) [on push and release]
+
+on:
+  push:
+    branches:
+      - '**'   # run on all branches
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      # Uncomment this when OOpenCAL secret is available
+      # - name: Checkout OOpenCAL dependency
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: alessioderango/OOpenCAL
+      #     path: deps/OOpenCAL
+      #     token: ${{ secrets.OOPENCAL_TOKEN }}
+
+      - name: Install dependencies (Qt6, VTK, build tools)
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            cmake \
+            qt6-base-dev \
+            qt6-tools-dev \
+            qt6-tools-dev-tools \
+            libvtk9-dev \
+            libvtk9-qt-dev \
+            software-properties-common
+
+      - name: Install GCC 13
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt update
+          sudo apt install -y gcc-13 g++-13
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 \
+                                   --slave /usr/bin/g++ g++ /usr/bin/g++-13
+
+      - name: Prepare application icon
+        run: |
+          mkdir -p build/resources/icons
+          cp icons/application.png build/resources/icons/myproject.png
+
+      - name: Build application
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -DOOPENCAL_DIR=${{ github.workspace }}/deps/OOpenCAL
+          cmake --build . --parallel
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyProject-binaries
+          path: build/
+
+      - name: Upload binaries to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/*
