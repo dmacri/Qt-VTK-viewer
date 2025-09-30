@@ -48,6 +48,8 @@ protected:
 
     void enableToolTipWhenMouseAboveWidget();
 
+    void readSettingsFromConfigFile(const string &filename);
+
 private:
     std::unique_ptr<SceneWidgetVisualizerProxy> sceneWidgetVisualizerProxy;
     std::unique_ptr<SettingParameter> settingParameter;

@@ -90,47 +90,13 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
         throw std::invalid_argument("Missing arguments");
     }
 
-    char *filename = argv[1];
+    const char *filename = argv[1];
     if (! std::filesystem::exists(filename))
     {
         throw std::invalid_argument("File '"s + filename + "' does not exist!");
     }
 
-    Config config(filename);
-    config.readConfigFile();
-
-    ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
-    ConfigCategory* execContext = config.getConfigCategory("DISTRIBUTED");
-    int infoFromFile[8];
-
-    constexpr size_t outputFileNameLength = 256;
-    settingParameter->outputFileName = new char[outputFileNameLength]{};
-    string tmpFileName = filename;
-    std::size_t positionOfLastPathSeparatorIfFound = tmpFileName.find_last_of("/\\");
-    tmpFileName = tmpFileName.substr(0, positionOfLastPathSeparatorIfFound) + "/Output/";
-
-    sceneWidgetVisualizerProxy->vis.readConfigurationFile(filename, infoFromFile, settingParameter->outputFileName);
-    tmpFileName += generalContext->getConfigParameter("output_file_name")->getValue<string>();
-    tmpFileName.copy(settingParameter->outputFileName, outputFileNameLength);
-
-    settingParameter->dimX = generalContext->getConfigParameter("number_of_columns")->getValue<int>();
-    settingParameter->dimY = generalContext->getConfigParameter("number_of_rows")->getValue<int>();
-    int borderSizeX = execContext->getConfigParameter("border_size_x")->getValue<int>();
-    int borderSizeY = execContext->getConfigParameter("border_size_y")->getValue<int>();
-    int numBorders = 1;
-    settingParameter->nNodeX = execContext->getConfigParameter("number_node_x")->getValue<int>();
-    settingParameter->nNodeY = execContext->getConfigParameter("number_node_y")->getValue<int>();
-    settingParameter->nsteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
-
-    cout << "dimX " <<settingParameter-> dimX << endl;
-    cout << "dimY " << settingParameter-> dimY << endl;
-    cout << "borderSizeX " << borderSizeX << endl;
-    cout << "borderSizeY " << borderSizeY << endl;
-    cout << "numBorders " << numBorders << endl;
-    cout << "nNodeX " <<settingParameter-> nNodeX << endl;
-    cout << "nNodeY " <<settingParameter-> nNodeY << endl;
-    cout << "outputFileName " << settingParameter->outputFileName << endl;
-
+    readSettingsFromConfigFile(filename);
 
     setupVtkScene();
 
@@ -140,6 +106,38 @@ void SceneWidget::addVisualizer(int argc, char* argv[])
     renderWindow()->Render();
     interactor()->Initialize();
     interactor()->Enable();
+}
+
+void SceneWidget::readSettingsFromConfigFile(const std::string& filename)
+{
+    Config config(filename);
+    config.readConfigFile();
+
+    ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
+    ConfigCategory* execContext = config.getConfigCategory("DISTRIBUTED");
+
+    constexpr size_t outputFileNameLength = 256;
+    settingParameter->outputFileName = new char[outputFileNameLength]{};
+    string tmpFileName = filename;
+    std::size_t positionOfLastPathSeparatorIfFound = tmpFileName.find_last_of("/\\");
+    tmpFileName = tmpFileName.substr(0, positionOfLastPathSeparatorIfFound) + "/Output/";
+
+    int infoFromFile[8]; // TODO: GB: We are not reading this anywhere
+    sceneWidgetVisualizerProxy->vis.readConfigurationFile(filename.c_str(), infoFromFile, settingParameter->outputFileName);
+    tmpFileName += generalContext->getConfigParameter("output_file_name")->getValue<string>();
+
+    tmpFileName.copy(settingParameter->outputFileName, outputFileNameLength);
+
+    settingParameter->dimX = generalContext->getConfigParameter("number_of_columns")->getValue<int>();
+    settingParameter->dimY = generalContext->getConfigParameter("number_of_rows")->getValue<int>();
+    // int borderSizeX = execContext->getConfigParameter("border_size_x")->getValue<int>(); // not used
+    // int borderSizeY = execContext->getConfigParameter("border_size_y")->getValue<int>(); // not used
+    // int numBorders = 1; // not used
+    settingParameter->nNodeX = execContext->getConfigParameter("number_node_x")->getValue<int>();
+    settingParameter->nNodeY = execContext->getConfigParameter("number_node_y")->getValue<int>();
+    settingParameter->nsteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
+
+    cout << *settingParameter << endl;
 }
 
 void SceneWidget::setupVtkScene()
