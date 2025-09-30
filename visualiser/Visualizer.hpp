@@ -49,34 +49,24 @@ long int Visualizer<T>::gotoStep(int step, FILE *fp, int node)
     return hashMap[node][step];
 }
 
-template <class T>
-void Visualizer<T>::stampa(long int fPos)
-{
-}
-template <class T>
-char* Visualizer<T>::giveMeFileName(char *fileName, int node)
-{
-    char *fileNameTmp = new char[256];
-    strcpy(fileNameTmp, fileName);
-    strcat(fileNameTmp, std::to_string(node).c_str());
-    strcat(fileNameTmp, ".txt");
-    return fileNameTmp;
-}
-template <class T>
-char* Visualizer<T>::giveMeFileNameIndex(char *fileName, int node)
-{
-    char *fileNameTmp = new char[256];
-    strcpy(fileNameTmp, fileName);
-    strcat(fileNameTmp, std::to_string(node).c_str());
-    strcat(fileNameTmp, "_index.txt");
-    return fileNameTmp;
-}
-template <class T>
-FILE* Visualizer<T>::giveMeLocalColAndRowFromStep(int step, char *fileName, int node, int &nLocalCols, int &nLocalRows, char *&line, size_t &len)
-{
-    char *fileNameTmp = giveMeFileName(fileName, node);
 
-    FILE *fp = fopen(fileNameTmp, "r");
+template <class T>
+std::string Visualizer<T>::giveMeFileName(const std::string &fileName, int node) const
+{
+    return std::format("{}{}.txt", fileName, node);
+}
+template <class T>
+std::string Visualizer<T>::giveMeFileNameIndex(char *fileName, int node) const
+{
+    return std::format("{}{}_index.txt", fileName, node);
+}
+
+template <class T>
+FILE* Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows, char *&line, size_t &len)
+{
+    auto fileNameTmp = giveMeFileName(fileName, node);
+
+    FILE *fp = fopen(fileNameTmp.c_str(), "r");
     if (fp == NULL)
     {
         cout << "Can't read " << fileNameTmp << " in giveMeLocalColAndRowFromStep function" << endl;
@@ -98,10 +88,50 @@ FILE* Visualizer<T>::giveMeLocalColAndRowFromStep(int step, char *fileName, int 
 }
 
 template <class T>
+std::pair<int,int> Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, char *&line, size_t &len)
+{
+    auto fileNameTmp = giveMeFileName(fileName, node);
+
+    FILE *fp = fopen(fileNameTmp.c_str(), "r");
+    if (fp == NULL)
+    {
+        cout << "Can't read " << fileNameTmp << " in " << __FUNCTION__ << " function" << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    long int fPos = gotoStep(step, fp, node);
+    fseek(fp, fPos, SEEK_SET);
+    //printMatrixFromStepByUser(hashmap, stepUser);
+    // generalPorpouseGetline(&line, &len, fp);
+    getline(&line, &len, fp);
+    char *pch = strtok(line, "-");
+    auto nLocalCols = atoi(pch);
+    pch = strtok(NULL, "-");
+    auto nLocalRows = atoi(pch);
+
+    fclose(fp);
+
+    return {nLocalCols, nLocalRows};
+}
+
+bool allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount)
+{
+    for (int node = 0; node < nodesCount; ++node)
+    {
+        if (AlllocalCols[node] > 0 || AlllocalRows[node] > 0)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+template <class T>
 void Visualizer<T>::getElementMatrix(int step, T **&m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, char *fileName, Line *lines)
 {
-    int *AlllocalCols = new int[(nNodeX * nNodeY)];
-    int *AlllocalRows = new int[(nNodeX * nNodeY)];
+    std::vector<int> AlllocalCols, AlllocalRows;
+    AlllocalCols.resize(nNodeX * nNodeY);
+    AlllocalRows.resize(nNodeX * nNodeY);
     
     // Check if we need to use fallback step
     int actualStep = step;
@@ -113,54 +143,42 @@ void Visualizer<T>::getElementMatrix(int step, T **&m, int nGlobalCols, int nGlo
 
     for (int node = 0; node < (nNodeX * nNodeY); node++)
     {
-        int nLocalCols;
-        int nLocalRows;
-        char *line = NULL;
+        char *line = nullptr;
         size_t len = 0;
 
-        FILE *fp = giveMeLocalColAndRowFromStep(actualStep, fileName, node, nLocalCols, nLocalRows, line, len);
+        auto [nLocalCols, nLocalRows] = giveMeLocalColAndRowFromStep(actualStep, fileName, node, line, len);
         
-
         AlllocalCols[node] = nLocalCols;
         AlllocalRows[node] = nLocalRows;
-        fclose(fp);
     }
     
-    // Check if all nodes have empty data (step beyond simulation end)
-    bool allEmpty = true;
-    for (int node = 0; node < (nNodeX * nNodeY); node++) {
-        if (AlllocalCols[node] > 0 || AlllocalRows[node] > 0) {
-            allEmpty = false;
-            break;
-        }
-    }
+    const bool allEmpty = allNodesHaveEmptyData(AlllocalCols, AlllocalRows, nNodeX * nNodeY);
+
     
     // If all nodes are empty and this is step 4000, use previous step
-    if (allEmpty && step == 4000) {
+    if (allEmpty && step == 4000)
+    {
         actualStep = 3999;
         
         // Reload data with fallback step
         for (int node = 0; node < (nNodeX * nNodeY); node++)
         {
-            int nLocalCols;
-            int nLocalRows;
-            char *line = NULL;
+            char *line = nullptr;
             size_t len = 0;
 
-            FILE *fp = giveMeLocalColAndRowFromStep(actualStep, fileName, node, nLocalCols, nLocalRows, line, len);
+            auto [nLocalCols, nLocalRows] = giveMeLocalColAndRowFromStep(actualStep, fileName, node, line, len);
+
             AlllocalCols[node] = nLocalCols;
             AlllocalRows[node] = nLocalRows;
-            fclose(fp);
         }
     }
 
     bool startStepDone = false;
     for (int node = 0; node < (nNodeX * nNodeY); node++)
     {
-        int nLocalCols;
-        int nLocalRows;
         char *line = NULL;
         size_t len = 0;
+        int nLocalCols, nLocalRows;
 
         FILE *fp = giveMeLocalColAndRowFromStep(actualStep, fileName, node, nLocalCols, nLocalRows, line, len);
 
@@ -194,19 +212,10 @@ void Visualizer<T>::getElementMatrix(int step, T **&m, int nGlobalCols, int nGlo
             }
         }
 
-        
-        Line *lineTmp = new Line(offsetX, offsetY, offsetX + nLocalCols, offsetY);
-        Line *lineTmp2 = new Line(offsetX, offsetY, offsetX, offsetY + nLocalRows);
+        lines[node * 2] = Line(offsetX, offsetY, offsetX + nLocalCols, offsetY);
+        lines[node * 2 + 1] = Line(offsetX, offsetY, offsetX, offsetY + nLocalRows);
 
-        lines[node * 2] = *lineTmp;
-        lines[node * 2 + 1] = *lineTmp2;
-
-        // Debug output for line coordinates (commented for performance)
-        // cout << "Node " << node << " lineTmp.x1= " << lineTmp->x1 << " lineTmp.y1 " << lineTmp->y1 << " lineTmp.x2= " << lineTmp->x2 << " lineTmp.y2 " << lineTmp->y2<< endl;
-
-        int row = 0;
-
-        while (row < nLocalRows)
+        for (int row = 0; row < nLocalRows; row++)
         {
            // generalPorpouseGetline(&line, &len, fp);
             getline(&line, &len, fp);
@@ -232,14 +241,10 @@ void Visualizer<T>::getElementMatrix(int step, T **&m, int nGlobalCols, int nGlo
 
                 col++;
             }
-            row++;
         }
 
         fclose(fp);
     }
-
-    delete[] AlllocalCols;
-    delete[] AlllocalRows;
 }
 
 
@@ -249,8 +254,7 @@ void Visualizer<T>::readConfigurationFile(const char *filename, int infoFromFile
 {
     char str[999];
     int n = 0;
-    FILE *file;
-    file = fopen(filename, "r");
+    FILE *file = fopen(filename, "r");
 
     if (file)
     {
@@ -275,9 +279,9 @@ void Visualizer<T>::loadHashmapFromFile(int nNodeX, int nNodeY, char *filename)
 {
     for (int node = 0; node < (nNodeX * nNodeY); node++)
     {
-        char *fileNameIndex = giveMeFileNameIndex(filename, node);
+        auto fileNameIndex = giveMeFileNameIndex(filename, node);
         cout << fileNameIndex << endl;
-        FILE *fp = fopen(fileNameIndex, "r");
+        FILE *fp = fopen(fileNameIndex.c_str(), "r");
         if (fp == NULL)
             exit(EXIT_FAILURE);
         int step = 0;
@@ -305,7 +309,6 @@ void Visualizer<T>::loadHashmapFromFile(int nNodeX, int nNodeY, char *filename)
         // }
         // cout << "finito" << endl;
         fclose(fp);
-        //cout << "finito" << endl;
     }
 }
 template <class T>

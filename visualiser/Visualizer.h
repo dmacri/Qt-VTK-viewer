@@ -41,10 +41,12 @@ public:
     Visualizer() = default;
 
     long int gotoStep(int step, FILE *fp, int node);
-    void stampa(long int fPos);
-    char *giveMeFileName(char *fileName, int node);
-    char *giveMeFileNameIndex(char *fileName, int node);
-    FILE *giveMeLocalColAndRowFromStep(int step, char *fileName, int node, int &nLocalCols, int &nLocalRows, char *&line, size_t &len);
+
+    std::string giveMeFileName(const std::string& fileName, int node) const;
+    std::string giveMeFileNameIndex(char *fileName, int node) const;
+
+    FILE *giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows, char *&line, size_t &len);
+    std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, char *&line, size_t &len);
     void getElementMatrix(int step, T **&m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, char *fileName, Line *lines);
     void drawWithVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines, std::string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
     void refreshWindowsVTK(T **p, int nRows, int nCols, int step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
