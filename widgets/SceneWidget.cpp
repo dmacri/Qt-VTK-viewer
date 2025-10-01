@@ -190,7 +190,7 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
 
     const string keyPressed = interactor->GetKeySym();
     SceneWidget* sw = static_cast<SceneWidget*>(clientData);
-    SettingParameter* sp = const_cast<SettingParameter*>(sw->getSettingParameter());
+    SettingParameter* sp = sw->settingParameter.get();
 
     SceneWidgetVisualizerProxy* visualiserProxy = sp->sceneWidgetVisualizerProxy;
 
