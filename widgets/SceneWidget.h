@@ -19,7 +19,7 @@ class SceneWidget : public QVTKOpenGLNativeWidget
 {
     Q_OBJECT
 public:
-    explicit SceneWidget(QWidget* parent = nullptr, int argc=0, char* argv[]=nullptr);
+    explicit SceneWidget(QWidget* parent);
     ~SceneWidget();
 
     void addVisualizer(const string &filename);

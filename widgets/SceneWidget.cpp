@@ -36,7 +36,7 @@ std::string prepareOutputFileName(const std::string& configFile, const std::stri
 } // namespace
 
 
-SceneWidget::SceneWidget(QWidget* parent, int argc, char *argv[])
+SceneWidget::SceneWidget(QWidget* parent)
     : QVTKOpenGLNativeWidget(parent)
     , m_lastMousePos()
     , sceneWidgetVisualizerProxy{std::make_unique<SceneWidgetVisualizerProxy>()}
