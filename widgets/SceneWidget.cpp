@@ -52,12 +52,12 @@ char* prepareOutputFileName(const std::string& configFile, const std::string& ou
     fs::create_directories(outputDir);  // ensure that directory exists
 
     // Step 2: build full output file path
-    fs::path outputFilePath = outputDir / outputFileNameFromCfg;
+    std::string outputFilePath = (outputDir / outputFileNameFromCfg).string();
 
     // Step 3: copy to buffer
-    const size_t outputFileNameLength = outputFilePath.string().size() + 1;
+    const size_t outputFileNameLength = outputFilePath.size() + 1;
     char* buffer = new char[outputFileNameLength]{};
-    outputFilePath.string().copy(buffer, outputFileNameLength);
+    outputFilePath.copy(buffer, outputFileNameLength);
 
     return buffer;
 }
