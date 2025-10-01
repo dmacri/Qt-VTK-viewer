@@ -34,9 +34,6 @@ vtkNew<vtkNamedColors> colors;
 vtkNew<vtkActor> gridActor;
 vtkNew<vtkActor2D> actorBuildLine;
 //Per la generazione delle linee del load balancing
-vtkNew<vtkPoints> pts;
-vtkNew<vtkCellArray> cellLines;
-vtkNew<vtkPolyData> grid;
 vtkNew<vtkTextMapper> singleLineTextStep;
 vtkNew<vtkTextProperty> singleLineTextPropStep;
 
@@ -195,7 +192,10 @@ void SceneWidget::renderVtkScene()
     DEBUG << "DEBUG: drawWithVTK completed" << endl;
     
     DEBUG << "DEBUG: Calling buildLoadBalanceLine..." << endl;
-    sceneWidgetVisualizerProxy->vis.buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,pts,cellLines,grid,settingRenderParameter->colors,settingRenderParameter->m_renderer,actorBuildLine);
+    vtkNew<vtkCellArray> cellLines;
+    vtkNew<vtkPoints> pts;
+    vtkNew<vtkPolyData> grid;
+    sceneWidgetVisualizerProxy->vis.buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->dimY+1, settingParameter->dimX+1, pts, cellLines, grid,settingRenderParameter->colors,settingRenderParameter->m_renderer,actorBuildLine);
     DEBUG << "DEBUG: buildLoadBalanceLine completed" << endl;
 
     sceneWidgetVisualizerProxy->vis.buildStepText(settingParameter->step, settingParameter->font_size, settingRenderParameter->colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
@@ -237,9 +237,6 @@ void SceneWidget::mouseMoveEvent(QMouseEvent* event)
     // Restart the tooltip timer
     m_toolTipTimer.stop();
     m_toolTipTimer.start();
-    // TODO: GB: Ask what should we display, what position?
-    // Optionally, you can show the coordinates immediately in the status bar or elsewhere
-    // statusBar()->showMessage(QString("X: %1, Y: %2").arg(event->x()).arg(event->y()));
 }
 
 void SceneWidget::leaveEvent(QEvent* event)
@@ -268,27 +265,31 @@ void SceneWidget::selectedStepParameter(int stepNumber)
 }
 
 
-void SceneWidget::upgradeModelInCentralPanel(){
-    if (settingParameter->changed==true || settingParameter->firstTime==true )
+void SceneWidget::upgradeModelInCentralPanel()
+{
+    if (true == settingParameter->changed || true == settingParameter->firstTime )
     {
         std::vector<Line> lines;
         lines.resize(settingParameter->numberOfLines);
 
         try
-        {   cout <<"CurrentStep--->>" <<settingParameter->step << endl;
+        {
+            DEBUG <<"CurrentStep--->>" <<settingParameter->step << endl;
             sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
 
-            sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingParameter->numberOfLines,gridActor);
-                  cout <<"Number of lines--->>" << settingParameter->numberOfLines << endl;
-            if (settingParameter->numberOfLines > 0) {
-                sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(&lines[0], settingParameter->numberOfLines,settingParameter->dimY+1,settingParameter->dimX+1,actorBuildLine,settingRenderParameter->colors);
+            sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingParameter->numberOfLines, gridActor);
+            DEBUG <<"Number of lines--->>" << settingParameter->numberOfLines << endl;
+            if (settingParameter->numberOfLines > 0)
+            {
+                sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->dimY+1, settingParameter->dimX+1, actorBuildLine, settingRenderParameter->colors);
             }
             // Force renderer update
             settingRenderParameter->m_renderer->Modified();
 
-            sceneWidgetVisualizerProxy->vis.buildStepLine(settingParameter->step,singleLineTextStep,singleLineTextPropStep,settingRenderParameter->colors,"White");
+            sceneWidgetVisualizerProxy->vis.buildStepLine(settingParameter->step, singleLineTextStep, singleLineTextPropStep, settingRenderParameter->colors, "White");
 
-        }catch(const std::runtime_error& re)
+        }
+        catch(const std::runtime_error& re)
         {
             std::cerr << "Runtime error di getElementMatrix: " << re.what() << std::endl;
         }
@@ -302,7 +303,6 @@ void SceneWidget::upgradeModelInCentralPanel(){
         renderWindow()->Render();
         QApplication::processEvents();
     }
-
 }
 
 namespace
