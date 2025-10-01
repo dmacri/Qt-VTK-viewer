@@ -11,7 +11,7 @@ class Config
 public:
     Config(const std::string& configuration_path);
 
-    void setConfiguration_path(const std::string& value)
+    void setConfigurationPath(const std::string& value)
     {
         configuration_path = value;
     }
@@ -20,4 +20,9 @@ public:
     void readConfigFile();
 
     ConfigCategory* getConfigCategory(const std::string &name);
+
+    std::vector<std::string> categoryNames() const;
+
+protected:
+    void setUpConfigCategories();
 };

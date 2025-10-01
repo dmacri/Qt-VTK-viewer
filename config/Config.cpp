@@ -6,6 +6,7 @@
 #include <stdexcept> // std::runtime_error
 #include <string>
 #include <fstream>
+#include <ranges>
 
 #include "Config.h"
 
@@ -53,6 +54,13 @@ void remove_spaces(std::string& s)
 
 Config::Config(const std::string& configuration_path)
     : configuration_path{configuration_path}
+{
+    setUpConfigCategories();
+
+    readConfigFile();
+}
+
+void Config::setUpConfigCategories()
 {
     configCategories.push_back(ConfigCategory{
         "GENERAL",
@@ -153,8 +161,25 @@ ConfigCategory *Config::getConfigCategory(const std::string& name)
     return nullptr;
 }
 
+std::vector<std::string> Config::categoryNames() const
+{
+    auto categoryName = [](const auto& category)
+    {
+        return category.getName();
+    };
+
+    auto view = configCategories | std::views::transform(categoryName);
+
+    return { view.begin(), view.end() };
+}
+
 void Config::readConfigFile()
 {
+    if (configuration_path.empty())
+    {
+        throw std::runtime_error("The path to configuration file is empty!");
+    }
+
     std::cout << std::format("READING '{}'...\n", configuration_path);
     std::ifstream file(configuration_path);
     if (! file.is_open())

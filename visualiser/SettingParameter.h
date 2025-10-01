@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iosfwd>
 #include <string>
 #include "visualiserProxy/SceneWidgetVisualizerProxyDefault.h"
 
@@ -17,10 +18,12 @@ struct SettingParameter
     int dimY;
     int nNodeX;
     int nNodeY;
-    char *outputFileName;
+    std::string outputFileName;
     int numberOfLines;
     const int font_size = 18;
     std::string edittext;// an empty string for editting
     SceneWidgetVisualizerProxy* sceneWidgetVisualizerProxy;
     SceneWidget* sceneWidget;
+
+    friend std::ostream& operator<<(std::ostream& os, const SettingParameter& sp);
 };

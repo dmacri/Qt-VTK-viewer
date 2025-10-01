@@ -11,7 +11,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # List source files & resources
 file(GLOB_RECURSE Headers *.h *.hpp)
 file(GLOB Sources *.cpp)
-list(APPEND Sources config/Config.cpp)
+list(APPEND Sources 
+    config/Config.cpp 
+    visualiser/SettingParameter.cpp
+    widgets/ClickableLabel.cpp
+    widgets/ConfigDetailsDialog.cpp
+    widgets/SceneWidget.cpp
+)
 file(GLOB Resources *.qrc)
 file(GLOB Styles *.qss)
 file(GLOB UIs *.ui)
@@ -37,7 +43,7 @@ find_package(VTK COMPONENTS
     InteractionStyle
     RenderingContextOpenGL2
     RenderingCore
-    GUISupportQt # instead of deprecated vtkGUISupportQt
+    GUISupportQt
     RenderingFreeType
     RenderingGL2PSOpenGL2
     RenderingOpenGL2
