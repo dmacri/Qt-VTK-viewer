@@ -26,6 +26,11 @@ public:
 
     void selectedStepParameter(int stepNumber);
 
+    const SettingParameter* getSettingParameter() const
+    {
+        return settingParameter.get();
+    }
+
 signals:
     void changedStepNumberWithKeyboardKeys(int stepNumber);
 

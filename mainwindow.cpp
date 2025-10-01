@@ -9,6 +9,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "config/Config.h"
+#include "ConfigDetailsDialog.h"
 
 
 namespace
@@ -44,6 +45,7 @@ void MainWindow::setupConnections()
 
     connect(ui->positionSpinBox, &QSpinBox::editingFinished, this, &MainWindow::onStepNumberChanged);
     connect(ui->sceneWidget, &SceneWidget::changedStepNumberWithKeyboardKeys, ui->updatePositionSlider, &QSlider::setValue);
+    connect(ui->inputFilePathLabel, &ClickableLabel::doubleClicked, this, &MainWindow::showConfigDetailsDialog);
 }
 
 void MainWindow::connectMenuActions()
@@ -80,6 +82,7 @@ void MainWindow::configureCursorPosition()
 
 void MainWindow::showInputFilePathOnBarLabel(const QString& inputFilePath)
 {
+    configFilePath = inputFilePath;
     ui->inputFilePathLabel->setText(tr("Input file: ") + inputFilePath);
 }
 
@@ -145,6 +148,19 @@ void MainWindow::showAboutThisApplicationDialog()
     QMessageBox::information(this, "About",
                              "By Davide Macri.\n"
                              "Configurator for visualizer");
+}
+
+void MainWindow::showConfigDetailsDialog()
+{
+    if (configFilePath.isEmpty())
+    {
+        QMessageBox::warning(this, tr("No Configuration"),
+                           tr("No configuration file has been loaded."));
+        return;
+    }
+
+    ConfigDetailsDialog dialog(configFilePath.toStdString(), this);
+    dialog.exec();
 }
 
 void MainWindow::playingRequested(PlayingDirection direction)

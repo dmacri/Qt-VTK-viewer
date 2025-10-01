@@ -6,6 +6,7 @@
 #include <stdexcept> // std::runtime_error
 #include <string>
 #include <fstream>
+#include <ranges>
 
 #include "Config.h"
 
@@ -151,6 +152,18 @@ ConfigCategory *Config::getConfigCategory(const std::string& name)
         return &(*it);
     }
     return nullptr;
+}
+
+std::vector<std::string> Config::categoryNames() const
+{
+    auto categoryName = [](const auto& category)
+    {
+        return category.getName();
+    };
+
+    auto view = configCategories | std::views::transform(categoryName);
+
+    return { view.begin(), view.end() };
 }
 
 void Config::readConfigFile()

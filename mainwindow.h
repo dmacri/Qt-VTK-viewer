@@ -21,6 +21,7 @@ public:
 private slots:
 
     void showAboutThisApplicationDialog();
+    void showConfigDetailsDialog();
     void onStepNumberChanged();
 
     void onPlayButtonClicked();
@@ -68,6 +69,7 @@ private:
     int currentStep = 1;
     bool isPlaying = false ;
     bool isBacking = false;
+    QString configFilePath;
 
     QString noSelectionMessage;
     QString directorySelectionMessage;

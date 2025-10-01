@@ -233,7 +233,7 @@
      </layout>
     </item>
     <item row="17" column="0" colspan="16">
-     <widget class="QLabel" name="inputFilePathLabel">
+     <widget class="ClickableLabel" name="inputFilePathLabel">
       <property name="sizePolicy">
        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
         <horstretch>0</horstretch>
@@ -247,7 +247,7 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">margin: 0px; padding: 0px;</string>
+       <string notr="true">margin: 0px; padding: 0px; cursor: pointer;</string>
       </property>
       <property name="frameShape">
        <enum>QFrame::Shape::NoFrame</enum>
@@ -405,6 +405,11 @@
     <slot>zoomToExtent()</slot>
     <slot>increaseCountUp()</slot>
    </slots>
+  </customwidget>
+  <customwidget>
+   <class>ClickableLabel</class>
+   <extends>QLabel</extends>
+   <header location="global">ClickableLabel.h</header>
   </customwidget>
  </customwidgets>
  <resources>

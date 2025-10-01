@@ -94,7 +94,7 @@ void SceneWidget::enableToolTipWhenMouseAboveWidget()
 SceneWidget::~SceneWidget() = default;
 
 
-void SceneWidget:: addVisualizer(int argc, char* argv[])
+void SceneWidget::addVisualizer(int argc, char* argv[])
 {
     if (argc == 1)
     {

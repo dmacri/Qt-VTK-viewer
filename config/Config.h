@@ -20,4 +20,6 @@ public:
     void readConfigFile();
 
     ConfigCategory* getConfigCategory(const std::string &name);
+
+    std::vector<std::string> categoryNames() const;
 };
