@@ -243,7 +243,7 @@
       <property name="maximumSize">
        <size>
         <width>16777215</width>
-        <height>12</height>
+        <height>15</height>
        </size>
       </property>
       <property name="styleSheet">
@@ -352,6 +352,7 @@
      <string>File</string>
     </property>
     <addaction name="separator"/>
+    <addaction name="actionShow_config_details"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -392,6 +393,14 @@
   <action name="actionOpen">
    <property name="text">
     <string>Open</string>
+   </property>
+  </action>
+  <action name="actionShow_config_details">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentProperties"/>
+   </property>
+   <property name="text">
+    <string>Show config details</string>
    </property>
   </action>
  </widget>

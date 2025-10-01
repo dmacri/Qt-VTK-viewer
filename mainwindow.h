@@ -67,7 +67,7 @@ private:
     Ui::MainWindow* ui;
 
     int currentStep = 1;
-    bool isPlaying = false ;
+    bool isPlaying = false;
     bool isBacking = false;
 
     QString noSelectionMessage;

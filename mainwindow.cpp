@@ -52,6 +52,7 @@ void MainWindow::connectMenuActions()
 {
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::showAboutThisApplicationDialog);
+    connect(ui->actionShow_config_details, &QAction::triggered, this, &MainWindow::showConfigDetailsDialog);
 }
 
 void MainWindow::configureButtons()

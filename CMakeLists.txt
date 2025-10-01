@@ -43,7 +43,7 @@ find_package(VTK COMPONENTS
     InteractionStyle
     RenderingContextOpenGL2
     RenderingCore
-    GUISupportQt # instead of deprecated vtkGUISupportQt
+    GUISupportQt
     RenderingFreeType
     RenderingGL2PSOpenGL2
     RenderingOpenGL2
