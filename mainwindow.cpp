@@ -9,7 +9,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "config/Config.h"
-#include "ConfigDetailsDialog.h"
+#include "widgets/ConfigDetailsDialog.h"
 
 
 namespace

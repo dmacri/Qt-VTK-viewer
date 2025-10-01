@@ -14,8 +14,9 @@ file(GLOB Sources *.cpp)
 list(APPEND Sources 
     config/Config.cpp 
     visualiser/SettingParameter.cpp
-    # ClickableLabel.cpp
-    # ConfigDetailsDialog.cpp
+    widgets/ClickableLabel.cpp
+    widgets/ConfigDetailsDialog.cpp
+    widgets/SceneWidget.cpp
 )
 file(GLOB Resources *.qrc)
 file(GLOB Styles *.qss)

@@ -399,7 +399,7 @@
   <customwidget>
    <class>SceneWidget</class>
    <extends>QOpenGLWidget</extends>
-   <header location="global">SceneWidget.h</header>
+   <header location="global">widgets/SceneWidget.h</header>
    <slots>
     <signal>click()</signal>
     <slot>zoomToExtent()</slot>
@@ -409,7 +409,7 @@
   <customwidget>
    <class>ClickableLabel</class>
    <extends>QLabel</extends>
-   <header location="global">ClickableLabel.h</header>
+   <header location="global">widgets/ClickableLabel.h</header>
   </customwidget>
  </customwidgets>
  <resources>
