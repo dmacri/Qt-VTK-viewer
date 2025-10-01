@@ -15,6 +15,7 @@ int main(int argc, char* argv[])
         std::cerr << "Usage: " << argv[0] << " <configurationFilePath>" << std::endl;
         return 1;
     }
+    const auto configFilePath = argv[1];
 
    // vtkObject::GlobalWarningDisplayOff();
 
@@ -23,7 +24,7 @@ int main(int argc, char* argv[])
     QApplication a(argc, argv);
     QApplication::setStyle(QStyleFactory::create("Fusion"));
 
-    MainWindow mainWindow(argc, argv);
+    MainWindow mainWindow(configFilePath);
 
     if (QFile styleFile("style.qss"); styleFile.open(QFile::ReadOnly))
     {

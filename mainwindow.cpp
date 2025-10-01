@@ -18,20 +18,20 @@ constexpr int FIRST_STEP_NUMBER = 1;
 }
 
 
-MainWindow::MainWindow(int argc, char* argv[], QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow)
+MainWindow::MainWindow(const QString& configFileName, QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    configureUIElements(argc,argv);
+    configureUIElements(configFileName);
     setupConnections();
 }
 
-void MainWindow::configureUIElements(int argc, char* argv[])
+void MainWindow::configureUIElements(const QString& configFileName)
 {
     configureButtons();
     loadStrings();
-    initializeSceneWidget(argc, argv);
-    showInputFilePathOnBarLabel(argv[1]);
-    setTotalStepsFromConfiguration(argv[1]);
+    initializeSceneWidget(configFileName);
+    showInputFilePathOnBarLabel(configFileName);
+    setTotalStepsFromConfiguration(configFileName);
 
     changeWhichButtonsAreEnabled();
 }
@@ -86,14 +86,15 @@ void MainWindow::showInputFilePathOnBarLabel(const QString& inputFilePath)
     ui->inputFilePathLabel->setFileName(inputFilePath);
 }
 
-void MainWindow::initializeSceneWidget(int argc, char* argv[])
+void MainWindow::initializeSceneWidget(const QString& configFileName)
 {
-    ui->sceneWidget->addVisualizer(argc, argv);
+    ui->sceneWidget->addVisualizer(configFileName.toStdString());
 }
 
-void MainWindow::setTotalStepsFromConfiguration(char* configurationFile)
+void MainWindow::setTotalStepsFromConfiguration(const QString &configurationFile)
 {
-    Config config(configurationFile);
+    const auto configFilePath = configurationFile.toStdString();
+    Config config(configFilePath);
     config.readConfigFile();
     ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
 

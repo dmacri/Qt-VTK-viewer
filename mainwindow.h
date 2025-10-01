@@ -15,7 +15,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(int argc, char* argv[], QWidget* parent = nullptr);
+    explicit MainWindow(const QString& configFileName, QWidget* parent = nullptr);
     ~MainWindow();
 
 private slots:
@@ -42,13 +42,13 @@ private:
 
     void playingRequested(PlayingDirection direction);
 
-    void configureUIElements(int argc, char* argv[]);
+    void configureUIElements(const QString& configFileName);
     void setupConnections();
     void configureButtons();
     void configureButton(QPushButton* button, QStyle::StandardPixmap icon);
     void configureCursorPosition();
-    void initializeSceneWidget(int argc, char* argv[]);
-    void setTotalStepsFromConfiguration(char *configurationFile);
+    void initializeSceneWidget(const QString& configFileName);
+    void setTotalStepsFromConfiguration(const QString& configurationFile);
     void connectButtons();
     void connectSliders();
     void connectMenuActions();

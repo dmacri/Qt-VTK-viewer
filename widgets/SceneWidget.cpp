@@ -94,14 +94,8 @@ void SceneWidget::enableToolTipWhenMouseAboveWidget()
 SceneWidget::~SceneWidget() = default;
 
 
-void SceneWidget::addVisualizer(int argc, char* argv[])
+void SceneWidget::addVisualizer(const std::string &filename)
 {
-    if (argc == 1)
-    {
-        throw std::invalid_argument("Missing arguments");
-    }
-
-    const char *filename = argv[1];
     if (! std::filesystem::exists(filename))
     {
         throw std::invalid_argument("File '"s + filename + "' does not exist!");

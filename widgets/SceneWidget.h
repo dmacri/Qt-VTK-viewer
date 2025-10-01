@@ -22,7 +22,7 @@ public:
     explicit SceneWidget(QWidget* parent = nullptr, int argc=0, char* argv[]=nullptr);
     ~SceneWidget();
 
-    void addVisualizer(int argc, char* argv[]);
+    void addVisualizer(const string &filename);
 
     void selectedStepParameter(int stepNumber);
 
