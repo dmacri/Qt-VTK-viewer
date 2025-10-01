@@ -71,7 +71,7 @@ private:
     vtkNew<vtkNamedColors> colors;
     vtkNew<vtkActor> gridActor;
     vtkNew<vtkActor2D> actorBuildLine;
-    //Per la generazione delle linee del load balancing
+    /// For the generation of load balancing lines
     vtkNew<vtkTextMapper> singleLineTextStep;
     vtkNew<vtkTextProperty> singleLineTextPropStep;
 };

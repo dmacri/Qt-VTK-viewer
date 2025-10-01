@@ -1,25 +1,13 @@
-#include <cstdlib>
-#include <cstring>
 #include <filesystem>
-#include <iostream>
+#include <iostream> // std::cout
 #include <QApplication>
-#include <vtkActor2D.h>
 #include <vtkCallbackCommand.h>
-#include <vtkCamera.h>
-#include <vtkDataSetMapper.h>
-#include <vtkFileOutputWindow.h>
-#include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkInteractorStyleImage.h>
 #include <vtkNamedColors.h>
 #include <vtkNew.h>
 #include <vtkObjectFactory.h>
 #include <vtkPolyData.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkProperty.h>
-#include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
-#include <vtkTextProperty.h>
-#include <vtkXMLPolyDataReader.h>
 #include "SceneWidget.h"
 #include "config/Config.h"
 #include "visualiser/Line.h"
@@ -159,7 +147,7 @@ void SceneWidget::setupVtkScene()
 
 void SceneWidget::renderVtkScene()
 {
-    DEBUG << "DEBUG: Starting renderVtkScene" << endl;
+    DEBUG << "DEBUG: Starting " << __FUNCTION__ << endl;
     DEBUG << "DEBUG: Loading hashmap from file..." << endl;
     sceneWidgetVisualizerProxy->vis.loadHashmapFromFile(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
     DEBUG << "DEBUG: Hashmap loaded successfully" << endl;
@@ -264,7 +252,8 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
 
 void SceneWidget::increaseCountUp()
 {
-    if (settingParameter->step < settingParameter->nsteps * 2){
+    if (settingParameter->step < settingParameter->nsteps * 2)
+    {
         settingParameter->step += 1;
         settingParameter->changed = true;
     }
@@ -273,7 +262,8 @@ void SceneWidget::increaseCountUp()
 
 void SceneWidget::decreaseCountDown()
 {
-    if (settingParameter->step  > 1){
+    if (settingParameter->step  > 1)
+    {
         settingParameter->step  -= 1;
         settingParameter->changed = true;
     }
@@ -321,18 +311,16 @@ void SceneWidget::selectedStepParameter(int stepNumber)
 
 void SceneWidget::upgradeModelInCentralPanel()
 {
-    if (true == settingParameter->changed || true == settingParameter->firstTime )
+    if (settingParameter->changed || settingParameter->firstTime )
     {
         std::vector<Line> lines;
         lines.resize(settingParameter->numberOfLines);
 
         try
         {
-            DEBUG <<"CurrentStep--->>" <<settingParameter->step << endl;
-            sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
-
+            sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);            
             sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingParameter->numberOfLines, gridActor);
-            DEBUG <<"Number of lines--->>" << settingParameter->numberOfLines << endl;
+            DEBUG <<"--->> CurrentStep:" <<settingParameter->step << ". Number of lines:" << settingParameter->numberOfLines << endl;
             if (settingParameter->numberOfLines > 0)
             {
                 sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->dimY+1, settingParameter->dimX+1, actorBuildLine, settingRenderParameter->colors);
@@ -341,15 +329,16 @@ void SceneWidget::upgradeModelInCentralPanel()
             settingRenderParameter->m_renderer->Modified();
 
             sceneWidgetVisualizerProxy->vis.buildStepLine(settingParameter->step, singleLineTextStep, singleLineTextPropStep, settingRenderParameter->colors, "White");
-
         }
         catch(const std::runtime_error& re)
         {
-            std::cerr << "Runtime error di getElementMatrix: " << re.what() << std::endl;
+            std::cerr << "Runtime error getElementMatrix: " << re.what() << std::endl;
+            throw;
         }
         catch(const std::exception& ex)
         {
             std::cerr << "Error occurred: " << ex.what() << std::endl;
+            throw;
         }
 
         settingParameter->firstTime = false;
