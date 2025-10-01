@@ -21,7 +21,7 @@ constexpr bool DEBUG_LOGS_ENABLED = false;
 
 namespace
 {
-char* prepareOutputFileName(const std::string& configFile, const std::string& outputFileNameFromCfg)
+std::string prepareOutputFileName(const std::string& configFile, const std::string& outputFileNameFromCfg)
 {
     namespace fs = std::filesystem;
 
@@ -31,14 +31,7 @@ char* prepareOutputFileName(const std::string& configFile, const std::string& ou
     fs::create_directories(outputDir);  // ensure that directory exists
 
     // Step 2: build full output file path
-    std::string outputFilePath = (outputDir / outputFileNameFromCfg).string();
-
-    // Step 3: copy to buffer
-    const size_t outputFileNameLength = outputFilePath.size() + 1;
-    char* buffer = new char[outputFileNameLength]{};
-    outputFilePath.copy(buffer, outputFileNameLength);
-
-    return buffer;
+    return (outputDir / outputFileNameFromCfg).string();
 }
 } // namespace
 
@@ -135,10 +128,11 @@ void SceneWidget::setupVtkScene()
 
     renderWindow()->AddRenderer(settingRenderParameter->m_renderer);
     interactor()->SetRenderWindow(renderWindow());
-    
-    renderWindow()->SetSize(settingParameter->dimX, (settingParameter->dimY + 10));
 
-    /// An interactor with this style you can block only rotation, but not blocking zoom.You can use NULL value in SetInteractorStyle if you want block evreth
+    renderWindow()->SetSize(settingParameter->dimX, settingParameter->dimY + 10);
+
+    /// An interactor with this style blocks rotation but not zoom.
+    /// Use nullptr in SetInteractorStyle to block everything.
     vtkNew<vtkInteractorStyleImage> style;
     interactor()->SetInteractorStyle(style);
 
@@ -162,7 +156,7 @@ void SceneWidget::renderVtkScene()
     DEBUG << "DEBUG: Allocated lines array" << endl;
 
     DEBUG << "DEBUG: Calling getElementMatrix..." << endl;
-    sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p,settingParameter-> dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
+    sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
     DEBUG << "DEBUG: getElementMatrix completed" << endl;
 
     DEBUG << "DEBUG: Calling drawWithVTK..." << endl;
@@ -203,7 +197,7 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
         if (sp->sceneWidget)
             sp->sceneWidget->changedStepNumberWithKeyboardKeys(sp->step);
     }
-    if (keyPressed == "Down")
+    else if (keyPressed == "Down")
     {
         if (sp->step  > 1)
             sp->step  -= 1;
@@ -212,12 +206,12 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
         if (sp->sceneWidget)
             sp->sceneWidget->changedStepNumberWithKeyboardKeys(sp->step);
     }
-    if (keyPressed == "i")
+    else if (keyPressed == "i")
     {
         sp->insertAction = true;
     }
 
-    if (true == sp->changed || true == sp->firstTime )
+    if (sp->changed || sp->firstTime)
     {
         std::vector<Line> lines;
         lines.resize(sp->numberOfLines);
@@ -305,7 +299,7 @@ void SceneWidget::selectedStepParameter(int stepNumber)
 {
     settingParameter->step = stepNumber;
     settingParameter->changed = true;
-    SceneWidget::upgradeModelInCentralPanel();
+    upgradeModelInCentralPanel();
 }
 
 
@@ -318,7 +312,7 @@ void SceneWidget::upgradeModelInCentralPanel()
 
         try
         {
-            sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);            
+            sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
             sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingParameter->numberOfLines, gridActor);
             DEBUG <<"--->> CurrentStep:" <<settingParameter->step << ". Number of lines:" << settingParameter->numberOfLines << endl;
             if (settingParameter->numberOfLines > 0)

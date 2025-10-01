@@ -61,7 +61,7 @@ public:
     FILE *giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows, char *&line, size_t &len);
     std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, char *&line, size_t &len);
     template<class Matrix>
-    void getElementMatrix(int step, Matrix& m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, char *fileName, Line *lines);
+    void getElementMatrix(int step, Matrix& m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, const std::string& fileName, Line *lines);
     template<class Matrix>
     void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines, std::string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
     template<class Matrix>
@@ -168,7 +168,7 @@ bool Visualizer<T>::allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, 
 
 template<class T>
 template<class Matrix>
-void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, char *fileName, Line *lines)
+void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, const std::string& fileName, Line *lines)
 {
     std::vector<int> AlllocalCols, AlllocalRows;
     AlllocalCols.resize(nNodeX * nNodeY);

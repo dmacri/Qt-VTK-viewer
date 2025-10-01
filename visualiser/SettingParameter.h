@@ -18,7 +18,7 @@ struct SettingParameter
     int dimY;
     int nNodeX;
     int nNodeY;
-    char *outputFileName;
+    std::string outputFileName;
     int numberOfLines;
     const int font_size = 18;
     std::string edittext;// an empty string for editting
