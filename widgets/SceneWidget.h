@@ -50,6 +50,7 @@ protected:
     void renderVtkScene();
 
     void upgradeModelInCentralPanel();
+    void updateVisualization(const std::string& stepLineColor);
 
     void enableToolTipWhenMouseAboveWidget();
 
@@ -65,8 +66,6 @@ private:
 
     QTimer m_toolTipTimer;
     QPoint m_lastMousePos;
-
-    std::vector<int> maxStepVisited;
 
     vtkNew<vtkNamedColors> colors;
     vtkNew<vtkActor> gridActor;

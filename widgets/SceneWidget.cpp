@@ -124,8 +124,6 @@ void SceneWidget::setupVtkScene()
 {
     sceneWidgetVisualizerProxy->vis.hashMap.resize(settingParameter->nNodeX * settingParameter->nNodeY);
 
-    maxStepVisited.resize(settingParameter->nNodeX * settingParameter->nNodeY);
-
     renderWindow()->AddRenderer(settingRenderParameter->m_renderer);
     interactor()->SetRenderWindow(renderWindow());
 
@@ -213,21 +211,13 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
 
     if (sp->changed || sp->firstTime)
     {
-        std::vector<Line> lines;
-        lines.resize(sp->numberOfLines);
         try
         {
-            visualiserProxy->vis.getElementMatrix(sp->step, visualiserProxy->p, sp->dimX, sp->dimY, sp->nNodeX, sp->nNodeY, sp->outputFileName, &lines[0]);
-
-            visualiserProxy->vis.refreshWindowsVTK(visualiserProxy->p, sp->dimY, sp->dimX, sp->step, &lines[0], sp->numberOfLines, sw->gridActor);
-
-            //visualiserProxy->vis->refreshBuildLoadBalanceLine(lines, cam->numberOfLines, cam->dimY+1, cam->dimX+1, actorBuildLine, colors, pts, cellLines, grid);
-
-            visualiserProxy->vis.refreshBuildLoadBalanceLine(&lines[0], sp->numberOfLines, sp->dimY+1, sp->dimX+1, sw->actorBuildLine, sw->colors);
+            sw->updateVisualization("Red");
+            
             // Force renderer update for keyboard callback too
             sp->sceneWidget->renderWindow()->Modified();
-
-            visualiserProxy->vis.buildStepLine(sp->step, sw->singleLineTextStep, sw->singleLineTextPropStep, sw->colors, "Red");
+            sp->sceneWidget->renderWindow()->Render();
         }
         catch(const std::runtime_error& re)
         {
@@ -237,7 +227,7 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
         {
             std::cerr << "Error occurred: " << ex.what() << std::endl;
         }
-        sp->sceneWidget->renderWindow()->Render();
+        
         sp->firstTime = false;
         sp->changed = false;
     }
@@ -251,18 +241,18 @@ void SceneWidget::increaseCountUp()
         settingParameter->step += 1;
         settingParameter->changed = true;
     }
-    SceneWidget::upgradeModelInCentralPanel();
+    upgradeModelInCentralPanel();
 }
 
 void SceneWidget::decreaseCountDown()
 {
-    if (settingParameter->step  > 1)
+    if (settingParameter->step > 1)
     {
-        settingParameter->step  -= 1;
+        settingParameter->step -= 1;
         settingParameter->changed = true;
     }
 
-    SceneWidget::upgradeModelInCentralPanel();
+    upgradeModelInCentralPanel();
 }
 
 void SceneWidget::mouseMoveEvent(QMouseEvent* event)
@@ -303,41 +293,82 @@ void SceneWidget::selectedStepParameter(int stepNumber)
 }
 
 
+void SceneWidget::updateVisualization(const std::string& stepLineColor)
+{
+    std::vector<Line> lines(settingParameter->numberOfLines);
+
+    sceneWidgetVisualizerProxy->vis.getElementMatrix(
+        settingParameter->step, 
+        sceneWidgetVisualizerProxy->p, 
+        settingParameter->dimX, 
+        settingParameter->dimY, 
+        settingParameter->nNodeX, 
+        settingParameter->nNodeY, 
+        settingParameter->outputFileName, 
+        &lines[0]
+    );
+
+    sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(
+        sceneWidgetVisualizerProxy->p, 
+        settingParameter->dimY, 
+        settingParameter->dimX, 
+        settingParameter->step, 
+        &lines[0], 
+        settingParameter->numberOfLines, 
+        gridActor
+    );
+
+    //visualiserProxy->vis->refreshBuildLoadBalanceLine(lines, cam->numberOfLines, cam->dimY+1, cam->dimX+1, actorBuildLine, colors, pts, cellLines, grid);
+
+    DEBUG << "--->> CurrentStep:" << settingParameter->step 
+          << ". Number of lines:" << settingParameter->numberOfLines << endl;
+
+    if (settingParameter->numberOfLines > 0)
+    {
+        sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(
+            &lines[0], 
+            settingParameter->numberOfLines, 
+            settingParameter->dimY + 1, 
+            settingParameter->dimX + 1, 
+            actorBuildLine, 
+            settingRenderParameter->colors
+        );
+    }
+
+    sceneWidgetVisualizerProxy->vis.buildStepLine(
+        settingParameter->step, 
+        singleLineTextStep, 
+        singleLineTextPropStep, 
+        settingRenderParameter->colors, 
+        stepLineColor
+    );
+}
+
 void SceneWidget::upgradeModelInCentralPanel()
 {
-    if (settingParameter->changed || settingParameter->firstTime )
+    if (!settingParameter->changed && !settingParameter->firstTime)
+        return;
+
+    try
     {
-        std::vector<Line> lines;
-        lines.resize(settingParameter->numberOfLines);
-
-        try
-        {
-            sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
-            sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingParameter->numberOfLines, gridActor);
-            DEBUG <<"--->> CurrentStep:" <<settingParameter->step << ". Number of lines:" << settingParameter->numberOfLines << endl;
-            if (settingParameter->numberOfLines > 0)
-            {
-                sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->dimY+1, settingParameter->dimX+1, actorBuildLine, settingRenderParameter->colors);
-            }
-            // Force renderer update
-            settingRenderParameter->m_renderer->Modified();
-
-            sceneWidgetVisualizerProxy->vis.buildStepLine(settingParameter->step, singleLineTextStep, singleLineTextPropStep, settingRenderParameter->colors, "White");
-        }
-        catch(const std::runtime_error& re)
-        {
-            std::cerr << "Runtime error getElementMatrix: " << re.what() << std::endl;
-            throw;
-        }
-        catch(const std::exception& ex)
-        {
-            std::cerr << "Error occurred: " << ex.what() << std::endl;
-            throw;
-        }
-
-        settingParameter->firstTime = false;
-        settingParameter->changed = false;
+        updateVisualization("White");
+        
+        // Force renderer update
+        settingRenderParameter->m_renderer->Modified();
         renderWindow()->Render();
         QApplication::processEvents();
     }
+    catch(const std::runtime_error& re)
+    {
+        std::cerr << "Runtime error getElementMatrix: " << re.what() << std::endl;
+        throw;
+    }
+    catch(const std::exception& ex)
+    {
+        std::cerr << "Error occurred: " << ex.what() << std::endl;
+        throw;
+    }
+
+    settingParameter->firstTime = false;
+    settingParameter->changed = false;
 }
