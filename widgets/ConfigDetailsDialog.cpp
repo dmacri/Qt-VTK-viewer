@@ -4,6 +4,8 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QHeaderView>
+#include <QApplication>
+#include <QScreen>
 #include "ConfigDetailsDialog.h"
 #include "config/Config.h"
 
@@ -12,9 +14,14 @@ ConfigDetailsDialog::ConfigDetailsDialog(const std::string& configFilePath, QWid
     : QDialog(parent)
     , tableWidget(new QTableWidget(this))
     , mainLayout(new QVBoxLayout(this))
+    , filePathLabel(new QLabel(this))
 {
     setupUI();
     loadConfigData(configFilePath);
+    
+    filePathLabel->setText(QString::fromStdString(configFilePath));
+    
+    adjustSizeToContent();
 }
 
 ConfigDetailsDialog::~ConfigDetailsDialog() = default;
@@ -23,6 +30,14 @@ void ConfigDetailsDialog::setupUI()
 {
     setWindowTitle(tr("Configuration Details"));
     setMinimumSize(600, 600);
+    
+    // Setup file path label
+    QFont pathFont;
+    pathFont.setBold(true);
+    filePathLabel->setFont(pathFont);
+    filePathLabel->setWordWrap(true);
+    filePathLabel->setStyleSheet("QLabel { padding: 5px; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; }");
+    mainLayout->addWidget(filePathLabel);
     
     // Setup table
     tableWidget->setColumnCount(2);
@@ -112,4 +127,42 @@ void ConfigDetailsDialog::loadConfigData(const std::string& configFilePath)
         tableWidget->setItem(0, 0, new QTableWidgetItem(tr("Error loading configuration")));
         tableWidget->setItem(0, 1, new QTableWidgetItem(QString::fromStdString(e.what())));
     }
+}
+
+void ConfigDetailsDialog::adjustSizeToContent()
+{
+    // Calculate required height for table content
+    int totalHeight = 0;
+    
+    // Add height for all rows
+    for (int row = 0; row < tableWidget->rowCount(); ++row)
+    {
+        totalHeight += tableWidget->rowHeight(row);
+    }
+    
+    // Add height for horizontal header
+    totalHeight += tableWidget->horizontalHeader()->height();
+    
+    // Add height for file path label
+    totalHeight += filePathLabel->sizeHint().height();
+    
+    // Add height for close button (approximate)
+    totalHeight += 50;
+    
+    // Add margins and spacing from layout
+    totalHeight += mainLayout->contentsMargins().top() + mainLayout->contentsMargins().bottom();
+    totalHeight += mainLayout->spacing() * 2; // spacing between widgets
+    
+    // Add some extra padding
+    totalHeight += 40;
+    
+    // Get screen geometry to limit maximum height
+    QScreen* screen = QApplication::primaryScreen();
+    int maxHeight = screen->availableGeometry().height() - 100; // Leave some margin
+    
+    // Set height, but don't exceed screen height
+    int finalHeight = qMin(totalHeight, maxHeight);
+    
+    // Keep minimum width at 600
+    resize(600, finalHeight);
 }
