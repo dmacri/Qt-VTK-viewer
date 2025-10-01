@@ -82,8 +82,7 @@ void MainWindow::configureCursorPosition()
 
 void MainWindow::showInputFilePathOnBarLabel(const QString& inputFilePath)
 {
-    configFilePath = inputFilePath;
-    ui->inputFilePathLabel->setText(tr("Input file: ") + inputFilePath);
+    ui->inputFilePathLabel->setFileName(inputFilePath);
 }
 
 void MainWindow::initializeSceneWidget(int argc, char* argv[])
@@ -152,14 +151,15 @@ void MainWindow::showAboutThisApplicationDialog()
 
 void MainWindow::showConfigDetailsDialog()
 {
-    if (configFilePath.isEmpty())
+    const auto configFileName = ui->inputFilePathLabel->getFileName();
+    if (configFileName.isEmpty())
     {
         QMessageBox::warning(this, tr("No Configuration"),
                            tr("No configuration file has been loaded."));
         return;
     }
 
-    ConfigDetailsDialog dialog(configFilePath.toStdString(), this);
+    ConfigDetailsDialog dialog(configFileName.toStdString(), this);
     dialog.exec();
 }
 

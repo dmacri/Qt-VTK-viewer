@@ -12,9 +12,19 @@ class ClickableLabel : public QLabel
 public:
     explicit ClickableLabel(QWidget* parent = nullptr);
 
+    void setFileName(QString fileName);
+
+    const QString &getFileName() const
+    {
+        return fileName;
+    }
+
 signals:
     void doubleClicked();
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent* event) override;
+
+private:
+    QString fileName;
 };

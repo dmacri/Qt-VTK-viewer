@@ -69,7 +69,6 @@ private:
     int currentStep = 1;
     bool isPlaying = false ;
     bool isBacking = false;
-    QString configFilePath;
 
     QString noSelectionMessage;
     QString directorySelectionMessage;
