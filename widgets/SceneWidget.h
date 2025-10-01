@@ -31,6 +31,8 @@ public:
         return settingParameter.get();
     }
 
+    static void keypressCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
+
 signals:
     void changedStepNumberWithKeyboardKeys(int stepNumber);
 
@@ -65,4 +67,11 @@ private:
     QPoint m_lastMousePos;
 
     std::vector<int> maxStepVisited;
+
+    vtkNew<vtkNamedColors> colors;
+    vtkNew<vtkActor> gridActor;
+    vtkNew<vtkActor2D> actorBuildLine;
+    //Per la generazione delle linee del load balancing
+    vtkNew<vtkTextMapper> singleLineTextStep;
+    vtkNew<vtkTextProperty> singleLineTextPropStep;
 };
