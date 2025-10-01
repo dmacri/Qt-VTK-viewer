@@ -64,7 +64,6 @@ void ConfigDetailsDialog::loadConfigData(const std::string& configFilePath)
     try
     {
         Config config(configFilePath);
-        config.readConfigFile();
         
         int rowCount = 0;
         

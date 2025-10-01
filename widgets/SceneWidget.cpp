@@ -111,7 +111,6 @@ void SceneWidget::addVisualizer(const std::string &filename)
 void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
 {
     Config config(filename);
-    config.readConfigFile();
 
     {
         ConfigCategory* generalContext = config.getConfigCategory("GENERAL");

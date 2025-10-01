@@ -95,7 +95,7 @@ void MainWindow::setTotalStepsFromConfiguration(const QString &configurationFile
 {
     const auto configFilePath = configurationFile.toStdString();
     Config config(configFilePath);
-    config.readConfigFile();
+
     ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
 
     const auto totalSteps = generalContext->getConfigParameter("number_steps")->getValue<int>();

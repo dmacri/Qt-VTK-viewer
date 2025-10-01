@@ -55,6 +55,13 @@ void remove_spaces(std::string& s)
 Config::Config(const std::string& configuration_path)
     : configuration_path{configuration_path}
 {
+    setUpConfigCategories();
+
+    readConfigFile();
+}
+
+void Config::setUpConfigCategories()
+{
     configCategories.push_back(ConfigCategory{
         "GENERAL",
         {
