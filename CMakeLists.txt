@@ -8,11 +8,14 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# List source files & resources
+
+# ============================================
+# Sources and resources
+# ============================================
 file(GLOB_RECURSE Headers *.h *.hpp)
 file(GLOB Sources *.cpp)
-list(APPEND Sources 
-    config/Config.cpp 
+list(APPEND Sources
+    config/Config.cpp
     visualiser/SettingParameter.cpp
     widgets/ClickableLabel.cpp
     widgets/ConfigDetailsDialog.cpp
@@ -24,17 +27,18 @@ file(GLOB UIs *.ui)
 file(GLOB_RECURSE Docs *.md)
 
 
-# Use Qt
-#set(CMAKE_AUTOMOC ON)
-#set(CMAKE_AUTOUIC ON)
+# ============================================
+# Qt setup
+# ============================================
 set(CMAKE_AUTORCC ON)
-#set(CMAKE_AUTOUIC ON)
-
 set(CMAKE_INCLUDE_CURRENT_DIR "YES")
 set(CMAKE_AUTOMOC "YES")
 set(CMAKE_AUTOUIC "YES")
 
-# Find package VTK
+
+# ============================================
+# VTK dependencies
+# ============================================
 find_package(VTK COMPONENTS
     CommonColor
     CommonCore
@@ -53,12 +57,17 @@ find_package(VTK COMPONENTS
         IOLegacy
 )
 
-# Build executable
-add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${Sources} ${Headers} ${Resources} ${UIs} ${Styles} ${Docs} LICENSE)
+
+# ============================================
+# Executable target
+# ============================================
+add_executable(${PROJECT_NAME} MACOSX_BUNDLE
+    ${Sources} ${Headers} ${Resources} ${UIs} ${Styles} ${Docs} LICENSE
+)
 
 
 # ============================================
-# Option to change OOpenCAL directory
+# OOpenCAL include directory (optional)
 # ============================================
 set(OOPENCAL_DIR "/home/dmacri80/Progetto-Visualizer/" CACHE PATH "Path to the base directory of OOpenCAL sources")
 
@@ -70,9 +79,49 @@ else()
 endif()
 
 
+# ============================================
+# inih library (manual integration)
+# ============================================
+# NOTE:
+# The inih library does not provide a CMake build system.
+# It only contains sources and a Meson build definition.
+# Therefore we must manually add the relevant .c/.cpp files
+# and include directories here.
+#
+# Sources:
+#   - ini.c / ini.h   (C parser)
+#   - cpp/INIReader.* (C++ wrapper)
+#
+# We fetch the repository using FetchContent and then
+# register its sources into our target manually.
+include(FetchContent)
+
+FetchContent_Declare(
+    inih
+    GIT_REPOSITORY https://github.com/benhoyt/inih.git
+    GIT_TAG        master
+)
+
+FetchContent_GetProperties(inih)
+if(NOT inih_POPULATED)
+    FetchContent_Populate(inih)
+
+    target_sources(${PROJECT_NAME} PRIVATE
+        ${inih_SOURCE_DIR}/ini.c
+        ${inih_SOURCE_DIR}/cpp/INIReader.cpp
+    )
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        ${inih_SOURCE_DIR}
+        ${inih_SOURCE_DIR}/cpp
+    )
+endif()
+
+
+# ============================================
 # Linking
-#target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Widgets Qt5::OpenGL VTK::GUISupportQt VTK::IOLegacy)
+# ============================================
 target_link_libraries(${PROJECT_NAME} PRIVATE ${VTK_LIBRARIES})
+#target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Widgets Qt5::OpenGL VTK::GUISupportQt VTK::IOLegacy)
 
 vtk_module_autoinit(
     TARGETS ${PROJECT_NAME}

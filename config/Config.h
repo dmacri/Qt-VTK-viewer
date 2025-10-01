@@ -19,10 +19,13 @@ public:
     void writeConfigFile() const;
     void readConfigFile();
 
-    ConfigCategory* getConfigCategory(const std::string &name);
+    ConfigCategory* getConfigCategory(const std::string &name, bool ignoreCase = false);
 
     std::vector<std::string> categoryNames() const;
 
 protected:
     void setUpConfigCategories();
+
+    void readConfigFileInOOpenCalFormat();
+    void readConfigFileInIniFormat();
 };

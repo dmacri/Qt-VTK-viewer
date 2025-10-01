@@ -1,37 +1,20 @@
 #include <algorithm>
 #include <cctype> // isspace()
+#include <filesystem>
 #include <iostream>
-#include <QDebug>
-#include <QtGlobal>
 #include <stdexcept> // std::runtime_error
 #include <string>
 #include <fstream>
 #include <ranges>
+#include <QtGlobal>
+#include <QDebug>
+#include <INIReader.h>
 
 #include "Config.h"
 
 
 namespace
 {
-void remove_spaces(char *s)
-{
-    if (!s)
-        return;
-
-    char* source = s;
-    char* destination = s;
-
-    while (*source)
-    {
-        if (! isspace(static_cast<unsigned char>(*source)))
-        {
-            *destination++ = *source;
-        }
-        ++source;
-    }
-    *destination = '\0';
-}
-
 /**
  * @brief Removes all whitespace characters from a std::string.
  *
@@ -151,14 +134,31 @@ void Config::writeConfigFile() const
     }
 }
 
-ConfigCategory *Config::getConfigCategory(const std::string& name)
+ConfigCategory* Config::getConfigCategory(const std::string& name, bool ignoreCase)
 {
-    auto it = std::find(begin(configCategories), end(configCategories), name);
-    if (it != end(configCategories))
+    if (! ignoreCase)
     {
-        return &(*it);
+        // Default behavior: case-sensitive
+        auto it = std::find(begin(configCategories), end(configCategories), name);
+        if (it != end(configCategories))
+        {
+            return &(*it);
+        }
+        return nullptr;
     }
-    return nullptr;
+    else
+    {
+        // Case-insensitive comparison using QString
+        for (auto& category : configCategories)
+        {
+            if (QString::fromStdString(category.getName())
+                    .compare(QString::fromStdString(name), Qt::CaseInsensitive) == 0)
+            {
+                return &category;
+            }
+        }
+        return nullptr;
+    }
 }
 
 std::vector<std::string> Config::categoryNames() const
@@ -181,8 +181,25 @@ void Config::readConfigFile()
     }
 
     std::cout << std::format("READING '{}'...\n", configuration_path);
+    std::filesystem::path configurationFile(configuration_path);
+    if (".txt" == configurationFile.extension())
+    {
+        readConfigFileInOOpenCalFormat();
+    }
+    else if (".ini" == configurationFile.extension())
+    {
+        readConfigFileInIniFormat();
+    }
+    else
+    {
+        throw std::invalid_argument("Not supported file extention for config files: " + configurationFile.extension().string());
+    }
+}
+
+void Config::readConfigFileInOOpenCalFormat()
+{
     std::ifstream file(configuration_path);
-    if (! file.is_open())
+    if (!file.is_open())
     {
         throw std::runtime_error(std::format("Cannot open file '{}' for reading!", configuration_path));
     }
@@ -201,7 +218,7 @@ void Config::readConfigFile()
         line.pop_back(); // removing ':' from the end
         remove_spaces(line);
 
-        ConfigCategory* configCategory = getConfigCategory(line);
+        ConfigCategory *configCategory = getConfigCategory(line);
         if (! configCategory)
         {
             throw std::runtime_error(std::format("Unknown config category '{}'", line));
@@ -220,13 +237,48 @@ void Config::readConfigFile()
                 throw std::runtime_error(std::format("Invalid parameter line: '{}'", line));
             }
 
-            std::string parName  = line.substr(0, pos);
+            std::string parName = line.substr(0, pos);
             std::string valueStr = line.substr(pos + 1);
 
             remove_spaces(parName);
             remove_spaces(valueStr);
 
             configCategory->setConfigParameterValue(parName, valueStr);
+        }
+    }
+}
+
+void Config::readConfigFileInIniFormat()
+{
+    INIReader reader(configuration_path);
+    if (reader.ParseError() < 0)
+    {
+        throw std::runtime_error("Cannot load INI file: " + configuration_path);
+    }
+
+    // INIReader automatically converts section names to lowercase.
+    // Therefore, we use 'ignoreCase=true' when retrieving ConfigCategory to
+    // correctly match the section names regardless of case in the INI file.
+    for (const auto& section : reader.Sections())
+    {
+        ConfigCategory* configCategory = getConfigCategory(section, /*ignoreCase=*/true);
+        if (! configCategory)
+        {
+            throw std::runtime_error(std::format("Unknown config category '{}'", section));
+        }
+
+        for (auto const& key : reader.Keys(section))
+        {
+            // Retrieve value as string (INIReader always returns string internally)
+            std::string value = reader.Get(section, key, "");
+
+            // Remove whitespaces around key and value to keep consistency
+            std::string cleanKey = key;
+            std::string cleanValue = value;
+            remove_spaces(cleanKey);
+            remove_spaces(cleanValue);
+
+            configCategory->setConfigParameterValue(cleanKey, cleanValue);
         }
     }
 }
