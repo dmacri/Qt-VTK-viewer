@@ -8,14 +8,11 @@
 #include <QProgressDialog>
 #include <utility> // std::to_underlying, requires C++23
 
-#include <vtkOggTheoraWriter.h>
-#include <vtkWindowToImageFilter.h>
-#include <vtkRenderWindow.h>
-
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "config/Config.h"
 #include "widgets/ConfigDetailsDialog.h"
+#include "video/VideoExporter.h"
 
 
 namespace
@@ -219,57 +216,38 @@ void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
     progress.setMinimumDuration(0);
     progress.setValue(0);
     
-    // Setup VTK video writer
-    vtkNew<vtkOggTheoraWriter> writer;
-    writer->SetFileName(outputFilePath.toStdString().c_str());
-    writer->SetRate(fps);
-    writer->SetQuality(2); // Quality 0-2, where 2 is highest
+    // Create video exporter
+    VideoExporter exporter;
     
-    // Setup window to image filter
-    vtkNew<vtkWindowToImageFilter> windowToImageFilter;
-    windowToImageFilter->SetInput(ui->sceneWidget->renderWindow());
-    windowToImageFilter->SetScale(1); // Image quality scale
-    windowToImageFilter->SetInputBufferTypeToRGB();
-    windowToImageFilter->ReadFrontBufferOff(); // Read from back buffer
-    
-    // Connect filter to writer
-    writer->SetInputConnection(windowToImageFilter->GetOutputPort());
-    
-    // Start writing
-    writer->Start();
-    
-    // Iterate through all steps and capture frames
-    for (int step = FIRST_STEP_NUMBER; step <= totalSteps(); ++step)
-    {
-        // Check if user cancelled
-        if (progress.wasCanceled())
-        {
-            writer->End();
-            throw std::runtime_error("Video export cancelled by user");
-        }
-        
-        // Update progress
-        progress.setValue(step);
-        progress.setLabelText(tr("Exporting video... Step %1 of %2").arg(step).arg(totalSteps()));
-        
-        // Set the step and render
+    // Define callback to update visualization for each step
+    auto updateStepCallback = [this](int step) {
         currentStep = step;
-        {
-            QSignalBlocker blockSlider(ui->updatePositionSlider);
-            setPositionOnWidgets(currentStep);
-        }
-        
-        // Force render and process events
-        ui->sceneWidget->renderWindow()->Render();
+        QSignalBlocker blockSlider(ui->updatePositionSlider);
+        setPositionOnWidgets(currentStep);
         QApplication::processEvents();
-        
-        // Capture frame
-        windowToImageFilter->Modified();
-        writer->Write();
-    }
+    };
     
-    // Finalize video
-    writer->End();
+    // Define callback to report progress
+    auto progressCallback = [&progress, this](int step, int total) {
+        progress.setValue(step);
+        progress.setLabelText(tr("Exporting video... Step %1 of %2").arg(step).arg(total));
+    };
+    
+    // Define callback to check if cancelled
+    auto cancelledCallback = [&progress]() -> bool {
+        return progress.wasCanceled();
+    };
+    
+    // Export video using VideoExporter
+    exporter.exportVideo(
+        ui->sceneWidget->renderWindow(),
+        outputFilePath,
+        fps,
+        totalSteps(),
+        updateStepCallback,
+        progressCallback,
+        cancelledCallback
+    );
     
     // Restore original state
     currentStep = originalStep;

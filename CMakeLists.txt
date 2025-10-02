@@ -17,6 +17,7 @@ list(APPEND Sources
     widgets/ClickableLabel.cpp
     widgets/ConfigDetailsDialog.cpp
     widgets/SceneWidget.cpp
+    video/VideoExporter.cpp
 )
 file(GLOB Resources *.qrc)
 file(GLOB Styles *.qss)
