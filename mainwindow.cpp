@@ -1,15 +1,18 @@
+#include <utility> // std::to_underlying, which requires C++23
 #include <QCommonStyle>
 #include <QSettings>
 #include <QThread> // QThread::msleep
 #include <QDebug>
 #include <QMessageBox>
 #include <QPushButton>
-#include <utility> // std::to_underlying, requires C++23
+#include <QFileDialog>
+#include <QProgressDialog>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "config/Config.h"
 #include "widgets/ConfigDetailsDialog.h"
+#include "visualiser/VideoExporter.h"
 
 
 namespace
@@ -53,6 +56,7 @@ void MainWindow::connectMenuActions()
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::showAboutThisApplicationDialog);
     connect(ui->actionShow_config_details, &QAction::triggered, this, &MainWindow::showConfigDetailsDialog);
+    connect(ui->actionExport_Video, &QAction::triggered, this, &MainWindow::exportVideoDialog);
 }
 
 void MainWindow::configureButtons()
@@ -163,6 +167,94 @@ void MainWindow::showConfigDetailsDialog()
 
     ConfigDetailsDialog dialog(configFileName.toStdString(), this);
     dialog.exec();
+}
+
+void MainWindow::exportVideoDialog()
+{
+    QString outputFilePath = QFileDialog::getSaveFileName(this,
+                                                          tr("Export Video"),
+                                                          /*dir=*/QString(),
+                                                          tr("OGG Video Files (*.ogv);;All Files (*)"));
+    
+    if (outputFilePath.isEmpty())
+    {
+        return; // User cancelled
+    }
+    
+    // Ensure .ogv extension
+    if (! outputFilePath.endsWith(".ogv", Qt::CaseInsensitive))
+    {
+        outputFilePath += ".ogv";
+    }
+    
+    const int fps = ui->speedSpinBox->value();
+    
+    // Record video
+    try
+    {
+        recordVideoToFile(outputFilePath, fps);
+        QMessageBox::information(this, tr("Export Complete"),
+                               tr("Video exported successfully to:\n%1").arg(outputFilePath));
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::critical(this, tr("Export Failed"),
+                            tr("Failed to export video:\n%1").arg(e.what()));
+    }
+}
+
+void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
+{
+    // Save current state
+    const int originalStep = currentStep;
+    const bool wasPlaying = isPlaying;
+    isPlaying = false;
+    
+    // Create progress dialog
+    QProgressDialog progress(tr("Exporting video..."), tr("Cancel"), 1, totalSteps(), this);
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setMinimumDuration(0);
+    progress.setValue(0);
+    
+    // Create video exporter
+    VideoExporter exporter;
+    
+    // Define callback to update visualization for each step
+    auto updateStepCallback = [this](int step) {
+        currentStep = step;
+        QSignalBlocker blockSlider(ui->updatePositionSlider);
+        setPositionOnWidgets(currentStep);
+        QApplication::processEvents();
+    };
+    
+    // Define callback to report progress
+    auto progressCallback = [&progress, this](int step, int total) {
+        progress.setValue(step);
+        progress.setLabelText(tr("Exporting video... Step %1 of %2").arg(step).arg(total));
+    };
+    
+    // Define callback to check if cancelled
+    auto cancelledCallback = [&progress]() -> bool {
+        return progress.wasCanceled();
+    };
+    
+    // Export video using VideoExporter
+    exporter.exportVideo(
+        ui->sceneWidget->renderWindow(),
+        outputFilePath,
+        fps,
+        totalSteps(),
+        updateStepCallback,
+        progressCallback,
+        cancelledCallback
+    );
+    
+    // Restore original state
+    currentStep = originalStep;
+    setPositionOnWidgets(currentStep);
+    isPlaying = wasPlaying;
+    
+    progress.setValue(totalSteps());
 }
 
 void MainWindow::playingRequested(PlayingDirection direction)

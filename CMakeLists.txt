@@ -14,6 +14,7 @@ file(GLOB Sources *.cpp)
 list(APPEND Sources 
     config/Config.cpp 
     visualiser/SettingParameter.cpp
+    visualiser/VideoExporter.cpp
     widgets/ClickableLabel.cpp
     widgets/ConfigDetailsDialog.cpp
     widgets/SceneWidget.cpp
@@ -43,11 +44,11 @@ find_package(VTK COMPONENTS
     InteractionStyle
     RenderingContextOpenGL2
     RenderingCore
-    GUISupportQt
     RenderingFreeType
     RenderingGL2PSOpenGL2
     RenderingOpenGL2
     IOXML
+    IOOggTheora
     REQUIRED
         GUISupportQt
         IOLegacy

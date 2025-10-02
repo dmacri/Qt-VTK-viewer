@@ -353,6 +353,9 @@
     </property>
     <addaction name="separator"/>
     <addaction name="actionShow_config_details"/>
+    <addaction name="separator"/>
+    <addaction name="actionExport_Video"/>
+    <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -401,6 +404,17 @@
    </property>
    <property name="text">
     <string>Show config details</string>
+   </property>
+  </action>
+  <action name="actionExport_Video">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::MediaRecord"/>
+   </property>
+   <property name="text">
+    <string>Export Video...</string>
+   </property>
+   <property name="toolTip">
+    <string>Export simulation as OGG video</string>
    </property>
   </action>
  </widget>

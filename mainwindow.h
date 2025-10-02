@@ -22,6 +22,7 @@ private slots:
 
     void showAboutThisApplicationDialog();
     void showConfigDetailsDialog();
+    void exportVideoDialog();
     void onStepNumberChanged();
 
     void onPlayButtonClicked();
@@ -63,6 +64,7 @@ private:
 
     void changeWhichButtonsAreEnabled();
 
+    void recordVideoToFile(const QString& outputFilePath, int fps);
 
     Ui::MainWindow* ui;
 

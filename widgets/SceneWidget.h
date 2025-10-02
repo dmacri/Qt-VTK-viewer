@@ -50,7 +50,7 @@ protected:
     void renderVtkScene();
 
     void upgradeModelInCentralPanel();
-    void updateVisualization(const std::string& stepLineColor);
+    void updateVisualization();
 
     void enableToolTipWhenMouseAboveWidget();
 
