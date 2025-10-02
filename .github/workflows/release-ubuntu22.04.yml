@@ -18,7 +18,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      Uncomment this when OOpenCAL secret is available
       - name: Checkout OOpenCAL dependency
         uses: actions/checkout@v3
         with:
