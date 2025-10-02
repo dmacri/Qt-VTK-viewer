@@ -213,7 +213,7 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
     {
         try
         {
-            sw->updateVisualization("Red");
+            sw->updateVisualization();
             
             // Force renderer update for keyboard callback too
             sp->sceneWidget->renderWindow()->Modified();
@@ -293,7 +293,7 @@ void SceneWidget::selectedStepParameter(int stepNumber)
 }
 
 
-void SceneWidget::updateVisualization(const std::string& stepLineColor)
+void SceneWidget::updateVisualization()
 {
     std::vector<Line> lines(settingParameter->numberOfLines);
 
@@ -335,6 +335,7 @@ void SceneWidget::updateVisualization(const std::string& stepLineColor)
         );
     }
 
+    const std::string stepLineColor{"red"};
     sceneWidgetVisualizerProxy->vis.buildStepLine(
         settingParameter->step, 
         singleLineTextStep, 
@@ -351,7 +352,7 @@ void SceneWidget::upgradeModelInCentralPanel()
 
     try
     {
-        updateVisualization("White");
+        updateVisualization();
         
         // Force renderer update
         settingRenderParameter->m_renderer->Modified();
