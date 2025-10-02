@@ -74,9 +74,6 @@ public:
     vtkTextProperty* buildStepLine(int step,vtkSmartPointer<vtkTextMapper> ,vtkSmartPointer<vtkTextProperty> singleLineTextProp,vtkSmartPointer<vtkNamedColors> colors, std::string color);
     vtkNew<vtkActor2D> buildStepText(int step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer);
 
-    size_t generalPorpouseGetline(char **lineptr, size_t *n, FILE *stream); // TODO: GB: not used
-    void refreshBuildStepText(int step,vtkActor2D* stepLineTextActor); // TODO: GB: Not used
-
 private:
     bool allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount);
 };
@@ -353,54 +350,6 @@ void Visualizer<T>::loadHashmapFromFile(int nNodeX, int nNodeY, const std::strin
         fclose(fp);
     }
 }
-template <class T>
-size_t Visualizer<T>::generalPorpouseGetline(char **lineptr, size_t *n, FILE *stream) {
-    size_t pos;
-    int c;
-
-    if (lineptr == NULL || stream == NULL || n == NULL) {
-        errno = EINVAL;
-        return -1;
-    }
-
-    c = getc(stream);
-    if (c == EOF) {
-        return -1;
-    }
-
-    if (*lineptr == NULL) {
-        *lineptr = (char*) malloc(128);
-        if (*lineptr == NULL) {
-            return -1;
-        }
-        *n = 128;
-    }
-
-    pos = 0;
-    while(c != EOF) {
-        if (pos + 1 >= *n) {
-            size_t new_size = *n + (*n >> 2);
-            if (new_size < 128) {
-                new_size = 128;
-            }
-            char *new_ptr =(char*) realloc(*lineptr, new_size);
-            if (new_ptr == NULL) {
-                return -1;
-            }
-            *n = new_size;
-            *lineptr = new_ptr;
-        }
-
-        ((unsigned char *)(*lineptr))[pos ++] = c;
-        if (c == '\n') {
-            break;
-        }
-        c = getc(stream);
-    }
-
-    (*lineptr)[pos] = '\0';
-    return pos;
-}
 
 template <class T>
 template <class Matrix>
@@ -429,7 +378,6 @@ void Visualizer<T>::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int s
         for (int col = 0; col < nCols; col++)
         {
             points->InsertNextPoint(col, row, 1);
-
         }
     }
 
@@ -448,20 +396,20 @@ void Visualizer<T>::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int s
 
     gridActor->SetMapper(gridMapper);
     renderer->AddActor(gridActor);
-
 }
 
 template <class T>
 template <class Matrix>
 void Visualizer<T>::refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines, vtkSmartPointer<vtkActor> gridActor)
 {
-    vtkLookupTable* lut =(vtkLookupTable*)gridActor->GetMapper()->GetLookupTable();
-
-    // dynamic_cast<vtkLookupTable*>(gridActor->GetMapper()->GetLookupTable());
-
-    buidColor(lut, nCols, nRows, p);
-    gridActor->GetMapper()->SetLookupTable(lut);
-    gridActor->GetMapper()->Update();
+    if (vtkLookupTable* lut = dynamic_cast<vtkLookupTable*>(gridActor->GetMapper()->GetLookupTable()))
+    {
+        buidColor(lut, nCols, nRows, p);
+        gridActor->GetMapper()->SetLookupTable(lut);
+        gridActor->GetMapper()->Update();
+    }
+    else
+        throw std::runtime_error("Invalid dynamic cast!");
 }
 
 template <class T>
@@ -493,7 +441,6 @@ void Visualizer<T>::buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int
     actorBuildLine->GetProperty()->SetColor(colors->GetColor3d("Red").GetData());
    // actorBuildLine->GetProperty()->SetLineWidth(1.5);
     renderer->AddActor2D(actorBuildLine);
-
 }
 
 template <class T>
@@ -526,20 +473,10 @@ void Visualizer<T>::refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nC
     
     lineActor->SetMapper(mapper);
     lineActor->GetMapper()->Update();
-
 }
 
 template <class T>
-void Visualizer<T>::refreshBuildStepText(int step,vtkActor2D* stepLineTextActor)
-{
-    vtkTextMapper* stepLineTextMapper = (vtkTextMapper*) stepLineTextActor->GetMapper();
-    std::string stepText = "Step " + std::to_string(step);
-    stepLineTextMapper->SetInput(stepText.c_str());
-    stepLineTextMapper->Update();
-}
-
-template <class T>
-vtkTextProperty* Visualizer<T>:: buildStepLine(int step,vtkSmartPointer<vtkTextMapper> singleLineTextB,vtkSmartPointer<vtkTextProperty> singleLineTextProp,vtkSmartPointer<vtkNamedColors> colors, std::string color)
+vtkTextProperty* Visualizer<T>::buildStepLine(int step,vtkSmartPointer<vtkTextMapper> singleLineTextB,vtkSmartPointer<vtkTextProperty> singleLineTextProp,vtkSmartPointer<vtkNamedColors> colors, std::string color)
 {
     std::string stepText = "Step " + std::to_string(step);
     singleLineTextB->SetInput(stepText.c_str());
@@ -549,7 +486,6 @@ vtkTextProperty* Visualizer<T>:: buildStepLine(int step,vtkSmartPointer<vtkTextM
     tprop->SetVerticalJustificationToBottom();
     tprop->SetColor(colors->GetColor3d(color).GetData());
     return tprop;
-
 }
 
 
