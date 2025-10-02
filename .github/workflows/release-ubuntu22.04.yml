@@ -18,13 +18,13 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # Uncomment this when OOpenCAL secret is available
-      # - name: Checkout OOpenCAL dependency
-      #   uses: actions/checkout@v3
-      #   with:
-      #     repository: alessioderango/OOpenCAL
-      #     path: deps/OOpenCAL
-      #     token: ${{ secrets.OOPENCAL_TOKEN }}
+      Uncomment this when OOpenCAL secret is available
+      - name: Checkout OOpenCAL dependency
+        uses: actions/checkout@v3
+        with:
+          repository: alessioderango/OOpenCAL
+          path: deps/OOpenCAL
+          token: ${{ secrets.VisualizerOpenCal }}
 
       - name: Install dependencies (Qt6, VTK, build tools)
         run: |

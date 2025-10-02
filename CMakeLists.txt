@@ -46,7 +46,7 @@ find_package(VTK COMPONENTS
 )
 
 # Build executable
-add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${Sources} ${Headers} ${Resources} ${UIs} ${Styles} ${Docs} LICENSE)
+add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${Sources} ${Headers} ${Resources} ${UIs} ${Styles} ${Docs} LICENSE .github/workflows/release-ubuntu22.04.yml)
 
 
 # ============================================
