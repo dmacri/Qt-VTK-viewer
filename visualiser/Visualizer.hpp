@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cerrno>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -49,15 +48,23 @@ template <class T>
 class Visualizer
 {
 public:
-    T** p;
     std::vector<std::unordered_map<int, long int>> hashMap;
 
     Visualizer() = default;
 
-    long int gotoStep(int step, FILE *fp, int node);
+    long int gotoStep(int step, FILE *fp, int node)
+    {
+        return hashMap[node][step];
+    }
 
-    std::string giveMeFileName(const std::string& fileName, int node) const;
-    std::string giveMeFileNameIndex(const std::string &fileName, int node) const;
+    std::string giveMeFileName(const std::string& fileName, int node) const
+    {
+        return std::format("{}{}.txt", fileName, node);
+    }
+    std::string giveMeFileNameIndex(const std::string &fileName, int node) const
+    {
+        return std::format("{}{}_index.txt", fileName, node);
+    }
 
     FILE *giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows, char *&line, size_t &len);
     std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, char *&line, size_t &len);
@@ -77,57 +84,72 @@ public:
 private:
     bool allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount);
 };
+////////////////////////////////////////////////////////////////////
 
-
-
-template <class T>
-long int Visualizer<T>::gotoStep(int step, FILE *fp, int node)
-{
-    return hashMap[node][step];
-}
-
-
-template <class T>
-std::string Visualizer<T>::giveMeFileName(const std::string &fileName, int node) const
-{
-    return std::format("{}{}.txt", fileName, node);
-}
-template <class T>
-std::string Visualizer<T>::giveMeFileNameIndex(const std::string &fileName, int node) const
-{
-    return std::format("{}{}_index.txt", fileName, node);
-}
 
 template <class T>
 FILE* Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows, char *&line, size_t &len)
 {
-    auto fileNameTmp = giveMeFileName(fileName, node);
+    const auto fileNameTmp = giveMeFileName(fileName, node);
 
     FILE *fp = fopen(fileNameTmp.c_str(), "r");
-    if (fp == NULL)
+    if (nullptr == fp)
     {
-        cout << "Can't read " << fileNameTmp << " in giveMeLocalColAndRowFromStep function" << endl;
-        exit(EXIT_FAILURE);
+        throw std::runtime_error(std::format("Can't read '{}' in {} function", fileNameTmp, __FUNCTION__));
     }
 
-    long int fPos = gotoStep(step, fp, node);
-
+    const auto fPos = gotoStep(step, fp, node);
     fseek(fp, fPos, SEEK_SET);
     //printMatrixFromStepByUser(hashmap, stepUser);
    // generalPorpouseGetline(&line, &len, fp);
     getline(&line, &len, fp);
-    char *pch;
-    pch = strtok(line, "-");
+    char *pch = strtok(line, "-");
     nLocalCols = atoi(pch);
     pch = strtok(NULL, "-");
     nLocalRows = atoi(pch);
     return fp;
 }
+// template <class T>
+// std::ifstream Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int& nLocalCols, int& nLocalRows)
+// {
+//     const auto fileNameTmp = giveMeFileName(fileName, node);
+
+//     std::ifstream file(fileNameTmp);
+//     if (! file.is_open())
+//     {
+//         throw std::runtime_error(std::format("Can't read '{}' in {} function", fileNameTmp, __func__));
+//     }
+
+//     const auto fPos = gotoStep(step, file, node);
+//     file.seekg(fPos);
+//     if (! file)
+//     {
+//         throw std::runtime_error(std::format("Seek failed in '{}' at position {}", fileNameTmp, fPos));
+//     }
+
+//     std::string line;
+//     if (! std::getline(file, line))
+//     {
+//         throw std::runtime_error(std::format("Failed to read line from '{}' at position {}", fileNameTmp, fPos));
+//     }
+
+//     const auto delimiterPos = line.find('-');
+//     if (delimiterPos == std::string::npos)
+//     {
+//         throw std::runtime_error(std::format("Invalid format in '{}': '{}'", fileNameTmp, line));
+//     }
+
+//     nLocalCols = std::stoi(line.substr(0, delimiterPos));
+//     nLocalRows = std::stoi(line.substr(delimiterPos + 1));
+
+//     return file;
+// }
+
 
 template <class T>
 std::pair<int,int> Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, char *&line, size_t &len)
 {
-    auto fileNameTmp = giveMeFileName(fileName, node);
+    const auto fileNameTmp = giveMeFileName(fileName, node);
 
     FILE *fp = fopen(fileNameTmp.c_str(), "r");
     if (fp == NULL)
