@@ -43,11 +43,11 @@ find_package(VTK COMPONENTS
     InteractionStyle
     RenderingContextOpenGL2
     RenderingCore
-    GUISupportQt
     RenderingFreeType
     RenderingGL2PSOpenGL2
     RenderingOpenGL2
     IOXML
+    IOOggTheora
     REQUIRED
         GUISupportQt
         IOLegacy

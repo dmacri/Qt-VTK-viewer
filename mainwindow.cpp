@@ -4,7 +4,13 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QFileDialog>
+#include <QProgressDialog>
 #include <utility> // std::to_underlying, requires C++23
+
+#include <vtkOggTheoraWriter.h>
+#include <vtkWindowToImageFilter.h>
+#include <vtkRenderWindow.h>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -53,6 +59,7 @@ void MainWindow::connectMenuActions()
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::showAboutThisApplicationDialog);
     connect(ui->actionShow_config_details, &QAction::triggered, this, &MainWindow::showConfigDetailsDialog);
+    connect(ui->actionExport_Video, &QAction::triggered, this, &MainWindow::exportVideoDialog);
 }
 
 void MainWindow::configureButtons()
@@ -163,6 +170,113 @@ void MainWindow::showConfigDetailsDialog()
 
     ConfigDetailsDialog dialog(configFileName.toStdString(), this);
     dialog.exec();
+}
+
+void MainWindow::exportVideoDialog()
+{
+    QString outputFilePath = QFileDialog::getSaveFileName(this,
+                                                          tr("Export Video"),
+                                                          /*dir=*/QString(),
+                                                          tr("OGG Video Files (*.ogv);;All Files (*)"));
+    
+    if (outputFilePath.isEmpty())
+    {
+        return; // User cancelled
+    }
+    
+    // Ensure .ogv extension
+    if (! outputFilePath.endsWith(".ogv", Qt::CaseInsensitive))
+    {
+        outputFilePath += ".ogv";
+    }
+    
+    const int fps = ui->speedSpinBox->value();
+    
+    // Record video
+    try
+    {
+        recordVideoToFile(outputFilePath, fps);
+        QMessageBox::information(this, tr("Export Complete"),
+                               tr("Video exported successfully to:\n%1").arg(outputFilePath));
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::critical(this, tr("Export Failed"),
+                            tr("Failed to export video:\n%1").arg(e.what()));
+    }
+}
+
+void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
+{
+    // Save current state
+    const int originalStep = currentStep;
+    const bool wasPlaying = isPlaying;
+    isPlaying = false;
+    
+    // Create progress dialog
+    QProgressDialog progress(tr("Exporting video..."), tr("Cancel"), 1, totalSteps(), this);
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setMinimumDuration(0);
+    progress.setValue(0);
+    
+    // Setup VTK video writer
+    vtkNew<vtkOggTheoraWriter> writer;
+    writer->SetFileName(outputFilePath.toStdString().c_str());
+    writer->SetRate(fps);
+    writer->SetQuality(2); // Quality 0-2, where 2 is highest
+    
+    // Setup window to image filter
+    vtkNew<vtkWindowToImageFilter> windowToImageFilter;
+    windowToImageFilter->SetInput(ui->sceneWidget->renderWindow());
+    windowToImageFilter->SetScale(1); // Image quality scale
+    windowToImageFilter->SetInputBufferTypeToRGB();
+    windowToImageFilter->ReadFrontBufferOff(); // Read from back buffer
+    
+    // Connect filter to writer
+    writer->SetInputConnection(windowToImageFilter->GetOutputPort());
+    
+    // Start writing
+    writer->Start();
+    
+    // Iterate through all steps and capture frames
+    for (int step = FIRST_STEP_NUMBER; step <= totalSteps(); ++step)
+    {
+        // Check if user cancelled
+        if (progress.wasCanceled())
+        {
+            writer->End();
+            throw std::runtime_error("Video export cancelled by user");
+        }
+        
+        // Update progress
+        progress.setValue(step);
+        progress.setLabelText(tr("Exporting video... Step %1 of %2").arg(step).arg(totalSteps()));
+        
+        // Set the step and render
+        currentStep = step;
+        {
+            QSignalBlocker blockSlider(ui->updatePositionSlider);
+            setPositionOnWidgets(currentStep);
+        }
+        
+        // Force render and process events
+        ui->sceneWidget->renderWindow()->Render();
+        QApplication::processEvents();
+        
+        // Capture frame
+        windowToImageFilter->Modified();
+        writer->Write();
+    }
+    
+    // Finalize video
+    writer->End();
+    
+    // Restore original state
+    currentStep = originalStep;
+    setPositionOnWidgets(currentStep);
+    isPlaying = wasPlaying;
+    
+    progress.setValue(totalSteps());
 }
 
 void MainWindow::playingRequested(PlayingDirection direction)
