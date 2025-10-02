@@ -1,38 +1,42 @@
+#include <utility> // std::to_underlying, which requires C++23
 #include <QCommonStyle>
 #include <QSettings>
-#include <QLabel>
-#include <QThread>
-#include <QFile>
+#include <QThread> // QThread::msleep
 #include <QDebug>
-#include <QFileDialog>
 #include <QMessageBox>
-#include <QIntValidator>
 #include <QPushButton>
+#include <QFileDialog>
+#include <QProgressDialog>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "Config.h"
+#include "config/Config.h"
+#include "widgets/ConfigDetailsDialog.h"
+#include "visualiser/VideoExporter.h"
 
-#include <vtkDataSetReader.h>
-#include <Visualizer.hpp>
+
+namespace
+{
+constexpr int FIRST_STEP_NUMBER = 1;
+}
 
 
-MainWindow::MainWindow(int argc, char* argv[], QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow)
+MainWindow::MainWindow(const QString& configFileName, QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    configureUIElements(argc,argv);
+    configureUIElements(configFileName);
     setupConnections();
 }
 
-void MainWindow::configureUIElements(int argc, char* argv[])
+void MainWindow::configureUIElements(const QString& configFileName)
 {
-    addValidatorForPositionInputWidget();
     configureButtons();
-    configureSliders();
     loadStrings();
-    initializeSceneWidget(argc, argv);
-    showInputFilePathOnBarLabel(argv[1]);
-    setTotalStepsFromConfiguration(argv[1]);
+    initializeSceneWidget(configFileName);
+    showInputFilePathOnBarLabel(configFileName);
+    setTotalStepsFromConfiguration(configFileName);
+
+    changeWhichButtonsAreEnabled();
 }
 
 void MainWindow::setupConnections()
@@ -42,19 +46,17 @@ void MainWindow::setupConnections()
     connectButtons();
     connectSliders();
 
-    connect(ui->positionLineEdit, &QLineEdit::returnPressed, this, &MainWindow::onStepNumberInputed);
+    connect(ui->positionSpinBox, &QSpinBox::editingFinished, this, &MainWindow::onStepNumberChanged);
+    connect(ui->sceneWidget, &SceneWidget::changedStepNumberWithKeyboardKeys, ui->updatePositionSlider, &QSlider::setValue);
+    connect(ui->inputFilePathLabel, &ClickableLabel::doubleClicked, this, &MainWindow::showConfigDetailsDialog);
 }
 
 void MainWindow::connectMenuActions()
 {
     connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::showAboutThisApplicationDialog);
-}
-
-void MainWindow::addValidatorForPositionInputWidget()
-{
-    QIntValidator* validator = new QIntValidator(ui->positionLineEdit);
-    ui->positionLineEdit->setValidator(validator);
+    connect(ui->actionShow_config_details, &QAction::triggered, this, &MainWindow::showConfigDetailsDialog);
+    connect(ui->actionExport_Video, &QAction::triggered, this, &MainWindow::exportVideoDialog);
 }
 
 void MainWindow::configureButtons()
@@ -75,35 +77,29 @@ void MainWindow::configureButton(QPushButton* button, QStyle::StandardPixmap ico
     button->setStyleSheet(NULL);
 }
 
-void MainWindow::configureSliders()
-{
-    ui->sleepSlider->setMinimum(1);
-    ui->sleepSlider->setMaximum(100);
-    ui->sleepSlider->setValue(50);
-    // ui->sleepSlider->setStyleSheet(styleSheetSleep);
-}
 void MainWindow::configureCursorPosition()
 {
-    ui->updatePositionSlider->setMinimum(1);
+    ui->updatePositionSlider->setMinimum(FIRST_STEP_NUMBER);
     ui->updatePositionSlider->setMaximum(100);
-    ui->updatePositionSlider->setValue(1);
+    ui->updatePositionSlider->setValue(FIRST_STEP_NUMBER);
 }
 
 
 void MainWindow::showInputFilePathOnBarLabel(const QString& inputFilePath)
 {
-    ui->inputFilePathLabel->setText(tr("Input file: ") + inputFilePath);
+    ui->inputFilePathLabel->setFileName(inputFilePath);
 }
 
-void MainWindow::initializeSceneWidget(int argc, char* argv[])
+void MainWindow::initializeSceneWidget(const QString& configFileName)
 {
-    ui->sceneWidget->addVisualizer(argc, argv);
+    ui->sceneWidget->addVisualizer(configFileName.toStdString());
 }
 
-void MainWindow::setTotalStepsFromConfiguration(char* configurationFile)
+void MainWindow::setTotalStepsFromConfiguration(const QString &configurationFile)
 {
-    Config config(configurationFile);
-    config.readConfigFile();
+    const auto configFilePath = configurationFile.toStdString();
+    Config config(configFilePath);
+
     ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
 
     const auto totalSteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
@@ -114,6 +110,7 @@ void MainWindow::setTotalSteps(int totalStepsValue)
 {
     ui->totalStep->setText(QString("/") + QString::number(totalStepsValue));
     ui->updatePositionSlider->setMaximum(totalStepsValue);
+    ui->positionSpinBox->setMaximum(totalStepsValue);
 }
 
 int MainWindow::totalSteps() const
@@ -133,23 +130,17 @@ void MainWindow::connectButtons()
 
 void MainWindow::connectSliders()
 {
-    connect(ui->sleepSlider, &QSlider::valueChanged, this, &MainWindow::updateSleepDuration);
     connect(ui->updatePositionSlider, &QSlider::valueChanged, this, &MainWindow::onUpdatePositionOnSlider);
 }
 
 void MainWindow::loadStrings()
 {
-    QString iniFilePath = QApplication::applicationDirPath() + "/app_strings.ini";
-    QSettings settings(iniFilePath, QSettings::IniFormat);
-    qDebug() <<"Il file path è" << settings.fileName();
-    noSelectionMessage = settings.value("Messages/noSelectionWarning").toString();
-    qDebug() <<"Il messaggio  è" << noSelectionMessage;
-
-    directorySelectionMessage = settings.value("Messages/directorySelectionWarning").toString();
-    compilationSuccessfulMessage = settings.value("Messages/compilationSuccessful").toString();
-    compilationFailedMessage = settings.value("Messages/compilationFailed").toString();
-    deleteSuccessfulMessage = settings.value("Messages/deleteSuccessful").toString();
-    deleteFailedMessage = settings.value("Messages/deleteFailed").toString();
+    noSelectionMessage = tr("Nessun elemento selezionato!");
+    directorySelectionMessage = tr("Nessun elemento selezionato!");
+    compilationSuccessfulMessage = tr("Compilation successful.");
+    compilationFailedMessage = tr("Compilation failed.");
+    deleteSuccessfulMessage = tr("Delete SceneWidgetVisualizerProxy.h successful.");
+    deleteFailedMessage = tr("Delete SceneWidgetVisualizerProxy.h failed.");
 }
 
 MainWindow::~MainWindow()
@@ -164,31 +155,137 @@ void MainWindow::showAboutThisApplicationDialog()
                              "Configurator for visualizer");
 }
 
-void MainWindow::playingRequested(int direction)
+void MainWindow::showConfigDetailsDialog()
 {
-    currentStep = std::clamp(currentStep + direction, 0, totalSteps() - 1);
-
-    for (int step = currentStep; step >= 0 && step <= totalSteps(); step += direction)
+    const auto configFileName = ui->inputFilePathLabel->getFileName();
+    if (configFileName.isEmpty())
     {
+        QMessageBox::warning(this, tr("No Configuration"),
+                           tr("No configuration file has been loaded."));
+        return;
+    }
+
+    ConfigDetailsDialog dialog(configFileName.toStdString(), this);
+    dialog.exec();
+}
+
+void MainWindow::exportVideoDialog()
+{
+    QString outputFilePath = QFileDialog::getSaveFileName(this,
+                                                          tr("Export Video"),
+                                                          /*dir=*/QString(),
+                                                          tr("OGG Video Files (*.ogv);;All Files (*)"));
+    
+    if (outputFilePath.isEmpty())
+    {
+        return; // User cancelled
+    }
+    
+    // Ensure .ogv extension
+    if (! outputFilePath.endsWith(".ogv", Qt::CaseInsensitive))
+    {
+        outputFilePath += ".ogv";
+    }
+    
+    const int fps = ui->speedSpinBox->value();
+    
+    // Record video
+    try
+    {
+        recordVideoToFile(outputFilePath, fps);
+        QMessageBox::information(this, tr("Export Complete"),
+                               tr("Video exported successfully to:\n%1").arg(outputFilePath));
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::critical(this, tr("Export Failed"),
+                            tr("Failed to export video:\n%1").arg(e.what()));
+    }
+}
+
+void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
+{
+    // Save current state
+    const int originalStep = currentStep;
+    const bool wasPlaying = isPlaying;
+    isPlaying = false;
+    
+    // Create progress dialog
+    QProgressDialog progress(tr("Exporting video..."), tr("Cancel"), 1, totalSteps(), this);
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setMinimumDuration(0);
+    progress.setValue(0);
+    
+    // Create video exporter
+    VideoExporter exporter;
+    
+    // Define callback to update visualization for each step
+    auto updateStepCallback = [this](int step) {
         currentStep = step;
+        QSignalBlocker blockSlider(ui->updatePositionSlider);
+        setPositionOnWidgets(currentStep);
+        QApplication::processEvents();
+    };
+    
+    // Define callback to report progress
+    auto progressCallback = [&progress, this](int step, int total) {
+        progress.setValue(step);
+        progress.setLabelText(tr("Exporting video... Step %1 of %2").arg(step).arg(total));
+    };
+    
+    // Define callback to check if cancelled
+    auto cancelledCallback = [&progress]() -> bool {
+        return progress.wasCanceled();
+    };
+    
+    // Export video using VideoExporter
+    exporter.exportVideo(
+        ui->sceneWidget->renderWindow(),
+        outputFilePath,
+        fps,
+        totalSteps(),
+        updateStepCallback,
+        progressCallback,
+        cancelledCallback
+    );
+    
+    // Restore original state
+    currentStep = originalStep;
+    setPositionOnWidgets(currentStep);
+    isPlaying = wasPlaying;
+    
+    progress.setValue(totalSteps());
+}
+
+void MainWindow::playingRequested(PlayingDirection direction)
+{
+    currentStep = std::clamp(currentStep + std::to_underlying(direction), FIRST_STEP_NUMBER, totalSteps());
+
+    while (true)
+    {
+        currentStep = std::clamp(currentStep, FIRST_STEP_NUMBER, totalSteps());;
 
         {
             QSignalBlocker blockSlider(ui->updatePositionSlider);
             setPositionOnWidgets(currentStep);
         }
 
-        if (movingCursorSleep && currentStep < totalSteps() / 2)
-        {
-            int sleep = totalSteps() / 2 - cursorValueSleep;
-            QThread::msleep(sleep * 5);
-        }
+        QThread::msleep(ui->sleepSpinBox->value());
 
         QApplication::processEvents();
 
-        if (!isPlaying || (direction < 0 && currentStep == 0))
+        if (!isPlaying || (std::to_underlying(direction) < 0 && currentStep == 0))
         {
             break;
         }
+
+        if (PlayingDirection::Forward == direction && currentStep == totalSteps()
+            || PlayingDirection::Backward == direction && currentStep == FIRST_STEP_NUMBER)
+        {
+            break;
+        }
+
+        currentStep += std::to_underlying(direction)*ui->speedSpinBox->value();
     }
 }
 
@@ -203,7 +300,7 @@ void MainWindow::onPlayButtonClicked()
     {
         isPlaying = true;
         isBacking = false;
-        playingRequested(+1);
+        playingRequested(PlayingDirection::Forward);
     }
 }
 
@@ -223,20 +320,20 @@ void MainWindow::onBackButtonClicked()
 {
     isPlaying = true;
     isBacking = true;
-    playingRequested(-1);
+    playingRequested(PlayingDirection::Backward);
 }
 
 void MainWindow::onLeftButtonClicked()
 {
     ui->sceneWidget->decreaseCountDown();
-    currentStep = std::max(currentStep - 1, 0);
+    currentStep = std::max(currentStep - 1, FIRST_STEP_NUMBER);
     setPositionOnWidgets(currentStep);
 }
 
 void MainWindow::onRightButtonClicked()
 {
     ui->sceneWidget->increaseCountUp();
-    currentStep = std::min(currentStep + 1, totalSteps() - 1);
+    currentStep = std::min(currentStep + 1, totalSteps());
     setPositionOnWidgets(currentStep);
 }
 
@@ -247,55 +344,28 @@ void MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
         QSignalBlocker sliderBlocker(ui->updatePositionSlider);
         ui->updatePositionSlider->setValue(stepPosition);
     }
-    ui->positionLineEdit->setText(QString::number(stepPosition));
+    ui->positionSpinBox->setValue(stepPosition);
     ui->sceneWidget->selectedStepParameter(stepPosition);
+
+    changeWhichButtonsAreEnabled();
 }
 
-void MainWindow::onStepNumberInputed()
+void MainWindow::changeWhichButtonsAreEnabled()
 {
-    // TODO: GB: Why not to use SpinBox instead of LineEdit?
-    QString text = ui->positionLineEdit->text();
-    if (!text.isEmpty())
-    {
-        bool conversionOk;
-        int step = text.toInt(&conversionOk);
-        if (conversionOk)
-        {
-            currentStep = step;
-            setPositionOnWidgets(currentStep);
-        }
-        else
-        {
-            QMessageBox::critical(this, tr("Errore"), tr("Problemi con il numero che hai inserito"));
-        }
-    }
-    else
-    {
-        QMessageBox::critical(this, tr("Errore"), tr("Inserisci un valore numerico"));
-    }
+    ui->rightButton->setDisabled(currentStep == totalSteps());
+    ui->playButton->setDisabled(currentStep == totalSteps());
+    ui->leftButton->setDisabled(currentStep <= 1);
+    ui->backButton->setDisabled(currentStep <= 1);
 }
 
-void MainWindow::updateSleepDuration(int value)
+void MainWindow::onStepNumberChanged()
 {
-    const int deltaStep = totalSteps() / 10;
-    const double positionPercentage = (double) ui->sleepSlider->value() / totalSteps();
-    const int sliderMaxValue = ui->sleepSlider->maximum();
-    const int sliderHalve = sliderMaxValue / 2;
-    const double sliderNormalizedPosition = positionPercentage * sliderMaxValue / sliderMaxValue;
-    if (value > sliderHalve && value <= sliderMaxValue && isBacking == false)
+    auto step = ui->positionSpinBox->value();
+    if (step != currentStep)
     {
-        stepIncrement = sliderNormalizedPosition * deltaStep;
+        currentStep = step;
+        setPositionOnWidgets(currentStep);
     }
-    else if(value > sliderHalve && value <= sliderMaxValue && isBacking == true)
-    {
-        stepIncrement = - sliderNormalizedPosition * deltaStep;
-    }
-    else
-    {
-        movingCursorSleep = true;
-    }
-    cursorValueSleep = value;
-    ui->sleepSlider->setToolTip("Current sleeping value " + QString::number(cursorValueSleep));
 }
 
 void MainWindow::onUpdatePositionOnSlider(int value)
@@ -303,8 +373,8 @@ void MainWindow::onUpdatePositionOnSlider(int value)
     qDebug() << "Step is " << value;
 
     {
-        QSignalBlocker blockLineEdit(ui->positionLineEdit);
-        ui->positionLineEdit->setText(QString::number(value));
+        QSignalBlocker blockSpinBox(ui->positionSpinBox);
+        ui->positionSpinBox->setValue(value);
     }
 
     currentStep = value;

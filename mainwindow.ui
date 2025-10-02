@@ -40,40 +40,14 @@
     <property name="spacing">
      <number>0</number>
     </property>
-    <item row="15" column="13">
-     <spacer name="verticalSpacer">
-      <property name="orientation">
-       <enum>Qt::Orientation::Vertical</enum>
-      </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::Policy::Fixed</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>10</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
     <item row="16" column="2" colspan="4">
      <layout class="QHBoxLayout" name="buttonBoxLayout">
-      <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Policy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>5</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
+      <property name="spacing">
+       <number>8</number>
+      </property>
+      <property name="leftMargin">
+       <number>5</number>
+      </property>
       <item>
        <widget class="QPushButton" name="skipForwardButton">
         <property name="sizePolicy">
@@ -91,58 +65,23 @@
        </widget>
       </item>
       <item>
-       <spacer name="horizontalSpacer_6">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Policy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>5</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="positionLineEdit">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>50</horstretch>
-          <verstretch>100</verstretch>
-         </sizepolicy>
-        </property>
+       <widget class="QSpinBox" name="positionSpinBox">
         <property name="maximumSize">
          <size>
-          <width>50</width>
+          <width>80</width>
           <height>16777215</height>
          </size>
         </property>
-        <property name="text">
-         <string>1</string>
+        <property name="buttonSymbols">
+         <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+        </property>
+        <property name="prefix">
+         <string>step: </string>
+        </property>
+        <property name="minimum">
+         <number>1</number>
         </property>
        </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_5">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Policy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>5</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
       </item>
       <item>
        <widget class="QLabel" name="totalStep">
@@ -174,22 +113,6 @@
        </widget>
       </item>
       <item>
-       <spacer name="horizontalSpacer_7">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Policy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>5</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
        <widget class="QPushButton" name="stopButton">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -204,22 +127,6 @@
          <iconset theme="QIcon::ThemeIcon::MediaPlaybackStop"/>
         </property>
        </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_8">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Policy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>5</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
       </item>
       <item>
        <widget class="QPushButton" name="backButton">
@@ -238,22 +145,6 @@
        </widget>
       </item>
       <item>
-       <spacer name="horizontalSpacer_9">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Policy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>5</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
        <widget class="QPushButton" name="leftButton">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -268,22 +159,6 @@
          <iconset theme="QIcon::ThemeIcon::GoPrevious"/>
         </property>
        </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_10">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Policy::Fixed</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>5</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
       </item>
       <item>
        <widget class="QPushButton" name="rightButton">
@@ -302,117 +177,87 @@
        </widget>
       </item>
       <item>
-       <spacer name="horizontalSpacer_3">
+       <widget class="QSpinBox" name="speedSpinBox">
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Speed: frames per step</string>
+        </property>
+        <property name="prefix">
+         <string>Speed: </string>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="sleepSpinBox">
+        <property name="maximumSize">
+         <size>
+          <width>140</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="prefix">
+         <string>Sleep [ms]: </string>
+        </property>
+        <property name="maximum">
+         <number>1000</number>
+        </property>
+        <property name="singleStep">
+         <number>10</number>
+        </property>
+        <property name="stepType">
+         <enum>QAbstractSpinBox::StepType::AdaptiveDecimalStepType</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_11">
         <property name="orientation">
          <enum>Qt::Orientation::Horizontal</enum>
         </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Policy::Fixed</enum>
-        </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>5</width>
+          <width>40</width>
           <height>20</height>
          </size>
         </property>
        </spacer>
       </item>
-      <item>
-       <widget class="QSlider" name="sleepSlider">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>700</width>
-          <height>50</height>
-         </size>
-        </property>
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>100</number>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-        <property name="tickPosition">
-         <enum>QSlider::TickPosition::NoTicks</enum>
-        </property>
-       </widget>
-      </item>
      </layout>
     </item>
-    <item row="16" column="16">
-     <spacer name="horizontalSpacer_4">
-      <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
+    <item row="17" column="0" colspan="16">
+     <widget class="ClickableLabel" name="inputFilePathLabel">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
       </property>
-      <property name="sizeType">
-       <enum>QSizePolicy::Policy::Fixed</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
+      <property name="maximumSize">
        <size>
-        <width>5</width>
-        <height>20</height>
+        <width>16777215</width>
+        <height>15</height>
        </size>
       </property>
-     </spacer>
+      <property name="styleSheet">
+       <string notr="true">margin: 0px; padding: 0px; cursor: pointer;</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Shape::NoFrame</enum>
+      </property>
+      <property name="text">
+       <string>Input file: </string>
+      </property>
+     </widget>
     </item>
-    <item row="14" column="2">
-     <layout class="QVBoxLayout" name="progressSizerLayout">
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Orientation::Horizontal</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Policy::Fixed</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>5</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QSlider" name="updatePositionSlider">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="toolTip">
-           <string>Position</string>
-          </property>
-          <property name="minimum">
-           <number>1</number>
-          </property>
-          <property name="maximum">
-           <number>100</number>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Orientation::Horizontal</enum>
-          </property>
-          <property name="tickPosition">
-           <enum>QSlider::TickPosition::NoTicks</enum>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </item>
-    <item row="4" column="0" rowspan="10" colspan="17">
+    <item row="4" column="0" rowspan="10" colspan="16">
      <widget class="SceneWidget" name="sceneWidget">
       <property name="enabled">
        <bool>true</bool>
@@ -431,28 +276,57 @@
       </property>
      </widget>
     </item>
-    <item row="17" column="2">
-     <widget class="QLabel" name="inputFilePathLabel">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
+    <item row="14" column="2">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="leftMargin">
+       <number>6</number>
       </property>
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>12</height>
-       </size>
+      <property name="rightMargin">
+       <number>6</number>
       </property>
-      <property name="text">
-       <string>Input file: </string>
-      </property>
-     </widget>
+      <item>
+       <widget class="QSlider" name="updatePositionSlider">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Position</string>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="tickPosition">
+         <enum>QSlider::TickPosition::NoTicks</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="statusbar">
+   <property name="maximumSize">
+    <size>
+     <width>16777215</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="layoutDirection">
+    <enum>Qt::LayoutDirection::LeftToRight</enum>
+   </property>
+   <property name="sizeGripEnabled">
+    <bool>false</bool>
+   </property>
+  </widget>
   <widget class="QToolBar" name="toolBar">
    <property name="windowTitle">
     <string>toolBar</string>
@@ -477,6 +351,10 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="separator"/>
+    <addaction name="actionShow_config_details"/>
+    <addaction name="separator"/>
+    <addaction name="actionExport_Video"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -520,17 +398,41 @@
     <string>Open</string>
    </property>
   </action>
+  <action name="actionShow_config_details">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentProperties"/>
+   </property>
+   <property name="text">
+    <string>Show config details</string>
+   </property>
+  </action>
+  <action name="actionExport_Video">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::MediaRecord"/>
+   </property>
+   <property name="text">
+    <string>Export Video...</string>
+   </property>
+   <property name="toolTip">
+    <string>Export simulation as OGG video</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
    <class>SceneWidget</class>
    <extends>QOpenGLWidget</extends>
-   <header location="global">scenewidget.h</header>
+   <header location="global">widgets/SceneWidget.h</header>
    <slots>
     <signal>click()</signal>
     <slot>zoomToExtent()</slot>
     <slot>increaseCountUp()</slot>
    </slots>
+  </customwidget>
+  <customwidget>
+   <class>ClickableLabel</class>
+   <extends>QLabel</extends>
+   <header location="global">widgets/ClickableLabel.h</header>
   </customwidget>
  </customwidgets>
  <resources>
