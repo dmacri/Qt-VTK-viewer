@@ -1,11 +1,10 @@
-#include "VideoExporter.h"
-
+#include <stdexcept>
 #include <vtkOggTheoraWriter.h>
 #include <vtkWindowToImageFilter.h>
 #include <vtkRenderWindow.h>
 #include <vtkNew.h>
+#include "visualiser/VideoExporter.h"
 
-#include <stdexcept>
 
 VideoExporter::VideoExporter(QObject* parent)
     : QObject(parent)

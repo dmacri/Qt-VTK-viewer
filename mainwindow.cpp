@@ -1,3 +1,4 @@
+#include <utility> // std::to_underlying, which requires C++23
 #include <QCommonStyle>
 #include <QSettings>
 #include <QThread> // QThread::msleep
@@ -6,13 +7,12 @@
 #include <QPushButton>
 #include <QFileDialog>
 #include <QProgressDialog>
-#include <utility> // std::to_underlying, requires C++23
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "config/Config.h"
 #include "widgets/ConfigDetailsDialog.h"
-#include "video/VideoExporter.h"
+#include "visualiser/VideoExporter.h"
 
 
 namespace
