@@ -43,8 +43,6 @@ SceneWidget::SceneWidget(QWidget* parent)
     , settingParameter{std::make_unique<SettingParameter>()}
     , settingRenderParameter{std::make_unique<SettingRenderParameter>()}
 {
-    settingParameter->sceneWidgetVisualizerProxy = sceneWidgetVisualizerProxy.get();
-
     enableToolTipWhenMouseAboveWidget();
 }
 
@@ -110,7 +108,6 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename)
     settingParameter->insertAction = false;
 
     sceneWidgetVisualizerProxy->initMatrix(settingParameter->dimX, settingParameter->dimY);
-    settingParameter->sceneWidgetVisualizerProxy->p = sceneWidgetVisualizerProxy->p;
 
     settingRenderParameter->m_renderer->SetBackground(settingRenderParameter->colors->GetColor3d("Silver").GetData());
 
@@ -181,7 +178,7 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
     SceneWidget* sw = static_cast<SceneWidget*>(clientData);
     SettingParameter* sp = sw->settingParameter.get();
 
-    SceneWidgetVisualizerProxy* visualiserProxy = sp->sceneWidgetVisualizerProxy;
+    SceneWidgetVisualizerProxy* visualiserProxy = sw->sceneWidgetVisualizerProxy.get();
 
     if (keyPressed == "Up")
     {
