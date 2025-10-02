@@ -73,7 +73,10 @@ set(OOPENCAL_DIR "/home/dmacri80/Progetto-Visualizer/" CACHE PATH "Path to the b
 
 if(OOPENCAL_DIR)
     message(STATUS "Using OOpenCAL directory: ${OOPENCAL_DIR}")
-    target_include_directories(${PROJECT_NAME} PRIVATE ${OOPENCAL_DIR})
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        ${OOPENCAL_DIR}
+        ${OOPENCAL_DIR}/OOpenCAL
+    )
 else()
     message(WARNING "OOPENCAL_DIR not set! Includes like <OOpenCAL/...> may not work.")
 endif()
