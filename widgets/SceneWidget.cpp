@@ -129,33 +129,29 @@ void SceneWidget::setupVtkScene()
     interactor()->SetInteractorStyle(style);
 
     renderWindow()->SetWindowName(QApplication::applicationName().toLocal8Bit().data());
-}
-
-void SceneWidget::renderVtkScene()
-{
-    DEBUG << "DEBUG: Starting " << __FUNCTION__ << endl;
-    DEBUG << "DEBUG: Loading hashmap from file..." << endl;
-    sceneWidgetVisualizerProxy->vis.loadHashmapFromFile(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
-    DEBUG << "DEBUG: Hashmap loaded successfully" << endl;
 
     vtkNew<vtkCallbackCommand> keypressCallback;
     keypressCallback->SetCallback(SceneWidget::keypressCallbackFunction);
     keypressCallback->SetClientData(this);
     interactor()->AddObserver(vtkCommand::KeyPressEvent, keypressCallback);
+}
+
+void SceneWidget::renderVtkScene()
+{
+    DEBUG << "DEBUG: Starting " << __FUNCTION__ << endl;
+    sceneWidgetVisualizerProxy->vis.loadHashmapFromFile(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
+    DEBUG << "DEBUG: Hashmap loaded successfully" << endl;
 
     std::vector<Line> lines;
     lines.resize(settingParameter->numberOfLines);
-    DEBUG << "DEBUG: Allocated lines array" << endl;
+    DEBUG << "DEBUG: Allocated lines array " << settingParameter->numberOfLines << endl;
 
-    DEBUG << "DEBUG: Calling getElementMatrix..." << endl;
     sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
     DEBUG << "DEBUG: getElementMatrix completed" << endl;
 
-    DEBUG << "DEBUG: Calling drawWithVTK..." << endl;
     sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingParameter->numberOfLines, settingParameter->edittext, settingRenderParameter->m_renderer, gridActor);
     DEBUG << "DEBUG: drawWithVTK completed" << endl;
     
-    DEBUG << "DEBUG: Calling buildLoadBalanceLine..." << endl;
     vtkNew<vtkCellArray> cellLines;
     vtkNew<vtkPoints> pts;
     vtkNew<vtkPolyData> grid;
