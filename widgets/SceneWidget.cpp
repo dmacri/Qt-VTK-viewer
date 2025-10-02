@@ -114,9 +114,6 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename)
 
     settingRenderParameter->m_renderer->SetBackground(settingRenderParameter->colors->GetColor3d("Silver").GetData());
 
-    // Set the scene widget pointer in the settings
-    settingParameter->sceneWidget = this;
-
     cout << *settingParameter << endl;
 }
 
@@ -192,8 +189,8 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
             sp->step += 1;
         sp->changed = true;
 
-        if (sp->sceneWidget)
-            sp->sceneWidget->changedStepNumberWithKeyboardKeys(sp->step);
+        if (sw)
+            sw->changedStepNumberWithKeyboardKeys(sp->step);
     }
     else if (keyPressed == "Down")
     {
@@ -201,8 +198,8 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
             sp->step  -= 1;
         sp->changed = true;
 
-        if (sp->sceneWidget)
-            sp->sceneWidget->changedStepNumberWithKeyboardKeys(sp->step);
+        if (sw)
+            sw->changedStepNumberWithKeyboardKeys(sp->step);
     }
     else if (keyPressed == "i")
     {
@@ -216,8 +213,8 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
             sw->updateVisualization();
             
             // Force renderer update for keyboard callback too
-            sp->sceneWidget->renderWindow()->Modified();
-            sp->sceneWidget->renderWindow()->Render();
+            sw->renderWindow()->Modified();
+            sw->renderWindow()->Render();
         }
         catch(const std::runtime_error& re)
         {
