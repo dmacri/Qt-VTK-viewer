@@ -66,8 +66,8 @@ public:
         return std::format("{}{}_index.txt", fileName, node);
     }
 
-    FILE *giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows, char *&line, size_t &len);
-    std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, char *&line, size_t &len);
+    FILE *giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
+    std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node);
     template<class Matrix>
     void getElementMatrix(int step, Matrix& m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, const std::string& fileName, Line *lines);
     template<class Matrix>
@@ -88,7 +88,7 @@ private:
 
 
 template <class T>
-FILE* Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows, char *&line, size_t &len)
+FILE* Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows)
 {
     const auto fileNameTmp = giveMeFileName(fileName, node);
 
@@ -102,7 +102,11 @@ FILE* Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& f
     fseek(fp, fPos, SEEK_SET);
     //printMatrixFromStepByUser(hashmap, stepUser);
    // generalPorpouseGetline(&line, &len, fp);
+
+    char *line = {};
+    size_t len{};
     getline(&line, &len, fp);
+
     char *pch = strtok(line, "-");
     nLocalCols = atoi(pch);
     pch = strtok(NULL, "-");
@@ -147,7 +151,7 @@ FILE* Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& f
 
 
 template <class T>
-std::pair<int,int> Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, char *&line, size_t &len)
+std::pair<int,int> Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node)
 {
     const auto fileNameTmp = giveMeFileName(fileName, node);
 
@@ -162,6 +166,9 @@ std::pair<int,int> Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const s
     fseek(fp, fPos, SEEK_SET);
     //printMatrixFromStepByUser(hashmap, stepUser);
     // generalPorpouseGetline(&line, &len, fp);
+
+    char *line{};
+    size_t len{};
     getline(&line, &len, fp);
     char *pch = strtok(line, "-");
     auto nLocalCols = atoi(pch);
@@ -204,10 +211,7 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int n
 
     for (int node = 0; node < (nNodeX * nNodeY); node++)
     {
-        char *line = nullptr;
-        size_t len = 0;
-
-        auto [nLocalCols, nLocalRows] = giveMeLocalColAndRowFromStep(actualStep, fileName, node, line, len);
+        auto [nLocalCols, nLocalRows] = giveMeLocalColAndRowFromStep(actualStep, fileName, node);
         
         AlllocalCols[node] = nLocalCols;
         AlllocalRows[node] = nLocalRows;
@@ -224,10 +228,7 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int n
         // Reload data with fallback step
         for (int node = 0; node < (nNodeX * nNodeY); node++)
         {
-            char *line = nullptr;
-            size_t len = 0;
-
-            auto [nLocalCols, nLocalRows] = giveMeLocalColAndRowFromStep(actualStep, fileName, node, line, len);
+            const auto [nLocalCols, nLocalRows] = giveMeLocalColAndRowFromStep(actualStep, fileName, node);
 
             AlllocalCols[node] = nLocalCols;
             AlllocalRows[node] = nLocalRows;
@@ -237,11 +238,9 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int n
     bool startStepDone = false;
     for (int node = 0; node < (nNodeX * nNodeY); node++)
     {
-        char *line = NULL;
-        size_t len = 0;
         int nLocalCols, nLocalRows;
 
-        FILE *fp = giveMeLocalColAndRowFromStep(actualStep, fileName, node, nLocalCols, nLocalRows, line, len);
+        FILE *fp = giveMeLocalColAndRowFromStep(actualStep, fileName, node, nLocalCols, nLocalRows);
 
         // if (step == 4)
         //     cout << "node " << node << " cols = " << nLocalCols << " rows= " << nLocalRows << endl;
@@ -278,6 +277,9 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int n
 
         for (int row = 0; row < nLocalRows; row++)
         {
+            char *line = NULL;
+            size_t len = 0;
+
            // generalPorpouseGetline(&line, &len, fp);
             getline(&line, &len, fp);
             int col = 0;
