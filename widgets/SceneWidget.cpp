@@ -128,7 +128,7 @@ void SceneWidget::setupVtkScene()
     vtkNew<vtkInteractorStyleImage> style;
     interactor()->SetInteractorStyle(style);
 
-    renderWindow()->SetWindowName("Visualizer");
+    renderWindow()->SetWindowName(QApplication::applicationName().toLocal8Bit().data());
 }
 
 void SceneWidget::renderVtkScene()

@@ -24,6 +24,7 @@ constexpr int FIRST_STEP_NUMBER = 1;
 MainWindow::MainWindow(const QString& configFileName, QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setWindowTitle(QApplication::applicationName());
     configureUIElements(configFileName);
     setupConnections();
 }
