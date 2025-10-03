@@ -119,26 +119,29 @@ jobs:
 
           dpkg-deb --build deb ${PROJECT_NAME}.deb
 
+      - name: List build outputs
+        run: ls -lh
+
       - name: Upload AppImage artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${PROJECT_NAME}-AppImage
-          path: ${PROJECT_NAME}-x86_64.AppImage
+          name: ${{ env.PROJECT_NAME }}-AppImage
+          path: ${{ env.PROJECT_NAME }}-x86_64.AppImage
 
       - name: Upload .deb artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${PROJECT_NAME}-deb
-          path: ${PROJECT_NAME}.deb
+          name: ${{ env.PROJECT_NAME }}-deb
+          path: ${{ env.PROJECT_NAME }}.deb
 
       - name: Upload AppImage to GitHub Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: ${PROJECT_NAME}-x86_64.AppImage
+          files: ${{ env.PROJECT_NAME }}-x86_64.AppImage
 
       - name: Upload .deb to GitHub Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: ${PROJECT_NAME}.deb
+          files: ${{ env.PROJECT_NAME }}.deb
