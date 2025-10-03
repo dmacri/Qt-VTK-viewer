@@ -69,7 +69,7 @@ public:
     [[nodiscard]] FILE *giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
     [[nodiscard]] std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node);
     template<class Matrix>
-    void getElementMatrix(int step, Matrix& m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, const std::string& fileName, Line *lines);
+    void getElementMatrix(int step, Matrix& m, int nNodeX, int nNodeY, const std::string& fileName, Line *lines);
     template<class Matrix>
     void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines, std::string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
     template<class Matrix>
@@ -90,7 +90,7 @@ public:
      * @param nNodeX number of nodes along the X axis
      * @param nNodeY number of nodes along the Y axis
      * @param filename base filename (e.g., "ball"), for which nodes files are being read */
-    void loadHashmapFromFile(int nNodeX, int nNodeY, const std::string &filename);
+    void loadStepOffsetsPerNode(int nNodeX, int nNodeY, const std::string &filename);
     void buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows,vtkSmartPointer<vtkPoints> pts,vtkSmartPointer<vtkCellArray> cellLines,vtkSmartPointer<vtkPolyData> grid,vtkSmartPointer<vtkNamedColors> colors,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor2D> actorBuildLine);
     void refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows, vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors);
     vtkTextProperty* buildStepLine(int step,vtkSmartPointer<vtkTextMapper> ,vtkSmartPointer<vtkTextProperty> singleLineTextProp,vtkSmartPointer<vtkNamedColors> colors, std::string color);
@@ -100,6 +100,8 @@ private:
     bool allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount);
 
     static std::pair<int,int> getColumnAndRowFromLine(const std::string& line);
+
+    std::pair<std::vector<int>, std::vector<int>> giveMeLocalColsAndRowsForAllSteps(int step, int nNodeX, int nNodeY, const std::string& fileName);
 };
 ////////////////////////////////////////////////////////////////////
 
@@ -190,44 +192,22 @@ bool Visualizer<T>::allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, 
 
 template<class T>
 template<class Matrix>
-void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, const std::string& fileName, Line *lines)
+void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nNodeX, int nNodeY, const std::string& fileName, Line *lines)
 {
-    std::vector<int> AlllocalCols, AlllocalRows;
-    AlllocalCols.resize(nNodeX * nNodeY);
-    AlllocalRows.resize(nNodeX * nNodeY);
-    
     // Check if we need to use fallback step
     int actualStep = step;
 
-    // m = new T*[nGlobalRows];
-    // for(int i = 0;i < nGlobalRows; i++){
-    //     m[i]= new T[nGlobalCols];
-    // }
+    auto [allLocalCols, allLocalRows] = giveMeLocalColsAndRowsForAllSteps(step, nNodeX, nNodeY, fileName);
 
-    for (int node = 0; node < (nNodeX * nNodeY); node++)
-    {
-        auto [nLocalCols, nLocalRows] = giveMeLocalColAndRowFromStep(actualStep, fileName, node);
-        
-        AlllocalCols[node] = nLocalCols;
-        AlllocalRows[node] = nLocalRows;
-    }
-    
-    const bool allEmpty = allNodesHaveEmptyData(AlllocalCols, AlllocalRows, nNodeX * nNodeY);
-
+    const bool allEmpty = allNodesHaveEmptyData(allLocalCols, allLocalRows, nNodeX * nNodeY);
     
     // If all nodes are empty and this is step 4000, use previous step
-    if (allEmpty && step == 4000)
+    if (allEmpty && step == 4000) // TODO: GB: What is 4000? Is 4000 the last step?
     {
         actualStep = 3999;
         
         // Reload data with fallback step
-        for (int node = 0; node < (nNodeX * nNodeY); node++)
-        {
-            const auto [nLocalCols, nLocalRows] = giveMeLocalColAndRowFromStep(actualStep, fileName, node);
-
-            AlllocalCols[node] = nLocalCols;
-            AlllocalRows[node] = nLocalRows;
-        }
+        std::tie(allLocalCols, allLocalRows) = giveMeLocalColsAndRowsForAllSteps(step, nNodeX, nNodeY, fileName);
     }
 
     bool startStepDone = false;
@@ -237,9 +217,6 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int n
 
         FILE *fp = giveMeLocalColAndRowFromStep(actualStep, fileName, node, nLocalCols, nLocalRows);
 
-        // if (step == 4)
-        //     cout << "node " << node << " cols = " << nLocalCols << " rows= " << nLocalRows << endl;
-
         int offsetX = 0; //= //(node % nNodeX)*nLocalCols;//-this->borderSizeX;
         int offsetY = 0; //= //(node / nNodeX)*nLocalRows;//-this->borderSizeY;
 
@@ -247,14 +224,14 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int n
         {
             for (int k = 0; k < node % nNodeX; k++)
             {
-                offsetX += AlllocalCols[k];
+                offsetX += allLocalCols[k];
             }
         }
         else
         {
             for (int k = (node / nNodeX) * nNodeX; k < node; k++)
             {
-                offsetX += AlllocalCols[k];
+                offsetX += allLocalCols[k];
             }
         }
 
@@ -262,7 +239,7 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int n
         {
             for (int k = node - nNodeX; k >= 0;)
             {
-                offsetY += AlllocalRows[k];
+                offsetY += allLocalRows[k];
                 k -= nNodeX;
             }
         }
@@ -302,10 +279,26 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int n
         fclose(fp);
     }
 }
+template<class T>
+std::pair<std::vector<int>, std::vector<int>> Visualizer<T>::giveMeLocalColsAndRowsForAllSteps(int step, int nNodeX, int nNodeY, const std::string& fileName)
+{
+    const auto nodesCount = nNodeX * nNodeY;
+    std::vector<int> allLocalCols{nodesCount}, allLocalRows{nodesCount};
+    allLocalCols.resize(nodesCount);
+    allLocalRows.resize(nodesCount);
 
+    for (int node = 0; node < nodesCount; node++)
+    {
+        auto [nLocalCols, nLocalRows] = giveMeLocalColAndRowFromStep(step, fileName, node);
+
+        allLocalCols[node] = nLocalCols;
+        allLocalRows[node] = nLocalRows;
+    }
+    return {allLocalCols, allLocalRows};
+}
 
 template <class T>
-void Visualizer<T>::loadHashmapFromFile(int nNodeX, int nNodeY, const std::string& filename)
+void Visualizer<T>::loadStepOffsetsPerNode(int nNodeX, int nNodeY, const std::string& filename)
 {
     const int totalNodes = nNodeX * nNodeY;
     for (int node = 0; node < totalNodes; ++node)
