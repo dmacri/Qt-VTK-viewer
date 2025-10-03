@@ -3,7 +3,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <format>
@@ -74,7 +73,7 @@ public:
     void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines, std::string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
     template<class Matrix>
     void refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
-    void readConfigurationFile(const char *filename, int infoFromFile[8], char *outputFileName);
+    // void readConfigurationFile(const char *filename, int infoFromFile[8], char *outputFileName);
     void loadHashmapFromFile(int nNodeX, int nNodeY, const std::string &filename);
     void buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows,vtkSmartPointer<vtkPoints> pts,vtkSmartPointer<vtkCellArray> cellLines,vtkSmartPointer<vtkPolyData> grid,vtkSmartPointer<vtkNamedColors> colors,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor2D> actorBuildLine);
     void refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows, vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors);
@@ -83,9 +82,10 @@ public:
 
 private:
     bool allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount);
+
+    static std::pair<int,int> getColumnAndRowFromLine(const std::string& line);
 };
 ////////////////////////////////////////////////////////////////////
-
 
 template <class T>
 FILE* Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows)
@@ -107,48 +107,30 @@ FILE* Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& f
     size_t len{};
     getline(&line, &len, fp);
 
-    char *pch = strtok(line, "-");
-    nLocalCols = atoi(pch);
-    pch = strtok(NULL, "-");
-    nLocalRows = atoi(pch);
+    std::tie(nLocalCols, nLocalRows) = getColumnAndRowFromLine(line);
+
     return fp;
 }
-// template <class T>
-// std::ifstream Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int& nLocalCols, int& nLocalRows)
-// {
-//     const auto fileNameTmp = giveMeFileName(fileName, node);
+template <class T>
+std::pair<int,int> Visualizer<T>::getColumnAndRowFromLine(const std::string& line)
+{
+    /// input format: "C-R" where C and R are numbers
+    if (line.empty())
+    {
+        throw std::invalid_argument("Line is empty, but it should dontain columns and row!");
+    }
 
-//     std::ifstream file(fileNameTmp);
-//     if (! file.is_open())
-//     {
-//         throw std::runtime_error(std::format("Can't read '{}' in {} function", fileNameTmp, __func__));
-//     }
+    const auto delimiterPos = line.find('-');
+    if (delimiterPos == std::string::npos)
+    {
+        throw std::runtime_error("No delimiter '-' found in the line: >" + line + "<");
+    }
 
-//     const auto fPos = gotoStep(step, file, node);
-//     file.seekg(fPos);
-//     if (! file)
-//     {
-//         throw std::runtime_error(std::format("Seek failed in '{}' at position {}", fileNameTmp, fPos));
-//     }
+    auto nLocalCols = std::stoi(line.substr(0, delimiterPos));
+    auto nLocalRows = std::stoi(line.substr(delimiterPos + 1));
 
-//     std::string line;
-//     if (! std::getline(file, line))
-//     {
-//         throw std::runtime_error(std::format("Failed to read line from '{}' at position {}", fileNameTmp, fPos));
-//     }
-
-//     const auto delimiterPos = line.find('-');
-//     if (delimiterPos == std::string::npos)
-//     {
-//         throw std::runtime_error(std::format("Invalid format in '{}': '{}'", fileNameTmp, line));
-//     }
-
-//     nLocalCols = std::stoi(line.substr(0, delimiterPos));
-//     nLocalRows = std::stoi(line.substr(delimiterPos + 1));
-
-//     return file;
-// }
-
+    return {nLocalCols, nLocalRows};
+}
 
 template <class T>
 std::pair<int,int> Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node)
@@ -174,16 +156,7 @@ std::pair<int,int> Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const s
         throw std::runtime_error(std::format("Failed to read line from '{}' at position {}", fileNameTmp, fPos));
     }
 
-    const auto delimiterPos = line.find('-');
-    if (delimiterPos == std::string::npos)
-    {
-        throw std::runtime_error(std::format("Invalid format in '{}': '{}'", fileNameTmp, line));
-    }
-
-    auto nLocalCols = std::stoi(line.substr(0, delimiterPos));
-    auto nLocalRows = std::stoi(line.substr(delimiterPos + 1));
-
-    return {nLocalCols, nLocalRows};
+    return getColumnAndRowFromLine(line);
 }
 
 template <class T>
@@ -288,9 +261,9 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int n
 
            // generalPorpouseGetline(&line, &len, fp);
             getline(&line, &len, fp);
-            int col = 0;
+
             //m[row]=new T[nLocalCols];
-            while (col < nLocalCols)
+            for (int col = 0; col < nLocalCols; ++col)
             {
                 char *elem;
                 if (col == 0)
@@ -307,8 +280,6 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int n
                 m[row + offsetY][col + offsetX].T::composeElement(elem);
                 //rgb* color= m[row+offsetY][col+offsetX].outputValue();
                 //   cout << color->getRed()<<" " << color->getGreen()<<" " <<color->getBlue() << endl;
-
-                col++;
             }
         }
 
@@ -318,30 +289,30 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int n
 
 
 
-template <class T>
-void Visualizer<T>::readConfigurationFile(const char *filename, int infoFromFile[8], char *outputFileName)
-{
-    char str[999];
-    int n = 0;
-    FILE *file = fopen(filename, "r");
+// template <class T>
+// void Visualizer<T>::readConfigurationFile(const char *filename, int infoFromFile[8], char *outputFileName)
+// {
+//     char str[999];
+//     int n = 0;
+//     FILE *file = fopen(filename, "r");
 
-    if (file)
-    {
-        int i = 1;
-        while (fscanf(file, "%s", str) != EOF && i <= 16)
-        {
-            if (i % 2 == 0)
-                infoFromFile[n++] = atoi(str);
-            ++i;
-        }
+//     if (file)
+//     {
+//         int i = 1;
+//         while (fscanf(file, "%s", str) != EOF && i <= 16)
+//         {
+//             if (i % 2 == 0)
+//                 infoFromFile[n++] = atoi(str);
+//             ++i;
+//         }
 
-        int x = fscanf(file, "%s", str);
-        int y = fscanf(file, "%s", str);
-        strcpy(outputFileName, str);
+//         int x = fscanf(file, "%s", str);
+//         int y = fscanf(file, "%s", str);
+//         strcpy(outputFileName, str);
 
-        fclose(file);
-    }
-}
+//         fclose(file);
+//     }
+// }
 
 template <class T>
 void Visualizer<T>::loadHashmapFromFile(int nNodeX, int nNodeY, const std::string& filename)
@@ -357,26 +328,9 @@ void Visualizer<T>::loadHashmapFromFile(int nNodeX, int nNodeY, const std::strin
         long int nbytes = 0;
         while (fscanf(fp, "%d %ld\n", &step, &nbytes) != EOF)
         {
-            // cout << step << " " << nbytes << endl;
             std::pair<int, long int> p(step, nbytes);
             hashMap[node].insert(p);
         }
-        // char* line = NULL;
-        // size_t len = 0;
-        // while( getline(&line, &len, fp)){
-
-        //     char * pch;
-        //     pch = strtok (line," ");
-        //     int step =atoi(pch);
-        //     pch = strtok (NULL, " ");
-        //     long int nbytes =strtoll(pch, NULL, 10);//atoi(pch);
-
-        //     cout << step << " " << nbytes << endl;
-        //     std::pair<int, long int> p(step,nbytes);
-        //     hashMap[node].insert(p);
-        //     cout << fileNameIndex << endl;
-        // }
-        // cout << "finito" << endl;
         fclose(fp);
     }
 }
@@ -527,10 +481,8 @@ vtkNew<vtkActor2D> Visualizer<T>::buildStepText(int step, int font_size, vtkSmar
     singleLineTextProp->BoldOn();
     singleLineTextProp->ItalicOff();
     singleLineTextProp->ShadowOff();
-    std::stringstream stringStream;
-    stringStream << "Step " << step;
-    std::string stringWithStep = stringStream.str();
 
+    const std::string stringWithStep = "Step " + std::to_string(step);
     stepLineTextMapper->SetInput(stringWithStep.c_str());
     auto tprop = stepLineTextMapper->GetTextProperty();
     tprop->ShallowCopy(singleLineTextProp);
