@@ -52,7 +52,7 @@ public:
 
     Visualizer() = default;
 
-    long int gotoStep(int step, FILE *fp, int node)
+    long int stepStartingPositionInFile(int step, int node)
     {
         return hashMap[node][step];
     }
@@ -98,7 +98,7 @@ FILE* Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& f
         throw std::runtime_error(std::format("Can't read '{}' in {} function", fileNameTmp, __FUNCTION__));
     }
 
-    const auto fPos = gotoStep(step, fp, node);
+    const auto fPos = stepStartingPositionInFile(step, node);
     fseek(fp, fPos, SEEK_SET);
     //printMatrixFromStepByUser(hashmap, stepUser);
    // generalPorpouseGetline(&line, &len, fp);
@@ -155,27 +155,33 @@ std::pair<int,int> Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const s
 {
     const auto fileNameTmp = giveMeFileName(fileName, node);
 
-    FILE *fp = fopen(fileNameTmp.c_str(), "r");
-    if (fp == NULL)
+    std::ifstream file(fileNameTmp);
+    if (! file.is_open())
     {
-        cout << "Can't read " << fileNameTmp << " in " << __FUNCTION__ << " function" << endl;
-        exit(EXIT_FAILURE);
+        throw std::runtime_error(std::format("Can't read '{}' in {} function", fileNameTmp, __func__));
     }
 
-    long int fPos = gotoStep(step, fp, node);
-    fseek(fp, fPos, SEEK_SET);
-    //printMatrixFromStepByUser(hashmap, stepUser);
-    // generalPorpouseGetline(&line, &len, fp);
+    const auto fPos = stepStartingPositionInFile(step, node);
+    file.seekg(fPos);
+    if (! file)
+    {
+        throw std::runtime_error(std::format("Seek failed in '{}' at position {}", fileNameTmp, fPos));
+    }
 
-    char *line{};
-    size_t len{};
-    getline(&line, &len, fp);
-    char *pch = strtok(line, "-");
-    auto nLocalCols = atoi(pch);
-    pch = strtok(NULL, "-");
-    auto nLocalRows = atoi(pch);
+    std::string line;
+    if (! std::getline(file, line))
+    {
+        throw std::runtime_error(std::format("Failed to read line from '{}' at position {}", fileNameTmp, fPos));
+    }
 
-    fclose(fp);
+    const auto delimiterPos = line.find('-');
+    if (delimiterPos == std::string::npos)
+    {
+        throw std::runtime_error(std::format("Invalid format in '{}': '{}'", fileNameTmp, line));
+    }
+
+    auto nLocalCols = std::stoi(line.substr(0, delimiterPos));
+    auto nLocalRows = std::stoi(line.substr(delimiterPos + 1));
 
     return {nLocalCols, nLocalRows};
 }
