@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -56,24 +57,39 @@ public:
         return hashMap[node][step];
     }
 
-    std::string giveMeFileName(const std::string& fileName, int node) const
+    [[nodiscard]] std::string giveMeFileName(const std::string& fileName, int node) const
     {
         return std::format("{}{}.txt", fileName, node);
     }
-    std::string giveMeFileNameIndex(const std::string &fileName, int node) const
+    [[nodiscard]] std::string giveMeFileNameIndex(const std::string &fileName, int node) const
     {
         return std::format("{}{}_index.txt", fileName, node);
     }
 
-    FILE *giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
-    std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node);
+    [[nodiscard]] FILE *giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
+    [[nodiscard]] std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node);
     template<class Matrix>
     void getElementMatrix(int step, Matrix& m, int nGlobalCols, int nGlobalRows, int nNodeX, int nNodeY, const std::string& fileName, Line *lines);
     template<class Matrix>
     void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines, std::string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
     template<class Matrix>
     void refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
-    // void readConfigurationFile(const char *filename, int infoFromFile[8], char *outputFileName);
+
+    /** @brief Loads data into hashMap from text files.
+     *
+     * Expected file format (each line):
+     *     <stepNumber:int> <positionInFile:long>
+     *
+     * Example:
+     *     0 37
+     *     1 32504
+     *     2 64971
+     *
+     * Each line must contain exactly two numbers separated by whitespace.
+     *
+     * @param nNodeX number of nodes along the X axis
+     * @param nNodeY number of nodes along the Y axis
+     * @param filename base filename (e.g., "ball"), for which nodes files are being read */
     void loadHashmapFromFile(int nNodeX, int nNodeY, const std::string &filename);
     void buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows,vtkSmartPointer<vtkPoints> pts,vtkSmartPointer<vtkCellArray> cellLines,vtkSmartPointer<vtkPolyData> grid,vtkSmartPointer<vtkNamedColors> colors,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor2D> actorBuildLine);
     void refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows, vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors);
@@ -288,50 +304,41 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nGlobalCols, int n
 }
 
 
-
-// template <class T>
-// void Visualizer<T>::readConfigurationFile(const char *filename, int infoFromFile[8], char *outputFileName)
-// {
-//     char str[999];
-//     int n = 0;
-//     FILE *file = fopen(filename, "r");
-
-//     if (file)
-//     {
-//         int i = 1;
-//         while (fscanf(file, "%s", str) != EOF && i <= 16)
-//         {
-//             if (i % 2 == 0)
-//                 infoFromFile[n++] = atoi(str);
-//             ++i;
-//         }
-
-//         int x = fscanf(file, "%s", str);
-//         int y = fscanf(file, "%s", str);
-//         strcpy(outputFileName, str);
-
-//         fclose(file);
-//     }
-// }
-
 template <class T>
 void Visualizer<T>::loadHashmapFromFile(int nNodeX, int nNodeY, const std::string& filename)
 {
-    for (int node = 0; node < (nNodeX * nNodeY); node++)
+    const int totalNodes = nNodeX * nNodeY;
+    for (int node = 0; node < totalNodes; ++node)
     {
-        auto fileNameIndex = giveMeFileNameIndex(filename, node);
-        cout << fileNameIndex << endl;
-        FILE *fp = fopen(fileNameIndex.c_str(), "r");
-        if (fp == NULL)
-            exit(EXIT_FAILURE);
-        int step = 0;
-        long int nbytes = 0;
-        while (fscanf(fp, "%d %ld\n", &step, &nbytes) != EOF)
+        const auto fileNameIndex = giveMeFileNameIndex(filename, node);
+        std::cout << "Reading file: " << fileNameIndex << '\n';
+
+        if (! std::filesystem::exists(fileNameIndex))
         {
-            std::pair<int, long int> p(step, nbytes);
-            hashMap[node].insert(p);
+            throw std::runtime_error("File not found: " + fileNameIndex);
         }
-        fclose(fp);
+
+        std::ifstream file(fileNameIndex);
+        if (! file)
+        {
+            throw std::runtime_error("Cannot open file: " + fileNameIndex);
+        }
+
+        int stepNumber;
+        long positionInFile;
+
+        while (true)
+        {
+            if (! (file >> stepNumber >> positionInFile))
+            { /// enters here if reading error
+                if (file.eof())
+                    break;
+                else
+                    throw std::runtime_error("Invalid line format in file: " + fileNameIndex);
+            }
+
+            hashMap[node].emplace(stepNumber, positionInFile);
+        }
     }
 }
 
