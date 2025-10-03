@@ -69,6 +69,9 @@ jobs:
           cmake .. -DOOPENCAL_DIR=${{ github.workspace }}/deps
           cmake --build . --parallel
 
+      - name: Listing dependencies to shared libraries
+        run: ldd build/${PROJECT_NAME}
+
       - name: Move desktop and icon into build dir
         run: |
           cp ${PROJECT_NAME}.desktop build/
@@ -82,12 +85,22 @@ jobs:
       - name: Run linuxdeployqt (create AppImage)
         run: |
           export PATH=/usr/lib/qt6/bin:$PATH
-          ./linuxdeployqt-continuous-x86_64.AppImage build/${PROJECT_NAME}.desktop -appimage
+          ./linuxdeployqt-continuous-x86_64.AppImage build/${PROJECT_NAME}.desktop \
+            -appimage \
+            -bundle-non-qt-libs
 
       - name: Rename AppImage
         run: |
           APPIMAGE=$(ls *.AppImage | head -n 1)
           mv "$APPIMAGE" ${PROJECT_NAME}-x86_64.AppImage
+
+      - name: Inspect AppImage contents
+        run: |
+          mkdir squashfs-root
+          ./QtVtkViewer-x86_64.AppImage --appimage-extract > /dev/null
+          ls -lh squashfs-root/usr/lib | head -n 50 || true
+          echo ">>> Checking for VTK libs:"
+          ls -lh squashfs-root/usr/lib | grep vtk || echo "No VTK libs found"
 
       - name: Build .deb package
         run: |
