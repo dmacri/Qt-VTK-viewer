@@ -1,12 +1,12 @@
 #pragma once
 
-#include <cstdio>
-#include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <string>
 #include <unordered_map>
 #include <format>
+#include <string_view>
+#include <vector>
 #include <vtkActor2D.h>
 #include <vtkCallbackCommand.h>
 #include <vtkCamera.h>
@@ -57,16 +57,7 @@ public:
         return hashMap[node][step];
     }
 
-    [[nodiscard]] std::string giveMeFileName(const std::string& fileName, int node) const
-    {
-        return std::format("{}{}.txt", fileName, node);
-    }
-    [[nodiscard]] std::string giveMeFileNameIndex(const std::string &fileName, int node) const
-    {
-        return std::format("{}{}_index.txt", fileName, node);
-    }
-
-    [[nodiscard]] FILE *giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
+    [[nodiscard]] std::ifstream giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
     [[nodiscard]] std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node);
     template<class Matrix>
     void getElementMatrix(int step, Matrix& m, int nNodeX, int nNodeY, const std::string& fileName, Line *lines);
@@ -97,65 +88,44 @@ public:
     vtkNew<vtkActor2D> buildStepText(int step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer);
 
 private:
-    bool allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount);
-
-    static std::pair<int,int> getColumnAndRowFromLine(const std::string& line);
-
     std::pair<std::vector<int>, std::vector<int>> giveMeLocalColsAndRowsForAllSteps(int step, int nNodeX, int nNodeY, const std::string& fileName);
-
-    std::pair<int,int> calculateXYOffset(int node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows);
 };
+
+namespace VisualiserHelpers // functions which are not templates
+{
+[[nodiscard]] inline std::string giveMeFileName(const std::string& fileName, int node)
+{
+    return std::format("{}{}.txt", fileName, node);
+}
+[[nodiscard]] inline std::string giveMeFileNameIndex(const std::string &fileName, int node)
+{
+    return std::format("{}{}_index.txt", fileName, node);
+}
+
+std::pair<int,int> getColumnAndRowFromLine(const std::string& line);
+
+bool allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount);
+
+std::pair<int,int> calculateXYOffset(int node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows);
+
+std::vector<std::string_view> splitLine(std::string_view line, int nLocalCols, char delimiter = ' ') noexcept;
+std::vector<int> splitLineIntoNumbers(const std::string& line, int nLocalCols, const char* separator=" "); // TODO: Not used
+
+void loadStepOffsetsPerNode(int nNodeX, int nNodeY, const std::string& filename);
+}
 ////////////////////////////////////////////////////////////////////
-
-template <class T>
-FILE* Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows)
-{
-    const auto fileNameTmp = giveMeFileName(fileName, node);
-
-    FILE *fp = fopen(fileNameTmp.c_str(), "r");
-    if (nullptr == fp)
-    {
-        throw std::runtime_error(std::format("Can't read '{}' in {} function", fileNameTmp, __FUNCTION__));
-    }
-
-    const auto fPos = stepStartingPositionInFile(step, node);
-    fseek(fp, fPos, SEEK_SET);
-    //printMatrixFromStepByUser(hashmap, stepUser);
-   // generalPorpouseGetline(&line, &len, fp);
-
-    char *line = {};
-    size_t len{};
-    getline(&line, &len, fp);
-
-    std::tie(nLocalCols, nLocalRows) = getColumnAndRowFromLine(line);
-
-    return fp;
-}
-template <class T>
-std::pair<int,int> Visualizer<T>::getColumnAndRowFromLine(const std::string& line)
-{
-    /// input format: "C-R" where C and R are numbers
-    if (line.empty())
-    {
-        throw std::invalid_argument("Line is empty, but it should dontain columns and row!");
-    }
-
-    const auto delimiterPos = line.find('-');
-    if (delimiterPos == std::string::npos)
-    {
-        throw std::runtime_error("No delimiter '-' found in the line: >" + line + "<");
-    }
-
-    auto nLocalCols = std::stoi(line.substr(0, delimiterPos));
-    auto nLocalRows = std::stoi(line.substr(delimiterPos + 1));
-
-    return {nLocalCols, nLocalRows};
-}
 
 template <class T>
 std::pair<int,int> Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node)
 {
-    const auto fileNameTmp = giveMeFileName(fileName, node);
+    int nLocalCols, nLocalRows;
+    std::ifstream file = giveMeLocalColAndRowFromStep(step, fileName, node, nLocalCols, nLocalRows);
+    return {nLocalCols, nLocalRows};
+}
+template <class T>
+std::ifstream Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows)
+{
+    const auto fileNameTmp = VisualiserHelpers::giveMeFileName(fileName, node);
 
     std::ifstream file(fileNameTmp);
     if (! file.is_open())
@@ -176,43 +146,8 @@ std::pair<int,int> Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const s
         throw std::runtime_error(std::format("Failed to read line from '{}' at position {}", fileNameTmp, fPos));
     }
 
-    return getColumnAndRowFromLine(line);
-}
-
-template <class T>
-bool Visualizer<T>::allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount)
-{
-    for (int node = 0; node < nodesCount; ++node)
-    {
-        if (AlllocalCols[node] > 0 || AlllocalRows[node] > 0)
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
-inline std::vector<int> splitLineIntoNumbers(const std::string& line, int nLocalCols, const char* separator=" ")
-{
-    std::vector<int> numbers;
-    numbers.reserve(nLocalCols);
-
-    std::size_t currentPosition = {};
-    while (true)
-    {
-        auto separatorPosition = line.find(separator, currentPosition);
-        if (std::string::npos != separatorPosition)
-        {
-            auto currentElement2Convert = line.substr(currentPosition, separatorPosition);
-            cout << ">" << currentElement2Convert << "<" << endl;
-            auto currentNumber = std::stoi(currentElement2Convert);
-            numbers.push_back(currentNumber);
-
-            currentPosition = separatorPosition + 1;
-        }
-    }
-
-    return numbers;
+    std::tie(nLocalCols, nLocalRows) = VisualiserHelpers::getColumnAndRowFromLine(line);
+    return file;
 }
 
 template<class T>
@@ -227,7 +162,7 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nNodeX, int nNodeY
     // If all nodes are empty and this is step 4000, use previous step
     if (step == 4000) // TODO: GB: What is 4000? Is 4000 the last step?
     {
-        if (const bool allEmpty = allNodesHaveEmptyData(allLocalCols, allLocalRows, nNodeX * nNodeY))
+        if (const bool allEmpty = VisualiserHelpers::allNodesHaveEmptyData(allLocalCols, allLocalRows, nNodeX * nNodeY))
         {
             actualStep = 3999;
             // Reload data with fallback step
@@ -238,41 +173,40 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nNodeX, int nNodeY
     bool startStepDone = false;
     for (int node = 0; node < (nNodeX * nNodeY); node++)
     {
-        const auto [offsetX, offsetY] = calculateXYOffset(node, nNodeX, nNodeY, allLocalCols, allLocalRows);
+        const auto [offsetX, offsetY] = VisualiserHelpers::calculateXYOffset(node, nNodeX, nNodeY, allLocalCols, allLocalRows);
 
         int nLocalCols, nLocalRows;
-        FILE *fp = giveMeLocalColAndRowFromStep(actualStep, fileName, node, nLocalCols, nLocalRows);
+        std::ifstream fp = giveMeLocalColAndRowFromStep(actualStep, fileName, node, nLocalCols, nLocalRows);
 
         lines[node * 2] = Line(offsetX, offsetY, offsetX + nLocalCols, offsetY);
         lines[node * 2 + 1] = Line(offsetX, offsetY, offsetX, offsetY + nLocalRows);
 
         for (int row = 0; row < nLocalRows; row++)
         {
-            char *line = NULL;
-            size_t len = 0;
-
-            getline(&line, &len, fp);
-            // auto numbersFromLine = splitLineIntoNumbers(line, nLocalCols, " ");
-
-            for (int col = 0; col < nLocalCols; ++col)
+            std::string line;
+            if (! getline(fp, line))
             {
-                char *elem;
-                if (col == 0)
-                    elem = strtok(line, " ");
-                else
-                    elem = strtok(NULL, " ");
+                const auto fileNameTmp = VisualiserHelpers::giveMeFileName(fileName, node);
+                throw std::runtime_error("Error when reading entire line of file " + fileNameTmp);
+            }
 
+            const auto tokens = VisualiserHelpers::splitLine(line, nLocalCols, /*delimiter=*/' ');
+
+            std::string temp_buffer;
+            temp_buffer.reserve(log10(INT_MAX) + 1);
+
+            for (int col = 0; col < nLocalCols && col < static_cast<int>(tokens.size()); ++col)
+            {
                 if (!startStepDone)
                 {
                     m[row + offsetY][col + offsetX].T::startStep(step);
                     startStepDone = true;
                 }
 
-                m[row + offsetY][col + offsetX].T::composeElement(elem);
+                temp_buffer.assign(tokens[col]);
+                m[row + offsetY][col + offsetX].T::composeElement(temp_buffer.data());
             }
         }
-
-        fclose(fp);
     }
 }
 template<class T>
@@ -293,45 +227,13 @@ std::pair<std::vector<int>, std::vector<int>> Visualizer<T>::giveMeLocalColsAndR
     return {allLocalCols, allLocalRows};
 }
 
-template<class T>
-std::pair<int,int> Visualizer<T>::calculateXYOffset(int node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows)
-{
-    int offsetX = 0; //= //(node % nNodeX)*nLocalCols;//-this->borderSizeX;
-    int offsetY = 0; //= //(node / nNodeX)*nLocalRows;//-this->borderSizeY;
-
-    if (nNodeY == 1)
-    {
-        for (int k = 0; k < node % nNodeX; k++)
-        {
-            offsetX += allLocalCols[k];
-        }
-    }
-    else
-    {
-        for (int k = (node / nNodeX) * nNodeX; k < node; k++)
-        {
-            offsetX += allLocalCols[k];
-        }
-    }
-
-    if (node >= nNodeX)
-    {
-        for (int k = node - nNodeX; k >= 0;)
-        {
-            offsetY += allLocalRows[k];
-            k -= nNodeX;
-        }
-    }
-    return {offsetX, offsetY};
-}
-
 template <class T>
 void Visualizer<T>::loadStepOffsetsPerNode(int nNodeX, int nNodeY, const std::string& filename)
 {
     const int totalNodes = nNodeX * nNodeY;
     for (int node = 0; node < totalNodes; ++node)
     {
-        const auto fileNameIndex = giveMeFileNameIndex(filename, node);
+        const auto fileNameIndex = VisualiserHelpers::giveMeFileNameIndex(filename, node);
         std::cout << "Reading file: " << fileNameIndex << '\n';
 
         if (! std::filesystem::exists(fileNameIndex))

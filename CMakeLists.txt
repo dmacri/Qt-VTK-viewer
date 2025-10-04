@@ -18,6 +18,7 @@ list(APPEND Sources
     config/Config.cpp
     visualiser/SettingParameter.cpp
     visualiser/VideoExporter.cpp
+    visualiser/Visualiser.cpp
     widgets/ClickableLabel.cpp
     widgets/ConfigDetailsDialog.cpp
     widgets/SceneWidget.cpp
