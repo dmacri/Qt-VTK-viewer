@@ -102,6 +102,8 @@ private:
     static std::pair<int,int> getColumnAndRowFromLine(const std::string& line);
 
     std::pair<std::vector<int>, std::vector<int>> giveMeLocalColsAndRowsForAllSteps(int step, int nNodeX, int nNodeY, const std::string& fileName);
+
+    std::pair<int,int> calculateXYOffset(int node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows);
 };
 ////////////////////////////////////////////////////////////////////
 
@@ -190,6 +192,29 @@ bool Visualizer<T>::allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, 
     return true;
 }
 
+inline std::vector<int> splitLineIntoNumbers(const std::string& line, int nLocalCols, const char* separator=" ")
+{
+    std::vector<int> numbers;
+    numbers.reserve(nLocalCols);
+
+    std::size_t currentPosition = {};
+    while (true)
+    {
+        auto separatorPosition = line.find(separator, currentPosition);
+        if (std::string::npos != separatorPosition)
+        {
+            auto currentElement2Convert = line.substr(currentPosition, separatorPosition);
+            cout << ">" << currentElement2Convert << "<" << endl;
+            auto currentNumber = std::stoi(currentElement2Convert);
+            numbers.push_back(currentNumber);
+
+            currentPosition = separatorPosition + 1;
+        }
+    }
+
+    return numbers;
+}
+
 template<class T>
 template<class Matrix>
 void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nNodeX, int nNodeY, const std::string& fileName, Line *lines)
@@ -198,51 +223,25 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nNodeX, int nNodeY
     int actualStep = step;
 
     auto [allLocalCols, allLocalRows] = giveMeLocalColsAndRowsForAllSteps(step, nNodeX, nNodeY, fileName);
-
-    const bool allEmpty = allNodesHaveEmptyData(allLocalCols, allLocalRows, nNodeX * nNodeY);
     
     // If all nodes are empty and this is step 4000, use previous step
-    if (allEmpty && step == 4000) // TODO: GB: What is 4000? Is 4000 the last step?
+    if (step == 4000) // TODO: GB: What is 4000? Is 4000 the last step?
     {
-        actualStep = 3999;
-        
-        // Reload data with fallback step
-        std::tie(allLocalCols, allLocalRows) = giveMeLocalColsAndRowsForAllSteps(step, nNodeX, nNodeY, fileName);
+        if (const bool allEmpty = allNodesHaveEmptyData(allLocalCols, allLocalRows, nNodeX * nNodeY))
+        {
+            actualStep = 3999;
+            // Reload data with fallback step
+            std::tie(allLocalCols, allLocalRows) = giveMeLocalColsAndRowsForAllSteps(step, nNodeX, nNodeY, fileName);
+        }
     }
 
     bool startStepDone = false;
     for (int node = 0; node < (nNodeX * nNodeY); node++)
     {
+        const auto [offsetX, offsetY] = calculateXYOffset(node, nNodeX, nNodeY, allLocalCols, allLocalRows);
+
         int nLocalCols, nLocalRows;
-
         FILE *fp = giveMeLocalColAndRowFromStep(actualStep, fileName, node, nLocalCols, nLocalRows);
-
-        int offsetX = 0; //= //(node % nNodeX)*nLocalCols;//-this->borderSizeX;
-        int offsetY = 0; //= //(node / nNodeX)*nLocalRows;//-this->borderSizeY;
-
-        if (nNodeY == 1)
-        {
-            for (int k = 0; k < node % nNodeX; k++)
-            {
-                offsetX += allLocalCols[k];
-            }
-        }
-        else
-        {
-            for (int k = (node / nNodeX) * nNodeX; k < node; k++)
-            {
-                offsetX += allLocalCols[k];
-            }
-        }
-
-        if (node >= nNodeX)
-        {
-            for (int k = node - nNodeX; k >= 0;)
-            {
-                offsetY += allLocalRows[k];
-                k -= nNodeX;
-            }
-        }
 
         lines[node * 2] = Line(offsetX, offsetY, offsetX + nLocalCols, offsetY);
         lines[node * 2 + 1] = Line(offsetX, offsetY, offsetX, offsetY + nLocalRows);
@@ -252,10 +251,9 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nNodeX, int nNodeY
             char *line = NULL;
             size_t len = 0;
 
-           // generalPorpouseGetline(&line, &len, fp);
             getline(&line, &len, fp);
+            // auto numbersFromLine = splitLineIntoNumbers(line, nLocalCols, " ");
 
-            //m[row]=new T[nLocalCols];
             for (int col = 0; col < nLocalCols; ++col)
             {
                 char *elem;
@@ -271,8 +269,6 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nNodeX, int nNodeY
                 }
 
                 m[row + offsetY][col + offsetX].T::composeElement(elem);
-                //rgb* color= m[row+offsetY][col+offsetX].outputValue();
-                //   cout << color->getRed()<<" " << color->getGreen()<<" " <<color->getBlue() << endl;
             }
         }
 
@@ -295,6 +291,38 @@ std::pair<std::vector<int>, std::vector<int>> Visualizer<T>::giveMeLocalColsAndR
         allLocalRows[node] = nLocalRows;
     }
     return {allLocalCols, allLocalRows};
+}
+
+template<class T>
+std::pair<int,int> Visualizer<T>::calculateXYOffset(int node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows)
+{
+    int offsetX = 0; //= //(node % nNodeX)*nLocalCols;//-this->borderSizeX;
+    int offsetY = 0; //= //(node / nNodeX)*nLocalRows;//-this->borderSizeY;
+
+    if (nNodeY == 1)
+    {
+        for (int k = 0; k < node % nNodeX; k++)
+        {
+            offsetX += allLocalCols[k];
+        }
+    }
+    else
+    {
+        for (int k = (node / nNodeX) * nNodeX; k < node; k++)
+        {
+            offsetX += allLocalCols[k];
+        }
+    }
+
+    if (node >= nNodeX)
+    {
+        for (int k = node - nNodeX; k >= 0;)
+        {
+            offsetY += allLocalRows[k];
+            k -= nNodeX;
+        }
+    }
+    return {offsetX, offsetY};
 }
 
 template <class T>
