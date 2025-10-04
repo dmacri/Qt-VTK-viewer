@@ -47,8 +47,13 @@ using ssize_t = intptr_t;
 template <class T>
 class Visualizer
 {
-public:
     std::vector<std::unordered_map<int, long int>> hashMap;
+
+public:
+    void prepareHashMap(int nNodeX, int nNodeY)
+    {
+        hashMap.resize(nNodeX * nNodeY);
+    }
 
     Visualizer() = default;
 
