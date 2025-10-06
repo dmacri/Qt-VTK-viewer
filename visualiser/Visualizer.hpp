@@ -55,8 +55,6 @@ public:
         hashMap.resize(nNodeX * nNodeY);
     }
 
-    Visualizer() = default;
-
     long int stepStartingPositionInFile(int step, int node)
     {
         return hashMap.at(node).at(step);
@@ -163,53 +161,65 @@ void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nNodeX, int nNodeY
     int actualStep = step;
 
     auto [allLocalCols, allLocalRows] = giveMeLocalColsAndRowsForAllSteps(step, nNodeX, nNodeY, fileName);
-    
+
     // If all nodes are empty and this is step 4000, use previous step
-    if (step == 4000) // TODO: GB: What is 4000? Is 4000 the last step?
+    if (step == 4000 &&  // TODO: GB: What is 4000? Is 4000 the last step?
+        VisualiserHelpers::allNodesHaveEmptyData(allLocalCols, allLocalRows, nNodeX * nNodeY))
     {
-        if (const bool allEmpty = VisualiserHelpers::allNodesHaveEmptyData(allLocalCols, allLocalRows, nNodeX * nNodeY))
-        {
-            actualStep = 3999;
-            // Reload data with fallback step
-            std::tie(allLocalCols, allLocalRows) = giveMeLocalColsAndRowsForAllSteps(step, nNodeX, nNodeY, fileName);
-        }
+        actualStep = 3999;
+        // Reload data with fallback step
+        std::tie(allLocalCols, allLocalRows) = giveMeLocalColsAndRowsForAllSteps(actualStep, nNodeX, nNodeY, fileName);
     }
 
     bool startStepDone = false;
-    for (int node = 0; node < (nNodeX * nNodeY); node++)
+
+    constexpr size_t numbersPerLine = 10'000;
+    const size_t lineBufferSize = (log10(UINT_MAX) + 2) * numbersPerLine;
+    std::string line;
+    line.reserve(lineBufferSize); /// for speedup to avoid realocations
+
+    for (int node = 0; node < nNodeX * nNodeY; ++node)
     {
         const auto [offsetX, offsetY] = VisualiserHelpers::calculateXYOffset(node, nNodeX, nNodeY, allLocalCols, allLocalRows);
 
         int nLocalCols, nLocalRows;
         std::ifstream fp = giveMeLocalColAndRowFromStep(actualStep, fileName, node, nLocalCols, nLocalRows);
+        if (! fp)
+            throw std::runtime_error("Cannot open file for node " + std::to_string(node));
 
-        lines[node * 2] = Line(offsetX, offsetY, offsetX + nLocalCols, offsetY);
+        /// introducing big buffer for reading (for speed up)
+        static thread_local char fileBuffer[1 << 16];
+        fp.rdbuf()->pubsetbuf(fileBuffer, sizeof(fileBuffer));
+
+        lines[node * 2]     = Line(offsetX, offsetY, offsetX + nLocalCols, offsetY);
         lines[node * 2 + 1] = Line(offsetX, offsetY, offsetX, offsetY + nLocalRows);
 
-        for (int row = 0; row < nLocalRows; row++)
+        for (int row = 0; row < nLocalRows; ++row)
         {
-            std::string line;
-            if (! getline(fp, line))
+            if (! std::getline(fp, line))
             {
                 const auto fileNameTmp = VisualiserHelpers::giveMeFileName(fileName, node);
                 throw std::runtime_error("Error when reading entire line of file " + fileNameTmp);
             }
 
-            const auto tokens = VisualiserHelpers::splitLine(line, nLocalCols, /*delimiter=*/' ');
+            std::replace(begin(line), end(line), ' ', '\0'); /// this is faster than using std::ranges::replace
 
-            std::string temp_buffer;
-            temp_buffer.reserve(log10(INT_MAX) + 1);
-
-            for (int col = 0; col < nLocalCols && col < static_cast<int>(tokens.size()); ++col)
+            /// Moving through tokens (token are characters ended with '0')
+            char* currentTokenPtr = line.data();
+            for (int col = 0; col < nLocalCols && *currentTokenPtr; ++col)
             {
-                if (!startStepDone)
+                if (! startStepDone) [[unlikely]]
                 {
                     m[row + offsetY][col + offsetX].T::startStep(step);
                     startStepDone = true;
                 }
 
-                temp_buffer.assign(tokens[col]);
-                m[row + offsetY][col + offsetX].T::composeElement(temp_buffer.data());
+                m[row + offsetY][col + offsetX].T::composeElement(currentTokenPtr);
+
+                /// go to another token
+                while (*currentTokenPtr)
+                    ++currentTokenPtr;
+                ++currentTokenPtr; /// skip '\0'
             }
         }
     }
