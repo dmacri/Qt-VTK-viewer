@@ -51,13 +51,9 @@ public:
     }
 
     [[nodiscard]] std::ifstream giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
-    [[nodiscard]] std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node);
+    [[nodiscard]] std::pair<int,int> readLocalColumnAndRowForStepFromFile(int step, const std::string& fileName, int node);
     template<class Matrix>
     void readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line *lines);
-    template<class Matrix>
-    void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
-    template<class Matrix>
-    void refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
 
     /** @brief Loads data into hashMap from text files.
      *
@@ -74,7 +70,13 @@ public:
      * @param nNodeX number of nodes along the X axis
      * @param nNodeY number of nodes along the Y axis
      * @param filename base filename (e.g., "ball"), for which nodes files are being read */
-    void loadStepOffsetsPerNode(int nNodeX, int nNodeY, const std::string &filename);
+    void readStepsOffsetsForAllNodesFromFiles(int nNodeX, int nNodeY, const std::string &filename);
+
+    /// visualising part:
+    template<class Matrix>
+    void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
+    template<class Matrix>
+    void refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
     void buildLoadBalanceLine(Line *lines, int dimLines, int nCols, int nRows, vtkSmartPointer<vtkPoints> pts, vtkSmartPointer<vtkCellArray> cellLines, vtkSmartPointer<vtkPolyData> grid, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine);
     void refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows, vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors);
     vtkTextProperty* buildStepLine(int step, vtkSmartPointer<vtkTextMapper>, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkNamedColors> colors, std::string color);
@@ -104,7 +106,7 @@ std::pair<int,int> calculateXYOffset(int node, int nNodeX, int nNodeY, const std
 ////////////////////////////////////////////////////////////////////
 
 template <class T>
-std::pair<int,int> Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node)
+std::pair<int,int> Visualizer<T>::readLocalColumnAndRowForStepFromFile(int step, const std::string& fileName, int node)
 {
     int nLocalCols, nLocalRows;
     std::ifstream file = giveMeLocalColAndRowFromStep(step, fileName, node, nLocalCols, nLocalRows);
@@ -219,7 +221,7 @@ std::pair<std::vector<int>, std::vector<int>> Visualizer<T>::giveMeLocalColsAndR
 
     for (int node = 0; node < nodesCount; node++)
     {
-        auto [nLocalCols, nLocalRows] = giveMeLocalColAndRowFromStep(step, fileName, node);
+        auto [nLocalCols, nLocalRows] = readLocalColumnAndRowForStepFromFile(step, fileName, node);
 
         allLocalCols[node] = nLocalCols;
         allLocalRows[node] = nLocalRows;
@@ -228,7 +230,7 @@ std::pair<std::vector<int>, std::vector<int>> Visualizer<T>::giveMeLocalColsAndR
 }
 
 template <class T>
-void Visualizer<T>::loadStepOffsetsPerNode(int nNodeX, int nNodeY, const std::string& filename)
+void Visualizer<T>::readStepsOffsetsForAllNodesFromFiles(int nNodeX, int nNodeY, const std::string& filename)
 {
     const int totalNodes = nNodeX * nNodeY;
     for (int node = 0; node < totalNodes; ++node)

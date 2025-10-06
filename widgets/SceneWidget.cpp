@@ -141,7 +141,7 @@ void SceneWidget::setupVtkScene()
 void SceneWidget::renderVtkScene()
 {
     DEBUG << "DEBUG: Starting " << __FUNCTION__ << endl;
-    sceneWidgetVisualizerProxy->vis.loadStepOffsetsPerNode(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
+    sceneWidgetVisualizerProxy->vis.readStepsOffsetsForAllNodesFromFiles(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
     DEBUG << "DEBUG: Hashmap loaded successfully" << endl;
 
     std::vector<Line> lines(settingParameter->numberOfLines);
