@@ -161,19 +161,7 @@ template<class T>
 template<class Matrix>
 void Visualizer<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line *lines)
 {
-    // Check if we need to use fallback step
-    int actualStep = sp->step;
-
-    auto [allLocalCols, allLocalRows] = giveMeLocalColsAndRowsForAllSteps(actualStep, sp->nNodeX, sp->nNodeY, sp->outputFileName);
-
-    // If all nodes are empty and this is step 4000, use previous step
-    if (sp->step == 4000 &&  // TODO: GB: What is 4000? Is 4000 the last step?
-        VisualiserHelpers::allNodesHaveEmptyData(allLocalCols, allLocalRows, sp->nNodeX * sp->nNodeY))
-    {
-        actualStep = 3999;
-        // Reload data with fallback step
-        std::tie(allLocalCols, allLocalRows) = giveMeLocalColsAndRowsForAllSteps(actualStep, sp->nNodeX, sp->nNodeY, sp->outputFileName);
-    }
+    const auto [allLocalCols, allLocalRows] = giveMeLocalColsAndRowsForAllSteps(sp->step, sp->nNodeX, sp->nNodeY, sp->outputFileName);
 
     bool startStepDone = false;
 
@@ -187,7 +175,7 @@ void Visualizer<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* 
         const auto [offsetX, offsetY] = VisualiserHelpers::calculateXYOffset(node, sp->nNodeX, sp->nNodeY, allLocalCols, allLocalRows);
 
         int nLocalCols, nLocalRows;
-        std::ifstream fp = readLocalColumnAndRowForStepFromFileReturningStream(actualStep, sp->outputFileName, node, nLocalCols, nLocalRows);
+        std::ifstream fp = readLocalColumnAndRowForStepFromFileReturningStream(sp->step, sp->outputFileName, node, nLocalCols, nLocalRows);
         if (! fp)
             throw std::runtime_error("Cannot open file for node " + std::to_string(node));
 
