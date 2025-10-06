@@ -59,7 +59,7 @@ public:
 
     long int stepStartingPositionInFile(int step, int node)
     {
-        return hashMap[node][step];
+        return hashMap.at(node).at(step);
     }
 
     [[nodiscard]] std::ifstream giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
@@ -67,7 +67,7 @@ public:
     template<class Matrix>
     void getElementMatrix(int step, Matrix& m, int nNodeX, int nNodeY, const std::string& fileName, Line *lines);
     template<class Matrix>
-    void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines, std::string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
+    void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
     template<class Matrix>
     void refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
 
@@ -87,9 +87,9 @@ public:
      * @param nNodeY number of nodes along the Y axis
      * @param filename base filename (e.g., "ball"), for which nodes files are being read */
     void loadStepOffsetsPerNode(int nNodeX, int nNodeY, const std::string &filename);
-    void buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows,vtkSmartPointer<vtkPoints> pts,vtkSmartPointer<vtkCellArray> cellLines,vtkSmartPointer<vtkPolyData> grid,vtkSmartPointer<vtkNamedColors> colors,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor2D> actorBuildLine);
+    void buildLoadBalanceLine(Line *lines, int dimLines, int nCols, int nRows, vtkSmartPointer<vtkPoints> pts, vtkSmartPointer<vtkCellArray> cellLines, vtkSmartPointer<vtkPolyData> grid, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine);
     void refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows, vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors);
-    vtkTextProperty* buildStepLine(int step,vtkSmartPointer<vtkTextMapper> ,vtkSmartPointer<vtkTextProperty> singleLineTextProp,vtkSmartPointer<vtkNamedColors> colors, std::string color);
+    vtkTextProperty* buildStepLine(int step, vtkSmartPointer<vtkTextMapper>, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkNamedColors> colors, std::string color);
     vtkNew<vtkActor2D> buildStepText(int step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer);
 
 private:
@@ -272,14 +272,9 @@ void Visualizer<T>::loadStepOffsetsPerNode(int nNodeX, int nNodeY, const std::st
 
 template <class T>
 template <class Matrix>
-void Visualizer<T>::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines, std::string edittext,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor)
+void Visualizer<T>::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor)
 {
-    vtkNew<vtkStructuredGrid> structuredGrid;
-    vtkNew<vtkNamedColors> colors;
-    vtkNew<vtkPoints> points;
-    vtkNew<vtkLookupTable> lut;
-
-    auto numberOfPoints = nRows * nCols;
+    const auto numberOfPoints = nRows * nCols;
     vtkNew<vtkDoubleArray> pointValues;
     pointValues->SetNumberOfTuples(numberOfPoints);
     for (size_t i = 0; i < numberOfPoints; ++i)
@@ -287,11 +282,10 @@ void Visualizer<T>::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int s
         pointValues->SetValue(i, i);
     }
 
+    vtkNew<vtkLookupTable> lut;
     lut->SetNumberOfTableValues(numberOfPoints);
-   // lut->Build();
-    // Assign some specific colors in this case
 
-
+    vtkNew<vtkPoints> points;
     for (int row = 0; row < nRows; row++)
     {
         for (int col = 0; col < nCols; col++)
@@ -300,18 +294,18 @@ void Visualizer<T>::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int s
         }
     }
 
+    vtkNew<vtkStructuredGrid> structuredGrid;
     structuredGrid->SetDimensions(nCols, nRows, 1);
     structuredGrid->SetPoints(points);
     structuredGrid->GetPointData()->SetScalars(pointValues);
 
-    buidColor(lut,nCols,nRows,p);
+    buidColor(lut, nCols, nRows, p);
 
     vtkNew<vtkDataSetMapper> gridMapper;
     gridMapper->UpdateDataObject();
     gridMapper->SetInputData(structuredGrid);
     gridMapper->SetLookupTable(lut);
     gridMapper->SetScalarRange(0, numberOfPoints - 1);
-    // gridMapper->ScalarVisibilityOn();
 
     gridActor->SetMapper(gridMapper);
     renderer->AddActor(gridActor);
@@ -332,7 +326,7 @@ void Visualizer<T>::refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols,
 }
 
 template <class T>
-void Visualizer<T>::buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows,vtkSmartPointer<vtkPoints> pts,vtkSmartPointer<vtkCellArray> cellLines,vtkSmartPointer<vtkPolyData> grid,vtkSmartPointer<vtkNamedColors> colors,vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor2D> actorBuildLine)
+void Visualizer<T>::buildLoadBalanceLine(Line *lines, int dimLines,int nCols, int nRows, vtkSmartPointer<vtkPoints> pts, vtkSmartPointer<vtkCellArray> cellLines, vtkSmartPointer<vtkPolyData> grid, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor2D> actorBuildLine)
 {
     for (int i = 0; i < dimLines; i++)
     {
@@ -342,8 +336,8 @@ void Visualizer<T>::buildLoadBalanceLine(Line *lines, int dimLines,int nCols,int
         cellLines->InsertNextCell(2);
         cellLines->InsertCellPoint(i*2);
         cellLines->InsertCellPoint(i*2+1);
-
     }
+
     grid->SetPoints(pts);
     grid->SetLines(cellLines);
     // Set up the coordinate system.
@@ -440,9 +434,8 @@ void buidColor(vtkLookupTable* lut, int nCols, int nRows, Matrix& p)
     {
         for (int c = 0; c < nCols; ++c)
         {
-            rgb *color=p[r][c].outputValue();
-           // lut->SetTableValue(r*nCols+c,(double)color->getRed(),(double)color->getGreen(),(double)color->getBlue());
-            lut->SetTableValue((nRows-1-r)*nCols+c,(double)color->getRed(),(double)color->getGreen(),(double)color->getBlue());
+            rgb *color = p[r][c].outputValue();
+            lut->SetTableValue((nRows-1-r)*nCols+c, (double)color->getRed(), (double)color->getGreen(), (double)color->getBlue());
         }
     }
 }
