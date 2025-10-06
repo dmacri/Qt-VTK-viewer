@@ -22,7 +22,7 @@ ColumnAndRow ReaderHelpers::getColumnAndRowFromLine(const std::string& line)
         };
 }
 
-std::pair<int,int> ReaderHelpers::calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows)
+std::pair<int,int> ReaderHelpers::calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std::vector<ColumnAndRow>& columnsAndRows)
 {
     int offsetX = 0; //= //(node % nNodeX)*nLocalCols;//-this->borderSizeX;
     int offsetY = 0; //= //(node / nNodeX)*nLocalRows;//-this->borderSizeY;
@@ -31,14 +31,14 @@ std::pair<int,int> ReaderHelpers::calculateXYOffset(NodeIndex node, int nNodeX, 
     {
         for (int k = 0; k < node % nNodeX; k++)
         {
-            offsetX += allLocalCols[k];
+            offsetX += columnsAndRows[k].column;
         }
     }
     else
     {
         for (int k = (node / nNodeX) * nNodeX; k < node; k++)
         {
-            offsetX += allLocalCols[k];
+            offsetX += columnsAndRows[k].column;
         }
     }
 
@@ -46,7 +46,7 @@ std::pair<int,int> ReaderHelpers::calculateXYOffset(NodeIndex node, int nNodeX, 
     {
         for (int k = node - nNodeX; k >= 0;)
         {
-            offsetY += allLocalRows[k];
+            offsetY += columnsAndRows[k].row;
             k -= nNodeX;
         }
     }

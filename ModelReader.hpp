@@ -66,7 +66,7 @@ private:
 
     [[nodiscard]] ColumnAndRow readColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node);
 
-    std::pair<std::vector<StepIndex>, std::vector<StepIndex>> giveMeLocalColsAndRowsForAllSteps(StepIndex step, int nNodeX, int nNodeY, const std::string& fileName);
+    std::vector<ColumnAndRow> giveMeLocalColsAndRowsForAllSteps(StepIndex step, int nNodeX, int nNodeY, const std::string& fileName);
 };
 
 /////////////////////////////
@@ -83,7 +83,7 @@ namespace ReaderHelpers /// functions which are not templates
 
 ColumnAndRow getColumnAndRowFromLine(const std::string& line);
 
-std::pair<int,int> calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows);
+std::pair<int,int> calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std::vector<ColumnAndRow> &columnsAndRows);
 }
 /////////////////////////////
 
@@ -126,7 +126,7 @@ template<class T>
 template<class Matrix>
 void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line *lines)
 {
-    const auto [allLocalCols, allLocalRows] = giveMeLocalColsAndRowsForAllSteps(sp->step, sp->nNodeX, sp->nNodeY, sp->outputFileName);
+    const auto columnsAndRows = giveMeLocalColsAndRowsForAllSteps(sp->step, sp->nNodeX, sp->nNodeY, sp->outputFileName);
 
     bool startStepDone = false;
 
@@ -137,7 +137,7 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
 
     for (NodeIndex node = 0; node < sp->nNodeX * sp->nNodeY; ++node)
     {
-        const auto [offsetX, offsetY] = ReaderHelpers::calculateXYOffset(node, sp->nNodeX, sp->nNodeY, allLocalCols, allLocalRows);
+        const auto [offsetX, offsetY] = ReaderHelpers::calculateXYOffset(node, sp->nNodeX, sp->nNodeY, columnsAndRows);
 
         ColumnAndRow columnAndRow;
         std::ifstream fp = readColumnAndRowForStepFromFileReturningStream(sp->step, sp->outputFileName, node, columnAndRow);
@@ -182,21 +182,17 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
     }
 }
 template<class T>
-std::pair<std::vector<StepIndex>, std::vector<StepIndex>> ModelReader<T>::giveMeLocalColsAndRowsForAllSteps(StepIndex step, int nNodeX, int nNodeY, const std::string& fileName)
+std::vector<ColumnAndRow> ModelReader<T>::giveMeLocalColsAndRowsForAllSteps(StepIndex step, int nNodeX, int nNodeY, const std::string& fileName)
 {
     const auto nodesCount = nNodeX * nNodeY;
-    std::vector<StepIndex> allLocalCols{nodesCount}, allLocalRows{nodesCount};
-    allLocalCols.resize(nodesCount);
-    allLocalRows.resize(nodesCount);
+    std::vector<ColumnAndRow> allColumnsAndRows(nodesCount);
+    allColumnsAndRows.resize(nodesCount);
 
     for (NodeIndex node = 0; node < nodesCount; node++)
     {
-        auto [nLocalCols, nLocalRows] = readColumnAndRowForStepFromFile(step, fileName, node);
-
-        allLocalCols[node] = nLocalCols;
-        allLocalRows[node] = nLocalRows;
+        allColumnsAndRows[node] = readColumnAndRowForStepFromFile(step, fileName, node);
     }
-    return {allLocalCols, allLocalRows};
+    return allColumnsAndRows;
 }
 
 template <class T>
