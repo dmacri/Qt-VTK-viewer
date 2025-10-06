@@ -8,8 +8,8 @@ struct SettingParameter
 {
     StepIndex step;
     StepIndex nsteps;
-    int dimX;
-    int dimY;
+    int numberOfColumnX;
+    int numberOfRowsY;
     int nNodeX;
     int nNodeY;
     int numberOfLines;

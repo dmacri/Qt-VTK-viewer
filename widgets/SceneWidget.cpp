@@ -84,8 +84,8 @@ void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
         ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
         const std::string outputFileNameFromCfg = generalContext->getConfigParameter("output_file_name")->getValue<std::string>();
         settingParameter->outputFileName = prepareOutputFileName(filename, outputFileNameFromCfg);
-        settingParameter->dimX = generalContext->getConfigParameter("number_of_columns")->getValue<int>();
-        settingParameter->dimY = generalContext->getConfigParameter("number_of_rows")->getValue<int>();
+        settingParameter->numberOfColumnX = generalContext->getConfigParameter("number_of_columns")->getValue<int>();
+        settingParameter->numberOfRowsY = generalContext->getConfigParameter("number_of_rows")->getValue<int>();
         settingParameter->nsteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
     }
 
@@ -109,7 +109,7 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename)
     settingParameter->firstTime = true;
     settingParameter->insertAction = false;
 
-    sceneWidgetVisualizerProxy->initMatrix(settingParameter->dimX, settingParameter->dimY);
+    sceneWidgetVisualizerProxy->initMatrix(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY);
 
     settingRenderParameter->m_renderer->SetBackground(settingRenderParameter->colors->GetColor3d("Silver").GetData());
 
@@ -123,7 +123,7 @@ void SceneWidget::setupVtkScene()
     renderWindow()->AddRenderer(settingRenderParameter->m_renderer);
     interactor()->SetRenderWindow(renderWindow());
 
-    renderWindow()->SetSize(settingParameter->dimX, settingParameter->dimY + 10);
+    renderWindow()->SetSize(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY + 10);
 
     /// An interactor with this style blocks rotation but not zoom.
     /// Use nullptr in SetInteractorStyle to block everything.
@@ -149,13 +149,13 @@ void SceneWidget::renderVtkScene()
     sceneWidgetVisualizerProxy->vis.readStageStateFromFilesForStep(sceneWidgetVisualizerProxy->p, settingParameter.get(), &lines[0]);
     DEBUG << "DEBUG: readStageStateFromFilesForStep completed" << endl;
 
-    sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingRenderParameter->m_renderer, gridActor);
+    sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p, settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, &lines[0], settingRenderParameter->m_renderer, gridActor);
     DEBUG << "DEBUG: drawWithVTK completed" << endl;
 
     vtkNew<vtkCellArray> cellLines;
     vtkNew<vtkPoints> pts;
     vtkNew<vtkPolyData> grid;
-    sceneWidgetVisualizerProxy->vis.buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->dimY+1, settingParameter->dimX+1, pts, cellLines, grid,settingRenderParameter->colors,settingRenderParameter->m_renderer,actorBuildLine);
+    sceneWidgetVisualizerProxy->vis.buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->numberOfRowsY+1, settingParameter->numberOfColumnX+1, pts, cellLines, grid,settingRenderParameter->colors,settingRenderParameter->m_renderer,actorBuildLine);
     DEBUG << "DEBUG: buildLoadBalanceLine completed" << endl;
 
     sceneWidgetVisualizerProxy->vis.buildStepText(settingParameter->step, settingParameter->font_size, settingRenderParameter->colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
@@ -295,8 +295,8 @@ void SceneWidget::updateVisualization()
 
     sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(
         sceneWidgetVisualizerProxy->p,
-        settingParameter->dimY,
-        settingParameter->dimX,
+        settingParameter->numberOfRowsY,
+        settingParameter->numberOfColumnX,
         settingParameter->step,
         &lines[0],
         settingParameter->numberOfLines,
@@ -313,8 +313,8 @@ void SceneWidget::updateVisualization()
         sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(
             &lines[0], 
             settingParameter->numberOfLines, 
-            settingParameter->dimY + 1, 
-            settingParameter->dimX + 1, 
+            settingParameter->numberOfRowsY + 1,
+            settingParameter->numberOfColumnX + 1,
             actorBuildLine, 
             settingRenderParameter->colors
         );
