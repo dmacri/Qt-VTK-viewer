@@ -333,22 +333,38 @@ void MainWindow::onLeftButtonClicked()
 
 void MainWindow::onRightButtonClicked()
 {
-    ui->sceneWidget->increaseCountUp();
-    currentStep = std::min(currentStep + 1, totalSteps());
-    setPositionOnWidgets(currentStep);
+    try
+    {
+        ui->sceneWidget->increaseCountUp();
+        currentStep = std::min(currentStep + 1, totalSteps());
+        setPositionOnWidgets(currentStep);
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::warning(this, "Changing position error",
+                             tr("It was impossible to change position, because:\n") + e.what());
+    }
 }
 
 void MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
-{    
-    if (updateSlider)
+{
+    try
     {
-        QSignalBlocker sliderBlocker(ui->updatePositionSlider);
-        ui->updatePositionSlider->setValue(stepPosition);
-    }
-    ui->positionSpinBox->setValue(stepPosition);
-    ui->sceneWidget->selectedStepParameter(stepPosition);
+        if (updateSlider)
+        {
+            QSignalBlocker sliderBlocker(ui->updatePositionSlider);
+            ui->updatePositionSlider->setValue(stepPosition);
+        }
+        ui->positionSpinBox->setValue(stepPosition);
+        ui->sceneWidget->selectedStepParameter(stepPosition);
 
-    changeWhichButtonsAreEnabled();
+        changeWhichButtonsAreEnabled();
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::warning(this, "Changing position error",
+                             tr("It was impossible to change position, because:\n") + e.what());
+    }
 }
 
 void MainWindow::changeWhichButtonsAreEnabled()
