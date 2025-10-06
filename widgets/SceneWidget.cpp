@@ -142,8 +142,7 @@ void SceneWidget::renderVtkScene()
     sceneWidgetVisualizerProxy->vis.loadStepOffsetsPerNode(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
     DEBUG << "DEBUG: Hashmap loaded successfully" << endl;
 
-    std::vector<Line> lines;
-    lines.resize(settingParameter->numberOfLines);
+    std::vector<Line> lines(settingParameter->numberOfLines);
     DEBUG << "DEBUG: Allocated lines array " << settingParameter->numberOfLines << endl;
 
     sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
@@ -151,7 +150,7 @@ void SceneWidget::renderVtkScene()
 
     sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingRenderParameter->m_renderer, gridActor);
     DEBUG << "DEBUG: drawWithVTK completed" << endl;
-    
+
     vtkNew<vtkCellArray> cellLines;
     vtkNew<vtkPoints> pts;
     vtkNew<vtkPolyData> grid;

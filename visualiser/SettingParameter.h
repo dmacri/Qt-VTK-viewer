@@ -18,7 +18,6 @@ struct SettingParameter
     std::string outputFileName;
     int numberOfLines;
     const int font_size = 18;
-    std::string edittext;// an empty string for editting
 
     friend std::ostream& operator<<(std::ostream& os, const SettingParameter& sp);
 };

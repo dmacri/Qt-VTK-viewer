@@ -340,9 +340,9 @@ void Visualizer<T>::buildLoadBalanceLine(Line *lines, int dimLines,int nCols, in
 {
     for (int i = 0; i < dimLines; i++)
     {
-        cout << lines[i].x1 << "  " << lines[i].y1 << "  " <<lines[i].x2 << "  " <<lines[i].y2 << endl;
-        pts->InsertNextPoint((lines[i].x1 * 1), ( nCols-1-lines[i].y1 * 1), 0.0);
-        pts->InsertNextPoint((lines[i].x2 * 1), ( nCols-1-lines[i].y2 * 1), 0.0);
+        cout << "Line (" << lines[i].x1 << ", " << lines[i].y1 << ") -> (" <<lines[i].x2 << ", " <<lines[i].y2 << ")" << endl;
+        pts->InsertNextPoint(lines[i].x1 * 1, nCols-1-lines[i].y1 * 1, 0.0);
+        pts->InsertNextPoint(lines[i].x2 * 1, nCols-1-lines[i].y2 * 1, 0.0);
         cellLines->InsertNextCell(2);
         cellLines->InsertCellPoint(i*2);
         cellLines->InsertCellPoint(i*2+1);
