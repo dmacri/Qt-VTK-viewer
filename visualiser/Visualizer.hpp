@@ -50,8 +50,25 @@ public:
         return hashMap.at(node).at(step);
     }
 
-    [[nodiscard]] std::ifstream giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
+    /** @brief Opens the data file for a given simulation step and node.
+     *
+     * The function locates the correct file for the specified node (e.g. "ball3.txt", where 3 is node number),
+     * seeks to the byte position corresponding to the given simulation step in file,
+     * reads the first header line containing local grid dimensions (columns and rows),
+     * and returns an input file stream positioned right after that header.
+     *
+     * @param step         Simulation step number.
+     * @param fileName     Base file name (without node index or extension).
+     * @param node         Node index for which data should be opened.
+     * @param nLocalCols   Output: number of local columns read from header line.
+     * @param nLocalRows   Output: number of local rows read from header line.
+     *
+     * @return std::ifstream Stream ready for reading cell data of this node at given step.
+     * @throws std::runtime_error If the file cannot be opened, seek fails, or header is invalid. */
+    [[nodiscard]] std::ifstream readLocalColumnAndRowForStepFromFileReturningStream(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
+
     [[nodiscard]] std::pair<int,int> readLocalColumnAndRowForStepFromFile(int step, const std::string& fileName, int node);
+
     template<class Matrix>
     void readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line *lines);
 
@@ -109,11 +126,11 @@ template <class T>
 std::pair<int,int> Visualizer<T>::readLocalColumnAndRowForStepFromFile(int step, const std::string& fileName, int node)
 {
     int nLocalCols, nLocalRows;
-    std::ifstream file = giveMeLocalColAndRowFromStep(step, fileName, node, nLocalCols, nLocalRows);
+    std::ifstream file = readLocalColumnAndRowForStepFromFileReturningStream(step, fileName, node, nLocalCols, nLocalRows);
     return {nLocalCols, nLocalRows};
 }
 template <class T>
-std::ifstream Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows)
+std::ifstream Visualizer<T>::readLocalColumnAndRowForStepFromFileReturningStream(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows)
 {
     const auto fileNameTmp = VisualiserHelpers::giveMeFileName(fileName, node);
 
@@ -170,7 +187,7 @@ void Visualizer<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* 
         const auto [offsetX, offsetY] = VisualiserHelpers::calculateXYOffset(node, sp->nNodeX, sp->nNodeY, allLocalCols, allLocalRows);
 
         int nLocalCols, nLocalRows;
-        std::ifstream fp = giveMeLocalColAndRowFromStep(actualStep, sp->outputFileName, node, nLocalCols, nLocalRows);
+        std::ifstream fp = readLocalColumnAndRowForStepFromFileReturningStream(actualStep, sp->outputFileName, node, nLocalCols, nLocalRows);
         if (! fp)
             throw std::runtime_error("Cannot open file for node " + std::to_string(node));
 
