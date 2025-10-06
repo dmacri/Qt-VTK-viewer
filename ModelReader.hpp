@@ -14,16 +14,17 @@
 template <class Cell>
 class ModelReader
 {
-    std::vector<std::unordered_map<StepIndex, FilePosition>> hashMap;
+    std::vector<std::unordered_map<StepIndex, FilePosition>> stage;
+
 public:
-    void prepareHashMap(NodeIndex nNodeX, NodeIndex nNodeY)
+    void prepareStage(NodeIndex nNodeX, NodeIndex nNodeY)
     {
-        hashMap.resize(nNodeX * nNodeY);
+        stage.resize(nNodeX * nNodeY);
     }
 
     FilePosition getStepStartingPositionInFile(StepIndex step, NodeIndex node)
     {
-        return hashMap.at(node).at(step);
+        return stage.at(node).at(step);
     }
 
     /** @brief Opens the data file for a given simulation step and node.
@@ -231,7 +232,7 @@ void ModelReader<T>::readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, Node
                     throw std::runtime_error("Invalid line format in file: " + fileNameIndex);
             }
 
-            const auto [it, inserted] = hashMap[node].emplace(stepNumber, positionInFile);
+            const auto [it, inserted] = stage[node].emplace(stepNumber, positionInFile);
             if (! inserted)
             {
                 std::cerr << std::format("Duplicate stepNumber {} found in file '{}' (node {})", stepNumber, fileNameIndex, node) << std::endl;

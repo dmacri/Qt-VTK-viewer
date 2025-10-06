@@ -118,7 +118,7 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename)
 
 void SceneWidget::setupVtkScene()
 {
-    sceneWidgetVisualizerProxy->modelReader.prepareHashMap(settingParameter->nNodeX, settingParameter->nNodeY);
+    sceneWidgetVisualizerProxy->modelReader.prepareStage(settingParameter->nNodeX, settingParameter->nNodeY);
 
     renderWindow()->AddRenderer(settingRenderParameter->m_renderer);
     interactor()->SetRenderWindow(renderWindow());
