@@ -61,14 +61,13 @@ public:
      * @param step         Simulation step number.
      * @param fileName     Base file name (without node index or extension).
      * @param node         Node index for which data should be opened.
-     * @param nLocalCols   Output: number of local columns read from header line.
-     * @param nLocalRows   Output: number of local rows read from header line.
+     * @param columnAndRow Output: number of local columns and rows read from header line.
      *
      * @return std::ifstream Stream ready for reading cell data of this node at given step.
      * @throws std::runtime_error If the file cannot be opened, seek fails, or header is invalid. */
-    [[nodiscard]] std::ifstream readLocalColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName, NodeIndex node, int &nLocalCols, int &nLocalRows);
+    [[nodiscard]] std::ifstream readLocalColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName, NodeIndex node, ColumnAndRow& columnAndRow);
 
-    [[nodiscard]] std::pair<int,int> readLocalColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node);
+    [[nodiscard]] ColumnAndRow readLocalColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node);
 
     template<class Matrix>
     void readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line *lines);
@@ -115,21 +114,21 @@ namespace VisualiserHelpers /// functions which are not templates
     return std::format("{}{}_index.txt", fileName, node);
 }
 
-std::pair<int,int> getColumnAndRowFromLine(const std::string& line);
+ColumnAndRow getColumnAndRowFromLine(const std::string& line);
 
 std::pair<int,int> calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows);
 }
 ////////////////////////////////////////////////////////////////////
 
 template <class T>
-std::pair<int,int> Visualizer<T>::readLocalColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node)
+ColumnAndRow Visualizer<T>::readLocalColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node)
 {
-    int nLocalCols, nLocalRows;
-    std::ifstream file = readLocalColumnAndRowForStepFromFileReturningStream(step, fileName, node, nLocalCols, nLocalRows);
-    return {nLocalCols, nLocalRows};
+    ColumnAndRow columnAndRow;
+    std::ifstream file = readLocalColumnAndRowForStepFromFileReturningStream(step, fileName, node, columnAndRow);
+    return columnAndRow;
 }
 template <class T>
-std::ifstream Visualizer<T>::readLocalColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName, NodeIndex node, int &nLocalCols, int &nLocalRows)
+std::ifstream Visualizer<T>::readLocalColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName, NodeIndex node, ColumnAndRow &columnAndRow)
 {
     const auto fileNameTmp = VisualiserHelpers::giveMeFileName(fileName, node);
 
@@ -152,7 +151,7 @@ std::ifstream Visualizer<T>::readLocalColumnAndRowForStepFromFileReturningStream
         throw std::runtime_error(std::format("Failed to read line from '{}' at position {}", fileNameTmp, fPos));
     }
 
-    std::tie(nLocalCols, nLocalRows) = VisualiserHelpers::getColumnAndRowFromLine(line);
+    columnAndRow = VisualiserHelpers::getColumnAndRowFromLine(line);
     return file;
 }
 
@@ -173,8 +172,8 @@ void Visualizer<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* 
     {
         const auto [offsetX, offsetY] = VisualiserHelpers::calculateXYOffset(node, sp->nNodeX, sp->nNodeY, allLocalCols, allLocalRows);
 
-        int nLocalCols, nLocalRows;
-        std::ifstream fp = readLocalColumnAndRowForStepFromFileReturningStream(sp->step, sp->outputFileName, node, nLocalCols, nLocalRows);
+        ColumnAndRow columnAndRow;
+        std::ifstream fp = readLocalColumnAndRowForStepFromFileReturningStream(sp->step, sp->outputFileName, node, columnAndRow);
         if (! fp)
             throw std::runtime_error("Cannot open file for node " + std::to_string(node));
 
@@ -182,10 +181,10 @@ void Visualizer<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* 
         static thread_local char fileBuffer[1 << 16];
         fp.rdbuf()->pubsetbuf(fileBuffer, sizeof(fileBuffer));
 
-        lines[node * 2]     = Line(offsetX, offsetY, offsetX + nLocalCols, offsetY);
-        lines[node * 2 + 1] = Line(offsetX, offsetY, offsetX, offsetY + nLocalRows);
+        lines[node * 2]     = Line(offsetX, offsetY, offsetX + columnAndRow.column, offsetY);
+        lines[node * 2 + 1] = Line(offsetX, offsetY, offsetX, offsetY + columnAndRow.row);
 
-        for (int row = 0; row < nLocalRows; ++row)
+        for (int row = 0; row < columnAndRow.row; ++row)
         {
             if (! std::getline(fp, line))
             {
@@ -197,7 +196,7 @@ void Visualizer<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* 
 
             /// Moving through tokens (token are characters ended with '0')
             char* currentTokenPtr = line.data();
-            for (int col = 0; col < nLocalCols && *currentTokenPtr; ++col)
+            for (int col = 0; col < columnAndRow.column && *currentTokenPtr; ++col)
             {
                 if (! startStepDone) [[unlikely]]
                 {

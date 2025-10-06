@@ -174,8 +174,6 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
     SceneWidget* sw = static_cast<SceneWidget*>(clientData);
     SettingParameter* sp = sw->settingParameter.get();
 
-    SceneWidgetVisualizerProxy* visualiserProxy = sw->sceneWidgetVisualizerProxy.get();
-
     if (keyPressed == "Up")
     {
         if (sp->step < sp->nsteps * 2)

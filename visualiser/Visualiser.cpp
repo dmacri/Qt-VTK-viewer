@@ -1,7 +1,7 @@
 #include "visualiser/Visualizer.hpp"
 
 
-std::pair<int,int> VisualiserHelpers::getColumnAndRowFromLine(const std::string& line)
+ColumnAndRow VisualiserHelpers::getColumnAndRowFromLine(const std::string& line)
 {
     /// input format: "C-R" where C and R are numbers
     if (line.empty())
@@ -15,10 +15,11 @@ std::pair<int,int> VisualiserHelpers::getColumnAndRowFromLine(const std::string&
         throw std::runtime_error("No delimiter '-' found in the line: >" + line + "<");
     }
 
-    auto nLocalCols = std::stoi(line.substr(0, delimiterPos));
-    auto nLocalRows = std::stoi(line.substr(delimiterPos + 1));
-
-    return {nLocalCols, nLocalRows};
+    return ColumnAndRow
+    {
+        .column = std::stoi(line.substr(0, delimiterPos)),
+        .row = std::stoi(line.substr(delimiterPos + 1))
+    };
 }
 
 std::pair<int,int> VisualiserHelpers::calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows)
