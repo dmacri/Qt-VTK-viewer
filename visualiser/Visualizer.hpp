@@ -38,15 +38,15 @@ using ssize_t = intptr_t;
 template <class T>
 class Visualizer
 {
-    std::vector<std::unordered_map<StepIndex, long int>> hashMap;
+    std::vector<std::unordered_map<StepIndex, FilePosition>> hashMap;
 
 public:
-    void prepareHashMap(int nNodeX, int nNodeY)
+    void prepareHashMap(NodeIndex nNodeX, NodeIndex nNodeY)
     {
         hashMap.resize(nNodeX * nNodeY);
     }
 
-    long int getStepStartingPositionInFile(StepIndex step, int node)
+    FilePosition getStepStartingPositionInFile(StepIndex step, NodeIndex node)
     {
         return hashMap.at(node).at(step);
     }
@@ -66,9 +66,9 @@ public:
      *
      * @return std::ifstream Stream ready for reading cell data of this node at given step.
      * @throws std::runtime_error If the file cannot be opened, seek fails, or header is invalid. */
-    [[nodiscard]] std::ifstream readLocalColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
+    [[nodiscard]] std::ifstream readLocalColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName, NodeIndex node, int &nLocalCols, int &nLocalRows);
 
-    [[nodiscard]] std::pair<int,int> readLocalColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, int node);
+    [[nodiscard]] std::pair<int,int> readLocalColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node);
 
     template<class Matrix>
     void readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line *lines);
@@ -96,7 +96,7 @@ public:
     template<class Matrix>
     void refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, StepIndex step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
     void buildLoadBalanceLine(Line *lines, int dimLines, int nCols, int nRows, vtkSmartPointer<vtkPoints> pts, vtkSmartPointer<vtkCellArray> cellLines, vtkSmartPointer<vtkPolyData> grid, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine);
-    void refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols, int nRows, vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors);
+    void refreshBuildLoadBalanceLine(Line *lines, int dimLines, int nCols, int nRows, vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors);
     vtkTextProperty* buildStepLine(StepIndex step, vtkSmartPointer<vtkTextMapper>, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkNamedColors> colors, std::string color);
     vtkNew<vtkActor2D> buildStepText(StepIndex step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer);
 
@@ -106,30 +106,30 @@ private:
 
 namespace VisualiserHelpers /// functions which are not templates
 {
-[[nodiscard]] inline std::string giveMeFileName(const std::string& fileName, int node)
+[[nodiscard]] inline std::string giveMeFileName(const std::string& fileName, NodeIndex node)
 {
     return std::format("{}{}.txt", fileName, node);
 }
-[[nodiscard]] inline std::string giveMeFileNameIndex(const std::string &fileName, int node)
+[[nodiscard]] inline std::string giveMeFileNameIndex(const std::string &fileName, NodeIndex node)
 {
     return std::format("{}{}_index.txt", fileName, node);
 }
 
 std::pair<int,int> getColumnAndRowFromLine(const std::string& line);
 
-std::pair<int,int> calculateXYOffset(int node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows);
+std::pair<int,int> calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows);
 }
 ////////////////////////////////////////////////////////////////////
 
 template <class T>
-std::pair<int,int> Visualizer<T>::readLocalColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, int node)
+std::pair<int,int> Visualizer<T>::readLocalColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node)
 {
     int nLocalCols, nLocalRows;
     std::ifstream file = readLocalColumnAndRowForStepFromFileReturningStream(step, fileName, node, nLocalCols, nLocalRows);
     return {nLocalCols, nLocalRows};
 }
 template <class T>
-std::ifstream Visualizer<T>::readLocalColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows)
+std::ifstream Visualizer<T>::readLocalColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName, NodeIndex node, int &nLocalCols, int &nLocalRows)
 {
     const auto fileNameTmp = VisualiserHelpers::giveMeFileName(fileName, node);
 
@@ -169,7 +169,7 @@ void Visualizer<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* 
     std::string line;
     line.reserve(lineBufferSize); /// for speedup to avoid realocations
 
-    for (int node = 0; node < sp->nNodeX * sp->nNodeY; ++node)
+    for (NodeIndex node = 0; node < sp->nNodeX * sp->nNodeY; ++node)
     {
         const auto [offsetX, offsetY] = VisualiserHelpers::calculateXYOffset(node, sp->nNodeX, sp->nNodeY, allLocalCols, allLocalRows);
 
@@ -223,7 +223,7 @@ std::pair<std::vector<StepIndex>, std::vector<StepIndex>> Visualizer<T>::giveMeL
     allLocalCols.resize(nodesCount);
     allLocalRows.resize(nodesCount);
 
-    for (int node = 0; node < nodesCount; node++)
+    for (NodeIndex node = 0; node < nodesCount; node++)
     {
         auto [nLocalCols, nLocalRows] = readLocalColumnAndRowForStepFromFile(step, fileName, node);
 
@@ -237,7 +237,7 @@ template <class T>
 void Visualizer<T>::readStepsOffsetsForAllNodesFromFiles(int nNodeX, int nNodeY, const std::string& filename)
 {
     const int totalNodes = nNodeX * nNodeY;
-    for (int node = 0; node < totalNodes; ++node)
+    for (NodeIndex node = 0; node < totalNodes; ++node)
     {
         const auto fileNameIndex = VisualiserHelpers::giveMeFileNameIndex(filename, node);
         std::cout << "Reading file: " << fileNameIndex << '\n';

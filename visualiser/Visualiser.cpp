@@ -1,5 +1,3 @@
-#include <ranges>
-
 #include "visualiser/Visualizer.hpp"
 
 
@@ -23,7 +21,7 @@ std::pair<int,int> VisualiserHelpers::getColumnAndRowFromLine(const std::string&
     return {nLocalCols, nLocalRows};
 }
 
-std::pair<int,int> VisualiserHelpers::calculateXYOffset(int node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows)
+std::pair<int,int> VisualiserHelpers::calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows)
 {
     int offsetX = 0; //= //(node % nNodeX)*nLocalCols;//-this->borderSizeX;
     int offsetY = 0; //= //(node / nNodeX)*nLocalRows;//-this->borderSizeY;
