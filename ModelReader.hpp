@@ -22,6 +22,27 @@ public:
         stage.resize(nNodeX * nNodeY);
     }
 
+    template<class Matrix>
+    void readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line *lines);
+
+    /** @brief Loads data into hashMap from text files.
+     *
+     * Expected file format (each line):
+     *     <stepNumber:int> <positionInFile:long>
+     *
+     * Example:
+     *     0 37
+     *     1 32504
+     *     2 64971
+     *
+     * Each line must contain exactly two numbers separated by whitespace.
+     *
+     * @param nNodeX number of nodes along the X axis
+     * @param nNodeY number of nodes along the Y axis
+     * @param filename base filename (e.g., "ball"), for which nodes files are being read */
+    void readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, NodeIndex nNodeY, const std::string &filename);
+
+private:
     FilePosition getStepStartingPositionInFile(StepIndex step, NodeIndex node)
     {
         return stage.at(node).at(step);
@@ -45,27 +66,6 @@ public:
 
     [[nodiscard]] ColumnAndRow readColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node);
 
-    template<class Matrix>
-    void readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line *lines);
-
-    /** @brief Loads data into hashMap from text files.
-     *
-     * Expected file format (each line):
-     *     <stepNumber:int> <positionInFile:long>
-     *
-     * Example:
-     *     0 37
-     *     1 32504
-     *     2 64971
-     *
-     * Each line must contain exactly two numbers separated by whitespace.
-     *
-     * @param nNodeX number of nodes along the X axis
-     * @param nNodeY number of nodes along the Y axis
-     * @param filename base filename (e.g., "ball"), for which nodes files are being read */
-    void readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, NodeIndex nNodeY, const std::string &filename);
-
-private:
     std::pair<std::vector<StepIndex>, std::vector<StepIndex>> giveMeLocalColsAndRowsForAllSteps(StepIndex step, int nNodeX, int nNodeY, const std::string& fileName);
 };
 
