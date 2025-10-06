@@ -23,18 +23,6 @@ std::pair<int,int> VisualiserHelpers::getColumnAndRowFromLine(const std::string&
     return {nLocalCols, nLocalRows};
 }
 
-bool VisualiserHelpers::allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount)
-{
-    for (int node = 0; node < nodesCount; ++node)
-    {
-        if (AlllocalCols[node] > 0 || AlllocalRows[node] > 0)
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
 std::pair<int,int> VisualiserHelpers::calculateXYOffset(int node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows)
 {
     int offsetX = 0; //= //(node % nNodeX)*nLocalCols;//-this->borderSizeX;

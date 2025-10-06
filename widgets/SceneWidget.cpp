@@ -275,7 +275,7 @@ void SceneWidget::showToolTip()
                       2000); // Show for 2 seconds
 }
 
-void SceneWidget::selectedStepParameter(int stepNumber)
+void SceneWidget::selectedStepParameter(StepIndex stepNumber)
 {
     settingParameter->step = stepNumber;
     settingParameter->changed = true;

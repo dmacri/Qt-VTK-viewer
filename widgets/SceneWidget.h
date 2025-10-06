@@ -24,7 +24,7 @@ public:
 
     void addVisualizer(const string &filename);
 
-    void selectedStepParameter(int stepNumber);
+    void selectedStepParameter(StepIndex stepNumber);
 
     const SettingParameter* getSettingParameter() const
     {
@@ -34,7 +34,7 @@ public:
     static void keypressCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
 
 signals:
-    void changedStepNumberWithKeyboardKeys(int stepNumber);
+    void changedStepNumberWithKeyboardKeys(StepIndex stepNumber);
 
 public slots:
     void increaseCountUp();

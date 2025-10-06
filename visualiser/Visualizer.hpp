@@ -28,6 +28,7 @@
 #include "Line.h"
 #include "OOpenCAL/base/Element.h" // rgb
 #include "visualiser/SettingParameter.h"
+#include "types.h" // StepIndex
 
 #ifndef __ssize_t_defined
 using ssize_t = intptr_t;
@@ -37,7 +38,7 @@ using ssize_t = intptr_t;
 template <class T>
 class Visualizer
 {
-    std::vector<std::unordered_map<int, long int>> hashMap;
+    std::vector<std::unordered_map<StepIndex, long int>> hashMap;
 
 public:
     void prepareHashMap(int nNodeX, int nNodeY)
@@ -45,7 +46,7 @@ public:
         hashMap.resize(nNodeX * nNodeY);
     }
 
-    long int getStepStartingPositionInFile(int step, int node)
+    long int getStepStartingPositionInFile(StepIndex step, int node)
     {
         return hashMap.at(node).at(step);
     }
@@ -65,9 +66,9 @@ public:
      *
      * @return std::ifstream Stream ready for reading cell data of this node at given step.
      * @throws std::runtime_error If the file cannot be opened, seek fails, or header is invalid. */
-    [[nodiscard]] std::ifstream readLocalColumnAndRowForStepFromFileReturningStream(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
+    [[nodiscard]] std::ifstream readLocalColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
 
-    [[nodiscard]] std::pair<int,int> readLocalColumnAndRowForStepFromFile(int step, const std::string& fileName, int node);
+    [[nodiscard]] std::pair<int,int> readLocalColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, int node);
 
     template<class Matrix>
     void readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line *lines);
@@ -91,16 +92,16 @@ public:
 
     /// visualising part:
     template<class Matrix>
-    void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
+    void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, StepIndex step, Line *lines, vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
     template<class Matrix>
-    void refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
+    void refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, StepIndex step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
     void buildLoadBalanceLine(Line *lines, int dimLines, int nCols, int nRows, vtkSmartPointer<vtkPoints> pts, vtkSmartPointer<vtkCellArray> cellLines, vtkSmartPointer<vtkPolyData> grid, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine);
-    void refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows, vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors);
-    vtkTextProperty* buildStepLine(int step, vtkSmartPointer<vtkTextMapper>, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkNamedColors> colors, std::string color);
-    vtkNew<vtkActor2D> buildStepText(int step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer);
+    void refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols, int nRows, vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors);
+    vtkTextProperty* buildStepLine(StepIndex step, vtkSmartPointer<vtkTextMapper>, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkNamedColors> colors, std::string color);
+    vtkNew<vtkActor2D> buildStepText(StepIndex step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer);
 
 private:
-    std::pair<std::vector<int>, std::vector<int>> giveMeLocalColsAndRowsForAllSteps(int step, int nNodeX, int nNodeY, const std::string& fileName);
+    std::pair<std::vector<StepIndex>, std::vector<StepIndex>> giveMeLocalColsAndRowsForAllSteps(StepIndex step, int nNodeX, int nNodeY, const std::string& fileName);
 };
 
 namespace VisualiserHelpers /// functions which are not templates
@@ -116,21 +117,19 @@ namespace VisualiserHelpers /// functions which are not templates
 
 std::pair<int,int> getColumnAndRowFromLine(const std::string& line);
 
-bool allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount);
-
 std::pair<int,int> calculateXYOffset(int node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows);
 }
 ////////////////////////////////////////////////////////////////////
 
 template <class T>
-std::pair<int,int> Visualizer<T>::readLocalColumnAndRowForStepFromFile(int step, const std::string& fileName, int node)
+std::pair<int,int> Visualizer<T>::readLocalColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, int node)
 {
     int nLocalCols, nLocalRows;
     std::ifstream file = readLocalColumnAndRowForStepFromFileReturningStream(step, fileName, node, nLocalCols, nLocalRows);
     return {nLocalCols, nLocalRows};
 }
 template <class T>
-std::ifstream Visualizer<T>::readLocalColumnAndRowForStepFromFileReturningStream(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows)
+std::ifstream Visualizer<T>::readLocalColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows)
 {
     const auto fileNameTmp = VisualiserHelpers::giveMeFileName(fileName, node);
 
@@ -165,8 +164,8 @@ void Visualizer<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* 
 
     bool startStepDone = false;
 
-    constexpr size_t numbersPerLine = 10'000;
-    const size_t lineBufferSize = (log10(UINT_MAX) + 2) * numbersPerLine;
+    constexpr std::size_t numbersPerLine = 10'000;
+    const std::size_t lineBufferSize = (log10(UINT_MAX) + 2) * numbersPerLine;
     std::string line;
     line.reserve(lineBufferSize); /// for speedup to avoid realocations
 
@@ -217,10 +216,10 @@ void Visualizer<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* 
     }
 }
 template<class T>
-std::pair<std::vector<int>, std::vector<int>> Visualizer<T>::giveMeLocalColsAndRowsForAllSteps(int step, int nNodeX, int nNodeY, const std::string& fileName)
+std::pair<std::vector<StepIndex>, std::vector<StepIndex>> Visualizer<T>::giveMeLocalColsAndRowsForAllSteps(StepIndex step, int nNodeX, int nNodeY, const std::string& fileName)
 {
     const auto nodesCount = nNodeX * nNodeY;
-    std::vector<int> allLocalCols{nodesCount}, allLocalRows{nodesCount};
+    std::vector<StepIndex> allLocalCols{nodesCount}, allLocalRows{nodesCount};
     allLocalCols.resize(nodesCount);
     allLocalRows.resize(nodesCount);
 
@@ -254,7 +253,7 @@ void Visualizer<T>::readStepsOffsetsForAllNodesFromFiles(int nNodeX, int nNodeY,
             throw std::runtime_error("Cannot open file: " + fileNameIndex);
         }
 
-        int stepNumber;
+        StepIndex stepNumber;
         long positionInFile;
 
         while (true)
@@ -274,7 +273,7 @@ void Visualizer<T>::readStepsOffsetsForAllNodesFromFiles(int nNodeX, int nNodeY,
 
 template <class T>
 template <class Matrix>
-void Visualizer<T>::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor)
+void Visualizer<T>::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, StepIndex step, Line *lines, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor)
 {
     const auto numberOfPoints = nRows * nCols;
     vtkNew<vtkDoubleArray> pointValues;
@@ -315,7 +314,7 @@ void Visualizer<T>::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int s
 
 template <class T>
 template <class Matrix>
-void Visualizer<T>::refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, int dimLines, vtkSmartPointer<vtkActor> gridActor)
+void Visualizer<T>::refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, StepIndex step, Line *lines, int dimLines, vtkSmartPointer<vtkActor> gridActor)
 {
     if (vtkLookupTable* lut = dynamic_cast<vtkLookupTable*>(gridActor->GetMapper()->GetLookupTable()))
     {
@@ -391,7 +390,7 @@ void Visualizer<T>::refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nC
 }
 
 template <class T>
-vtkTextProperty* Visualizer<T>::buildStepLine(int step,vtkSmartPointer<vtkTextMapper> singleLineTextB,vtkSmartPointer<vtkTextProperty> singleLineTextProp,vtkSmartPointer<vtkNamedColors> colors, std::string color)
+vtkTextProperty* Visualizer<T>::buildStepLine(StepIndex step, vtkSmartPointer<vtkTextMapper> singleLineTextB, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkNamedColors> colors, std::string color)
 {
     std::string stepText = "Step " + std::to_string(step);
     singleLineTextB->SetInput(stepText.c_str());
@@ -405,7 +404,7 @@ vtkTextProperty* Visualizer<T>::buildStepLine(int step,vtkSmartPointer<vtkTextMa
 
 
 template <class T>
-vtkNew<vtkActor2D> Visualizer<T>::buildStepText(int step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer)
+vtkNew<vtkActor2D> Visualizer<T>::buildStepText(StepIndex step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer)
 {
     singleLineTextProp->SetFontSize(font_size);
     singleLineTextProp->SetFontFamilyToArial();
