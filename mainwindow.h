@@ -28,6 +28,7 @@ private slots:
     void onPlayButtonClicked();
     void onStopButtonClicked();
     void onSkipForwardButtonClicked();
+    void onSkipBackwardButtonClicked();
     void onBackButtonClicked();
     void onLeftButtonClicked();
     void onRightButtonClicked();
