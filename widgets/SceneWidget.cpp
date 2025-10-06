@@ -146,8 +146,8 @@ void SceneWidget::renderVtkScene()
 
     std::vector<Line> lines(settingParameter->numberOfLines);
 
-    sceneWidgetVisualizerProxy->vis.readStageStateFromFilesForStep(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
-    DEBUG << "DEBUG: getElementMatrix completed" << endl;
+    sceneWidgetVisualizerProxy->vis.readStageStateFromFilesForStep(sceneWidgetVisualizerProxy->p, settingParameter.get(), &lines[0]);
+    DEBUG << "DEBUG: readStageStateFromFilesForStep completed" << endl;
 
     sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingRenderParameter->m_renderer, gridActor);
     DEBUG << "DEBUG: drawWithVTK completed" << endl;
@@ -270,8 +270,8 @@ void SceneWidget::showToolTip()
     QPoint globalPos = mapToGlobal(m_lastMousePos);
     QToolTip::showText(globalPos, 
                       QString("X: %1, Y: %2").arg(m_lastMousePos.x()).arg(m_lastMousePos.y()),
-                      this, 
-                      QRect(m_lastMousePos, QSize(1, 1)), 
+                      this,
+                      QRect(m_lastMousePos, QSize(1, 1)),
                       2000); // Show for 2 seconds
 }
 
@@ -288,21 +288,18 @@ void SceneWidget::updateVisualization()
     std::vector<Line> lines(settingParameter->numberOfLines);
 
     sceneWidgetVisualizerProxy->vis.readStageStateFromFilesForStep(
-        settingParameter->step,
         sceneWidgetVisualizerProxy->p,
-        settingParameter->nNodeX,
-        settingParameter->nNodeY,
-        settingParameter->outputFileName,
+        settingParameter.get(),
         &lines[0]
     );
 
     sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(
-        sceneWidgetVisualizerProxy->p, 
-        settingParameter->dimY, 
-        settingParameter->dimX, 
-        settingParameter->step, 
-        &lines[0], 
-        settingParameter->numberOfLines, 
+        sceneWidgetVisualizerProxy->p,
+        settingParameter->dimY,
+        settingParameter->dimX,
+        settingParameter->step,
+        &lines[0],
+        settingParameter->numberOfLines,
         gridActor
     );
 

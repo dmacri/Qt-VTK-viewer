@@ -27,6 +27,7 @@
 
 #include "Line.h"
 #include "OOpenCAL/base/Element.h" // rgb
+#include "visualiser/SettingParameter.h"
 
 #ifndef __ssize_t_defined
 using ssize_t = intptr_t;
@@ -52,7 +53,7 @@ public:
     [[nodiscard]] std::ifstream giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
     [[nodiscard]] std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node);
     template<class Matrix>
-    void readStageStateFromFilesForStep(int step, Matrix& m, int nNodeX, int nNodeY, const std::string& fileName, Line *lines);
+    void readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line *lines);
     template<class Matrix>
     void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
     template<class Matrix>
@@ -139,20 +140,20 @@ std::ifstream Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::s
 
 template<class T>
 template<class Matrix>
-void Visualizer<T>::readStageStateFromFilesForStep(int step, Matrix& m, int nNodeX, int nNodeY, const std::string& fileName, Line *lines)
+void Visualizer<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line *lines)
 {
     // Check if we need to use fallback step
-    int actualStep = step;
+    int actualStep = sp->step;
 
-    auto [allLocalCols, allLocalRows] = giveMeLocalColsAndRowsForAllSteps(step, nNodeX, nNodeY, fileName);
+    auto [allLocalCols, allLocalRows] = giveMeLocalColsAndRowsForAllSteps(actualStep, sp->nNodeX, sp->nNodeY, sp->outputFileName);
 
     // If all nodes are empty and this is step 4000, use previous step
-    if (step == 4000 &&  // TODO: GB: What is 4000? Is 4000 the last step?
-        VisualiserHelpers::allNodesHaveEmptyData(allLocalCols, allLocalRows, nNodeX * nNodeY))
+    if (sp->step == 4000 &&  // TODO: GB: What is 4000? Is 4000 the last step?
+        VisualiserHelpers::allNodesHaveEmptyData(allLocalCols, allLocalRows, sp->nNodeX * sp->nNodeY))
     {
         actualStep = 3999;
         // Reload data with fallback step
-        std::tie(allLocalCols, allLocalRows) = giveMeLocalColsAndRowsForAllSteps(actualStep, nNodeX, nNodeY, fileName);
+        std::tie(allLocalCols, allLocalRows) = giveMeLocalColsAndRowsForAllSteps(actualStep, sp->nNodeX, sp->nNodeY, sp->outputFileName);
     }
 
     bool startStepDone = false;
@@ -162,12 +163,12 @@ void Visualizer<T>::readStageStateFromFilesForStep(int step, Matrix& m, int nNod
     std::string line;
     line.reserve(lineBufferSize); /// for speedup to avoid realocations
 
-    for (int node = 0; node < nNodeX * nNodeY; ++node)
+    for (int node = 0; node < sp->nNodeX * sp->nNodeY; ++node)
     {
-        const auto [offsetX, offsetY] = VisualiserHelpers::calculateXYOffset(node, nNodeX, nNodeY, allLocalCols, allLocalRows);
+        const auto [offsetX, offsetY] = VisualiserHelpers::calculateXYOffset(node, sp->nNodeX, sp->nNodeY, allLocalCols, allLocalRows);
 
         int nLocalCols, nLocalRows;
-        std::ifstream fp = giveMeLocalColAndRowFromStep(actualStep, fileName, node, nLocalCols, nLocalRows);
+        std::ifstream fp = giveMeLocalColAndRowFromStep(actualStep, sp->outputFileName, node, nLocalCols, nLocalRows);
         if (! fp)
             throw std::runtime_error("Cannot open file for node " + std::to_string(node));
 
@@ -182,7 +183,7 @@ void Visualizer<T>::readStageStateFromFilesForStep(int step, Matrix& m, int nNod
         {
             if (! std::getline(fp, line))
             {
-                const auto fileNameTmp = VisualiserHelpers::giveMeFileName(fileName, node);
+                const auto fileNameTmp = VisualiserHelpers::giveMeFileName(sp->outputFileName, node);
                 throw std::runtime_error("Error when reading entire line of file " + fileNameTmp);
             }
 
@@ -194,7 +195,7 @@ void Visualizer<T>::readStageStateFromFilesForStep(int step, Matrix& m, int nNod
             {
                 if (! startStepDone) [[unlikely]]
                 {
-                    m[row + offsetY][col + offsetX].T::startStep(step);
+                    m[row + offsetY][col + offsetX].T::startStep(sp->step);
                     startStepDone = true;
                 }
 
