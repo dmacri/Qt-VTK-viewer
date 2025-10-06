@@ -16,7 +16,7 @@ public:
         : name{std::move(name)}, configParameters{std::move(params)}
     {}
 
-    void readFile(char* /*name*/, char* /*configuration_path*/)
+    void readFile(const char* /*name*/, const char* /*configuration_path*/)
     {
         #warning "Ask Alessio or Andrea about the function - how it should be implemented, or should it be removed?"
     }

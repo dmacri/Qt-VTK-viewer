@@ -118,7 +118,7 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename)
 
 void SceneWidget::setupVtkScene()
 {
-    sceneWidgetVisualizerProxy->vis.prepareHashMap(settingParameter->nNodeX, settingParameter->nNodeY);
+    sceneWidgetVisualizerProxy->modelReader.prepareHashMap(settingParameter->nNodeX, settingParameter->nNodeY);
 
     renderWindow()->AddRenderer(settingRenderParameter->m_renderer);
     interactor()->SetRenderWindow(renderWindow());
@@ -141,24 +141,24 @@ void SceneWidget::setupVtkScene()
 void SceneWidget::renderVtkScene()
 {
     DEBUG << "DEBUG: Starting " << __FUNCTION__ << endl;
-    sceneWidgetVisualizerProxy->vis.readStepsOffsetsForAllNodesFromFiles(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
+    sceneWidgetVisualizerProxy->modelReader.readStepsOffsetsForAllNodesFromFiles(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
     DEBUG << "DEBUG: Hashmap loaded successfully" << endl;
 
     std::vector<Line> lines(settingParameter->numberOfLines);
 
-    sceneWidgetVisualizerProxy->vis.readStageStateFromFilesForStep(sceneWidgetVisualizerProxy->p, settingParameter.get(), &lines[0]);
+    sceneWidgetVisualizerProxy->modelReader.readStageStateFromFilesForStep(sceneWidgetVisualizerProxy->p, settingParameter.get(), &lines[0]);
     DEBUG << "DEBUG: readStageStateFromFilesForStep completed" << endl;
 
-    sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p, settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, &lines[0], settingRenderParameter->m_renderer, gridActor);
+    sceneWidgetVisualizerProxy->visualiser.drawWithVTK(sceneWidgetVisualizerProxy->p, settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, &lines[0], settingRenderParameter->m_renderer, gridActor);
     DEBUG << "DEBUG: drawWithVTK completed" << endl;
 
     vtkNew<vtkCellArray> cellLines;
     vtkNew<vtkPoints> pts;
     vtkNew<vtkPolyData> grid;
-    sceneWidgetVisualizerProxy->vis.buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->numberOfRowsY+1, settingParameter->numberOfColumnX+1, pts, cellLines, grid,settingRenderParameter->colors,settingRenderParameter->m_renderer,actorBuildLine);
+    sceneWidgetVisualizerProxy->visualiser.buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->numberOfRowsY+1, settingParameter->numberOfColumnX+1, pts, cellLines, grid,settingRenderParameter->colors,settingRenderParameter->m_renderer,actorBuildLine);
     DEBUG << "DEBUG: buildLoadBalanceLine completed" << endl;
 
-    sceneWidgetVisualizerProxy->vis.buildStepText(settingParameter->step, settingParameter->font_size, settingRenderParameter->colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
+    sceneWidgetVisualizerProxy->visualiser.buildStepText(settingParameter->step, settingParameter->font_size, settingRenderParameter->colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
 
     // Render
     renderWindow()->Render();
@@ -285,13 +285,13 @@ void SceneWidget::updateVisualization()
 {
     std::vector<Line> lines(settingParameter->numberOfLines);
 
-    sceneWidgetVisualizerProxy->vis.readStageStateFromFilesForStep(
+    sceneWidgetVisualizerProxy->modelReader.readStageStateFromFilesForStep(
         sceneWidgetVisualizerProxy->p,
         settingParameter.get(),
         &lines[0]
     );
 
-    sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(
+    sceneWidgetVisualizerProxy->visualiser.refreshWindowsVTK(
         sceneWidgetVisualizerProxy->p,
         settingParameter->numberOfRowsY,
         settingParameter->numberOfColumnX,
@@ -308,7 +308,7 @@ void SceneWidget::updateVisualization()
 
     if (settingParameter->numberOfLines > 0)
     {
-        sceneWidgetVisualizerProxy->vis.refreshBuildLoadBalanceLine(
+        sceneWidgetVisualizerProxy->visualiser.refreshBuildLoadBalanceLine(
             &lines[0], 
             settingParameter->numberOfLines, 
             settingParameter->numberOfRowsY + 1,
@@ -319,7 +319,7 @@ void SceneWidget::updateVisualization()
     }
 
     const std::string stepLineColor{"red"};
-    sceneWidgetVisualizerProxy->vis.buildStepLine(
+    sceneWidgetVisualizerProxy->visualiser.buildStepLine(
         settingParameter->step, 
         singleLineTextStep, 
         singleLineTextPropStep, 
