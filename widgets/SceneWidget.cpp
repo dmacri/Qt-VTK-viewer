@@ -7,7 +7,9 @@
 #include <vtkNew.h>
 #include <vtkObjectFactory.h>
 #include <vtkPolyData.h>
+#include <vtkPointData.h>
 #include <vtkRenderWindowInteractor.h>
+#include <vtkRenderWindow.h>
 #include "SceneWidget.h"
 #include "config/Config.h"
 #include "visualiser/Line.h"
@@ -43,8 +45,6 @@ SceneWidget::SceneWidget(QWidget* parent)
     , settingParameter{std::make_unique<SettingParameter>()}
     , settingRenderParameter{std::make_unique<SettingRenderParameter>()}
 {
-    settingParameter->sceneWidgetVisualizerProxy = sceneWidgetVisualizerProxy.get();
-
     enableToolTipWhenMouseAboveWidget();
 }
 
@@ -110,19 +110,15 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename)
     settingParameter->insertAction = false;
 
     sceneWidgetVisualizerProxy->initMatrix(settingParameter->dimX, settingParameter->dimY);
-    settingParameter->sceneWidgetVisualizerProxy->p = sceneWidgetVisualizerProxy->p;
 
     settingRenderParameter->m_renderer->SetBackground(settingRenderParameter->colors->GetColor3d("Silver").GetData());
-
-    // Set the scene widget pointer in the settings
-    settingParameter->sceneWidget = this;
 
     cout << *settingParameter << endl;
 }
 
 void SceneWidget::setupVtkScene()
 {
-    sceneWidgetVisualizerProxy->vis.hashMap.resize(settingParameter->nNodeX * settingParameter->nNodeY);
+    sceneWidgetVisualizerProxy->vis.prepareHashMap(settingParameter->nNodeX, settingParameter->nNodeY);
 
     renderWindow()->AddRenderer(settingRenderParameter->m_renderer);
     interactor()->SetRenderWindow(renderWindow());
@@ -134,34 +130,28 @@ void SceneWidget::setupVtkScene()
     vtkNew<vtkInteractorStyleImage> style;
     interactor()->SetInteractorStyle(style);
 
-    renderWindow()->SetWindowName("Visualizer");
-}
-
-void SceneWidget::renderVtkScene()
-{
-    DEBUG << "DEBUG: Starting " << __FUNCTION__ << endl;
-    DEBUG << "DEBUG: Loading hashmap from file..." << endl;
-    sceneWidgetVisualizerProxy->vis.loadHashmapFromFile(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
-    DEBUG << "DEBUG: Hashmap loaded successfully" << endl;
+    renderWindow()->SetWindowName(QApplication::applicationName().toLocal8Bit().data());
 
     vtkNew<vtkCallbackCommand> keypressCallback;
     keypressCallback->SetCallback(SceneWidget::keypressCallbackFunction);
     keypressCallback->SetClientData(this);
     interactor()->AddObserver(vtkCommand::KeyPressEvent, keypressCallback);
+}
 
-    std::vector<Line> lines;
-    lines.resize(settingParameter->numberOfLines);
-    DEBUG << "DEBUG: Allocated lines array" << endl;
+void SceneWidget::renderVtkScene()
+{
+    DEBUG << "DEBUG: Starting " << __FUNCTION__ << endl;
+    sceneWidgetVisualizerProxy->vis.readStepsOffsetsForAllNodesFromFiles(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
+    DEBUG << "DEBUG: Hashmap loaded successfully" << endl;
 
-    DEBUG << "DEBUG: Calling getElementMatrix..." << endl;
-    sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->dimX, settingParameter->dimY, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
-    DEBUG << "DEBUG: getElementMatrix completed" << endl;
+    std::vector<Line> lines(settingParameter->numberOfLines);
 
-    DEBUG << "DEBUG: Calling drawWithVTK..." << endl;
-    sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingParameter->numberOfLines, settingParameter->edittext, settingRenderParameter->m_renderer, gridActor);
+    sceneWidgetVisualizerProxy->vis.readStageStateFromFilesForStep(sceneWidgetVisualizerProxy->p, settingParameter.get(), &lines[0]);
+    DEBUG << "DEBUG: readStageStateFromFilesForStep completed" << endl;
+
+    sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingRenderParameter->m_renderer, gridActor);
     DEBUG << "DEBUG: drawWithVTK completed" << endl;
-    
-    DEBUG << "DEBUG: Calling buildLoadBalanceLine..." << endl;
+
     vtkNew<vtkCellArray> cellLines;
     vtkNew<vtkPoints> pts;
     vtkNew<vtkPolyData> grid;
@@ -184,7 +174,7 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
     SceneWidget* sw = static_cast<SceneWidget*>(clientData);
     SettingParameter* sp = sw->settingParameter.get();
 
-    SceneWidgetVisualizerProxy* visualiserProxy = sp->sceneWidgetVisualizerProxy;
+    SceneWidgetVisualizerProxy* visualiserProxy = sw->sceneWidgetVisualizerProxy.get();
 
     if (keyPressed == "Up")
     {
@@ -192,8 +182,8 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
             sp->step += 1;
         sp->changed = true;
 
-        if (sp->sceneWidget)
-            sp->sceneWidget->changedStepNumberWithKeyboardKeys(sp->step);
+        if (sw)
+            sw->changedStepNumberWithKeyboardKeys(sp->step);
     }
     else if (keyPressed == "Down")
     {
@@ -201,8 +191,8 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
             sp->step  -= 1;
         sp->changed = true;
 
-        if (sp->sceneWidget)
-            sp->sceneWidget->changedStepNumberWithKeyboardKeys(sp->step);
+        if (sw)
+            sw->changedStepNumberWithKeyboardKeys(sp->step);
     }
     else if (keyPressed == "i")
     {
@@ -216,8 +206,8 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
             sw->updateVisualization();
             
             // Force renderer update for keyboard callback too
-            sp->sceneWidget->renderWindow()->Modified();
-            sp->sceneWidget->renderWindow()->Render();
+            sw->renderWindow()->Modified();
+            sw->renderWindow()->Render();
         }
         catch(const std::runtime_error& re)
         {
@@ -280,8 +270,8 @@ void SceneWidget::showToolTip()
     QPoint globalPos = mapToGlobal(m_lastMousePos);
     QToolTip::showText(globalPos, 
                       QString("X: %1, Y: %2").arg(m_lastMousePos.x()).arg(m_lastMousePos.y()),
-                      this, 
-                      QRect(m_lastMousePos, QSize(1, 1)), 
+                      this,
+                      QRect(m_lastMousePos, QSize(1, 1)),
                       2000); // Show for 2 seconds
 }
 
@@ -297,24 +287,19 @@ void SceneWidget::updateVisualization()
 {
     std::vector<Line> lines(settingParameter->numberOfLines);
 
-    sceneWidgetVisualizerProxy->vis.getElementMatrix(
-        settingParameter->step, 
-        sceneWidgetVisualizerProxy->p, 
-        settingParameter->dimX, 
-        settingParameter->dimY, 
-        settingParameter->nNodeX, 
-        settingParameter->nNodeY, 
-        settingParameter->outputFileName, 
+    sceneWidgetVisualizerProxy->vis.readStageStateFromFilesForStep(
+        sceneWidgetVisualizerProxy->p,
+        settingParameter.get(),
         &lines[0]
     );
 
     sceneWidgetVisualizerProxy->vis.refreshWindowsVTK(
-        sceneWidgetVisualizerProxy->p, 
-        settingParameter->dimY, 
-        settingParameter->dimX, 
-        settingParameter->step, 
-        &lines[0], 
-        settingParameter->numberOfLines, 
+        sceneWidgetVisualizerProxy->p,
+        settingParameter->dimY,
+        settingParameter->dimX,
+        settingParameter->step,
+        &lines[0],
+        settingParameter->numberOfLines,
         gridActor
     );
 

@@ -2,9 +2,6 @@
 
 #include <iosfwd>
 #include <string>
-#include "visualiserProxy/SceneWidgetVisualizerProxyDefault.h"
-
-class SceneWidget;
 
 
 struct SettingParameter
@@ -21,9 +18,6 @@ struct SettingParameter
     std::string outputFileName;
     int numberOfLines;
     const int font_size = 18;
-    std::string edittext;// an empty string for editting
-    SceneWidgetVisualizerProxy* sceneWidgetVisualizerProxy;
-    SceneWidget* sceneWidget;
 
     friend std::ostream& operator<<(std::ostream& os, const SettingParameter& sp);
 };
