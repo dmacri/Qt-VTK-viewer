@@ -88,7 +88,7 @@ public:
      * @param nNodeX number of nodes along the X axis
      * @param nNodeY number of nodes along the Y axis
      * @param filename base filename (e.g., "ball"), for which nodes files are being read */
-    void readStepsOffsetsForAllNodesFromFiles(int nNodeX, int nNodeY, const std::string &filename);
+    void readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, NodeIndex nNodeY, const std::string &filename);
 
     /// visualising part:
     template<class Matrix>
@@ -234,9 +234,9 @@ std::pair<std::vector<StepIndex>, std::vector<StepIndex>> Visualizer<T>::giveMeL
 }
 
 template <class T>
-void Visualizer<T>::readStepsOffsetsForAllNodesFromFiles(int nNodeX, int nNodeY, const std::string& filename)
+void Visualizer<T>::readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, NodeIndex nNodeY, const std::string& filename)
 {
-    const int totalNodes = nNodeX * nNodeY;
+    const auto totalNodes = nNodeX * nNodeY;
     for (NodeIndex node = 0; node < totalNodes; ++node)
     {
         const auto fileNameIndex = VisualiserHelpers::giveMeFileNameIndex(filename, node);
@@ -253,11 +253,11 @@ void Visualizer<T>::readStepsOffsetsForAllNodesFromFiles(int nNodeX, int nNodeY,
             throw std::runtime_error("Cannot open file: " + fileNameIndex);
         }
 
-        StepIndex stepNumber;
-        long positionInFile;
-
         while (true)
         {
+            StepIndex stepNumber;
+            FilePosition positionInFile;
+
             if (! (file >> stepNumber >> positionInFile))
             { /// enters here if reading error
                 if (file.eof())
@@ -266,7 +266,11 @@ void Visualizer<T>::readStepsOffsetsForAllNodesFromFiles(int nNodeX, int nNodeY,
                     throw std::runtime_error("Invalid line format in file: " + fileNameIndex);
             }
 
-            hashMap[node].emplace(stepNumber, positionInFile);
+            const auto [it, inserted] = hashMap[node].emplace(stepNumber, positionInFile);
+            if (! inserted)
+            {
+                std::cerr << std::format("Duplicate stepNumber {} found in file '{}' (node {})", stepNumber, fileNameIndex, node) << std::endl;
+            }
         }
     }
 }
