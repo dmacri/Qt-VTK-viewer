@@ -7,7 +7,9 @@
 #include <vtkNew.h>
 #include <vtkObjectFactory.h>
 #include <vtkPolyData.h>
+#include <vtkPointData.h>
 #include <vtkRenderWindowInteractor.h>
+#include <vtkRenderWindow.h>
 #include "SceneWidget.h"
 #include "config/Config.h"
 #include "visualiser/Line.h"
