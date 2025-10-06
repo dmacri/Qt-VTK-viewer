@@ -83,7 +83,7 @@ namespace ReaderHelpers /// functions which are not templates
 
 ColumnAndRow getColumnAndRowFromLine(const std::string& line);
 
-std::pair<int,int> calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std::vector<ColumnAndRow> &columnsAndRows);
+ColumnAndRow calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std::vector<ColumnAndRow> &columnsAndRows);
 }
 /////////////////////////////
 
@@ -137,7 +137,7 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
 
     for (NodeIndex node = 0; node < sp->nNodeX * sp->nNodeY; ++node)
     {
-        const auto [offsetX, offsetY] = ReaderHelpers::calculateXYOffset(node, sp->nNodeX, sp->nNodeY, columnsAndRows);
+        const auto offsetXY = ReaderHelpers::calculateXYOffset(node, sp->nNodeX, sp->nNodeY, columnsAndRows);
 
         ColumnAndRow columnAndRow;
         std::ifstream fp = readColumnAndRowForStepFromFileReturningStream(sp->step, sp->outputFileName, node, columnAndRow);
@@ -148,8 +148,8 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
         static thread_local char fileBuffer[1 << 16];
         fp.rdbuf()->pubsetbuf(fileBuffer, sizeof(fileBuffer));
 
-        lines[node * 2]     = Line(offsetX, offsetY, offsetX + columnAndRow.column, offsetY);
-        lines[node * 2 + 1] = Line(offsetX, offsetY, offsetX, offsetY + columnAndRow.row);
+        lines[node * 2]     = Line(offsetXY.x(), offsetXY.y(), offsetXY.x() + columnAndRow.column, offsetXY.y());
+        lines[node * 2 + 1] = Line(offsetXY.x(), offsetXY.y(), offsetXY.x(), offsetXY.y() + columnAndRow.row);
 
         for (int row = 0; row < columnAndRow.row; ++row)
         {
@@ -167,11 +167,11 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
             {
                 if (! startStepDone) [[unlikely]]
                 {
-                    m[row + offsetY][col + offsetX].T::startStep(sp->step);
+                    m[row + offsetXY.y()][col + offsetXY.x()].T::startStep(sp->step);
                     startStepDone = true;
                 }
 
-                m[row + offsetY][col + offsetX].T::composeElement(currentTokenPtr);
+                m[row + offsetXY.y()][col + offsetXY.x()].T::composeElement(currentTokenPtr);
 
                 /// go to another token
                 while (*currentTokenPtr)
