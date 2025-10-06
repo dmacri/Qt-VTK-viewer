@@ -8,7 +8,7 @@ std::pair<int,int> VisualiserHelpers::getColumnAndRowFromLine(const std::string&
     /// input format: "C-R" where C and R are numbers
     if (line.empty())
     {
-        throw std::invalid_argument("Line is empty, but it should dontain columns and row!");
+        throw std::invalid_argument("Line is empty, but it should contain columns and row!");
     }
 
     const auto delimiterPos = line.find('-');
@@ -64,45 +64,4 @@ std::pair<int,int> VisualiserHelpers::calculateXYOffset(int node, int nNodeX, in
         }
     }
     return {offsetX, offsetY};
-}
-
-std::vector<std::string_view> VisualiserHelpers::splitLine(std::string_view line, int nLocalCols, char delimiter) noexcept
-{
-    std::vector<std::string_view> result;
-    result.reserve(nLocalCols);
-
-    auto split_view = line | std::views::split(delimiter)
-                      | std::views::filter([](auto&& rng) {
-                            return !std::ranges::empty(rng);
-                        });
-
-    for (auto&& token : split_view)
-    {
-        result.emplace_back(token.begin(), token.end());
-    }
-
-    return result;
-}
-
-std::vector<int> VisualiserHelpers::splitLineIntoNumbers(const std::string& line, int nLocalCols, const char* separator)
-{
-    std::vector<int> numbers;
-    numbers.reserve(nLocalCols);
-
-    std::size_t currentPosition = {};
-    while (true)
-    {
-        auto separatorPosition = line.find(separator, currentPosition);
-        if (std::string::npos != separatorPosition)
-        {
-            auto currentElement2Convert = line.substr(currentPosition, separatorPosition);
-            cout << ">" << currentElement2Convert << "<" << endl;
-            auto currentNumber = std::stoi(currentElement2Convert);
-            numbers.push_back(currentNumber);
-
-            currentPosition = separatorPosition + 1;
-        }
-    }
-
-    return numbers;
 }

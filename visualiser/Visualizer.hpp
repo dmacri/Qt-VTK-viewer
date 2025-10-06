@@ -44,7 +44,7 @@ public:
         hashMap.resize(nNodeX * nNodeY);
     }
 
-    long int stepStartingPositionInFile(int step, int node)
+    long int getStepStartingPositionInFile(int step, int node)
     {
         return hashMap.at(node).at(step);
     }
@@ -52,7 +52,7 @@ public:
     [[nodiscard]] std::ifstream giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node, int &nLocalCols, int &nLocalRows);
     [[nodiscard]] std::pair<int,int> giveMeLocalColAndRowFromStep(int step, const std::string& fileName, int node);
     template<class Matrix>
-    void getElementMatrix(int step, Matrix& m, int nNodeX, int nNodeY, const std::string& fileName, Line *lines);
+    void readStageStateFromFilesForStep(int step, Matrix& m, int nNodeX, int nNodeY, const std::string& fileName, Line *lines);
     template<class Matrix>
     void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, int step, Line *lines, vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
     template<class Matrix>
@@ -83,7 +83,7 @@ private:
     std::pair<std::vector<int>, std::vector<int>> giveMeLocalColsAndRowsForAllSteps(int step, int nNodeX, int nNodeY, const std::string& fileName);
 };
 
-namespace VisualiserHelpers // functions which are not templates
+namespace VisualiserHelpers /// functions which are not templates
 {
 [[nodiscard]] inline std::string giveMeFileName(const std::string& fileName, int node)
 {
@@ -99,11 +99,6 @@ std::pair<int,int> getColumnAndRowFromLine(const std::string& line);
 bool allNodesHaveEmptyData(const std::vector<int>& AlllocalCols, const std::vector<int>& AlllocalRows, int nodesCount);
 
 std::pair<int,int> calculateXYOffset(int node, int nNodeX, int nNodeY, const std::vector<int>& allLocalCols, const std::vector<int>& allLocalRows);
-
-std::vector<std::string_view> splitLine(std::string_view line, int nLocalCols, char delimiter = ' ') noexcept;
-std::vector<int> splitLineIntoNumbers(const std::string& line, int nLocalCols, const char* separator=" "); // TODO: Not used
-
-void loadStepOffsetsPerNode(int nNodeX, int nNodeY, const std::string& filename);
 }
 ////////////////////////////////////////////////////////////////////
 
@@ -125,7 +120,7 @@ std::ifstream Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::s
         throw std::runtime_error(std::format("Can't read '{}' in {} function", fileNameTmp, __func__));
     }
 
-    const auto fPos = stepStartingPositionInFile(step, node);
+    const auto fPos = getStepStartingPositionInFile(step, node);
     file.seekg(fPos);
     if (! file)
     {
@@ -144,7 +139,7 @@ std::ifstream Visualizer<T>::giveMeLocalColAndRowFromStep(int step, const std::s
 
 template<class T>
 template<class Matrix>
-void Visualizer<T>::getElementMatrix(int step, Matrix& m, int nNodeX, int nNodeY, const std::string& fileName, Line *lines)
+void Visualizer<T>::readStageStateFromFilesForStep(int step, Matrix& m, int nNodeX, int nNodeY, const std::string& fileName, Line *lines)
 {
     // Check if we need to use fallback step
     int actualStep = step;
@@ -329,7 +324,7 @@ void Visualizer<T>::buildLoadBalanceLine(Line *lines, int dimLines,int nCols, in
 {
     for (int i = 0; i < dimLines; i++)
     {
-        cout << "Line (" << lines[i].x1 << ", " << lines[i].y1 << ") -> (" <<lines[i].x2 << ", " <<lines[i].y2 << ")" << endl;
+        std::cout << "Line (" << lines[i].x1 << ", " << lines[i].y1 << ") -> (" <<lines[i].x2 << ", " <<lines[i].y2 << ")" << std::endl;
         pts->InsertNextPoint(lines[i].x1 * 1, nCols-1-lines[i].y1 * 1, 0.0);
         pts->InsertNextPoint(lines[i].x2 * 1, nCols-1-lines[i].y2 * 1, 0.0);
         cellLines->InsertNextCell(2);

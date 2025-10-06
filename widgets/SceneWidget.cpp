@@ -145,9 +145,8 @@ void SceneWidget::renderVtkScene()
     DEBUG << "DEBUG: Hashmap loaded successfully" << endl;
 
     std::vector<Line> lines(settingParameter->numberOfLines);
-    DEBUG << "DEBUG: Allocated lines array " << settingParameter->numberOfLines << endl;
 
-    sceneWidgetVisualizerProxy->vis.getElementMatrix(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
+    sceneWidgetVisualizerProxy->vis.readStageStateFromFilesForStep(settingParameter->step, sceneWidgetVisualizerProxy->p, settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName, &lines[0]);
     DEBUG << "DEBUG: getElementMatrix completed" << endl;
 
     sceneWidgetVisualizerProxy->vis.drawWithVTK(sceneWidgetVisualizerProxy->p, settingParameter->dimY, settingParameter->dimX, settingParameter->step, &lines[0], settingRenderParameter->m_renderer, gridActor);
@@ -288,12 +287,12 @@ void SceneWidget::updateVisualization()
 {
     std::vector<Line> lines(settingParameter->numberOfLines);
 
-    sceneWidgetVisualizerProxy->vis.getElementMatrix(
-        settingParameter->step, 
-        sceneWidgetVisualizerProxy->p, 
-        settingParameter->nNodeX, 
-        settingParameter->nNodeY, 
-        settingParameter->outputFileName, 
+    sceneWidgetVisualizerProxy->vis.readStageStateFromFilesForStep(
+        settingParameter->step,
+        sceneWidgetVisualizerProxy->p,
+        settingParameter->nNodeX,
+        settingParameter->nNodeY,
+        settingParameter->outputFileName,
         &lines[0]
     );
 
