@@ -24,6 +24,11 @@ private slots:
     void showConfigDetailsDialog();
     void exportVideoDialog();
     void onStepNumberChanged();
+    void onOpenConfigurationRequested();
+
+    void onModelBallSelected();
+    void onModelSciddicaTSelected();
+    void onReloadDataRequested();
 
     void onPlayButtonClicked();
     void onStopButtonClicked();

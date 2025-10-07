@@ -41,9 +41,10 @@ std::string prepareOutputFileName(const std::string& configFile, const std::stri
 SceneWidget::SceneWidget(QWidget* parent)
     : QVTKOpenGLNativeWidget(parent)
     , m_lastMousePos()
-    , sceneWidgetVisualizerProxy{std::make_unique<SceneWidgetVisualizerProxy>()}
+    , sceneWidgetVisualizerProxy{SceneWidgetVisualizerFactory::create(ModelType::Ball)}
     , settingParameter{std::make_unique<SettingParameter>()}
     , settingRenderParameter{std::make_unique<SettingRenderParameter>()}
+    , currentModelType{sceneWidgetVisualizerProxy->getModelTypeValue()}
 {
     enableToolTipWhenMouseAboveWidget();
 }
@@ -118,7 +119,7 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename, int
 
 void SceneWidget::setupVtkScene()
 {
-    sceneWidgetVisualizerProxy->modelReader.prepareStage(settingParameter->nNodeX, settingParameter->nNodeY);
+    sceneWidgetVisualizerProxy->prepareStage(settingParameter->nNodeX, settingParameter->nNodeY);
 
     renderWindow()->AddRenderer(settingRenderParameter->m_renderer);
     interactor()->SetRenderWindow(renderWindow());
@@ -141,24 +142,24 @@ void SceneWidget::setupVtkScene()
 void SceneWidget::renderVtkScene()
 {
     DEBUG << "DEBUG: Starting " << __FUNCTION__ << endl;
-    sceneWidgetVisualizerProxy->modelReader.readStepsOffsetsForAllNodesFromFiles(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
+    sceneWidgetVisualizerProxy->readStepsOffsetsForAllNodesFromFiles(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
     DEBUG << "DEBUG: Hashmap loaded successfully" << endl;
 
     std::vector<Line> lines(settingParameter->numberOfLines);
 
-    sceneWidgetVisualizerProxy->modelReader.readStageStateFromFilesForStep(sceneWidgetVisualizerProxy->p, settingParameter.get(), &lines[0]);
+    sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
     DEBUG << "DEBUG: readStageStateFromFilesForStep completed" << endl;
 
-    sceneWidgetVisualizerProxy->visualiser.drawWithVTK(sceneWidgetVisualizerProxy->p, settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, &lines[0], settingRenderParameter->m_renderer, gridActor);
+    sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, &lines[0], settingRenderParameter->m_renderer, gridActor);
     DEBUG << "DEBUG: drawWithVTK completed" << endl;
 
     vtkNew<vtkCellArray> cellLines;
     vtkNew<vtkPoints> pts;
     vtkNew<vtkPolyData> grid;
-    sceneWidgetVisualizerProxy->visualiser.buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->numberOfRowsY+1, settingParameter->numberOfColumnX+1, pts, cellLines, grid,settingRenderParameter->colors,settingRenderParameter->m_renderer,actorBuildLine);
+    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->numberOfRowsY+1, settingParameter->numberOfColumnX+1, pts, cellLines, grid,settingRenderParameter->colors,settingRenderParameter->m_renderer,actorBuildLine);
     DEBUG << "DEBUG: buildLoadBalanceLine completed" << endl;
 
-    sceneWidgetVisualizerProxy->visualiser.buildStepText(settingParameter->step, settingParameter->font_size, settingRenderParameter->colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
+    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, settingRenderParameter->colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
 
     // Render
     renderWindow()->Render();
@@ -285,14 +286,12 @@ void SceneWidget::updateVisualization()
 {
     std::vector<Line> lines(settingParameter->numberOfLines);
 
-    sceneWidgetVisualizerProxy->modelReader.readStageStateFromFilesForStep(
-        sceneWidgetVisualizerProxy->p,
+    sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(
         settingParameter.get(),
         &lines[0]
     );
 
-    sceneWidgetVisualizerProxy->visualiser.refreshWindowsVTK(
-        sceneWidgetVisualizerProxy->p,
+    sceneWidgetVisualizerProxy->refreshWindowsVTK(
         settingParameter->numberOfRowsY,
         settingParameter->numberOfColumnX,
         settingParameter->step,
@@ -308,7 +307,7 @@ void SceneWidget::updateVisualization()
 
     if (settingParameter->numberOfLines > 0)
     {
-        sceneWidgetVisualizerProxy->visualiser.refreshBuildLoadBalanceLine(
+        sceneWidgetVisualizerProxy->getVisualizer().refreshBuildLoadBalanceLine(
             &lines[0], 
             settingParameter->numberOfLines, 
             settingParameter->numberOfRowsY + 1,
@@ -319,7 +318,7 @@ void SceneWidget::updateVisualization()
     }
 
     const std::string stepLineColor{"red"};
-    sceneWidgetVisualizerProxy->visualiser.buildStepLine(
+    sceneWidgetVisualizerProxy->getVisualizer().buildStepLine(
         settingParameter->step, 
         singleLineTextStep, 
         singleLineTextPropStep, 
@@ -355,4 +354,97 @@ void SceneWidget::upgradeModelInCentralPanel()
 
     settingParameter->firstTime = false;
     settingParameter->changed = false;
+}
+
+void SceneWidget::switchModel(ModelType modelType)
+{
+    if (modelType == currentModelType)
+    {
+        return; // Already using this model
+    }
+
+    // Create new visualizer with the selected model
+    sceneWidgetVisualizerProxy = SceneWidgetVisualizerFactory::create(modelType);
+    currentModelType = modelType;
+
+    // Reinitialize the matrix with current dimensions
+    sceneWidgetVisualizerProxy->initMatrix(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY);
+
+    std::cout << "Switched to model: " << sceneWidgetVisualizerProxy->getModelName() << std::endl;
+    std::cout << "Note: Use 'Reload Data' to load data files for the new model." << std::endl;
+}
+
+void SceneWidget::reloadData()
+{
+    try
+    {
+        std::cout << "Reloading data for model: " << sceneWidgetVisualizerProxy->getModelName() << std::endl;
+
+        // Clear existing stage data to avoid duplicates
+        sceneWidgetVisualizerProxy->clearStage();
+        
+        // Reinitialize and load data
+        sceneWidgetVisualizerProxy->prepareStage(settingParameter->nNodeX, settingParameter->nNodeY);
+        sceneWidgetVisualizerProxy->readStepsOffsetsForAllNodesFromFiles(
+            settingParameter->nNodeX, 
+            settingParameter->nNodeY, 
+            settingParameter->outputFileName
+        );
+
+        // Force a full refresh
+        settingParameter->firstTime = true;
+        settingParameter->changed = true;
+        upgradeModelInCentralPanel();
+
+        std::cout << "Data reloaded successfully." << std::endl;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Failed to reload data: " << e.what() << std::endl;
+        throw;
+    }
+}
+
+void SceneWidget::clearScene()
+{
+    std::cout << "Clearing scene..." << std::endl;
+    
+    // Clear the renderer
+    settingRenderParameter->m_renderer->RemoveAllViewProps();
+    
+    // Clear stage data
+    sceneWidgetVisualizerProxy->clearStage();
+    
+    // Reset VTK actors
+    gridActor = vtkNew<vtkActor>();
+    actorBuildLine = vtkNew<vtkActor2D>();
+    
+    std::cout << "Scene cleared." << std::endl;
+}
+
+void SceneWidget::loadNewConfiguration(const std::string& configFileName, int stepNumber)
+{
+    std::cout << "Loading new configuration: " << configFileName << std::endl;
+    
+    try
+    {
+        // Clear existing scene
+        clearScene();
+        
+        // Setup new parameters from config file
+        setupSettingParameters(configFileName, stepNumber);
+        
+        // Setup VTK scene (without adding renderer again - it's already added)
+        sceneWidgetVisualizerProxy->prepareStage(settingParameter->nNodeX, settingParameter->nNodeY);
+        
+        // Render the scene with new data
+        renderVtkScene();
+        
+        std::cout << "Configuration loaded successfully: " << configFileName << std::endl;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Failed to load configuration: " << e.what() << std::endl;
+        throw;
+    }
 }

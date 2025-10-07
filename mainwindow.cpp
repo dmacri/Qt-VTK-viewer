@@ -58,6 +58,12 @@ void MainWindow::connectMenuActions()
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::showAboutThisApplicationDialog);
     connect(ui->actionShow_config_details, &QAction::triggered, this, &MainWindow::showConfigDetailsDialog);
     connect(ui->actionExport_Video, &QAction::triggered, this, &MainWindow::exportVideoDialog);
+    connect(ui->actionOpenConfiguration, &QAction::triggered, this, &MainWindow::onOpenConfigurationRequested);
+    
+    // Model selection actions
+    connect(ui->actionModelBall, &QAction::triggered, this, &MainWindow::onModelBallSelected);
+    connect(ui->actionModelSciddicaT, &QAction::triggered, this, &MainWindow::onModelSciddicaTSelected);
+    connect(ui->actionReloadData, &QAction::triggered, this, &MainWindow::onReloadDataRequested);
 }
 
 void MainWindow::configureButtons()
@@ -343,7 +349,7 @@ void MainWindow::onRightButtonClicked()
     catch (const std::exception& e)
     {
         QMessageBox::warning(this, "Changing position error",
-                             tr("It was impossible to change position, because:\n") + e.what());
+                             tr("It was impossible to change position to %1, because:\n").arg(currentStep) + e.what());
     }
 }
 
@@ -362,7 +368,7 @@ void MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
     catch (const std::exception& e)
     {
         QMessageBox::warning(this, "Changing position error",
-                             tr("It was impossible to change position, because:\n") + e.what());
+                             tr("It was impossible to change position to %1, because:\n").arg(stepPosition) + e.what());
     }
     changeWhichButtonsAreEnabled();
 }
@@ -399,4 +405,113 @@ void MainWindow::onUpdatePositionOnSlider(int value)
     currentStep = value;
 
     setPositionOnWidgets(value, /*updateSlider=*/false);
+}
+
+void MainWindow::onModelBallSelected()
+{
+    try
+    {
+        ui->sceneWidget->switchModel(ModelType::Ball);
+        
+        // Update menu checkboxes
+        ui->actionModelBall->setChecked(true);
+        ui->actionModelSciddicaT->setChecked(false);
+        
+        QMessageBox::information(this, tr("Model Changed"),
+                               tr("Successfully switched to Ball model.\nUse 'Reload Data' (F5) to load data files."));
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::critical(this, tr("Model Switch Failed"),
+                            tr("Failed to switch model:\n%1").arg(e.what()));
+        
+        // Revert checkbox state
+        const auto currentModel = ui->sceneWidget->getCurrentModelName();
+        ui->actionModelBall->setChecked(currentModel == "Ball");
+        ui->actionModelSciddicaT->setChecked(currentModel == "SciddicaT");
+    }
+}
+
+void MainWindow::onModelSciddicaTSelected()
+{
+    try
+    {
+        ui->sceneWidget->switchModel(ModelType::SciddicaT);
+        
+        // Update menu checkboxes
+        ui->actionModelBall->setChecked(false);
+        ui->actionModelSciddicaT->setChecked(true);
+        
+        QMessageBox::information(this, tr("Model Changed"),
+                               tr("Successfully switched to SciddicaT model.\nUse 'Reload Data' (F5) to load data files."));
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::critical(this, tr("Model Switch Failed"),
+                            tr("Failed to switch model:\n%1").arg(e.what()));
+        
+        // Revert checkbox state
+        const auto currentModel = ui->sceneWidget->getCurrentModelName();
+        ui->actionModelBall->setChecked(currentModel == "Ball");
+        ui->actionModelSciddicaT->setChecked(currentModel == "SciddicaT");
+    }
+}
+
+void MainWindow::onReloadDataRequested()
+{
+    try
+    {
+        ui->sceneWidget->reloadData();
+        
+        QMessageBox::information(this, tr("Data Reloaded"),
+                               tr("Data files successfully reloaded for model: %1")
+                               .arg(QString::fromStdString(ui->sceneWidget->getCurrentModelName())));
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::critical(this, tr("Reload Failed"),
+                            tr("Failed to reload data:\n%1").arg(e.what()));
+    }
+}
+
+void MainWindow::onOpenConfigurationRequested()
+{
+    // Open file dialog to select configuration file
+    QString configFileName = QFileDialog::getOpenFileName(
+        this,
+        tr("Open Configuration File"),
+        QString(), // Start in current directory
+        tr("Configuration Files (*.txt *.ini);;All Files (*)")
+    );
+    
+    if (configFileName.isEmpty())
+    {
+        return; // User cancelled
+    }
+    
+    try
+    {
+        // Stop any ongoing playback
+        isPlaying = false;
+        isBacking = false;
+        
+        // Load new configuration
+        ui->sceneWidget->loadNewConfiguration(configFileName.toStdString(), 0);
+        
+        // Update UI with new configuration
+        showInputFilePathOnBarLabel(configFileName);
+        setTotalStepsFromConfiguration(configFileName);
+        
+        // Reset to first step
+        currentStep = 0;
+        setPositionOnWidgets(currentStep);
+        
+        QMessageBox::information(this, tr("Configuration Loaded"),
+                               tr("Successfully loaded configuration:\n%1").arg(configFileName));
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::critical(this, tr("Load Failed"),
+                            tr("Failed to load configuration:\n%1").arg(e.what()));
+    }
 }

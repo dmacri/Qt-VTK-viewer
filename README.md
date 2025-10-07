@@ -36,6 +36,27 @@ work correctly.
 
 Done. Happy coding :)
 
+## Features
+
+### ✨ Runtime Model Switching & Configuration Loading (NEW!)
+
+The application now supports **dynamic model switching and configuration loading at runtime** without recompilation!
+
+**Model Switching:**
+- Switch between different cell models (Ball, SciddicaT) via the **Model menu**
+- No need to edit `SceneWidgetVisualizerProxyDefault.h` and recompile
+- Easy to extend with new models
+
+**Configuration Loading:**
+- Load new configuration files via **File → Open Configuration** (Ctrl+O)
+- Automatically clears scene and reloads with new parameters
+- Updates GUI (steps, dimensions) automatically
+
+**Quick Start:**
+1. Run the application
+2. **Model** → Select model (Ball or SciddicaT)
+3. **File → Open Configuration** → Select config file
+4. Done! Visualization loaded
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

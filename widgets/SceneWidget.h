@@ -8,7 +8,8 @@
 #include <vtkRenderer.h>
 #include <vtkSmartPointer.h>
 #include <vtkNamedColors.h>
-#include "visualiserProxy/SceneWidgetVisualizerProxyDefault.h"
+#include "visualiserProxy/ISceneWidgetVisualizer.h"
+#include "visualiserProxy/SceneWidgetVisualizerFactory.h"
 
 
 class SettingParameter;
@@ -25,6 +26,41 @@ public:
     void addVisualizer(const string &filename, int stepNumber);
 
     void selectedStepParameter(StepIndex stepNumber);
+
+    /** @brief Switch to a different model type.
+     * 
+     * This method allows changing the visualization model at runtime.
+     * Note: This does NOT reload data files. Use reloadData() after switching.
+     * 
+     * @param modelType The new model type to use */
+    void switchModel(ModelType modelType);
+
+    /** @brief Reload data files for the current model.
+     * 
+     * This method reads data files from disk and refreshes the visualization.
+     * Call this after switching models or when data files have changed.
+     * Note: reloading data with not compatible model can crash the application */
+    void reloadData();
+
+    /** @brief Clear the entire scene (remove all VTK actors and data).
+     * 
+     * This method clears the renderer and resets the visualizer state.
+     * Call this before loading a new configuration file. */
+    void clearScene();
+
+    /** @brief Load a new configuration file and reinitialize the scene.
+     * 
+     * @param configFileName Path to the new configuration file
+     * @param stepNumber Initial step number to display */
+    void loadNewConfiguration(const std::string& configFileName, int stepNumber = 0);
+
+    /** @brief Get the current model name.
+     * 
+     * @return std::string The name of the currently active model */
+    auto getCurrentModelName() const
+    {
+        return sceneWidgetVisualizerProxy->getModelName();
+    }
 
     const SettingParameter* getSettingParameter() const
     {
@@ -60,9 +96,11 @@ protected:
     void setupSettingParameters(const std::string & configFilename, int stepNumber);
 
 private:
-    std::unique_ptr<SceneWidgetVisualizerProxy> sceneWidgetVisualizerProxy;
+    std::unique_ptr<ISceneWidgetVisualizer> sceneWidgetVisualizerProxy;
     std::unique_ptr<SettingParameter> settingParameter;
     std::unique_ptr<SettingRenderParameter> settingRenderParameter;
+    
+    ModelType currentModelType;
 
     QTimer m_toolTipTimer;
     QPoint m_lastMousePos;

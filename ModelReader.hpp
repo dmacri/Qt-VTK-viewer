@@ -22,6 +22,11 @@ public:
         stage.resize(nNodeX * nNodeY);
     }
 
+    void clearStage()
+    {
+        stage.clear();
+    }
+
     template<class Matrix>
     void readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line *lines);
 
