@@ -2,7 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <algorithm>
 #include "ConfigParameter.h"
 
 
@@ -16,7 +15,7 @@ public:
         : name{std::move(name)}, configParameters{std::move(params)}
     {}
 
-    void readFile(char* /*name*/, char* /*configuration_path*/)
+    void readFile(const char* /*name*/, const char* /*configuration_path*/)
     {
         #warning "Ask Alessio or Andrea about the function - how it should be implemented, or should it be removed?"
     }
@@ -41,20 +40,9 @@ public:
         return configParameters;
     }
 
-    ConfigParameter* getConfigParameter(const std::string& paramName)
-    {
-        auto it = std::find_if(configParameters.begin(), configParameters.end(),
-                               [&](const ConfigParameter& p) { return p.getName() == paramName; });
-        return (it != configParameters.end()) ? &*it : nullptr;
-    }
+    ConfigParameter* getConfigParameter(const std::string& paramName);
 
-    void setConfigParameterValue(const std::string& paramName, const std::string& value)
-    {
-        if (auto* configParameter = getConfigParameter(paramName))
-        {
-            configParameter->setDefaultValue(value);
-        }
-    }
+    void setConfigParameterValue(const std::string& paramName, const std::string& value);
 
     bool operator==(const std::string& name) const
     {

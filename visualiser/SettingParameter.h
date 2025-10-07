@@ -2,22 +2,22 @@
 
 #include <iosfwd>
 #include <string>
-
+#include "types.h"
 
 struct SettingParameter
 {
-    int step;
-    int nsteps;
+    StepIndex step;
+    StepIndex nsteps;
+    int numberOfColumnX;
+    int numberOfRowsY;
+    int nNodeX;
+    int nNodeY;
+    int numberOfLines;
+    std::string outputFileName;
+    static constexpr int font_size = 18;
     bool changed;
     bool firstTime;
     bool insertAction; // TOO: GB: Not read anywhere, just set
-    int dimX;
-    int dimY;
-    int nNodeX;
-    int nNodeY;
-    std::string outputFileName;
-    int numberOfLines;
-    const int font_size = 18;
 
     friend std::ostream& operator<<(std::ostream& os, const SettingParameter& sp);
 };

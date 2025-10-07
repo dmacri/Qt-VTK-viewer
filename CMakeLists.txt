@@ -16,6 +16,7 @@ file(GLOB_RECURSE Headers *.h *.hpp)
 file(GLOB Sources *.cpp)
 list(APPEND Sources
     config/Config.cpp
+    config/ConfigCategory.cpp
     visualiser/SettingParameter.cpp
     visualiser/VideoExporter.cpp
     visualiser/Visualiser.cpp

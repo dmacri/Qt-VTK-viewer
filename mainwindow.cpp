@@ -17,11 +17,11 @@
 
 namespace
 {
-constexpr int FIRST_STEP_NUMBER = 1;
+constexpr int FIRST_STEP_NUMBER = 0;
 }
 
 
-MainWindow::MainWindow(const QString& configFileName, QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow)
+MainWindow::MainWindow(const QString& configFileName, QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow), currentStep{FIRST_STEP_NUMBER}
 {
     ui->setupUi(this);
     setWindowTitle(QApplication::applicationName());
@@ -65,6 +65,7 @@ void MainWindow::configureButtons()
     configureButton(ui->rightButton, QStyle::SP_ArrowRight);
     configureButton(ui->leftButton, QStyle::SP_ArrowLeft);
     configureButton(ui->skipForwardButton, QStyle::SP_MediaSkipForward);
+    configureButton(ui->skipBackwardButton, QStyle::SP_MediaSkipBackward);
     configureButton(ui->playButton, QStyle::SP_MediaPlay);
     configureButton(ui->stopButton, QStyle::SP_MediaStop);
     configureButton(ui->backButton, QStyle::SP_MediaSeekBackward);
@@ -78,13 +79,6 @@ void MainWindow::configureButton(QPushButton* button, QStyle::StandardPixmap ico
     button->setStyleSheet(NULL);
 }
 
-void MainWindow::configureCursorPosition()
-{
-    ui->updatePositionSlider->setMinimum(FIRST_STEP_NUMBER);
-    ui->updatePositionSlider->setMaximum(100);
-    ui->updatePositionSlider->setValue(FIRST_STEP_NUMBER);
-}
-
 
 void MainWindow::showInputFilePathOnBarLabel(const QString& inputFilePath)
 {
@@ -93,7 +87,7 @@ void MainWindow::showInputFilePathOnBarLabel(const QString& inputFilePath)
 
 void MainWindow::initializeSceneWidget(const QString& configFileName)
 {
-    ui->sceneWidget->addVisualizer(configFileName.toStdString());
+    ui->sceneWidget->addVisualizer(configFileName.toStdString(), currentStep);
 }
 
 void MainWindow::setTotalStepsFromConfiguration(const QString &configurationFile)
@@ -124,6 +118,7 @@ void MainWindow::connectButtons()
     connect(ui->playButton, &QPushButton::clicked, this, &MainWindow::onPlayButtonClicked);
     connect(ui->stopButton, &QPushButton::clicked, this, &MainWindow::onStopButtonClicked);
     connect(ui->skipForwardButton, &QPushButton::clicked, this, &MainWindow::onSkipForwardButtonClicked);
+    connect(ui->skipBackwardButton, &QPushButton::clicked, this, &MainWindow::onSkipBackwardButtonClicked);
     connect(ui->backButton, &QPushButton::clicked, this, &MainWindow::onBackButtonClicked);
     connect(ui->leftButton, &QPushButton::clicked, this, &MainWindow::onLeftButtonClicked);
     connect(ui->rightButton, &QPushButton::clicked, this, &MainWindow::onRightButtonClicked);
@@ -317,6 +312,12 @@ void MainWindow::onSkipForwardButtonClicked()
     setPositionOnWidgets(currentStep);
 }
 
+void MainWindow::onSkipBackwardButtonClicked()
+{
+    currentStep = FIRST_STEP_NUMBER;
+    setPositionOnWidgets(currentStep);
+}
+
 void MainWindow::onBackButtonClicked()
 {
     isPlaying = true;
@@ -357,22 +358,23 @@ void MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
         }
         ui->positionSpinBox->setValue(stepPosition);
         ui->sceneWidget->selectedStepParameter(stepPosition);
-
-        changeWhichButtonsAreEnabled();
     }
     catch (const std::exception& e)
     {
         QMessageBox::warning(this, "Changing position error",
                              tr("It was impossible to change position, because:\n") + e.what());
     }
+    changeWhichButtonsAreEnabled();
 }
 
 void MainWindow::changeWhichButtonsAreEnabled()
 {
     ui->rightButton->setDisabled(currentStep == totalSteps());
     ui->playButton->setDisabled(currentStep == totalSteps());
-    ui->leftButton->setDisabled(currentStep <= 1);
-    ui->backButton->setDisabled(currentStep <= 1);
+    ui->leftButton->setDisabled(currentStep <= FIRST_STEP_NUMBER);
+    ui->backButton->setDisabled(currentStep <= FIRST_STEP_NUMBER);
+    ui->skipBackwardButton->setDisabled(currentStep <= FIRST_STEP_NUMBER);
+    ui->skipForwardButton->setDisabled(currentStep == totalSteps());
 }
 
 void MainWindow::onStepNumberChanged()

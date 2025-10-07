@@ -4,8 +4,8 @@
 std::ostream& operator<<(std::ostream& os, const SettingParameter& sp)
 {
     os << "SettingParameter{"
-       << "dimX=" << sp.dimX << ", "
-       << "dimY=" << sp.dimY << ", "
+       << "numberOfColumnX=" << sp.numberOfColumnX << ", "
+       << "numberOfRowsY=" << sp.numberOfRowsY << ", "
        << "nNodeX=" << sp.nNodeX << ", "
        << "nNodeY=" << sp.nNodeY << ", "
        << "outputFileName=" << sp.outputFileName << "}";

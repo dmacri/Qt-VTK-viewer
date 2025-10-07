@@ -1,11 +1,13 @@
 #pragma once
 
 #include "visualiser/Visualizer.hpp"
+#include "ModelReader.hpp"
 
 template<typename Cell>
 struct SceneWidgetVisualizerTemplate
 {
-    Visualizer<Cell> vis;
+    Visualizer visualiser;
+    ModelReader<Cell> modelReader;
 
     std::vector<std::vector<Cell>> p;
 

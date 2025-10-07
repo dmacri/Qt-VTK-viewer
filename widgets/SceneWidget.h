@@ -22,9 +22,9 @@ public:
     explicit SceneWidget(QWidget* parent);
     ~SceneWidget();
 
-    void addVisualizer(const string &filename);
+    void addVisualizer(const string &filename, int stepNumber);
 
-    void selectedStepParameter(int stepNumber);
+    void selectedStepParameter(StepIndex stepNumber);
 
     const SettingParameter* getSettingParameter() const
     {
@@ -34,7 +34,7 @@ public:
     static void keypressCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
 
 signals:
-    void changedStepNumberWithKeyboardKeys(int stepNumber);
+    void changedStepNumberWithKeyboardKeys(StepIndex stepNumber);
 
 public slots:
     void increaseCountUp();
@@ -57,7 +57,7 @@ protected:
     void readSettingsFromConfigFile(const std::string &filename);
 
     void setupVtkScene();
-    void setupSettingParameters(const std::string & configFilename);
+    void setupSettingParameters(const std::string & configFilename, int stepNumber);
 
 private:
     std::unique_ptr<SceneWidgetVisualizerProxy> sceneWidgetVisualizerProxy;

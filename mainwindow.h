@@ -28,6 +28,7 @@ private slots:
     void onPlayButtonClicked();
     void onStopButtonClicked();
     void onSkipForwardButtonClicked();
+    void onSkipBackwardButtonClicked();
     void onBackButtonClicked();
     void onLeftButtonClicked();
     void onRightButtonClicked();
@@ -47,7 +48,6 @@ private:
     void setupConnections();
     void configureButtons();
     void configureButton(QPushButton* button, QStyle::StandardPixmap icon);
-    void configureCursorPosition();
     void initializeSceneWidget(const QString& configFileName);
     void setTotalStepsFromConfiguration(const QString& configurationFile);
     void connectButtons();
@@ -68,7 +68,7 @@ private:
 
     Ui::MainWindow* ui;
 
-    int currentStep = 1;
+    int currentStep;
     bool isPlaying = false;
     bool isBacking = false;
 
