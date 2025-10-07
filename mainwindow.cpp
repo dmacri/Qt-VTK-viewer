@@ -79,13 +79,6 @@ void MainWindow::configureButton(QPushButton* button, QStyle::StandardPixmap ico
     button->setStyleSheet(NULL);
 }
 
-void MainWindow::configureCursorPosition()
-{
-    ui->updatePositionSlider->setMinimum(FIRST_STEP_NUMBER);
-    ui->updatePositionSlider->setMaximum(100);
-    ui->updatePositionSlider->setValue(FIRST_STEP_NUMBER);
-}
-
 
 void MainWindow::showInputFilePathOnBarLabel(const QString& inputFilePath)
 {

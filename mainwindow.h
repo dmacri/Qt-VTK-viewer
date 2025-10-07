@@ -48,7 +48,6 @@ private:
     void setupConnections();
     void configureButtons();
     void configureButton(QPushButton* button, QStyle::StandardPixmap icon);
-    void configureCursorPosition();
     void initializeSceneWidget(const QString& configFileName);
     void setTotalStepsFromConfiguration(const QString& configurationFile);
     void connectButtons();
