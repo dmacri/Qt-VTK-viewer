@@ -5,8 +5,8 @@
 #include <stdexcept> // std::invalid_argument
 #include "ISceneWidgetVisualizer.h"
 #include "SceneWidgetVisualizerAdapter.h"
-#include "SceneWidgetVisualizerProxyBall.h"
-#include "SceneWidgetVisualizerProxySciddicaT.h"
+#include <OOpenCAL/models/Ball/BallCell.h>
+#include <OOpenCAL/models/SciddicaT/SciddicaTCell.h>
 
 /// @brief Supported model types for visualization.
 enum class ModelType
