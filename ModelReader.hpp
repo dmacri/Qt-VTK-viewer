@@ -171,12 +171,15 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
                     startStepDone = true;
                 }
 
+                char* nextTokenPtr = currentTokenPtr;
+                while (*nextTokenPtr)
+                    ++nextTokenPtr;
+                ++nextTokenPtr; /// skip '\0'
+
                 m[row + offsetXY.y()][col + offsetXY.x()].T::composeElement(currentTokenPtr);
 
-                /// go to another token
-                while (*currentTokenPtr)
-                    ++currentTokenPtr;
-                ++currentTokenPtr; /// skip '\0'
+                /// composeElement() may add extra '\0', so we need extra variable
+                currentTokenPtr = nextTokenPtr;
             }
         }
     }
