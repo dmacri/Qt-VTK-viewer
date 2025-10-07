@@ -8,9 +8,10 @@
 #include <vtkRenderer.h>
 #include <vtkSmartPointer.h>
 #include <vtkNamedColors.h>
+#include <vtkTextMapper.h>
 #include "visualiserProxy/ISceneWidgetVisualizer.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
-
+#include "types.h"
 
 class SettingParameter;
 class SettingRenderParameter;
@@ -23,7 +24,7 @@ public:
     explicit SceneWidget(QWidget* parent);
     ~SceneWidget();
 
-    void addVisualizer(const string &filename, int stepNumber);
+    void addVisualizer(const std::string &filename, int stepNumber);
 
     void selectedStepParameter(StepIndex stepNumber);
 
