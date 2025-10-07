@@ -22,7 +22,7 @@ public:
     explicit SceneWidget(QWidget* parent);
     ~SceneWidget();
 
-    void addVisualizer(const string &filename);
+    void addVisualizer(const string &filename, int stepNumber);
 
     void selectedStepParameter(StepIndex stepNumber);
 
@@ -57,7 +57,7 @@ protected:
     void readSettingsFromConfigFile(const std::string &filename);
 
     void setupVtkScene();
-    void setupSettingParameters(const std::string & configFilename);
+    void setupSettingParameters(const std::string & configFilename, int stepNumber);
 
 private:
     std::unique_ptr<SceneWidgetVisualizerProxy> sceneWidgetVisualizerProxy;

@@ -62,14 +62,14 @@ void SceneWidget::enableToolTipWhenMouseAboveWidget()
 SceneWidget::~SceneWidget() = default;
 
 
-void SceneWidget::addVisualizer(const std::string &filename)
+void SceneWidget::addVisualizer(const std::string &filename, int stepNumber)
 {
     if (! std::filesystem::exists(filename))
     {
         throw std::invalid_argument("File '"s + filename + "' does not exist!");
     }
 
-    setupSettingParameters(filename);
+    setupSettingParameters(filename, stepNumber);
 
     setupVtkScene();
 
@@ -99,12 +99,12 @@ void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
     }
 }
 
-void SceneWidget::setupSettingParameters(const std::string & configFilename)
+void SceneWidget::setupSettingParameters(const std::string & configFilename, int stepNumber)
 {
     readSettingsFromConfigFile(configFilename);
 
     settingParameter->numberOfLines = 2 * (settingParameter->nNodeX * settingParameter->nNodeY);
-    settingParameter->step = 1;
+    settingParameter->step = stepNumber;
     settingParameter->changed = false;
     settingParameter->firstTime = true;
     settingParameter->insertAction = false;

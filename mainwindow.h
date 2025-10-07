@@ -69,7 +69,7 @@ private:
 
     Ui::MainWindow* ui;
 
-    int currentStep = 1;
+    int currentStep;
     bool isPlaying = false;
     bool isBacking = false;
 

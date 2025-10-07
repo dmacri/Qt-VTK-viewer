@@ -17,11 +17,11 @@
 
 namespace
 {
-constexpr int FIRST_STEP_NUMBER = 1;
+constexpr int FIRST_STEP_NUMBER = 0;
 }
 
 
-MainWindow::MainWindow(const QString& configFileName, QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow)
+MainWindow::MainWindow(const QString& configFileName, QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow), currentStep{FIRST_STEP_NUMBER}
 {
     ui->setupUi(this);
     setWindowTitle(QApplication::applicationName());
@@ -94,7 +94,7 @@ void MainWindow::showInputFilePathOnBarLabel(const QString& inputFilePath)
 
 void MainWindow::initializeSceneWidget(const QString& configFileName)
 {
-    ui->sceneWidget->addVisualizer(configFileName.toStdString());
+    ui->sceneWidget->addVisualizer(configFileName.toStdString(), currentStep);
 }
 
 void MainWindow::setTotalStepsFromConfiguration(const QString &configurationFile)
