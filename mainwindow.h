@@ -15,8 +15,10 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(const QString& configFileName, QWidget* parent = nullptr);
+    explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
+    
+    void loadInitialConfiguration(const QString& configFileName);
 
 private slots:
 
@@ -72,11 +74,9 @@ private:
     void recordVideoToFile(const QString& outputFilePath, int fps);
 
     void setWidgetsEnabledState(bool enabled);
-    void enterNoConfigurationMode();
+    void enterNoConfigurationFileMode();
 
     Ui::MainWindow* ui;
-    
-    bool hasConfiguration;
 
     int currentStep;
     bool isPlaying = false;

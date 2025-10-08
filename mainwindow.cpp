@@ -21,11 +21,10 @@ constexpr int FIRST_STEP_NUMBER = 0;
 }
 
 
-MainWindow::MainWindow(const QString& configFileName, QWidget* parent) 
+MainWindow::MainWindow(QWidget* parent) 
     : QMainWindow(nullptr)
     , ui(new Ui::MainWindow)
     , currentStep{FIRST_STEP_NUMBER}
-    , hasConfiguration{false}
 {
     ui->setupUi(this);
     setWindowTitle(QApplication::applicationName());
@@ -34,14 +33,13 @@ MainWindow::MainWindow(const QString& configFileName, QWidget* parent)
     configureButtons();
     loadStrings();
     
-    if (configFileName.isEmpty())
+    enterNoConfigurationFileMode();
+}
+
+void MainWindow::loadInitialConfiguration(const QString& configFileName)
+{
+    if (!configFileName.isEmpty())
     {
-        // Start in "no configuration" mode
-        enterNoConfigurationMode();
-    }
-    else
-    {
-        // Load configuration normally
         configureUIElements(configFileName);
     }
 }
@@ -52,7 +50,6 @@ void MainWindow::configureUIElements(const QString& configFileName)
     showInputFilePathOnBarLabel(configFileName);
     setTotalStepsFromConfiguration(configFileName);
     
-    hasConfiguration = true;
     setWidgetsEnabledState(true);
     changeWhichButtonsAreEnabled();
 }
@@ -511,12 +508,11 @@ void MainWindow::onOpenConfigurationRequested()
         // Stop any ongoing playback
         isPlaying = false;
         isBacking = false;
-        
-        if (!hasConfiguration)
+
+        if (bool isFirstConfiguration = ui->inputFilePathLabel->getFileName().isEmpty())
         {
             // First time loading configuration
             initializeSceneWidget(configFileName);
-            hasConfiguration = true;
         }
         else
         {
@@ -545,7 +541,7 @@ void MainWindow::onOpenConfigurationRequested()
     }
 }
 
-void MainWindow::enterNoConfigurationMode()
+void MainWindow::enterNoConfigurationFileMode()
 {    
     // Set UI to show no configuration loaded
     ui->inputFilePathLabel->setFileName("");
