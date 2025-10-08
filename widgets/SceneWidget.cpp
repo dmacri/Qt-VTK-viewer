@@ -108,7 +108,6 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename, int
     settingParameter->step = stepNumber;
     settingParameter->changed = false;
     settingParameter->firstTime = true;
-    settingParameter->insertAction = false;
 
     sceneWidgetVisualizerProxy->initMatrix(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY);
 
@@ -192,10 +191,6 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
 
         if (sw)
             sw->changedStepNumberWithKeyboardKeys(sp->step);
-    }
-    else if (keyPressed == "i")
-    {
-        sp->insertAction = true;
     }
 
     if (sp->changed || sp->firstTime)

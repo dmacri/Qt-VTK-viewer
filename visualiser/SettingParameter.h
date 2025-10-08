@@ -17,7 +17,6 @@ struct SettingParameter
     static constexpr int font_size = 18;
     bool changed;
     bool firstTime;
-    bool insertAction; // TOO: GB: Not read anywhere, just set
 
     friend std::ostream& operator<<(std::ostream& os, const SettingParameter& sp);
 };
