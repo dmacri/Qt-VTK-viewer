@@ -155,8 +155,6 @@ template<class T>
 template<class Matrix>
 void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line* lines)
 {
-    const auto columnsAndRows = giveMeLocalColsAndRowsForAllSteps(sp->step, sp->nNodeX, sp->nNodeY, sp->outputFileName);
-
     const auto totalNodes = sp->nNodeX * sp->nNodeY;
     const auto columnsAndRows = giveMeLocalColsAndRowsForAllSteps(sp->step, sp->nNodeX, sp->nNodeY, sp->outputFileName);
 
@@ -167,7 +165,7 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
 
         ColumnAndRow columnAndRow;
         std::ifstream fp = readColumnAndRowForStepFromFileReturningStream(sp->step, sp->outputFileName, node, columnAndRow);
-        if (!fp)
+        if (! fp)
             throw std::runtime_error("Cannot open file for node " + std::to_string(node));
 
         // Use a thread-local buffer for faster reading
@@ -208,14 +206,12 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
                     localStartStepDone = true;
                 }
 
-                char* nextTokenPtr = currentTokenPtr;
-                while (*nextTokenPtr)
-                    ++nextTokenPtr;
+                /// composeElement() may add extra '\0', so we need extra variable to jump to next position
+                char* nextTokenPtr = std::find(currentTokenPtr, line.data() + line.size(), '\0');
                 ++nextTokenPtr; // skip '\0'
 
                 m[row + offsetXY.y()][col + offsetXY.x()].T::composeElement(currentTokenPtr);
 
-                /// composeElement() may add extra '\0', so we need extra variable
                 currentTokenPtr = nextTokenPtr;
             }
         }
@@ -233,10 +229,7 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
     }
 
     // Wait for all async tasks to complete
-    for (auto& f : futures)
-    {
-        f.get();
-    }
+    std::ranges::for_each(futures, [](std::future<void>& f){ f.get(); });
 }
 template<class T>
 std::vector<ColumnAndRow> ModelReader<T>::giveMeLocalColsAndRowsForAllSteps(StepIndex step, int nNodeX, int nNodeY, const std::string& fileName)
