@@ -8,6 +8,7 @@ class MainWindow;
 }
 
 class QPushButton;
+class QActionGroup;
 
 
 class MainWindow : public QMainWindow
@@ -28,8 +29,7 @@ private slots:
     void onStepNumberChanged();
     void onOpenConfigurationRequested();
 
-    void onModelBallSelected();
-    void onModelSciddicaTSelected();
+    void onModelSelected();
     void onReloadDataRequested();
 
     void onPlayButtonClicked();
@@ -75,8 +75,13 @@ private:
 
     void setWidgetsEnabledState(bool enabled);
     void enterNoConfigurationFileMode();
+    
+    void switchToModel(const QString& modelName);
+    void createModelMenuActions();
 
     Ui::MainWindow* ui;
+    
+    QActionGroup* modelActionGroup;
 
     int currentStep;
     bool isPlaying = false;

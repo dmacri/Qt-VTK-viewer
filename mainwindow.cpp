@@ -13,6 +13,7 @@
 #include "config/Config.h"
 #include "widgets/ConfigDetailsDialog.h"
 #include "visualiser/VideoExporter.h"
+#include "visualiserProxy/SceneWidgetVisualizerFactory.h"
 
 
 namespace
@@ -25,6 +26,7 @@ MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(nullptr)
     , ui(new Ui::MainWindow)
     , currentStep{FIRST_STEP_NUMBER}
+    , modelActionGroup(nullptr)
 {
     ui->setupUi(this);
     setWindowTitle(QApplication::applicationName());
@@ -32,6 +34,7 @@ MainWindow::MainWindow(QWidget* parent)
     setupConnections();
     configureButtons();
     loadStrings();
+    createModelMenuActions();
     
     enterNoConfigurationFileMode();
 }
@@ -73,11 +76,9 @@ void MainWindow::connectMenuActions()
     connect(ui->actionShow_config_details, &QAction::triggered, this, &MainWindow::showConfigDetailsDialog);
     connect(ui->actionExport_Video, &QAction::triggered, this, &MainWindow::exportVideoDialog);
     connect(ui->actionOpenConfiguration, &QAction::triggered, this, &MainWindow::onOpenConfigurationRequested);
-    
-    // Model selection actions
-    connect(ui->actionModelBall, &QAction::triggered, this, &MainWindow::onModelBallSelected);
-    connect(ui->actionModelSciddicaT, &QAction::triggered, this, &MainWindow::onModelSciddicaTSelected);
     connect(ui->actionReloadData, &QAction::triggered, this, &MainWindow::onReloadDataRequested);
+
+    /// Model selection actions are connected dynamically in createModelMenuActions()
 }
 
 void MainWindow::configureButtons()
@@ -421,53 +422,42 @@ void MainWindow::onUpdatePositionOnSlider(int value)
     setPositionOnWidgets(value, /*updateSlider=*/false);
 }
 
-void MainWindow::onModelBallSelected()
+void MainWindow::onModelSelected()
 {
-    try
-    {
-        ui->sceneWidget->switchModel(ModelType::Ball);
-        
-        // Update menu checkboxes
-        ui->actionModelBall->setChecked(true);
-        ui->actionModelSciddicaT->setChecked(false);
-        
-        QMessageBox::information(this, tr("Model Changed"),
-                               tr("Successfully switched to Ball model.\nUse 'Reload Data' (F5) to load data files."));
-    }
-    catch (const std::exception& e)
-    {
-        QMessageBox::critical(this, tr("Model Switch Failed"),
-                            tr("Failed to switch model:\n%1").arg(e.what()));
-        
-        // Revert checkbox state
-        const auto currentModel = ui->sceneWidget->getCurrentModelName();
-        ui->actionModelBall->setChecked(currentModel == "Ball");
-        ui->actionModelSciddicaT->setChecked(currentModel == "SciddicaT");
-    }
+    QAction* action = qobject_cast<QAction*>(sender());
+    if (!action)
+        return;
+    
+    QString modelName = action->text();
+    switchToModel(modelName);
 }
 
-void MainWindow::onModelSciddicaTSelected()
+void MainWindow::switchToModel(const QString& modelName)
 {
     try
     {
-        ui->sceneWidget->switchModel(ModelType::SciddicaT);
+        // Find the model type from factory
+        const auto visualizer = SceneWidgetVisualizerFactory::createFromName(modelName.toStdString());
+        ModelType modelType = static_cast<ModelType>(visualizer->getModelTypeValue());
         
-        // Update menu checkboxes
-        ui->actionModelBall->setChecked(false);
-        ui->actionModelSciddicaT->setChecked(true);
+        ui->sceneWidget->switchModel(modelType);
         
         QMessageBox::information(this, tr("Model Changed"),
-                               tr("Successfully switched to SciddicaT model.\nUse 'Reload Data' (F5) to load data files."));
+                                 tr("Successfully switched to %1 model, but no data was reloaded from files.\n"
+                                    "Use 'Reload Data' (F5), or open another configuration file to load data files.\n"
+                                    "Notice: Model has to be compatible with configuration file, if not - the behaviour is undefined").arg(modelName));
     }
     catch (const std::exception& e)
     {
         QMessageBox::critical(this, tr("Model Switch Failed"),
-                            tr("Failed to switch model:\n%1").arg(e.what()));
+                              tr("Failed to switch model:\n%1").arg(e.what()));
         
-        // Revert checkbox state
-        const auto currentModel = ui->sceneWidget->getCurrentModelName();
-        ui->actionModelBall->setChecked(currentModel == "Ball");
-        ui->actionModelSciddicaT->setChecked(currentModel == "SciddicaT");
+        // Revert checkbox state to current model
+        const auto currentModel = QString::fromStdString(ui->sceneWidget->getCurrentModelName());
+        for (QAction* action : modelActionGroup->actions())
+        {
+            action->setChecked(action->text() == currentModel);
+        }
     }
 }
 
@@ -556,6 +546,48 @@ void MainWindow::enterNoConfigurationFileMode()
     setWidgetsEnabledState(false);
 }
 
+void MainWindow::createModelMenuActions()
+{
+    const auto availableModels = SceneWidgetVisualizerFactory::getAvailableModels();
+    
+    if (availableModels.empty())
+    {
+        std::cerr << "Warning: No models available from factory!" << std::endl;
+        return;
+    }
+    
+    // Create action group for exclusive selection
+    modelActionGroup = new QActionGroup(this);
+    modelActionGroup->setExclusive(true);
+    
+    // Clear existing model actions from menu (if any from .ui file)
+    ui->menuModel->clear();
+    
+    // Create action for each model
+    for (const auto& modelName : availableModels)
+    {
+        QAction* action = new QAction(QString::fromStdString(modelName), this);
+        action->setCheckable(true);
+        
+        // First model is checked by default
+        if (modelName == availableModels[0])
+        {
+            action->setChecked(true);
+        }
+        
+        modelActionGroup->addAction(action);
+        ui->menuModel->addAction(action);
+        
+        connect(action, &QAction::triggered, this, &MainWindow::onModelSelected);
+    }
+    
+    // Add separator and Reload Data action
+    ui->menuModel->addSeparator();
+    ui->menuModel->addAction(ui->actionReloadData);
+    
+    std::cout << "Created " << availableModels.size() << " model menu actions" << std::endl;
+}
+
 void MainWindow::setWidgetsEnabledState(bool enabled)
 {
     // Playback controls
@@ -581,8 +613,7 @@ void MainWindow::setWidgetsEnabledState(bool enabled)
     // actionQuit - always enabled
     // actionAbout - always enabled
     // actionOpenConfiguration - always enabled
-    // actionModelBall - always enabled (can switch before loading config)
-    // actionModelSciddicaT - always enabled (can switch before loading config)
+    // Model actions - always enabled (can switch before loading config)
     
     // These should be disabled without configuration:
     ui->actionShow_config_details->setEnabled(enabled);

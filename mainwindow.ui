@@ -382,10 +382,7 @@
     <property name="title">
      <string>Model</string>
     </property>
-    <addaction name="actionModelBall"/>
-    <addaction name="actionModelSciddicaT"/>
-    <addaction name="separator"/>
-    <addaction name="actionReloadData"/>
+    <!-- Model actions are added dynamically in MainWindow::createModelMenuActions() -->
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuModel"/>
@@ -453,31 +450,6 @@
    </property>
    <property name="toolTip">
     <string>Export simulation as OGG video</string>
-   </property>
-  </action>
-  <action name="actionModelBall">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Ball</string>
-   </property>
-   <property name="toolTip">
-    <string>Switch to Ball model</string>
-   </property>
-  </action>
-  <action name="actionModelSciddicaT">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>SciddicaT</string>
-   </property>
-   <property name="toolTip">
-    <string>Switch to SciddicaT model</string>
    </property>
   </action>
   <action name="actionReloadData">
