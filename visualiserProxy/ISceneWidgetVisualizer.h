@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vtkRenderer.h>
+#include "types.h"
 
 class SettingParameter;
 class Line;
@@ -35,8 +36,8 @@ public:
 
     /// @brief Draw the visualization using VTK.
     virtual void drawWithVTK(int nRows, int nCols, int step, Line* lines, 
-                            vtkSmartPointer<vtkRenderer> renderer, 
-                            vtkSmartPointer<vtkActor> gridActor) = 0;
+                             vtkSmartPointer<vtkRenderer> renderer,
+                             vtkSmartPointer<vtkActor> gridActor) = 0;
 
     /// @brief Refresh the VTK windows.
     virtual void refreshWindowsVTK(int nRows, int nCols, int step, Line* lines, 
@@ -52,4 +53,7 @@ public:
 
     /// @brief Get the ModelType enum value for this visualizer.
     virtual int getModelTypeValue() const = 0;
+
+    /// @brief Returns available steps from index file.
+    virtual std::vector<StepIndex> availableSteps() const = 0;
 };

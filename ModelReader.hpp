@@ -6,6 +6,8 @@
 #include <climits> // INT_MAX
 #include <cmath> // log10
 #include <filesystem>
+#include <algorithm> // std::ranges::sort
+#include <ranges>
 #include "types.h"
 #include "visualiser/SettingParameter.h"
 #include "visualiser/Line.h"
@@ -14,17 +16,17 @@
 template <class Cell>
 class ModelReader
 {
-    std::vector<std::unordered_map<StepIndex, FilePosition>> stage;
+    std::vector<std::unordered_map<StepIndex, FilePosition>> nodeStepOffsets;
 
 public:
     void prepareStage(NodeIndex nNodeX, NodeIndex nNodeY)
     {
-        stage.resize(nNodeX * nNodeY);
+        nodeStepOffsets.resize(nNodeX * nNodeY);
     }
 
     void clearStage()
     {
-        stage.clear();
+        nodeStepOffsets.clear();
     }
 
     template<class Matrix>
@@ -47,10 +49,34 @@ public:
      * @param filename base filename (e.g., "ball"), for which nodes files are being read */
     void readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, NodeIndex nNodeY, const std::string &filename);
 
+    /** @brief Returns a sorted list of all available simulation steps.
+     *
+     * This method inspects the internal `stage` structure, which stores for each node
+     * a mapping from step number (`StepIndex`) to byte offset within its corresponding file.
+     * It verifies that all nodes contain the same set of step indices. If any mismatch
+     * between nodes is detected, it either throws an exception or prints a warning message
+     * to `std::cerr`, depending on the value of `throwOnMismatch`.
+     *
+     * Additionally, if the `stage` data structure is empty (no node data loaded),
+     * the function will either throw a `std::runtime_error` or print a warning,
+     * depending on the value of `throwOnMismatch`.
+     *
+     * @param throwOnMismatch If true, throws `std::runtime_error` when:
+     *        - a mismatch between node step sets is detected, or
+     *        - the `stage` structure is empty.
+     *        If false, prints warnings to `std::cerr` instead of throwing.
+     *
+     * @return A sorted `std::vector<StepIndex>` containing all available simulation steps.
+     *
+     * @throws std::runtime_error If `throwOnMismatch` is true and:
+     *         - the `stage` is empty, or
+     *         - the step sets differ between nodes. */
+    std::vector<StepIndex> availableSteps(bool throwOnMismatch=false) const;
+
 private:
     FilePosition getStepStartingPositionInFile(StepIndex step, NodeIndex node)
     {
-        return stage.at(node).at(step);
+        return nodeStepOffsets.at(node).at(step);
     }
 
     /** @brief Opens the data file for a given simulation step and node.
@@ -236,11 +262,74 @@ void ModelReader<T>::readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, Node
                     throw std::runtime_error("Invalid line format in file: " + fileNameIndex);
             }
 
-            const auto [it, inserted] = stage[node].emplace(stepNumber, positionInFile);
+            const auto [it, inserted] = nodeStepOffsets[node].emplace(stepNumber, positionInFile);
             if (! inserted)
             {
                 std::cerr << std::format("Duplicate stepNumber {} found in file '{}' (node {})", stepNumber, fileNameIndex, node) << std::endl;
             }
         }
     }
+}
+
+template<class Cell>
+std::vector<StepIndex> ModelReader<Cell>::availableSteps(bool throwOnMismatch) const
+{
+    if (nodeStepOffsets.empty())
+    {
+        const auto errorMessage = "Warning: availableSteps() called on an empty stage.";
+        if (throwOnMismatch)
+        {
+            throw std::runtime_error(errorMessage);
+        }
+        else
+        {
+            std::cerr << errorMessage << std::endl;
+        }
+        return {};
+    }
+
+    // Helper lambda: extracts all step indices (keys) from a map and returns them sorted.
+    auto extractAndSortStepIndices = [](const auto& map) -> std::vector<StepIndex>
+    {
+        auto steps = map | std::views::keys | std::ranges::to<std::vector<StepIndex>>();
+        std::ranges::sort(steps);
+        return steps;
+    };
+
+    // Use the first node as the reference
+    const auto& fistNodeData = nodeStepOffsets.front();
+
+    // Collect and sort all step indices from the first node
+    auto firstNodeSteps = extractAndSortStepIndices(fistNodeData);
+
+    // Compare each node's step list against the reference
+    for (NodeIndex node = 1; node < nodeStepOffsets.size(); ++node)
+    {
+        const auto& nodeMap = nodeStepOffsets[node];
+        if (nodeMap.size() != fistNodeData.size())
+        {
+            const std::string msg = std::format("Step count mismatch for node {} (expected {}, found {})",
+                                                node, fistNodeData.size(), nodeMap.size());
+            if (throwOnMismatch)
+                throw std::runtime_error(msg);
+            else
+                std::cerr << "Warning: " << msg << '\n';
+        }
+
+        // Extract steps for comparison
+        auto nodeSteps = extractAndSortStepIndices(nodeMap);
+
+        // Compare with reference set
+        if (! std::ranges::equal(firstNodeSteps, nodeSteps))
+        {
+            const std::string msg = std::format("Inconsistent step indices detected in node {}.", node);
+            if (throwOnMismatch)
+                throw std::runtime_error(msg);
+            else
+                std::cerr << "[Warning] " << msg << '\n';
+        }
+    }
+
+    // Return the sorted list of unique steps
+    return firstNodeSteps;
 }

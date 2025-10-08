@@ -42,7 +42,8 @@ std::vector<string> SceneWidgetVisualizerFactory::getAvailableModels()
     std::vector<std::string> models;
 
     // Iterate through all model types
-    for (int i = 0; i <= static_cast<int>(ModelType::SciddicaT); ++i)
+    using IterationType = std::underlying_type_t<ModelType>;
+    for (IterationType i = {}; i <= static_cast<IterationType>(ModelType::SciddicaT); ++i)
     {
         try
         {

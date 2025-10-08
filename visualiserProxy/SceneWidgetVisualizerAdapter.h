@@ -19,8 +19,7 @@ public:
     SceneWidgetVisualizerAdapter(int modelTypeValue, const std::string& modelName)
         : m_modelTypeValue(modelTypeValue)
         , m_modelName(modelName)
-    {
-    }
+    {}
 
     void initMatrix(int dimX, int dimY) override
     {
@@ -75,8 +74,13 @@ public:
         return m_modelTypeValue;
     }
 
+    std::vector<StepIndex> availableSteps() const
+    {
+        return m_impl.modelReader.availableSteps();
+    }
+
 private:
     SceneWidgetVisualizerTemplate<Cell> m_impl;
-    std::string m_modelName;
-    int m_modelTypeValue;
+    const std::string m_modelName;
+    const int m_modelTypeValue;
 };

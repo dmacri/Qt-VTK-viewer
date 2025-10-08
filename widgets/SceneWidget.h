@@ -20,6 +20,7 @@ class SettingRenderParameter;
 class SceneWidget : public QVTKOpenGLNativeWidget
 {
     Q_OBJECT
+
 public:
     explicit SceneWidget(QWidget* parent);
     ~SceneWidget();
@@ -72,6 +73,10 @@ public:
 
 signals:
     void changedStepNumberWithKeyboardKeys(StepIndex stepNumber);
+
+    void totalNumberOfStepsReadFromConfigFile(StepIndex totalSteps);
+
+    void availableStepsReadFromConfigFile(std::vector<StepIndex> availableSteps);
 
 public slots:
     void increaseCountUp();

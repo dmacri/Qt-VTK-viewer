@@ -10,7 +10,6 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "config/Config.h"
 #include "widgets/ConfigDetailsDialog.h"
 #include "visualiser/VideoExporter.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
@@ -51,7 +50,6 @@ void MainWindow::configureUIElements(const QString& configFileName)
 {
     initializeSceneWidget(configFileName);
     showInputFilePathOnBarLabel(configFileName);
-    setTotalStepsFromConfiguration(configFileName);
     
     setWidgetsEnabledState(true);
     changeWhichButtonsAreEnabled();
@@ -65,8 +63,10 @@ void MainWindow::setupConnections()
     connectSliders();
 
     connect(ui->positionSpinBox, &QSpinBox::editingFinished, this, &MainWindow::onStepNumberChanged);
-    connect(ui->sceneWidget, &SceneWidget::changedStepNumberWithKeyboardKeys, ui->updatePositionSlider, &QSlider::setValue);
     connect(ui->inputFilePathLabel, &ClickableLabel::doubleClicked, this, &MainWindow::showConfigDetailsDialog);
+    connect(ui->sceneWidget, &SceneWidget::changedStepNumberWithKeyboardKeys, ui->updatePositionSlider, &QSlider::setValue);
+    connect(ui->sceneWidget, &SceneWidget::totalNumberOfStepsReadFromConfigFile, this, &MainWindow::totalStepsNumberChanged);
+    connect(ui->sceneWidget, &SceneWidget::availableStepsReadFromConfigFile, this, &MainWindow::availableStepsLoadedFromConfigFile);
 }
 
 void MainWindow::connectMenuActions()
@@ -111,18 +111,19 @@ void MainWindow::initializeSceneWidget(const QString& configFileName)
     ui->sceneWidget->addVisualizer(configFileName.toStdString(), currentStep);
 }
 
-void MainWindow::setTotalStepsFromConfiguration(const QString &configurationFile)
+void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> availableSteps)
 {
-    const auto configFilePath = configurationFile.toStdString();
-    Config config(configFilePath);
-
-    ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
-
-    const auto totalSteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
-    setTotalSteps(totalSteps);
+    std::cout << "Available steps:";
+    for (auto s : availableSteps)
+    {
+        std::cout << "\t" << s;
+    }
+    std::cout << std::endl;
+    // TODO: In future OOpenCal will be able to skips steps, then the function will be usefull
+    #warning "Not implemented: availableStepsLoadedFromConfigFile()"
 }
 
-void MainWindow::setTotalSteps(int totalStepsValue)
+void MainWindow::totalStepsNumberChanged(int totalStepsValue)
 {
     ui->totalStep->setText(QString("/") + QString::number(totalStepsValue));
     ui->updatePositionSlider->setMaximum(totalStepsValue);
@@ -501,7 +502,6 @@ void MainWindow::onOpenConfigurationRequested()
 
         if (bool isFirstConfiguration = ui->inputFilePathLabel->getFileName().isEmpty())
         {
-            // First time loading configuration
             initializeSceneWidget(configFileName);
         }
         else
@@ -512,7 +512,6 @@ void MainWindow::onOpenConfigurationRequested()
         
         // Update UI with new configuration
         showInputFilePathOnBarLabel(configFileName);
-        setTotalStepsFromConfiguration(configFileName);
         
         // Reset to first step
         currentStep = 0;
@@ -522,12 +521,12 @@ void MainWindow::onOpenConfigurationRequested()
         setWidgetsEnabledState(true);
         
         QMessageBox::information(this, tr("Configuration Loaded"),
-                               tr("Successfully loaded configuration:\n%1").arg(configFileName));
+                                 tr("Successfully loaded configuration:\n%1").arg(configFileName));
     }
     catch (const std::exception& e)
     {
         QMessageBox::critical(this, tr("Load Failed"),
-                            tr("Failed to load configuration:\n%1").arg(e.what()));
+                              tr("Failed to load configuration:\n%1").arg(e.what()));
     }
 }
 
@@ -537,7 +536,7 @@ void MainWindow::enterNoConfigurationFileMode()
     ui->inputFilePathLabel->setFileName("");
     ui->inputFilePathLabel->setText(tr("No configuration loaded - use File → Open Configuration"));
     
-    setTotalSteps(0);
+    totalStepsNumberChanged(0);
     currentStep = 0;
     ui->positionSpinBox->setValue(0);
     ui->updatePositionSlider->setValue(0);

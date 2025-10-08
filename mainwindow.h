@@ -2,6 +2,7 @@
 
 #include <QMainWindow>
 #include <QStyle>
+#include "types.h"
 
 namespace Ui {
 class MainWindow;
@@ -22,7 +23,6 @@ public:
     void loadInitialConfiguration(const QString& configFileName);
 
 private slots:
-
     void showAboutThisApplicationDialog();
     void showConfigDetailsDialog();
     void exportVideoDialog();
@@ -42,6 +42,9 @@ private slots:
 
     void onUpdatePositionOnSlider(int value);
 
+    void totalStepsNumberChanged(int totalStepsValue);
+    void availableStepsLoadedFromConfigFile(std::vector<StepIndex> availableSteps);
+
 private:
     enum class PlayingDirection
     {
@@ -56,7 +59,6 @@ private:
     void configureButtons();
     void configureButton(QPushButton* button, QStyle::StandardPixmap icon);
     void initializeSceneWidget(const QString& configFileName);
-    void setTotalStepsFromConfiguration(const QString& configurationFile);
     void connectButtons();
     void connectSliders();
     void connectMenuActions();
@@ -66,7 +68,6 @@ private:
 
     void setPositionOnWidgets(int stepPosition, bool updateSlider=true);
 
-    void setTotalSteps(int totalStepsValue);
     int totalSteps() const;
 
     void changeWhichButtonsAreEnabled();

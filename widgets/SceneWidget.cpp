@@ -77,29 +77,6 @@ void SceneWidget::addVisualizer(const std::string &filename, int stepNumber)
     renderVtkScene();
 }
 
-void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
-{
-    Config config(filename);
-
-    {
-        ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
-        const std::string outputFileNameFromCfg = generalContext->getConfigParameter("output_file_name")->getValue<std::string>();
-        settingParameter->outputFileName = prepareOutputFileName(filename, outputFileNameFromCfg);
-        settingParameter->numberOfColumnX = generalContext->getConfigParameter("number_of_columns")->getValue<int>();
-        settingParameter->numberOfRowsY = generalContext->getConfigParameter("number_of_rows")->getValue<int>();
-        settingParameter->nsteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
-    }
-
-    {
-        ConfigCategory* execContext = config.getConfigCategory("DISTRIBUTED");
-        // int borderSizeX = execContext->getConfigParameter("border_size_x")->getValue<int>(); // not used
-        // int borderSizeY = execContext->getConfigParameter("border_size_y")->getValue<int>(); // not used
-        // int numBorders = 1; // not used
-        settingParameter->nNodeX = execContext->getConfigParameter("number_node_x")->getValue<int>();
-        settingParameter->nNodeY = execContext->getConfigParameter("number_node_y")->getValue<int>();
-    }
-}
-
 void SceneWidget::setupSettingParameters(const std::string & configFilename, int stepNumber)
 {
     readSettingsFromConfigFile(configFilename);
@@ -113,7 +90,29 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename, int
 
     settingRenderParameter->m_renderer->SetBackground(settingRenderParameter->colors->GetColor3d("Silver").GetData());
 
-    cout << *settingParameter << endl;
+    DEBUG << *settingParameter << endl;
+}
+
+void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
+{
+    Config config(filename);
+
+    {
+        ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
+        const std::string outputFileNameFromCfg = generalContext->getConfigParameter("output_file_name")->getValue<std::string>();
+        settingParameter->outputFileName = prepareOutputFileName(filename, outputFileNameFromCfg);
+        settingParameter->numberOfColumnX = generalContext->getConfigParameter("number_of_columns")->getValue<int>();
+        settingParameter->numberOfRowsY = generalContext->getConfigParameter("number_of_rows")->getValue<int>();
+        settingParameter->nsteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
+        emit totalNumberOfStepsReadFromConfigFile(settingParameter->nsteps);
+    }
+
+    {
+        ConfigCategory* execContext = config.getConfigCategory("DISTRIBUTED");
+        settingParameter->nNodeX = execContext->getConfigParameter("number_node_x")->getValue<int>();
+        settingParameter->nNodeY = execContext->getConfigParameter("number_node_y")->getValue<int>();
+        /// Notice: there are much more params, which are not used: e.g. border_size_x, border_size_y
+    }
 }
 
 void SceneWidget::setupVtkScene()
@@ -136,34 +135,6 @@ void SceneWidget::setupVtkScene()
     keypressCallback->SetCallback(SceneWidget::keypressCallbackFunction);
     keypressCallback->SetClientData(this);
     interactor()->AddObserver(vtkCommand::KeyPressEvent, keypressCallback);
-}
-
-void SceneWidget::renderVtkScene()
-{
-    DEBUG << "DEBUG: Starting " << __FUNCTION__ << endl;
-    sceneWidgetVisualizerProxy->readStepsOffsetsForAllNodesFromFiles(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
-    DEBUG << "DEBUG: Hashmap loaded successfully" << endl;
-
-    std::vector<Line> lines(settingParameter->numberOfLines);
-
-    sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
-    DEBUG << "DEBUG: readStageStateFromFilesForStep completed" << endl;
-
-    sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, &lines[0], settingRenderParameter->m_renderer, gridActor);
-    DEBUG << "DEBUG: drawWithVTK completed" << endl;
-
-    vtkNew<vtkCellArray> cellLines;
-    vtkNew<vtkPoints> pts;
-    vtkNew<vtkPolyData> grid;
-    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->numberOfRowsY+1, settingParameter->numberOfColumnX+1, pts, cellLines, grid,settingRenderParameter->colors,settingRenderParameter->m_renderer,actorBuildLine);
-    DEBUG << "DEBUG: buildLoadBalanceLine completed" << endl;
-
-    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, settingRenderParameter->colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
-
-    // Render
-    renderWindow()->Render();
-    interactor()->Initialize();
-    interactor()->Enable();
 }
 
 void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
@@ -198,7 +169,7 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
         try
         {
             sw->updateVisualization();
-            
+
             // Force renderer update for keyboard callback too
             sw->renderWindow()->Modified();
             sw->renderWindow()->Render();
@@ -211,10 +182,39 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
         {
             std::cerr << "Error occurred: " << ex.what() << std::endl;
         }
-        
+
         sp->firstTime = false;
         sp->changed = false;
     }
+}
+
+void SceneWidget::renderVtkScene()
+{
+    DEBUG << "DEBUG: Starting " << __FUNCTION__ << endl;
+    sceneWidgetVisualizerProxy->readStepsOffsetsForAllNodesFromFiles(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
+    DEBUG << "DEBUG: Hashmap loaded successfully" << endl;
+    emit availableStepsReadFromConfigFile(sceneWidgetVisualizerProxy->availableSteps());
+
+    std::vector<Line> lines(settingParameter->numberOfLines);
+
+    sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
+    DEBUG << "DEBUG: readStageStateFromFilesForStep completed" << endl;
+
+    sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, &lines[0], settingRenderParameter->m_renderer, gridActor);
+    DEBUG << "DEBUG: drawWithVTK completed" << endl;
+
+    vtkNew<vtkCellArray> cellLines;
+    vtkNew<vtkPoints> pts;
+    vtkNew<vtkPolyData> grid;
+    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->numberOfRowsY+1, settingParameter->numberOfColumnX+1, pts, cellLines, grid,settingRenderParameter->colors,settingRenderParameter->m_renderer,actorBuildLine);
+    DEBUG << "DEBUG: buildLoadBalanceLine completed" << endl;
+
+    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, settingRenderParameter->colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
+
+    // Render
+    renderWindow()->Render();
+    interactor()->Initialize();
+    interactor()->Enable();
 }
 
 
