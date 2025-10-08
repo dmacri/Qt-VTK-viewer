@@ -71,7 +71,12 @@ private:
 
     void recordVideoToFile(const QString& outputFilePath, int fps);
 
+    void setWidgetsEnabledState(bool enabled);
+    void enterNoConfigurationMode();
+
     Ui::MainWindow* ui;
+    
+    bool hasConfiguration;
 
     int currentStep;
     bool isPlaying = false;

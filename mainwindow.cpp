@@ -21,22 +21,39 @@ constexpr int FIRST_STEP_NUMBER = 0;
 }
 
 
-MainWindow::MainWindow(const QString& configFileName, QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow), currentStep{FIRST_STEP_NUMBER}
+MainWindow::MainWindow(const QString& configFileName, QWidget* parent) 
+    : QMainWindow(nullptr)
+    , ui(new Ui::MainWindow)
+    , currentStep{FIRST_STEP_NUMBER}
+    , hasConfiguration{false}
 {
     ui->setupUi(this);
     setWindowTitle(QApplication::applicationName());
-    configureUIElements(configFileName);
+    
     setupConnections();
+    configureButtons();
+    loadStrings();
+    
+    if (configFileName.isEmpty())
+    {
+        // Start in "no configuration" mode
+        enterNoConfigurationMode();
+    }
+    else
+    {
+        // Load configuration normally
+        configureUIElements(configFileName);
+    }
 }
 
 void MainWindow::configureUIElements(const QString& configFileName)
 {
-    configureButtons();
-    loadStrings();
     initializeSceneWidget(configFileName);
     showInputFilePathOnBarLabel(configFileName);
     setTotalStepsFromConfiguration(configFileName);
-
+    
+    hasConfiguration = true;
+    setWidgetsEnabledState(true);
     changeWhichButtonsAreEnabled();
 }
 
@@ -495,8 +512,17 @@ void MainWindow::onOpenConfigurationRequested()
         isPlaying = false;
         isBacking = false;
         
-        // Load new configuration
-        ui->sceneWidget->loadNewConfiguration(configFileName.toStdString(), 0);
+        if (!hasConfiguration)
+        {
+            // First time loading configuration
+            initializeSceneWidget(configFileName);
+            hasConfiguration = true;
+        }
+        else
+        {
+            // Reload with new configuration
+            ui->sceneWidget->loadNewConfiguration(configFileName.toStdString(), 0);
+        }
         
         // Update UI with new configuration
         showInputFilePathOnBarLabel(configFileName);
@@ -506,6 +532,9 @@ void MainWindow::onOpenConfigurationRequested()
         currentStep = 0;
         setPositionOnWidgets(currentStep);
         
+        // Enable all widgets now that we have configuration
+        setWidgetsEnabledState(true);
+        
         QMessageBox::information(this, tr("Configuration Loaded"),
                                tr("Successfully loaded configuration:\n%1").arg(configFileName));
     }
@@ -514,4 +543,53 @@ void MainWindow::onOpenConfigurationRequested()
         QMessageBox::critical(this, tr("Load Failed"),
                             tr("Failed to load configuration:\n%1").arg(e.what()));
     }
+}
+
+void MainWindow::enterNoConfigurationMode()
+{    
+    // Set UI to show no configuration loaded
+    ui->inputFilePathLabel->setFileName("");
+    ui->inputFilePathLabel->setText(tr("No configuration loaded - use File → Open Configuration"));
+    
+    setTotalSteps(0);
+    currentStep = 0;
+    ui->positionSpinBox->setValue(0);
+    ui->updatePositionSlider->setValue(0);
+    
+    // Disable all playback and navigation widgets
+    setWidgetsEnabledState(false);
+}
+
+void MainWindow::setWidgetsEnabledState(bool enabled)
+{
+    // Playback controls
+    ui->playButton->setEnabled(enabled);
+    ui->stopButton->setEnabled(enabled);
+    ui->backButton->setEnabled(enabled);
+    ui->leftButton->setEnabled(enabled);
+    ui->rightButton->setEnabled(enabled);
+    ui->skipForwardButton->setEnabled(enabled);
+    ui->skipBackwardButton->setEnabled(enabled);
+    
+    // Position controls
+    ui->updatePositionSlider->setEnabled(enabled);
+    ui->positionSpinBox->setEnabled(enabled);
+    
+    // Speed/sleep controls (if they exist)
+    if (ui->speedSpinBox)
+        ui->speedSpinBox->setEnabled(enabled);
+    if (ui->sleepSpinBox)
+        ui->sleepSpinBox->setEnabled(enabled);
+    
+    // Menu actions - some should remain enabled
+    // actionQuit - always enabled
+    // actionAbout - always enabled
+    // actionOpenConfiguration - always enabled
+    // actionModelBall - always enabled (can switch before loading config)
+    // actionModelSciddicaT - always enabled (can switch before loading config)
+    
+    // These should be disabled without configuration:
+    ui->actionShow_config_details->setEnabled(enabled);
+    ui->actionExport_Video->setEnabled(enabled);
+    ui->actionReloadData->setEnabled(enabled);
 }

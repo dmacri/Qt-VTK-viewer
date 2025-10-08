@@ -10,12 +10,13 @@
 
 int main(int argc, char* argv[])
 {
-    if (1 == argc)
+    QString configFilePath;
+    if (argc > 1)
     {
-        std::cerr << "Usage: " << argv[0] << " <configurationFilePath>" << std::endl;
-        return 1;
+        configFilePath = argv[1];
     }
-    const auto configFilePath = argv[1];
+    // If no argument provided, configFilePath will be empty
+    // and MainWindow will start in "no configuration" mode
 
    // vtkObject::GlobalWarningDisplayOff();
 
