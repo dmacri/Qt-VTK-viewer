@@ -74,10 +74,7 @@ public:
     std::vector<StepIndex> availableSteps(bool throwOnMismatch=false) const;
 
 private:
-    FilePosition getStepStartingPositionInFile(StepIndex step, NodeIndex node)
-    {
-        return nodeStepOffsets.at(node).at(step);
-    }
+    FilePosition getStepStartingPositionInFile(StepIndex step, NodeIndex node) const;
 
     /** @brief Opens the data file for a given simulation step and node.
      *
@@ -332,4 +329,21 @@ std::vector<StepIndex> ModelReader<Cell>::availableSteps(bool throwOnMismatch) c
 
     // Return the sorted list of unique steps
     return firstNodeSteps;
+}
+
+template<class Cell>
+FilePosition ModelReader<Cell>::getStepStartingPositionInFile(StepIndex step, NodeIndex node) const
+{
+    if (node >= nodeStepOffsets.size())
+    {
+        throw std::out_of_range(std::format("Invalid node index {} (available nodes: {})", node, nodeStepOffsets.size()));
+    }
+
+    const auto& stepMap = nodeStepOffsets[node];
+    if (auto it = stepMap.find(step); it != stepMap.end())
+    {
+        return it->second;
+    }
+
+    throw std::out_of_range(std::format("Step {} not found in node {} (available step indices: {})", step, node, stepMap.size() - 1));
 }
