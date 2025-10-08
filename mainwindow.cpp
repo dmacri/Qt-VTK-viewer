@@ -281,18 +281,22 @@ void MainWindow::playingRequested(PlayingDirection direction)
 
     while (true)
     {
-        currentStep = std::clamp(currentStep, FIRST_STEP_NUMBER, totalSteps());;
+        currentStep = std::clamp(currentStep, FIRST_STEP_NUMBER, totalSteps());
 
         {
             QSignalBlocker blockSlider(ui->updatePositionSlider);
-            setPositionOnWidgets(currentStep);
+            if (bool changingPositionSuccess = setPositionOnWidgets(currentStep); ! changingPositionSuccess)
+            {
+                isPlaying = false;
+                break;
+            }
         }
 
         QThread::msleep(ui->sleepSpinBox->value());
 
         QApplication::processEvents();
 
-        if (!isPlaying || (std::to_underlying(direction) < 0 && currentStep == 0))
+        if (! isPlaying || (std::to_underlying(direction) < 0 && currentStep == 0))
         {
             break;
         }
@@ -349,44 +353,41 @@ void MainWindow::onBackButtonClicked()
 
 void MainWindow::onLeftButtonClicked()
 {
-    ui->sceneWidget->decreaseCountDown();
     currentStep = std::max(currentStep - 1, FIRST_STEP_NUMBER);
     setPositionOnWidgets(currentStep);
 }
 
 void MainWindow::onRightButtonClicked()
 {
-    try
-    {
-        ui->sceneWidget->increaseCountUp();
-        currentStep = std::min(currentStep + 1, totalSteps());
-        setPositionOnWidgets(currentStep);
-    }
-    catch (const std::exception& e)
-    {
-        QMessageBox::warning(this, "Changing position error",
-                             tr("It was impossible to change position to %1, because:\n").arg(currentStep) + e.what());
-    }
+    currentStep = std::min(currentStep + 1, totalSteps());
+    setPositionOnWidgets(currentStep);
 }
 
-void MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
+bool MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
 {
+    bool changingPositionSuccess = true;
+
+    const auto stepBeforeTrying2ChangePosition = currentStep;
     try
     {
+        ui->sceneWidget->selectedStepParameter(stepPosition);
         if (updateSlider)
         {
             QSignalBlocker sliderBlocker(ui->updatePositionSlider);
             ui->updatePositionSlider->setValue(stepPosition);
         }
         ui->positionSpinBox->setValue(stepPosition);
-        ui->sceneWidget->selectedStepParameter(stepPosition);
     }
     catch (const std::exception& e)
     {
         QMessageBox::warning(this, "Changing position error",
                              tr("It was impossible to change position to %1, because:\n").arg(stepPosition) + e.what());
+        currentStep = stepBeforeTrying2ChangePosition;
+        changingPositionSuccess = false;
     }
     changeWhichButtonsAreEnabled();
+
+    return changingPositionSuccess;
 }
 
 void MainWindow::changeWhichButtonsAreEnabled()

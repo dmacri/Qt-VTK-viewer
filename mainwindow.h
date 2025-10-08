@@ -66,7 +66,7 @@ private:
 
     void loadStrings();
 
-    void setPositionOnWidgets(int stepPosition, bool updateSlider=true);
+    bool setPositionOnWidgets(int stepPosition, bool updateSlider=true);
 
     int totalSteps() const;
 
