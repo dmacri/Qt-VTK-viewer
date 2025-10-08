@@ -7,6 +7,7 @@
 #include <cmath> // log10
 #include <filesystem>
 #include <algorithm> // std::ranges::sort
+#include <future>
 #include <ranges>
 #include "types.h"
 #include "visualiser/SettingParameter.h"
@@ -152,57 +153,65 @@ std::ifstream ModelReader<T>::readColumnAndRowForStepFromFileReturningStream(Ste
 
 template<class T>
 template<class Matrix>
-void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line *lines)
+void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line* lines)
 {
     const auto columnsAndRows = giveMeLocalColsAndRowsForAllSteps(sp->step, sp->nNodeX, sp->nNodeY, sp->outputFileName);
 
-    bool startStepDone = false;
+    const auto totalNodes = sp->nNodeX * sp->nNodeY;
+    const auto columnsAndRows = giveMeLocalColsAndRowsForAllSteps(sp->step, sp->nNodeX, sp->nNodeY, sp->outputFileName);
 
-    constexpr std::size_t numbersPerLine = 10'000;
-    const std::size_t lineBufferSize = (log10(UINT_MAX) + 2) * numbersPerLine;
-    std::string line;
-    line.reserve(lineBufferSize); /// for speedup to avoid realocations
-
-    for (NodeIndex node = 0; node < sp->nNodeX * sp->nNodeY; ++node)
+    /// Lambda responsible for reading and processing a single node’s file
+    auto processNode = [&, this/*, m, sp, lines, columnsAndRows*/](NodeIndex node) /*mutable*/
     {
         const auto offsetXY = ReaderHelpers::calculateXYOffset(node, sp->nNodeX, sp->nNodeY, columnsAndRows);
 
         ColumnAndRow columnAndRow;
         std::ifstream fp = readColumnAndRowForStepFromFileReturningStream(sp->step, sp->outputFileName, node, columnAndRow);
-        if (! fp)
+        if (!fp)
             throw std::runtime_error("Cannot open file for node " + std::to_string(node));
 
-        /// introducing big buffer for reading (for speed up)
+        // Use a thread-local buffer for faster reading
         static thread_local char fileBuffer[1 << 16];
         fp.rdbuf()->pubsetbuf(fileBuffer, sizeof(fileBuffer));
 
+        // Define boundary lines for the node
         lines[node * 2]     = Line(offsetXY.x(), offsetXY.y(), offsetXY.x() + columnAndRow.column, offsetXY.y());
         lines[node * 2 + 1] = Line(offsetXY.x(), offsetXY.y(), offsetXY.x(), offsetXY.y() + columnAndRow.row);
 
+        // Reserve a large line buffer to minimize reallocations
+        constexpr std::size_t numbersPerLine = 10'000;
+        const std::size_t lineBufferSize = (std::log10(UINT_MAX) + 2) * numbersPerLine;
+        std::string line;
+        line.reserve(lineBufferSize);
+
+        bool localStartStepDone = false;
+
+        // Process each line (row) from the node’s file
         for (int row = 0; row < columnAndRow.row; ++row)
         {
             if (! std::getline(fp, line))
             {
                 const auto fileNameTmp = ReaderHelpers::giveMeFileName(sp->outputFileName, node);
-                throw std::runtime_error("Error when reading entire line of file " + fileNameTmp);
+                throw std::runtime_error("Error reading entire line from " + fileNameTmp);
             }
 
-            std::replace(begin(line), end(line), ' ', '\0'); /// this is faster than using std::ranges::replace
+            // Replace spaces with '\0' to tokenize more efficiently
+            std::replace(line.begin(), line.end(), ' ', '\0');  /// this is faster than using std::ranges::replace
 
-            /// Moving through tokens (token are characters ended with '0')
+            // Tokenize and fill the corresponding part of the matrix
             char* currentTokenPtr = line.data();
             for (int col = 0; col < columnAndRow.column && *currentTokenPtr; ++col)
             {
-                if (! startStepDone) [[unlikely]]
+                if (!localStartStepDone) [[unlikely]]
                 {
                     m[row + offsetXY.y()][col + offsetXY.x()].T::startStep(sp->step);
-                    startStepDone = true;
+                    localStartStepDone = true;
                 }
 
                 char* nextTokenPtr = currentTokenPtr;
                 while (*nextTokenPtr)
                     ++nextTokenPtr;
-                ++nextTokenPtr; /// skip '\0'
+                ++nextTokenPtr; // skip '\0'
 
                 m[row + offsetXY.y()][col + offsetXY.x()].T::composeElement(currentTokenPtr);
 
@@ -210,6 +219,23 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
                 currentTokenPtr = nextTokenPtr;
             }
         }
+    };
+
+    /// Launch async tasks — one per node
+    std::vector<std::future<void>> futures;
+    futures.reserve(totalNodes);
+
+    for (NodeIndex node = 0; node < totalNodes; ++node)
+    {
+        futures.push_back(std::async(std::launch::async, [&, node]() {
+            processNode(node);
+        }));
+    }
+
+    // Wait for all async tasks to complete
+    for (auto& f : futures)
+    {
+        f.get();
     }
 }
 template<class T>
