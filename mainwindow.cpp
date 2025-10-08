@@ -113,14 +113,21 @@ void MainWindow::initializeSceneWidget(const QString& configFileName)
 
 void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> availableSteps)
 {
+    const auto lastStepAvailableInAvailableSteps = std::ranges::contains(availableSteps, totalSteps());
+    if ( ! lastStepAvailableInAvailableSteps)
+    {
+        QMessageBox::warning(this, tr("Number of steps mismatch"),
+                             tr("Total number of steps from config file is %1, but last step number from index file is %2")
+                                 .arg(totalSteps()).arg(availableSteps.back()));
+    }
+
+    // TODO: In future OOpenCal will be able to skips steps, then the function will be usefull
     std::cout << "Available steps:";
     for (auto s : availableSteps)
     {
         std::cout << "\t" << s;
     }
     std::cout << std::endl;
-    // TODO: In future OOpenCal will be able to skips steps, then the function will be usefull
-    #warning "Not implemented: availableStepsLoadedFromConfigFile()"
 }
 
 void MainWindow::totalStepsNumberChanged(int totalStepsValue)
