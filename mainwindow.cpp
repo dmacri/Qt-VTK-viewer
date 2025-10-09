@@ -360,13 +360,15 @@ void MainWindow::onBackButtonClicked()
 
 void MainWindow::onLeftButtonClicked()
 {
-    currentStep = std::max(currentStep - 1, FIRST_STEP_NUMBER);
+    const auto stepsPerClick = ui->speedSpinBox->value();
+    currentStep = std::max(currentStep - stepsPerClick, FIRST_STEP_NUMBER);
     setPositionOnWidgets(currentStep);
 }
 
 void MainWindow::onRightButtonClicked()
 {
-    currentStep = std::min(currentStep + 1, totalSteps());
+    const auto stepsPerClick = ui->speedSpinBox->value();
+    currentStep = std::min(currentStep + stepsPerClick, totalSteps());
     setPositionOnWidgets(currentStep);
 }
 
