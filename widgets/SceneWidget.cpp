@@ -192,7 +192,7 @@ void SceneWidget::renderVtkScene()
     std::vector<Line> lines(settingParameter->numberOfLines);
     sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
 
-    sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, &lines[0], settingRenderParameter->m_renderer, gridActor);
+    sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, settingRenderParameter->m_renderer, gridActor);
 
     sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->numberOfRowsY+1, settingParameter->numberOfColumnX+1, settingRenderParameter->colors, settingRenderParameter->m_renderer, actorBuildLine);
 
@@ -204,27 +204,6 @@ void SceneWidget::renderVtkScene()
     interactor()->Enable();
 }
 // TODO: add information : select a model
-
-void SceneWidget::increaseCountUp()
-{
-    if (settingParameter->step < settingParameter->nsteps * 2)
-    {
-        settingParameter->step += 1;
-        settingParameter->changed = true;
-    }
-    upgradeModelInCentralPanel();
-}
-
-void SceneWidget::decreaseCountDown()
-{
-    if (settingParameter->step > 1)
-    {
-        settingParameter->step -= 1;
-        settingParameter->changed = true;
-    }
-
-    upgradeModelInCentralPanel();
-}
 
 void SceneWidget::mouseMoveEvent(QMouseEvent* event)
 {
