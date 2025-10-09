@@ -194,7 +194,7 @@ void SceneWidget::renderVtkScene()
 
     sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, settingRenderParameter->m_renderer, gridActor);
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->numberOfRowsY+1, settingParameter->numberOfColumnX+1, settingRenderParameter->colors, settingRenderParameter->m_renderer, actorBuildLine);
+    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfRowsY+1, settingParameter->numberOfColumnX+1, settingRenderParameter->colors, settingRenderParameter->m_renderer, actorBuildLine);
 
     sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, settingRenderParameter->colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
 

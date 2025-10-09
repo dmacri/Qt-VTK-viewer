@@ -2,12 +2,12 @@
 #include "Line.h"
 
 
-void Visualizer::buildLoadBalanceLine(Line *lines, int dimLines, int nCols, int nRows, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine)
+void Visualizer::buildLoadBalanceLine(const std::vector<Line> &lines, int nCols, int nRows, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine)
 {
     vtkNew<vtkCellArray> cellLines;
     vtkNew<vtkPoints> pts;
 
-    for (int i = 0; i < dimLines; i++)
+    for (size_t i{}; i < lines.size(); i++)
     {
         std::cout << "Line (" << lines[i].x1 << ", " << lines[i].y1 << ") -> (" <<lines[i].x2 << ", " <<lines[i].y2 << ")" << std::endl;
         pts->InsertNextPoint(lines[i].x1 * 1, nCols-1-lines[i].y1 * 1, 0.0);
