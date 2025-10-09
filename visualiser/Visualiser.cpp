@@ -2,7 +2,7 @@
 #include "Line.h"
 
 
-void Visualizer::buildLoadBalanceLine(const std::vector<Line> &lines, int nCols, int nRows, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine)
+void Visualizer::buildLoadBalanceLine(const std::vector<Line> &lines, int nCols, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine)
 {
     vtkNew<vtkCellArray> cellLines;
     vtkNew<vtkPoints> pts;
