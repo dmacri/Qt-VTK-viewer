@@ -2,12 +2,14 @@
 
 #include <QMainWindow>
 #include <QStyle>
+#include "types.h"
 
 namespace Ui {
 class MainWindow;
 }
 
 class QPushButton;
+class QActionGroup;
 
 
 class MainWindow : public QMainWindow
@@ -15,15 +17,20 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(const QString& configFileName, QWidget* parent = nullptr);
+    explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
+    
+    void loadInitialConfiguration(const QString& configFileName);
 
 private slots:
-
     void showAboutThisApplicationDialog();
     void showConfigDetailsDialog();
     void exportVideoDialog();
     void onStepNumberChanged();
+    void onOpenConfigurationRequested();
+
+    void onModelSelected();
+    void onReloadDataRequested();
 
     void onPlayButtonClicked();
     void onStopButtonClicked();
@@ -34,6 +41,9 @@ private slots:
     void onRightButtonClicked();
 
     void onUpdatePositionOnSlider(int value);
+
+    void totalStepsNumberChanged(int totalStepsValue);
+    void availableStepsLoadedFromConfigFile(std::vector<StepIndex> availableSteps);
 
 private:
     enum class PlayingDirection
@@ -49,7 +59,6 @@ private:
     void configureButtons();
     void configureButton(QPushButton* button, QStyle::StandardPixmap icon);
     void initializeSceneWidget(const QString& configFileName);
-    void setTotalStepsFromConfiguration(const QString& configurationFile);
     void connectButtons();
     void connectSliders();
     void connectMenuActions();
@@ -57,16 +66,23 @@ private:
 
     void loadStrings();
 
-    void setPositionOnWidgets(int stepPosition, bool updateSlider=true);
+    bool setPositionOnWidgets(int stepPosition, bool updateSlider=true);
 
-    void setTotalSteps(int totalStepsValue);
     int totalSteps() const;
 
     void changeWhichButtonsAreEnabled();
 
     void recordVideoToFile(const QString& outputFilePath, int fps);
 
+    void setWidgetsEnabledState(bool enabled);
+    void enterNoConfigurationFileMode();
+    
+    void switchToModel(const QString& modelName);
+    void createModelMenuActions();
+
     Ui::MainWindow* ui;
+    
+    QActionGroup* modelActionGroup;
 
     int currentStep;
     bool isPlaying = false;

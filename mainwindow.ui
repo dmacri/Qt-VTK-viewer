@@ -364,6 +364,7 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionOpenConfiguration"/>
     <addaction name="separator"/>
     <addaction name="actionShow_config_details"/>
     <addaction name="separator"/>
@@ -377,9 +378,30 @@
     </property>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuModel">
+    <property name="title">
+     <string>Model</string>
+    </property>
+    <!-- Model actions are added dynamically in MainWindow::createModelMenuActions() -->
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuModel"/>
    <addaction name="menuHelp"/>
   </widget>
+  <action name="actionOpenConfiguration">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentOpen"/>
+   </property>
+   <property name="text">
+    <string>Open Configuration...</string>
+   </property>
+   <property name="toolTip">
+    <string>Load a new configuration file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
   <action name="actionQuit">
    <property name="icon">
     <iconset resource="resources.qrc">
@@ -428,6 +450,20 @@
    </property>
    <property name="toolTip">
     <string>Export simulation as OGG video</string>
+   </property>
+  </action>
+  <action name="actionReloadData">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::ViewRefresh"/>
+   </property>
+   <property name="text">
+    <string>Reload Data</string>
+   </property>
+   <property name="toolTip">
+    <string>Reload data files for current model</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
    </property>
   </action>
  </widget>

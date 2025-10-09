@@ -5,18 +5,12 @@
 #include <QStyleFactory>
 #include <QSurfaceFormat>
 #include <QVTKOpenGLNativeWidget.h>
+#include <filesystem>
 #include <vtkGenericOpenGLRenderWindow.h>
 
 
 int main(int argc, char* argv[])
 {
-    if (1 == argc)
-    {
-        std::cerr << "Usage: " << argv[0] << " <configurationFilePath>" << std::endl;
-        return 1;
-    }
-    const auto configFilePath = argv[1];
-
    // vtkObject::GlobalWarningDisplayOff();
 
     QSurfaceFormat::setDefaultFormat(QVTKOpenGLNativeWidget::defaultFormat());
@@ -25,7 +19,20 @@ int main(int argc, char* argv[])
     QApplication::setStyle(QStyleFactory::create("Fusion"));
     QApplication::setApplicationName("Visualiser");
 
-    MainWindow mainWindow(configFilePath);
+    MainWindow mainWindow;
+    
+    if (argc > 1)
+    {
+        const auto configurationFile = argv[1];
+        if (std::filesystem::exists(configurationFile))
+        {
+            mainWindow.loadInitialConfiguration(configurationFile);
+        }
+        else
+        {
+            std::cerr << "Provided argument is not valid file path: '" << configurationFile << "'!" << std::endl;
+        }
+    }
 
     if (QFile styleFile("style.qss"); styleFile.open(QFile::ReadOnly))
     {

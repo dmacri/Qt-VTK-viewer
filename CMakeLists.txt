@@ -20,6 +20,7 @@ list(APPEND Sources
     visualiser/SettingParameter.cpp
     visualiser/VideoExporter.cpp
     visualiser/Visualiser.cpp
+    visualiserProxy/SceneWidgetVisualizerFactory.cpp
     widgets/ClickableLabel.cpp
     widgets/ConfigDetailsDialog.cpp
     widgets/SceneWidget.cpp

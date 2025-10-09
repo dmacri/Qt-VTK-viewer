@@ -10,9 +10,9 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "config/Config.h"
 #include "widgets/ConfigDetailsDialog.h"
 #include "visualiser/VideoExporter.h"
+#include "visualiserProxy/SceneWidgetVisualizerFactory.h"
 
 
 namespace
@@ -21,22 +21,37 @@ constexpr int FIRST_STEP_NUMBER = 0;
 }
 
 
-MainWindow::MainWindow(const QString& configFileName, QWidget* parent) : QMainWindow(nullptr), ui(new Ui::MainWindow), currentStep{FIRST_STEP_NUMBER}
+MainWindow::MainWindow(QWidget* parent) 
+    : QMainWindow(nullptr)
+    , ui(new Ui::MainWindow)
+    , currentStep{FIRST_STEP_NUMBER}
+    , modelActionGroup(nullptr)
 {
     ui->setupUi(this);
     setWindowTitle(QApplication::applicationName());
-    configureUIElements(configFileName);
+    
     setupConnections();
+    configureButtons();
+    loadStrings();
+    createModelMenuActions();
+    
+    enterNoConfigurationFileMode();
+}
+
+void MainWindow::loadInitialConfiguration(const QString& configFileName)
+{
+    if (!configFileName.isEmpty())
+    {
+        configureUIElements(configFileName);
+    }
 }
 
 void MainWindow::configureUIElements(const QString& configFileName)
 {
-    configureButtons();
-    loadStrings();
     initializeSceneWidget(configFileName);
     showInputFilePathOnBarLabel(configFileName);
-    setTotalStepsFromConfiguration(configFileName);
-
+    
+    setWidgetsEnabledState(true);
     changeWhichButtonsAreEnabled();
 }
 
@@ -48,8 +63,10 @@ void MainWindow::setupConnections()
     connectSliders();
 
     connect(ui->positionSpinBox, &QSpinBox::editingFinished, this, &MainWindow::onStepNumberChanged);
-    connect(ui->sceneWidget, &SceneWidget::changedStepNumberWithKeyboardKeys, ui->updatePositionSlider, &QSlider::setValue);
     connect(ui->inputFilePathLabel, &ClickableLabel::doubleClicked, this, &MainWindow::showConfigDetailsDialog);
+    connect(ui->sceneWidget, &SceneWidget::changedStepNumberWithKeyboardKeys, ui->updatePositionSlider, &QSlider::setValue);
+    connect(ui->sceneWidget, &SceneWidget::totalNumberOfStepsReadFromConfigFile, this, &MainWindow::totalStepsNumberChanged);
+    connect(ui->sceneWidget, &SceneWidget::availableStepsReadFromConfigFile, this, &MainWindow::availableStepsLoadedFromConfigFile);
 }
 
 void MainWindow::connectMenuActions()
@@ -58,6 +75,10 @@ void MainWindow::connectMenuActions()
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::showAboutThisApplicationDialog);
     connect(ui->actionShow_config_details, &QAction::triggered, this, &MainWindow::showConfigDetailsDialog);
     connect(ui->actionExport_Video, &QAction::triggered, this, &MainWindow::exportVideoDialog);
+    connect(ui->actionOpenConfiguration, &QAction::triggered, this, &MainWindow::onOpenConfigurationRequested);
+    connect(ui->actionReloadData, &QAction::triggered, this, &MainWindow::onReloadDataRequested);
+
+    /// Model selection actions are connected dynamically in createModelMenuActions()
 }
 
 void MainWindow::configureButtons()
@@ -90,18 +111,26 @@ void MainWindow::initializeSceneWidget(const QString& configFileName)
     ui->sceneWidget->addVisualizer(configFileName.toStdString(), currentStep);
 }
 
-void MainWindow::setTotalStepsFromConfiguration(const QString &configurationFile)
+void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> availableSteps)
 {
-    const auto configFilePath = configurationFile.toStdString();
-    Config config(configFilePath);
+    const auto lastStepAvailableInAvailableSteps = std::ranges::contains(availableSteps, totalSteps());
+    if ( ! lastStepAvailableInAvailableSteps)
+    {
+        QMessageBox::warning(this, tr("Number of steps mismatch"),
+                             tr("Total number of steps from config file is %1, but last step number from index file is %2")
+                                 .arg(totalSteps()).arg(availableSteps.back()));
+    }
 
-    ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
-
-    const auto totalSteps = generalContext->getConfigParameter("number_steps")->getValue<int>();
-    setTotalSteps(totalSteps);
+    // TODO: In future OOpenCal will be able to skips steps, then the function will be usefull
+    std::cout << "Available steps:";
+    for (auto s : availableSteps)
+    {
+        std::cout << "\t" << s;
+    }
+    std::cout << std::endl;
 }
 
-void MainWindow::setTotalSteps(int totalStepsValue)
+void MainWindow::totalStepsNumberChanged(int totalStepsValue)
 {
     ui->totalStep->setText(QString("/") + QString::number(totalStepsValue));
     ui->updatePositionSlider->setMaximum(totalStepsValue);
@@ -259,18 +288,22 @@ void MainWindow::playingRequested(PlayingDirection direction)
 
     while (true)
     {
-        currentStep = std::clamp(currentStep, FIRST_STEP_NUMBER, totalSteps());;
+        currentStep = std::clamp(currentStep, FIRST_STEP_NUMBER, totalSteps());
 
         {
             QSignalBlocker blockSlider(ui->updatePositionSlider);
-            setPositionOnWidgets(currentStep);
+            if (bool changingPositionSuccess = setPositionOnWidgets(currentStep); ! changingPositionSuccess)
+            {
+                isPlaying = false;
+                break;
+            }
         }
 
         QThread::msleep(ui->sleepSpinBox->value());
 
         QApplication::processEvents();
 
-        if (!isPlaying || (std::to_underlying(direction) < 0 && currentStep == 0))
+        if (! isPlaying || (std::to_underlying(direction) < 0 && currentStep == 0))
         {
             break;
         }
@@ -327,44 +360,41 @@ void MainWindow::onBackButtonClicked()
 
 void MainWindow::onLeftButtonClicked()
 {
-    ui->sceneWidget->decreaseCountDown();
     currentStep = std::max(currentStep - 1, FIRST_STEP_NUMBER);
     setPositionOnWidgets(currentStep);
 }
 
 void MainWindow::onRightButtonClicked()
 {
-    try
-    {
-        ui->sceneWidget->increaseCountUp();
-        currentStep = std::min(currentStep + 1, totalSteps());
-        setPositionOnWidgets(currentStep);
-    }
-    catch (const std::exception& e)
-    {
-        QMessageBox::warning(this, "Changing position error",
-                             tr("It was impossible to change position, because:\n") + e.what());
-    }
+    currentStep = std::min(currentStep + 1, totalSteps());
+    setPositionOnWidgets(currentStep);
 }
 
-void MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
+bool MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
 {
+    bool changingPositionSuccess = true;
+
+    const auto stepBeforeTrying2ChangePosition = currentStep;
     try
     {
+        ui->sceneWidget->selectedStepParameter(stepPosition);
         if (updateSlider)
         {
             QSignalBlocker sliderBlocker(ui->updatePositionSlider);
             ui->updatePositionSlider->setValue(stepPosition);
         }
         ui->positionSpinBox->setValue(stepPosition);
-        ui->sceneWidget->selectedStepParameter(stepPosition);
     }
     catch (const std::exception& e)
     {
         QMessageBox::warning(this, "Changing position error",
-                             tr("It was impossible to change position, because:\n") + e.what());
+                             tr("It was impossible to change position to %1, because:\n").arg(stepPosition) + e.what());
+        currentStep = stepBeforeTrying2ChangePosition;
+        changingPositionSuccess = false;
     }
     changeWhichButtonsAreEnabled();
+
+    return changingPositionSuccess;
 }
 
 void MainWindow::changeWhichButtonsAreEnabled()
@@ -399,4 +429,201 @@ void MainWindow::onUpdatePositionOnSlider(int value)
     currentStep = value;
 
     setPositionOnWidgets(value, /*updateSlider=*/false);
+}
+
+void MainWindow::onModelSelected()
+{
+    QAction* action = qobject_cast<QAction*>(sender());
+    if (!action)
+        return;
+    
+    QString modelName = action->text();
+    switchToModel(modelName);
+}
+
+void MainWindow::switchToModel(const QString& modelName)
+{
+    try
+    {
+        // Find the model type from factory
+        const auto visualizer = SceneWidgetVisualizerFactory::createFromName(modelName.toStdString());
+        ModelType modelType = static_cast<ModelType>(visualizer->getModelTypeValue());
+        
+        ui->sceneWidget->switchModel(modelType);
+        
+        QMessageBox::information(this, tr("Model Changed"),
+                                 tr("Successfully switched to %1 model, but no data was reloaded from files.\n"
+                                    "Use 'Reload Data' (F5), or open another configuration file to load data files.\n"
+                                    "Notice: Model has to be compatible with configuration file, if not - the behaviour is undefined").arg(modelName));
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::critical(this, tr("Model Switch Failed"),
+                              tr("Failed to switch model:\n%1").arg(e.what()));
+        
+        // Revert checkbox state to current model
+        const auto currentModel = QString::fromStdString(ui->sceneWidget->getCurrentModelName());
+        for (QAction* action : modelActionGroup->actions())
+        {
+            action->setChecked(action->text() == currentModel);
+        }
+    }
+}
+
+void MainWindow::onReloadDataRequested()
+{
+    try
+    {
+        ui->sceneWidget->reloadData();
+        
+        QMessageBox::information(this, tr("Data Reloaded"),
+                               tr("Data files successfully reloaded for model: %1")
+                               .arg(QString::fromStdString(ui->sceneWidget->getCurrentModelName())));
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::critical(this, tr("Reload Failed"),
+                            tr("Failed to reload data:\n%1").arg(e.what()));
+    }
+}
+
+void MainWindow::onOpenConfigurationRequested()
+{
+    // Open file dialog to select configuration file
+    QString configFileName = QFileDialog::getOpenFileName(
+        this,
+        tr("Open Configuration File"),
+        QString(), // Start in current directory
+        tr("Configuration Files (*.txt *.ini);;All Files (*)")
+    );
+    
+    if (configFileName.isEmpty())
+    {
+        return; // User cancelled
+    }
+    
+    try
+    {
+        // Stop any ongoing playback
+        isPlaying = false;
+        isBacking = false;
+
+        if (bool isFirstConfiguration = ui->inputFilePathLabel->getFileName().isEmpty())
+        {
+            initializeSceneWidget(configFileName);
+        }
+        else
+        {
+            // Reload with new configuration
+            ui->sceneWidget->loadNewConfiguration(configFileName.toStdString(), 0);
+        }
+        
+        // Update UI with new configuration
+        showInputFilePathOnBarLabel(configFileName);
+        
+        // Reset to first step
+        currentStep = 0;
+        setPositionOnWidgets(currentStep);
+        
+        // Enable all widgets now that we have configuration
+        setWidgetsEnabledState(true);
+        
+        QMessageBox::information(this, tr("Configuration Loaded"),
+                                 tr("Successfully loaded configuration:\n%1").arg(configFileName));
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::critical(this, tr("Load Failed"),
+                              tr("Failed to load configuration:\n%1").arg(e.what()));
+    }
+}
+
+void MainWindow::enterNoConfigurationFileMode()
+{    
+    // Set UI to show no configuration loaded
+    ui->inputFilePathLabel->setFileName("");
+    ui->inputFilePathLabel->setText(tr("No configuration loaded - use File → Open Configuration"));
+    
+    totalStepsNumberChanged(0);
+    currentStep = 0;
+    ui->positionSpinBox->setValue(0);
+    ui->updatePositionSlider->setValue(0);
+    
+    // Disable all playback and navigation widgets
+    setWidgetsEnabledState(false);
+}
+
+void MainWindow::createModelMenuActions()
+{
+    const auto availableModels = SceneWidgetVisualizerFactory::getAvailableModels();
+    
+    if (availableModels.empty())
+    {
+        std::cerr << "Warning: No models available from factory!" << std::endl;
+        return;
+    }
+    
+    // Create action group for exclusive selection
+    modelActionGroup = new QActionGroup(this);
+    modelActionGroup->setExclusive(true);
+    
+    // Clear existing model actions from menu (if any from .ui file)
+    ui->menuModel->clear();
+    
+    // Create action for each model
+    for (const auto& modelName : availableModels)
+    {
+        QAction* action = new QAction(QString::fromStdString(modelName), this);
+        action->setCheckable(true);
+        
+        // First model is checked by default
+        if (modelName == availableModels[0])
+        {
+            action->setChecked(true);
+        }
+        
+        modelActionGroup->addAction(action);
+        ui->menuModel->addAction(action);
+        
+        connect(action, &QAction::triggered, this, &MainWindow::onModelSelected);
+    }
+    
+    // Add separator and Reload Data action
+    ui->menuModel->addSeparator();
+    ui->menuModel->addAction(ui->actionReloadData);
+    
+    std::cout << "Created " << availableModels.size() << " model menu actions" << std::endl;
+}
+
+void MainWindow::setWidgetsEnabledState(bool enabled)
+{
+    // Playback controls
+    ui->playButton->setEnabled(enabled);
+    ui->stopButton->setEnabled(enabled);
+    ui->backButton->setEnabled(enabled);
+    ui->leftButton->setEnabled(enabled);
+    ui->rightButton->setEnabled(enabled);
+    ui->skipForwardButton->setEnabled(enabled);
+    ui->skipBackwardButton->setEnabled(enabled);
+    
+    // Position controls
+    ui->updatePositionSlider->setEnabled(enabled);
+    ui->positionSpinBox->setEnabled(enabled);
+    
+    // Speed/sleep controls (if they exist)
+    if (ui->speedSpinBox)
+        ui->speedSpinBox->setEnabled(enabled);
+    if (ui->sleepSpinBox)
+        ui->sleepSpinBox->setEnabled(enabled);
+    
+    // Menu actions - some should remain enabled
+    // actionQuit - always enabled
+    // actionAbout - always enabled
+    // actionOpenConfiguration - always enabled
+    // Model actions - always enabled (can switch before loading config)
+    
+    // These should be disabled without configuration:
+    ui->actionShow_config_details->setEnabled(enabled);
+    ui->actionExport_Video->setEnabled(enabled);
+    ui->actionReloadData->setEnabled(enabled);
 }
