@@ -17,9 +17,6 @@
 #include "visualiser/SettingParameter.h"
 #include "visualiser/SettingRenderParameter.h"
 
-constexpr bool DEBUG_LOGS_ENABLED = false;
-#define DEBUG if constexpr (DEBUG_LOGS_ENABLED) std::cout
-
 
 namespace
 {
@@ -89,8 +86,6 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename, int
     sceneWidgetVisualizerProxy->initMatrix(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY);
 
     settingRenderParameter->m_renderer->SetBackground(settingRenderParameter->colors->GetColor3d("Silver").GetData());
-
-    DEBUG << *settingParameter << endl;
 }
 
 void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
@@ -190,24 +185,16 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
 
 void SceneWidget::renderVtkScene()
 {
-    DEBUG << "DEBUG: Starting " << __FUNCTION__ << endl;
     sceneWidgetVisualizerProxy->readStepsOffsetsForAllNodesFromFiles(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
-    DEBUG << "DEBUG: Hashmap loaded successfully" << endl;
+
     emit availableStepsReadFromConfigFile(sceneWidgetVisualizerProxy->availableSteps());
 
     std::vector<Line> lines(settingParameter->numberOfLines);
-
     sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
-    DEBUG << "DEBUG: readStageStateFromFilesForStep completed" << endl;
 
     sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, &lines[0], settingRenderParameter->m_renderer, gridActor);
-    DEBUG << "DEBUG: drawWithVTK completed" << endl;
 
-    vtkNew<vtkCellArray> cellLines;
-    vtkNew<vtkPoints> pts;
-    vtkNew<vtkPolyData> grid;
-    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->numberOfRowsY+1, settingParameter->numberOfColumnX+1, pts, cellLines, grid,settingRenderParameter->colors,settingRenderParameter->m_renderer,actorBuildLine);
-    DEBUG << "DEBUG: buildLoadBalanceLine completed" << endl;
+    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(&lines[0], settingParameter->numberOfLines, settingParameter->numberOfRowsY+1, settingParameter->numberOfColumnX+1, settingRenderParameter->colors, settingRenderParameter->m_renderer, actorBuildLine);
 
     sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, settingRenderParameter->colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
 
@@ -216,7 +203,7 @@ void SceneWidget::renderVtkScene()
     interactor()->Initialize();
     interactor()->Enable();
 }
-
+// TODO: add information : select a model
 
 void SceneWidget::increaseCountUp()
 {
@@ -297,9 +284,6 @@ void SceneWidget::updateVisualization()
 
     //visualiserProxy->vis->refreshBuildLoadBalanceLine(lines, cam->numberOfLines, cam->dimY+1, cam->dimX+1, actorBuildLine, colors, pts, cellLines, grid);
 
-    DEBUG << "--->> CurrentStep:" << settingParameter->step 
-          << ". Number of lines:" << settingParameter->numberOfLines << endl;
-
     if (settingParameter->numberOfLines > 0)
     {
         sceneWidgetVisualizerProxy->getVisualizer().refreshBuildLoadBalanceLine(
@@ -366,15 +350,12 @@ void SceneWidget::switchModel(ModelType modelType)
     sceneWidgetVisualizerProxy->initMatrix(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY);
 
     std::cout << "Switched to model: " << sceneWidgetVisualizerProxy->getModelName() << std::endl;
-    std::cout << "Note: Use 'Reload Data' to load data files for the new model." << std::endl;
 }
 
 void SceneWidget::reloadData()
 {
     try
     {
-        std::cout << "Reloading data for model: " << sceneWidgetVisualizerProxy->getModelName() << std::endl;
-
         // Clear existing stage data to avoid duplicates
         sceneWidgetVisualizerProxy->clearStage();
         
@@ -390,8 +371,6 @@ void SceneWidget::reloadData()
         settingParameter->firstTime = true;
         settingParameter->changed = true;
         upgradeModelInCentralPanel();
-
-        std::cout << "Data reloaded successfully." << std::endl;
     }
     catch (const std::exception& e)
     {
@@ -401,9 +380,7 @@ void SceneWidget::reloadData()
 }
 
 void SceneWidget::clearScene()
-{
-    std::cout << "Clearing scene..." << std::endl;
-    
+{    
     // Clear the renderer
     settingRenderParameter->m_renderer->RemoveAllViewProps();
     
@@ -413,14 +390,10 @@ void SceneWidget::clearScene()
     // Reset VTK actors
     gridActor = vtkNew<vtkActor>();
     actorBuildLine = vtkNew<vtkActor2D>();
-    
-    std::cout << "Scene cleared." << std::endl;
 }
 
 void SceneWidget::loadNewConfiguration(const std::string& configFileName, int stepNumber)
-{
-    std::cout << "Loading new configuration: " << configFileName << std::endl;
-    
+{    
     try
     {
         // Clear existing scene
@@ -433,9 +406,7 @@ void SceneWidget::loadNewConfiguration(const std::string& configFileName, int st
         sceneWidgetVisualizerProxy->prepareStage(settingParameter->nNodeX, settingParameter->nNodeY);
         
         // Render the scene with new data
-        renderVtkScene();
-        
-        std::cout << "Configuration loaded successfully: " << configFileName << std::endl;
+        renderVtkScene();        
     }
     catch (const std::exception& e)
     {

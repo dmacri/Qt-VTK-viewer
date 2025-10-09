@@ -121,7 +121,6 @@ void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> avail
                                  .arg(totalSteps()).arg(availableSteps.back()));
     }
 
-    // TODO: In future OOpenCal will be able to skips steps, then the function will be usefull
     std::cout << "Available steps:";
     for (auto s : availableSteps)
     {
