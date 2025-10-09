@@ -67,7 +67,7 @@ vtkTextProperty* Visualizer::buildStepLine(StepIndex step, vtkSmartPointer<vtkTe
 {
     std::string stepText = "Step " + std::to_string(step);
     singleLineTextB->SetInput(stepText.c_str());
-    singleLineTextB->Update();
+
     vtkTextProperty* textProp = singleLineTextB->GetTextProperty();
     textProp->ShallowCopy(singleLineTextProp);
     textProp->SetVerticalJustificationToBottom();

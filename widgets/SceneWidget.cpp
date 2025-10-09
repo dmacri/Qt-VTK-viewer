@@ -314,10 +314,10 @@ void SceneWidget::updateVisualization()
 
     const std::string stepLineColor{"red"};
     sceneWidgetVisualizerProxy->getVisualizer().buildStepLine(
-        settingParameter->step, 
-        singleLineTextStep, 
-        singleLineTextPropStep, 
-        settingRenderParameter->colors, 
+        settingParameter->step,
+        singleLineTextStep,
+        singleLineTextPropStep,
+        settingRenderParameter->colors,
         stepLineColor
     );
 }
