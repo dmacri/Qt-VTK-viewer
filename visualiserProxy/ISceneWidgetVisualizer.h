@@ -35,8 +35,7 @@ public:
     virtual void readStageStateFromFilesForStep(SettingParameter* sp, Line* lines) = 0;
 
     /// @brief Draw the visualization using VTK.
-    virtual void drawWithVTK(int nRows, int nCols, int step, Line* lines, 
-                             vtkSmartPointer<vtkRenderer> renderer,
+    virtual void drawWithVTK(int nRows, int nCols, int step, vtkSmartPointer<vtkRenderer> renderer,
                              vtkSmartPointer<vtkActor> gridActor) = 0;
 
     /// @brief Refresh the VTK windows.

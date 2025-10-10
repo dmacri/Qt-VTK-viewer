@@ -2,9 +2,12 @@
 #include "Line.h"
 
 
-void Visualizer::buildLoadBalanceLine(Line *lines, int dimLines,int nCols, int nRows, vtkSmartPointer<vtkPoints> pts, vtkSmartPointer<vtkCellArray> cellLines, vtkSmartPointer<vtkPolyData> grid, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor2D> actorBuildLine)
+void Visualizer::buildLoadBalanceLine(const std::vector<Line> &lines, int nCols, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine)
 {
-    for (int i = 0; i < dimLines; i++)
+    vtkNew<vtkCellArray> cellLines;
+    vtkNew<vtkPoints> pts;
+
+    for (size_t i{}; i < lines.size(); i++)
     {
         std::cout << "Line (" << lines[i].x1 << ", " << lines[i].y1 << ") -> (" <<lines[i].x2 << ", " <<lines[i].y2 << ")" << std::endl;
         pts->InsertNextPoint(lines[i].x1 * 1, nCols-1-lines[i].y1 * 1, 0.0);
@@ -14,6 +17,7 @@ void Visualizer::buildLoadBalanceLine(Line *lines, int dimLines,int nCols, int n
         cellLines->InsertCellPoint(i*2+1);
     }
 
+    vtkNew<vtkPolyData> grid;
     grid->SetPoints(pts);
     grid->SetLines(cellLines);
     // Set up the coordinate system.
@@ -67,7 +71,7 @@ vtkTextProperty* Visualizer::buildStepLine(StepIndex step, vtkSmartPointer<vtkTe
 {
     std::string stepText = "Step " + std::to_string(step);
     singleLineTextB->SetInput(stepText.c_str());
-    singleLineTextB->Update();
+
     vtkTextProperty* textProp = singleLineTextB->GetTextProperty();
     textProp->ShallowCopy(singleLineTextProp);
     textProp->SetVerticalJustificationToBottom();

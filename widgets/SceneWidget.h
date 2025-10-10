@@ -78,10 +78,6 @@ signals:
 
     void availableStepsReadFromConfigFile(std::vector<StepIndex> availableSteps);
 
-public slots:
-    void increaseCountUp();
-    void decreaseCountDown();
-
 private slots:
     void showToolTip();
 

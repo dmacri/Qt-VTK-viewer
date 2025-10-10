@@ -28,10 +28,10 @@ class Visualizer
 {
 public:
     template<class Matrix>
-    void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, StepIndex step, Line *lines, vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
+    void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, StepIndex step, vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
     template<class Matrix>
     void refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, StepIndex step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
-    void buildLoadBalanceLine(Line *lines, int dimLines, int nCols, int nRows, vtkSmartPointer<vtkPoints> pts, vtkSmartPointer<vtkCellArray> cellLines, vtkSmartPointer<vtkPolyData> grid, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine);
+    void buildLoadBalanceLine(const std::vector<Line>& lines, int nCols, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine);
     void refreshBuildLoadBalanceLine(Line *lines, int dimLines, int nCols, int nRows, vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors);
     vtkTextProperty* buildStepLine(StepIndex step, vtkSmartPointer<vtkTextMapper>, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkNamedColors> colors, std::string color);
     vtkNew<vtkActor2D> buildStepText(StepIndex step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer);
@@ -44,7 +44,7 @@ private:
 ////////////////////////////////////////////////////////////////////
 
 template <class Matrix>
-void Visualizer::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, StepIndex step, Line *lines, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor)
+void Visualizer::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, StepIndex step, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor)
 {
     const auto numberOfPoints = nRows * nCols;
     vtkNew<vtkDoubleArray> pointValues;
