@@ -1,4 +1,4 @@
-name: Build Qt-VTK-viewer (Qt6 + VTK, AppImage + deb) [on push and release]
+name: Build Qt-VTK-viewer (.deb only, system deps) [on push and release]
 
 on:
   push:
@@ -26,7 +26,7 @@ jobs:
           path: deps/OOpenCAL
           token: ${{ secrets.VisualizerOpenCal }}
 
-      - name: Install dependencies (Qt6, VTK, build tools)
+      - name: Install dependencies (runtime & build)
         run: |
           sudo apt update
           sudo apt install -y \
@@ -37,11 +37,6 @@ jobs:
             qt6-tools-dev-tools \
             libvtk9-dev \
             libvtk9-qt-dev \
-            debhelper \
-            dpkg-dev \
-            fakeroot \
-            libfuse2 \
-            wget \
             software-properties-common
 
       - name: Install GCC 13
@@ -74,43 +69,23 @@ jobs:
           cmake .. -DOOPENCAL_DIR=${{ github.workspace }}/deps
           cmake --build . --parallel
 
-      - name: Listing dependencies to shared libraries
-        run: |
-          echo "ldd of built binary:"
-          ldd build/${PROJECT_NAME} || true
-
-      ################### building deb with VTK copying
-      - name: Build .deb package with bundled VTK libs
+      ################### build .deb (with runtime Depends only, no libs bundled)
+      - name: Build .deb package (system dependencies only)
         run: |
           set -euo pipefail
           PKG_DIR="debian/${PROJECT_NAME}"
-
           mkdir -p "${PKG_DIR}/usr/bin"
           mkdir -p "${PKG_DIR}/usr/share/applications"
           mkdir -p "${PKG_DIR}/usr/share/icons/hicolor/256x256/apps"
-          mkdir -p "${PKG_DIR}/usr/lib/${PROJECT_NAME}"
           mkdir -p "${PKG_DIR}/DEBIAN"
 
           # Copy binary
-          cp build/${PROJECT_NAME} "${PKG_DIR}/usr/bin/${PROJECT_NAME}.real"
-          chmod +x "${PKG_DIR}/usr/bin/${PROJECT_NAME}.real"
-
-          ### WRAPPER to load bundled libs
-          echo "#!/bin/bash
-          export LD_LIBRARY_PATH=/usr/lib/${PROJECT_NAME}:\$LD_LIBRARY_PATH
-          exec /usr/bin/${PROJECT_NAME}.real \"\$@\"" > "${PKG_DIR}/usr/bin/${PROJECT_NAME}"
+          cp build/${PROJECT_NAME} "${PKG_DIR}/usr/bin/${PROJECT_NAME}"
           chmod +x "${PKG_DIR}/usr/bin/${PROJECT_NAME}"
 
           # Copy desktop & icon
           cp ${PROJECT_NAME}.desktop "${PKG_DIR}/usr/share/applications/" || true
           cp resources/icons/${PROJECT_NAME}.png "${PKG_DIR}/usr/share/icons/hicolor/256x256/apps/${PROJECT_NAME}.png" || true
-
-          ### VTK LIB COPY SECTION
-          echo "Copying VTK libs detected by ldd..."
-          for lib in $(ldd build/${PROJECT_NAME} | grep "libvtk" | awk '{print $3}' | grep -E "^/"); do
-            echo "Including: $lib"
-            cp "$lib" "${PKG_DIR}/usr/lib/${PROJECT_NAME}/"
-          done
 
           # Version
           if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
@@ -119,7 +94,7 @@ jobs:
             VERSION="0.0.1+git"
           fi
 
-          # Control file
+          # Control file with fixed Depends
           printf "%s\n" \
             "Package: ${PROJECT_NAME}" \
             "Version: ${VERSION}" \
@@ -127,34 +102,11 @@ jobs:
             "Priority: optional" \
             "Architecture: amd64" \
             "Maintainer: YourName <your@email>" \
-            "Depends: libc6, libstdc++6" \
-            "Description: ${PROJECT_NAME} - Qt + VTK scientific viewer (bundled VTK)" \
+            "Depends: libvtk9-dev, libvtk9-qt-dev, qt6-base-dev, libstdc++6, libc6" \
+            "Description: ${PROJECT_NAME} - Qt + VTK scientific viewer (system VTK)" \
             > "${PKG_DIR}/DEBIAN/control"
 
           dpkg-deb --build "${PKG_DIR}" "${PROJECT_NAME}.deb"
-
-      ################### AppImage
-      - name: Move desktop and icon into build dir
-        run: |
-          cp ${PROJECT_NAME}.desktop build/ || true
-          cp resources/icons/${PROJECT_NAME}.png build/ || true
-
-      - name: Download linuxdeployqt
-        run: |
-          wget -q https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
-          chmod +x linuxdeployqt-continuous-x86_64.AppImage
-
-      - name: Run linuxdeployqt (create AppImage)
-        run: |
-          export PATH=/usr/lib/qt6/bin:$PATH
-          ./linuxdeployqt-continuous-x86_64.AppImage build/${PROJECT_NAME}.desktop \
-            -appimage \
-            -bundle-non-qt-libs
-
-      - name: Rename AppImage
-        run: |
-          APPIMAGE=$(ls *.AppImage | head -n 1)
-          mv "$APPIMAGE" ${PROJECT_NAME}-x86_64.AppImage || true
 
       ################### artifacts
       - name: Upload .deb artifact
@@ -163,21 +115,9 @@ jobs:
           name: ${{ env.PROJECT_NAME }}-deb
           path: ${{ env.PROJECT_NAME }}.deb
 
-      - name: Upload AppImage artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.PROJECT_NAME }}-AppImage
-          path: ${{ env.PROJECT_NAME }}-x86_64.AppImage
-
       ################### release upload
       - name: Upload .deb to GitHub Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.PROJECT_NAME }}.deb
-
-      - name: Upload AppImage to GitHub Release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ${{ env.PROJECT_NAME }}-x86_64.AppImage
