@@ -109,6 +109,8 @@ void MainWindow::showInputFilePathOnBarLabel(const QString& inputFilePath)
 void MainWindow::initializeSceneWidget(const QString& configFileName)
 {
     ui->sceneWidget->addVisualizer(configFileName.toStdString(), currentStep);
+    ui->openConfigurationFileLabel->hide();
+    ui->sceneWidget->setHidden(false);
 }
 
 void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> availableSteps)
@@ -540,7 +542,9 @@ void MainWindow::onOpenConfigurationRequested()
 }
 
 void MainWindow::enterNoConfigurationFileMode()
-{    
+{
+    ui->sceneWidget->setHidden(true);
+
     // Set UI to show no configuration loaded
     ui->inputFilePathLabel->setFileName("");
     ui->inputFilePathLabel->setText(tr("No configuration loaded - use File → Open Configuration"));

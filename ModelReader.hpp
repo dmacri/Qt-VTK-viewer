@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <fstream>
+#include <format>
 #include <climits> // INT_MAX
 #include <cmath> // log10
 #include <filesystem>
