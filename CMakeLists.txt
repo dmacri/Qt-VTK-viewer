@@ -62,7 +62,7 @@ find_package(VTK COMPONENTS
 # Executable target
 # ============================================
 add_executable(${PROJECT_NAME} MACOSX_BUNDLE
-    ${Sources} ${Headers} ${Resources} ${UIs} ${Styles} ${Docs} LICENSE .github/workflows/release-ubuntu22.04.yml
+    ${Sources} ${Headers} ${Resources} ${UIs} ${Styles} ${Docs} LICENSE .github/workflows/release--deb-package--ubuntu24.04.yml
 )
 
 
