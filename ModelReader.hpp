@@ -1,11 +1,19 @@
+/** @file ModelReader.hpp
+ * @brief Declaration of the ModelReader template class for reading and processing model data.
+ * 
+ * This file contains the ModelReader class template which provides functionality to read,
+ * parse, and process model data from files. It supports reading data in stages and provides
+ * methods to access model data at different time steps. */
+
 #pragma once
+
 #include <vector>
 #include <unordered_map>
 #include <iostream>
 #include <fstream>
 #include <format>
 #include <climits> // INT_MAX
-#include <cmath> // log10
+#include <cmath>   // log10
 #include <filesystem>
 #include <algorithm> // std::ranges::sort
 #include <future>
@@ -14,29 +22,56 @@
 #include "visualiser/SettingParameter.h"
 #include "visualiser/Line.h"
 
-
+/** @class ModelReader
+ * @brief Template class for reading and processing model data from files.
+ * 
+ * The ModelReader class provides functionality to read model data in stages and
+ * access it at different time steps. It's designed to work with different cell types
+ * through template specialization.
+ * 
+ * @tparam Cell The cell type used in the model 
+ * Note: Cell is derived class from Element (which is header from OOpenCal) */
 template <class Cell>
 class ModelReader
 {
-    std::vector<std::unordered_map<StepIndex, FilePosition>> nodeStepOffsets;
+    std::vector<std::unordered_map<StepIndex, FilePosition>> nodeStepOffsets; ///< Maps node indices to their file positions for each step
 
 public:
+    /** @brief Prepares the reader for a new stage of data processing.
+     * 
+     * Initializes the internal data structures to handle a grid of nodes with
+     * the specified dimensions.
+     * 
+     * @param nNodeX Number of nodes along the X axis
+     * @param nNodeY Number of nodes along the Y axis */
     void prepareStage(NodeIndex nNodeX, NodeIndex nNodeY)
     {
         nodeStepOffsets.resize(nNodeX * nNodeY);
     }
 
+    /// @brief Clears the current stage and releases associated resources.
     void clearStage()
     {
         nodeStepOffsets.clear();
     }
 
+    /** @brief Reads the stage state from files for a specific step.
+     * 
+     * This method reads the model state for a specific simulation step and updates
+     * the provided matrix and settings accordingly.
+     * 
+     * @tparam Matrix The matrix type used to store the model state
+     * @param m Reference to the matrix that will store the model state
+     * @param sp Pointer to the setting parameters
+     * @param lines Pointer to the line data structure */
     template<class Matrix>
-    void readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line *lines);
+    void readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line* lines);
 
-    /** @brief Loads data into hashMap from text files.
+    /** @brief Loads step offset data from text files into an internal hash map.
      *
-     * Expected file format (each line):
+     * This method reads a file containing step number to file position mappings
+     * for each node in the simulation. The file format is expected to have one
+     * line per step per node with the format:
      *     <stepNumber:int> <positionInFile:long>
      *
      * Example:
@@ -46,10 +81,12 @@ public:
      *
      * Each line must contain exactly two numbers separated by whitespace.
      *
-     * @param nNodeX number of nodes along the X axis
-     * @param nNodeY number of nodes along the Y axis
-     * @param filename base filename (e.g., "ball"), for which nodes files are being read */
-    void readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, NodeIndex nNodeY, const std::string &filename);
+     * @param nNodeX Number of nodes along the X axis
+     * @param nNodeY Number of nodes along the Y axis
+     * @param filename Name of the file containing the step offsets
+     * 
+     * @throws std::runtime_error If the file cannot be opened or has an invalid format */
+    void readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, NodeIndex nNodeY, const std::string& filename);
 
     /** @brief Returns a sorted list of all available simulation steps.
      *
@@ -308,9 +345,10 @@ std::vector<StepIndex> ModelReader<Cell>::availableSteps(bool throwOnMismatch) c
     // Helper lambda: extracts all step indices (keys) from a map and returns them sorted.
     auto extractAndSortStepIndices = [](const auto& map) -> std::vector<StepIndex>
     {
-        auto steps = map | std::views::keys | std::ranges::to<std::vector<StepIndex>>();
-        std::ranges::sort(steps);
-        return steps;
+        auto steps = std::views::keys(map);
+        std::vector<StepIndex> steps2Return(steps.begin(), steps.end());
+        std::ranges::sort(steps2Return);
+        return steps2Return;
     };
 
     // Use the first node as the reference
