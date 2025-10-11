@@ -1,23 +1,77 @@
 # Qt-VTK-viewer
-A CMake/C++ project for embedding a VTK 3D view in a Qt window.
+
+A CMake/C++ project for embedding a VTK 3D view in a Qt window. This application provides a powerful interface for visualizing and interacting with 2D and 3D models and scientific data using the Visualization Toolkit (VTK) within a Qt-based graphical user interface.
 
 ![Qt VTK Viewer on Windows](doc/screenshot.png)
 
+## Project Overview
+
+The Qt-VTK-viewer is designed to:
+- Load and visualize 3D models and scientific data
+- Provide interactive 3D navigation and manipulation
+- Support various visualization techniques through VTK
+- Offer a user-friendly interface built with Qt
+
 ## Prerequisites
-- Qt 6.x downloaded.
-- VTK 9.x source downloaded & compiled. See [Build-VTK.md](doc/Build-VTK.md) for a guide to compile VTK.
-- **OOpenCAL source code available locally.**  
-  The project uses headers from the OOpenCAL library.  
-  In CMake you must set the variable **`OOPENCAL_DIR`** to point to the **base directory** of your OOpenCAL checkout.  
-  Example: if your local folder structure is  
+
+- **Qt 6.x** - The application framework
+- **VTK 9.x** - Visualization Toolkit (must be compiled from source)
+  - See [Build-VTK.md](doc/Build-VTK.md) for compilation instructions
+- **OOpenCAL** - Required for certain model types
+  - The project uses headers from the OOpenCAL library
+  - Set the `OOPENCAL_DIR` CMake variable to point to your OOpenCAL base directory
+
+### OOpenCAL Setup
+
+In CMake, set the `OOPENCAL_DIR` variable to the base directory of your OOpenCAL installation. For example, if your OOpenCAL files are located at:
 ```
 ~/BestSoftwareEver/OOpenCAL/models/Ball/BallCell.h
 ```
-then `OOPENCAL_DIR` should be set to:
+Then set:
 ```
-~/BestSoftwareEver
-````
-so that includes like:
+OOPENCAL_DIR=~/BestSoftwareEver
+```
+
+## Documentation
+
+Comprehensive API documentation is available and can be generated using Doxygen. To generate the documentation:
+
+```bash
+doxygen Doxyfile
+```
+
+The generated documentation will be available in the `doc/html` directory. Open `index.html` in a web browser to view it.
+
+## Project Structure
+
+Key components of the project include:
+
+- **ModelReader**: Handles reading and parsing model data from files
+- **MainWindow**: The main application window and UI implementation
+- **Config**: Manages application configuration and settings
+- **Visualization**: Contains VTK-based visualization components
+
+## Building the Project
+
+1. Create a build directory and configure the project:
+   ```bash
+   mkdir build && cd build
+   cmake .. -DOOPENCAL_DIR=/path/to/your/OOpenCAL
+   ```
+
+2. Build the project:
+   ```bash
+   make
+   ```
+
+3. Run the application:
+   ```bash
+   ./QtVtkViewer
+   ```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 ```cpp
 #include <OOpenCAL/models/Ball/BallCell.h>
 ````
@@ -38,7 +92,7 @@ Done. Happy coding :)
 
 ## Features
 
-### ✨ Runtime Model Switching & Configuration Loading (NEW!)
+### ✨ Runtime Model Switching & Configuration Loading
 
 The application now supports **dynamic model switching and configuration loading at runtime** without recompilation!
 

@@ -11,8 +11,6 @@ VideoExporter::VideoExporter(QObject* parent)
 {
 }
 
-VideoExporter::~VideoExporter() = default;
-
 void VideoExporter::exportVideo(
     vtkRenderWindow* renderWindow,
     const QString& outputFilePath,

@@ -1,3 +1,6 @@
+/** @file mainwindow.h
+ * @brief Declaration of the MainWindow class - the main application window. */
+
 #pragma once
 
 #include <QMainWindow>
@@ -12,6 +15,11 @@ class QPushButton;
 class QActionGroup;
 
 
+/** @class MainWindow
+ * @brief The main application window class that manages the user interface.
+ * 
+ * This class handles the main window's user interface, including menu actions,
+ * toolbars, and interaction with the 3D visualization widget. */
 class MainWindow : public QMainWindow
 {
     Q_OBJECT

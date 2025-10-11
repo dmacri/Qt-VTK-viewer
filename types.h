@@ -1,3 +1,6 @@
+/** @file types.h
+ * @brief Common type definitions used throughout the application. */
+
 #pragma once
 
 using StepIndex = int;
