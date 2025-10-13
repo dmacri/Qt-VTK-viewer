@@ -1,50 +1,45 @@
 #include "mainwindow.h"
 
 #include <QApplication>
+#include <QFile>
+#include <QStyleFactory>
 #include <QSurfaceFormat>
-
 #include <QVTKOpenGLNativeWidget.h>
-#include <QWidget>
-#include <QtGui>
+#include <filesystem>
+#include <vtkGenericOpenGLRenderWindow.h>
+
 
 int main(int argc, char* argv[])
 {
    // vtkObject::GlobalWarningDisplayOff();
 
-
-
     QSurfaceFormat::setDefaultFormat(QVTKOpenGLNativeWidget::defaultFormat());
+
     QApplication a(argc, argv);
-    QApplication::setStyle("fusion");
-    // Imposta uno stile personalizzato per le finestre principali
-    QString styleSheet = "QWidget {"
-                         "    background-color: #f2f2f2;"
-                         "    color: #333333;"
-                         "    font-family: Arial, sans-serif;"
-                         "}"
-                         "QMenuBar {"
-                         "    background-color: #444444;"
-                         "    color: #ffffff;"
-                         "}"
-                         "QMenuBar::item {"
-                         "    background-color: #444444;"
-                         "    padding: 4px 12px;"
-                         "}"
-                         "QMenuBar::item:selected {"
-                         "    background-color: #666666;"
-                         "}";
+    QApplication::setStyle(QStyleFactory::create("Fusion"));
+    QApplication::setApplicationName("Visualiser");
 
+    MainWindow mainWindow;
+    
+    if (argc > 1)
+    {
+        const auto configurationFile = argv[1];
+        if (std::filesystem::exists(configurationFile))
+        {
+            mainWindow.loadInitialConfiguration(configurationFile);
+        }
+        else
+        {
+            std::cerr << "Provided argument is not valid file path: '" << configurationFile << "'!" << std::endl;
+        }
+    }
 
+    if (QFile styleFile("style.qss"); styleFile.open(QFile::ReadOnly))
+    {
+        QString styleSheet = QLatin1String(styleFile.readAll());
+        mainWindow.setStyleSheet(styleSheet);
+    }
 
-
-    QWidget* parent = nullptr;
-
-    MainWindow *mainWindow=new MainWindow(parent, argc,  argv);
-    mainWindow->setStyleSheet(styleSheet);
-    mainWindow->show();
+    mainWindow.show();
     return a.exec();
 }
-
-
-
-
