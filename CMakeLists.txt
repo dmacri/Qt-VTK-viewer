@@ -61,12 +61,11 @@ find_package(VTK COMPONENTS
         IOLegacy
 )
 
-
 # ============================================
 # Executable target
 # ============================================
 add_executable(${PROJECT_NAME} MACOSX_BUNDLE
-    ${Sources} ${Headers} ${Resources} ${UIs} ${Styles} ${Docs} LICENSE
+    ${Sources} ${Headers} ${Resources} ${UIs} ${Styles} ${Docs} LICENSE .github/workflows/release--deb-package--ubuntu24.04.yml
 )
 
 
@@ -77,7 +76,10 @@ set(OOPENCAL_DIR "/home/dmacri80/Progetto-Visualizer/" CACHE PATH "Path to the b
 
 if(OOPENCAL_DIR)
     message(STATUS "Using OOpenCAL directory: ${OOPENCAL_DIR}")
-    target_include_directories(${PROJECT_NAME} PRIVATE ${OOPENCAL_DIR})
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        ${OOPENCAL_DIR}
+        ${OOPENCAL_DIR}/OOpenCAL
+    )
 else()
     message(WARNING "OOPENCAL_DIR not set! Includes like <OOpenCAL/...> may not work.")
 endif()

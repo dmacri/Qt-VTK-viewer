@@ -1,3 +1,5 @@
+![Build Status: Linux](https://github.com/dmacri/Qt-VTK-viewer/actions/workflows/release--deb-package--ubuntu24.04.yml/badge.svg)
+
 # Qt-VTK-viewer
 A CMake/C++ project for embedding a VTK 3D view in a Qt window.
 
