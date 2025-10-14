@@ -36,6 +36,7 @@ private slots:
     void exportVideoDialog();
     void onStepNumberChanged();
     void onOpenConfigurationRequested();
+    void onColorSettingsRequested();
 
     void onModelSelected();
     void onReloadDataRequested();

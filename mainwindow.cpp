@@ -11,6 +11,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "widgets/ConfigDetailsDialog.h"
+#include "widgets/ColorSettingsDialog.h"
 #include "visualiser/VideoExporter.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
 
@@ -77,6 +78,7 @@ void MainWindow::connectMenuActions()
     connect(ui->actionExport_Video, &QAction::triggered, this, &MainWindow::exportVideoDialog);
     connect(ui->actionOpenConfiguration, &QAction::triggered, this, &MainWindow::onOpenConfigurationRequested);
     connect(ui->actionReloadData, &QAction::triggered, this, &MainWindow::onReloadDataRequested);
+    connect(ui->actionColor_settings, &QAction::triggered, this, &MainWindow::onColorSettingsRequested);
 
     /// Model selection actions are connected dynamically in createModelMenuActions()
 }
@@ -539,6 +541,12 @@ void MainWindow::onOpenConfigurationRequested()
         QMessageBox::critical(this, tr("Load Failed"),
                               tr("Failed to load configuration:\n%1").arg(e.what()));
     }
+}
+
+void MainWindow::onColorSettingsRequested()
+{
+    ColorSettingsDialog* colorSettings = new ColorSettingsDialog(this);
+    colorSettings->show();
 }
 
 void MainWindow::enterNoConfigurationFileMode()

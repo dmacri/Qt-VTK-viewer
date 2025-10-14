@@ -24,6 +24,8 @@ list(APPEND Sources
     widgets/ClickableLabel.cpp
     widgets/ConfigDetailsDialog.cpp
     widgets/SceneWidget.cpp
+    widgets/ColorSettingsDialog.cpp
+    widgets/ColorSettings.cpp
 )
 file(GLOB Resources *.qrc)
 file(GLOB Styles *.qss)

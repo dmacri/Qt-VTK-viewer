@@ -18,7 +18,7 @@
 #include "visualiser/Line.h"
 #include "visualiser/Visualizer.hpp"
 #include "visualiser/SettingParameter.h"
-#include "visualiser/SettingRenderParameter.h"
+#include "widgets/ColorSettings.h"
 
 
 namespace
@@ -88,7 +88,13 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename, int
 
     sceneWidgetVisualizerProxy->initMatrix(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY);
 
-    renderer->SetBackground(colors->GetColor3d("Silver").GetData());
+    const QColor backgroundColorFromSettings = ColorSettings::instance().backgroundColor();
+    vtkColor3d vtkColor{
+        backgroundColorFromSettings.redF(),
+        backgroundColorFromSettings.greenF(),
+        backgroundColorFromSettings.blueF()
+    };
+    renderer->SetBackground(vtkColor.GetData());
 }
 
 void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
@@ -196,9 +202,9 @@ void SceneWidget::renderVtkScene()
 
     sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, renderer, gridActor);
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfColumnX+1, colors, renderer, actorBuildLine);
+    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfColumnX+1, renderer, actorBuildLine);
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, colors, singleLineTextPropStep, singleLineTextStep, renderer);
+    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, singleLineTextPropStep, singleLineTextStep, renderer);
 
     // Render
     renderWindow()->Render();
@@ -271,18 +277,14 @@ void SceneWidget::updateVisualization()
             settingParameter->numberOfLines, 
             settingParameter->numberOfRowsY + 1,
             settingParameter->numberOfColumnX + 1,
-            actorBuildLine, 
-            colors
+            actorBuildLine
         );
     }
 
-    const std::string stepLineColor{"red"};
     sceneWidgetVisualizerProxy->getVisualizer().buildStepLine(
         settingParameter->step,
         singleLineTextStep,
-        singleLineTextPropStep,
-        colors,
-        stepLineColor
+        singleLineTextPropStep
     );
 }
 

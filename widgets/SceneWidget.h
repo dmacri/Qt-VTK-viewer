@@ -163,9 +163,6 @@ private:
     /** @brief Last recorded mouse position. This variable keeps track of the last recorded mouse position.
      *  It is used to determine whether the mouse is still above the widget when the tooltip timer expires. */
     QPoint m_lastMousePos;
-
-    /// @brief VTK colors utility: it provides access to a set of predefined colors.
-    vtkNew<vtkNamedColors> colors;
     
     /// @brief VTK renderer for the scene: This renderer is responsible for rendering the 3D scene.
     vtkNew<vtkRenderer> renderer;
