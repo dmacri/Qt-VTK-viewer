@@ -367,8 +367,8 @@ void SceneWidget::clearScene()
     sceneWidgetVisualizerProxy->clearStage();
     
     // Reset VTK actors
-    gridActor = vtkNew<vtkActor>();
-    actorBuildLine = vtkNew<vtkActor2D>();
+    gridActor.Reset();
+    actorBuildLine.Reset();
 }
 
 void SceneWidget::loadNewConfiguration(const std::string& configFileName, int stepNumber)
