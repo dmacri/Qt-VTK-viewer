@@ -1,17 +1,42 @@
+/** @file ISceneWidgetVisualizer.h
+ * @brief Abstract interface for scene widget visualizers.
+ * 
+ * This file defines the ISceneWidgetVisualizer interface that serves as a contract
+ * for all model visualizers in the system. It enables runtime polymorphism for
+ * different cell models (e.g., BallCell, SciddicaTCell) without requiring
+ * compile-time template binding. This is a key component in the visualization
+ * system that allows for flexible model handling and visualization.
+ * 
+ * The interface is designed to work with the Model-View-Controller pattern,
+ * where different model types can be visualized using a common interface while
+ * maintaining their specific behaviors and requirements.
+ * 
+ * @see SceneWidgetVisualizerAdapter
+ * @see SceneWidgetVisualizerFactory
+ * @see doc/CHANGELOG_RUNTIME_MODELS.md for architectural details */
+
 #pragma once
 
 #include <vtkRenderer.h>
 #include "types.h"
 
+// Forward declarations
 class SettingParameter;
 class Line;
 class Visualizer;
 
-
-/** @brief Abstract interface for scene widget visualizers.
+/** @interface ISceneWidgetVisualizer
+ * @brief Abstract interface defining the contract for all scene widget visualizers.
  * 
- * This interface allows runtime polymorphism for different cell models
- * (e.g., BallCell, SciddicaTCell) without compile-time template binding. */
+ * This interface provides a common API for visualizing different types of cell-based
+ * models. It abstracts away the specific implementation details of each model type,
+ * allowing the visualization system to work with various models through a uniform interface.
+ * 
+ * Each model type (e.g., Ball, SciddicaT) provides its own implementation of this interface,
+ * typically through the SceneWidgetVisualizerAdapter template class. The interface
+ * handles the complete visualization lifecycle, from data loading to rendering.
+ * 
+ * @note Implementations of this interface should be thread-safe if used in a multi-threaded context. */
 class ISceneWidgetVisualizer
 {
 public:

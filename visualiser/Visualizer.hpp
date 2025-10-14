@@ -1,3 +1,6 @@
+/** @file Visualizer.hpp
+ * @brief Declaration of the Visualizer class for VTK-based visualization. */
+
 #pragma once
 
 #include <string>
@@ -24,6 +27,12 @@
 
 class Line;
 
+/** @class Visualizer
+ * @brief Handles VTK-based visualization of simulation data.
+ * 
+ * This class provides methods to render and update 2D visualizations
+ * of simulation data using the VTK library. It supports drawing grids,
+ * color mapping, and text annotations. */
 class Visualizer
 {
 public:
@@ -96,6 +105,28 @@ void Visualizer::refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, St
         throw std::runtime_error("Invalid dynamic cast!");
 }
 
+/** @brief Converts a color channel value to a normalized range [0, 1].
+ *
+ * This function is designed to be forward-compatible with upcoming changes in OOpenCal.
+ * Currently, OOpenCal provides color values in the 0–255 integer range. VTK, however,
+ * expects normalized double precision values in the 0–1 range.
+ *
+ * If the input value is greater than 1, it is assumed to be in the 0–255 range
+ * and will be scaled down to [0, 1]. If the value is already in the [0, 1] range
+ * (future OOpenCal format), it will be returned unchanged.
+ *
+ * @param channel The input color component (either in 0–255 or already in 0–1).
+ * @return Normalized color value in the range [0, 1]. */
+inline double toUnitColor(double channel)
+{
+    // Backward compatibility: if value is > 1, assume 0–255 format and scale.
+    if (channel > 1.0)
+        return channel / 255.0;
+
+    // Already normalized (future format) — return as-is.
+    return channel;
+}
+
 template <class Matrix>
 void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, Matrix& p)
 {
@@ -104,7 +135,13 @@ void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, Matrix& p)
         for (int c = 0; c < nCols; ++c)
         {
             rgb *color = p[r][c].outputValue();
-            lut->SetTableValue((nRows-1-r)*nCols+c, (double)color->getRed(), (double)color->getGreen(), (double)color->getBlue());
+            lut->SetTableValue(
+                (nRows - 1 - r) * nCols + c,
+                toUnitColor(color->getRed()),
+                toUnitColor(color->getGreen()),
+                toUnitColor(color->getBlue()),
+                1.0 // alpha channel – keep as 1.0 for full opacity (optional scaling)
+            );
         }
     }
 }

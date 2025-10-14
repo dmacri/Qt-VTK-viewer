@@ -1,3 +1,6 @@
+/** @file SceneWidget.cpp
+ * @brief Implementation of the SceneWidget class for 3D visualization. */
+
 #include <filesystem>
 #include <iostream> // std::cout
 #include <QApplication>
@@ -20,6 +23,10 @@
 
 namespace
 {
+/** @brief Prepares the output file path for saving visualization data
+ *  @param configFile Path to the configuration file
+ *  @param outputFileNameFromCfg Output filename from configuration
+ *  @return Full path to the output file */
 std::string prepareOutputFileName(const std::string& configFile, const std::string& outputFileNameFromCfg)
 {
     namespace fs = std::filesystem;
@@ -68,9 +75,7 @@ void SceneWidget::addVisualizer(const std::string &filename, int stepNumber)
     }
 
     setupSettingParameters(filename, stepNumber);
-
     setupVtkScene();
-
     renderVtkScene();
 }
 
@@ -81,11 +86,10 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename, int
     settingParameter->numberOfLines = 2 * (settingParameter->nNodeX * settingParameter->nNodeY);
     settingParameter->step = stepNumber;
     settingParameter->changed = false;
-    settingParameter->firstTime = true;
 
     sceneWidgetVisualizerProxy->initMatrix(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY);
 
-    settingRenderParameter->m_renderer->SetBackground(settingRenderParameter->colors->GetColor3d("Silver").GetData());
+    settingRenderParameter->m_renderer->SetBackground(colors->GetColor3d("Silver").GetData());
 }
 
 void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
@@ -159,7 +163,7 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
             sw->changedStepNumberWithKeyboardKeys(sp->step);
     }
 
-    if (sp->changed || sp->firstTime)
+    if (sp->changed)
     {
         try
         {
@@ -178,7 +182,6 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
             std::cerr << "Error occurred: " << ex.what() << std::endl;
         }
 
-        sp->firstTime = false;
         sp->changed = false;
     }
 }
@@ -194,16 +197,15 @@ void SceneWidget::renderVtkScene()
 
     sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, settingRenderParameter->m_renderer, gridActor);
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfColumnX+1, settingRenderParameter->colors, settingRenderParameter->m_renderer, actorBuildLine);
+    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfColumnX+1, colors, settingRenderParameter->m_renderer, actorBuildLine);
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, settingRenderParameter->colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
+    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
 
     // Render
     renderWindow()->Render();
     interactor()->Initialize();
     interactor()->Enable();
 }
-// TODO: add information : select a model
 
 void SceneWidget::mouseMoveEvent(QMouseEvent* event)
 {
@@ -271,7 +273,7 @@ void SceneWidget::updateVisualization()
             settingParameter->numberOfRowsY + 1,
             settingParameter->numberOfColumnX + 1,
             actorBuildLine, 
-            settingRenderParameter->colors
+            colors
         );
     }
 
@@ -280,14 +282,14 @@ void SceneWidget::updateVisualization()
         settingParameter->step,
         singleLineTextStep,
         singleLineTextPropStep,
-        settingRenderParameter->colors,
+        colors,
         stepLineColor
     );
 }
 
 void SceneWidget::upgradeModelInCentralPanel()
 {
-    if (!settingParameter->changed && !settingParameter->firstTime)
+    if (!settingParameter->changed)
         return;
 
     try
@@ -310,7 +312,6 @@ void SceneWidget::upgradeModelInCentralPanel()
         throw;
     }
 
-    settingParameter->firstTime = false;
     settingParameter->changed = false;
 }
 
@@ -347,7 +348,6 @@ void SceneWidget::reloadData()
         );
 
         // Force a full refresh
-        settingParameter->firstTime = true;
         settingParameter->changed = true;
         upgradeModelInCentralPanel();
     }
@@ -367,8 +367,8 @@ void SceneWidget::clearScene()
     sceneWidgetVisualizerProxy->clearStage();
     
     // Reset VTK actors
-    gridActor = vtkNew<vtkActor>();
-    actorBuildLine = vtkNew<vtkActor2D>();
+    gridActor.Reset();
+    actorBuildLine.Reset();
 }
 
 void SceneWidget::loadNewConfiguration(const std::string& configFileName, int stepNumber)

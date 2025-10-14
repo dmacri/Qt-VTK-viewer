@@ -1,3 +1,7 @@
+/** @file SceneWidget.h
+ * @brief Declaration of the SceneWidget class for 3D visualization.
+ * The class wraps QVTKOpenGLNativeWidget which is embedded VTK widget in Qt application. */
+
 #pragma once
 
 #include <QVTKOpenGLNativeWidget.h>
@@ -16,32 +20,43 @@
 class SettingParameter;
 class SettingRenderParameter;
 
-
+/** @class SceneWidget
+ * @brief A widget for 3D visualization using VTK in Qt app.
+ * 
+ * This widget provides a 3D visualization environment with support for multiple model types and interactive features. */
 class SceneWidget : public QVTKOpenGLNativeWidget
 {
     Q_OBJECT
 
 public:
+    /// @brief Constructs a SceneWidget with parent (which will takes care about deallecation of the widget, Qt is using that pattern)
     explicit SceneWidget(QWidget* parent);
+    
+    /// @brief Destroys the SceneWidget. It is on purpose defined in cpp file to clean up properly incomplete types.
     ~SceneWidget();
 
+    /** @brief Adds a visualizer for the specified config file. It moves position to provided step number.
+     *  @param filename The config file to visualize
+     *  @param stepNumber The simulation step to display **/
     void addVisualizer(const std::string &filename, int stepNumber);
 
+    /** @brief Updates the visualization widget to show the specified step.
+     *  @param stepNumber The step number to display */
     void selectedStepParameter(StepIndex stepNumber);
 
     /** @brief Switch to a different model type.
      * 
      * This method allows changing the visualization model at runtime.
-     * Note: This does NOT reload data files. Use reloadData() after switching.
+     * @note This does NOT reload data files. Use reloadData() after switching.
      * 
      * @param modelType The new model type to use */
     void switchModel(ModelType modelType);
 
     /** @brief Reload data files for the current model.
      * 
-     * This method reads data files from disk and refreshes the visualization.
+     * This method reads selected config file from disk and refreshes the visualization.
      * Call this after switching models or when data files have changed.
-     * Note: reloading data with not compatible model can crash the application */
+     * @note reloading data with not compatible model can crash the application */
     void reloadData();
 
     /** @brief Clear the entire scene (remove all VTK actors and data).
@@ -64,53 +79,111 @@ public:
         return sceneWidgetVisualizerProxy->getModelName();
     }
 
+    /** @brief Get the current setting parameter
+     *  @return Pointer to the current SettingParameter object */
     const SettingParameter* getSettingParameter() const
     {
         return settingParameter.get();
     }
 
+    /** @brief Callback function for VTK keypress events.
+     *  It handles arrow_up and arrow_down keys pressed and changes view of the widget.
+     *  Provided argument types are compatible with vtkCallbackCommand::SetCallback
+     * 
+     * @param caller The VTK object that triggered the event
+     * @param eventId The ID of the event
+     * @param clientData User data passed to the callback
+     * @param callData Event-specific data */
     static void keypressCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
 
 signals:
+    /** @brief Signal emitted when step number is changed using keyboard keys (sent from method keypressCallbackFunction)
+     *  @param stepNumber The new step number */
     void changedStepNumberWithKeyboardKeys(StepIndex stepNumber);
 
+    /** @brief Signal emitted when total number of steps is read from config file.
+     *  @param totalSteps Total number of steps available */
     void totalNumberOfStepsReadFromConfigFile(StepIndex totalSteps);
 
+    /** @brief Signal emitted when available steps are read from config file.
+     *  @param availableSteps Vector of available step numbers */
     void availableStepsReadFromConfigFile(std::vector<StepIndex> availableSteps);
 
 private slots:
+    /// @brief Shows a tooltip at the current mouse position
     void showToolTip();
 
 protected:
+    /** @brief Handles mouse move events. The method is overrided for toolTip with position.
+     *  @param event The mouse event */
     void mouseMoveEvent(QMouseEvent* event) override;
+    
+    /** @brief Handles the leave event (when mouse leaves the widget).
+     *  The method is overrided to hide toolTip when mouse moved.
+     *  @param event The leave event */
     void leaveEvent(QEvent* event) override;
 
+    /// @brief Renders the VTK scene. It needs to be called when reading from config file
     void renderVtkScene();
 
+    /// @brief Upgrades the model in the central panel
     void upgradeModelInCentralPanel();
+    
+    /// @brief Updates the visualization with current settings
     void updateVisualization();
 
+    /// @brief Enables tooltip display when mouse is above the widget
     void enableToolTipWhenMouseAboveWidget();
 
+    /// @brief Reads settings from a configuration file
+    /// @param filename Path to the configuration file
     void readSettingsFromConfigFile(const std::string &filename);
 
+    /// @brief Sets up the VTK scene, it is called when reading config file
     void setupVtkScene();
+    
+    /** @param configFilename Path to the configuration file and move view to provided step
+     *  @param stepNumber Initial step number to display */
     void setupSettingParameters(const std::string & configFilename, int stepNumber);
 
 private:
+    /** @brief Proxy for the scene widget visualizer
+     *  This proxy provides access to the visualizer implementation
+     *  and is responsible for updating the visualization when settings change. */
     std::unique_ptr<ISceneWidgetVisualizer> sceneWidgetVisualizerProxy;
+    
+    /// @brief Current setting parameter for the visualization.
     std::unique_ptr<SettingParameter> settingParameter;
+    
+    /// @brief Current render parameter settings
     std::unique_ptr<SettingRenderParameter> settingRenderParameter;
     
+    /// @brief Currently active model type
     ModelType currentModelType;
 
+    /// @brief Timer for tooltip display. This timer is used to delay the display of tooltips when the mouse is moved over the widget.
     QTimer m_toolTipTimer;
+    
+    /** @brief Last recorded mouse position. This variable keeps track of the last recorded mouse position.
+     *  It is used to determine whether the mouse is still above the widget when the tooltip timer expires. */
     QPoint m_lastMousePos;
 
+    /// @brief VTK colors utility: it provides access to a set of predefined colors.
     vtkNew<vtkNamedColors> colors;
+    
+    /// @brief VTK renderer for the scene: This renderer is responsible for rendering the 3D scene.
+    vtkNew<vtkRenderer> renderer;
+    
+    /** @brief Actor for the grid in the scene: This actor is responsible for rendering the grid in the scene.
+     *  The grid provides information about what part was calculated by which node */
     vtkNew<vtkActor> gridActor;
+    
+    /// @brief Actor for load balancing lines: This actor is responsible for rendering the load balancing lines.
     vtkNew<vtkActor2D> actorBuildLine;
-    /// For the generation of load balancing lines
+    
+    /// @brief Text mapper for step display: This text mapper is responsible for rendering the step number in the scene.
     vtkNew<vtkTextMapper> singleLineTextStep;
+    
+    /// @brief Text properties for step display: These text properties are used to customize the appearance of the step number in the scene.
     vtkNew<vtkTextProperty> singleLineTextPropStep;
 };
