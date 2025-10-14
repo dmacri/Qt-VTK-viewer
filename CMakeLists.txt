@@ -110,10 +110,10 @@ FetchContent_Declare(
     GIT_TAG        master
 )
 
-FetchContent_GetProperties(inih)
-if(NOT inih_POPULATED)
-    FetchContent_Populate(inih)
+FetchContent_MakeAvailable(inih)
 
+FetchContent_GetProperties(inih)
+if(inih_SOURCE_DIR)
     target_sources(${PROJECT_NAME} PRIVATE
         ${inih_SOURCE_DIR}/ini.c
         ${inih_SOURCE_DIR}/cpp/INIReader.cpp
