@@ -18,7 +18,6 @@
 #include "types.h"
 
 class SettingParameter;
-class SettingRenderParameter;
 
 /** @class SceneWidget
  * @brief A widget for 3D visualization using VTK in Qt app.
@@ -154,9 +153,6 @@ private:
     
     /// @brief Current setting parameter for the visualization.
     std::unique_ptr<SettingParameter> settingParameter;
-    
-    /// @brief Current render parameter settings
-    std::unique_ptr<SettingRenderParameter> settingRenderParameter;
     
     /// @brief Currently active model type
     ModelType currentModelType;

@@ -47,7 +47,6 @@ SceneWidget::SceneWidget(QWidget* parent)
     , m_lastMousePos()
     , sceneWidgetVisualizerProxy{SceneWidgetVisualizerFactory::create(ModelType::Ball)}
     , settingParameter{std::make_unique<SettingParameter>()}
-    , settingRenderParameter{std::make_unique<SettingRenderParameter>()}
     , currentModelType{sceneWidgetVisualizerProxy->getModelTypeValue()}
 {
     enableToolTipWhenMouseAboveWidget();
@@ -89,7 +88,7 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename, int
 
     sceneWidgetVisualizerProxy->initMatrix(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY);
 
-    settingRenderParameter->m_renderer->SetBackground(colors->GetColor3d("Silver").GetData());
+    renderer->SetBackground(colors->GetColor3d("Silver").GetData());
 }
 
 void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
@@ -118,7 +117,7 @@ void SceneWidget::setupVtkScene()
 {
     sceneWidgetVisualizerProxy->prepareStage(settingParameter->nNodeX, settingParameter->nNodeY);
 
-    renderWindow()->AddRenderer(settingRenderParameter->m_renderer);
+    renderWindow()->AddRenderer(renderer);
     interactor()->SetRenderWindow(renderWindow());
 
     renderWindow()->SetSize(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY + 10);
@@ -195,11 +194,11 @@ void SceneWidget::renderVtkScene()
     std::vector<Line> lines(settingParameter->numberOfLines);
     sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
 
-    sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, settingRenderParameter->m_renderer, gridActor);
+    sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, renderer, gridActor);
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfColumnX+1, colors, settingRenderParameter->m_renderer, actorBuildLine);
+    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfColumnX+1, colors, renderer, actorBuildLine);
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
+    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, colors, singleLineTextPropStep, singleLineTextStep, renderer);
 
     // Render
     renderWindow()->Render();
@@ -297,7 +296,7 @@ void SceneWidget::upgradeModelInCentralPanel()
         updateVisualization();
         
         // Force renderer update
-        settingRenderParameter->m_renderer->Modified();
+        renderer->Modified();
         renderWindow()->Render();
         QApplication::processEvents();
     }
@@ -361,7 +360,7 @@ void SceneWidget::reloadData()
 void SceneWidget::clearScene()
 {    
     // Clear the renderer
-    settingRenderParameter->m_renderer->RemoveAllViewProps();
+    renderer->RemoveAllViewProps();
     
     // Clear stage data
     sceneWidgetVisualizerProxy->clearStage();
