@@ -1,17 +1,45 @@
+/** @file SceneWidgetVisualizerAdapter.h
+ * @brief Adapter for template-based visualizers to implement ISceneWidgetVisualizer.
+ * 
+ * This file contains the SceneWidgetVisualizerAdapter class template that bridges the gap
+ * between the template-based SceneWidgetVisualizerTemplate and the polymorphic
+ * ISceneWidgetVisualizer interface. It's a key component in the visualization system
+ * that enables runtime selection and use of different model types.
+ * 
+ * The adapter pattern is used here to allow template-based implementations to be used
+ * through a common interface, enabling dynamic model loading and visualization without
+ * sacrificing the type safety and performance benefits of templates.
+ * 
+ * @see ISceneWidgetVisualizer
+ * @see SceneWidgetVisualizerTemplate
+ * @see SceneWidgetVisualizerFactory
+ * @see doc/CHANGELOG_RUNTIME_MODELS.md for architectural details */
+
 #pragma once
 
 #include "ISceneWidgetVisualizer.h"
 #include "SceneWidgetVisualizerProxy.h"
 
+// Forward declarations
 class Line;
 class SettingParameter;
 
-
-/** @brief Adapter that wraps SceneWidgetVisualizerTemplate to implement ISceneWidgetVisualizer.
+/** @class SceneWidgetVisualizerAdapter
+ * @brief Adapter that makes template-based visualizers work with the ISceneWidgetVisualizer interface.
  * 
- * This adapter allows template-based visualizers to be used polymorphically.
+ * This class template implements the ISceneWidgetVisualizer interface by delegating calls
+ * to an instance of SceneWidgetVisualizerTemplate<Cell>. It serves as an adapter between
+ * the polymorphic interface required by the visualization system and the template-based
+ * implementation of specific model visualizers.
  * 
- * @tparam Cell The cell type (e.g., BallCell, SciddicaTCell) */
+ * The adapter is responsible for:
+ * - Wrapping template-based visualizers in a polymorphic interface
+ * - Forwarding method calls to the appropriate template instance
+ * - Managing the lifetime of the underlying visualizer
+ * - Providing model-specific information to the visualization system
+ * 
+ * @tparam Cell The cell type that this adapter works with (e.g., BallCell, SciddicaTCell).
+ *              Must be compatible with the ModelReader and Visualizer being used. */
 template<typename Cell>
 class SceneWidgetVisualizerAdapter : public ISceneWidgetVisualizer
 {
