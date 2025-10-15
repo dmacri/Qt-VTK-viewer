@@ -181,3 +181,38 @@ if(EXISTS "${DOXYFILE_IN}")
 else()
     message(STATUS "Doxygen not found. Skipping docs target.")
 endif()
+
+# ============================================
+# Development tools: Sanitizers, IWYU, compile_commands
+# ============================================
+
+# Export compile_commands.json for tooling (clang-tidy, cppcheck, IWYU, etc.)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Enable sanitizers on non-Windows with GCC/Clang
+if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows" AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    include(CheckLibraryExists)
+
+    check_library_exists(asan __asan_init "" HAVE_LIBASAN)
+    check_library_exists(ubsan __ubsan_handle_add_overflow "" HAVE_LIBUBSAN)
+
+    if (HAVE_LIBASAN AND HAVE_LIBUBSAN)
+        message(STATUS "Sanitizers available: enabling AddressSanitizer and UndefinedBehaviorSanitizer")
+        set(SANITIZER_FLAGS "-fsanitize=address,undefined -fno-omit-frame-pointer")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS}")
+        set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZER_FLAGS}")
+    else()
+        message(WARNING "Sanitizers requested but libasan/libubsan not available on this system")
+    endif()
+endif()
+
+# include-what-you-use (IWYU)
+find_program(IWYU_PATH NAMES include-what-you-use iwyu)
+
+if (IWYU_PATH)
+    message(STATUS "Found include-what-you-use: ${IWYU_PATH}")
+    # Basic activation without mapping file
+    set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+else()
+    message(WARNING "include-what-you-use not found. Consider installing it for header optimization.")
+endif()
