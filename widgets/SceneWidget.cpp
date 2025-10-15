@@ -159,72 +159,6 @@ void SceneWidget::connectKeyboardCallback()
     interactor()->AddObserver(vtkCommand::KeyPressEvent, keypressCallback);
 }
 
-void SceneWidget::connectMouseCallback()
-{
-    vtkNew<vtkCallbackCommand> mouseMoveCallback;
-    mouseMoveCallback->SetCallback([](vtkObject* caller, long unsigned int, void* clientData, void*){
-        auto interactor = static_cast<vtkRenderWindowInteractor*>(caller);
-        auto* self = static_cast<SceneWidget*>(clientData);
-
-        // 1) Get the event position from VTK (origin: bottom-left)
-        int vtkX = interactor->GetEventPosition()[0];
-        int vtkY = interactor->GetEventPosition()[1];
-
-        // 2) Convert to Qt coordinates (origin: top-left) for tooltip/mapToGlobal
-        int size[2];
-        if (self->renderWindow())
-        {
-            size[0] = self->renderWindow()->GetSize()[0];
-            size[1] = self->renderWindow()->GetSize()[1];
-        }
-        else {
-            size[0] = 0; size[1] = 0;
-        }
-        int qtY = size[1] - vtkY;
-
-        self->m_lastMousePos = QPoint(vtkX, qtY);
-
-        // 3) Use a picker to obtain an accurate world position (if something was "hit")
-        vtkNew<vtkPropPicker> picker;
-        bool picked = false;
-        if (self->renderer)
-        {
-            // Pick returns 1 if something was hit (depending on the picker). Pass the renderer.
-            if (picker->Pick(vtkX, vtkY, 0.0, self->renderer))
-            {
-                double pickPos[3];
-                picker->GetPickPosition(pickPos);
-                self->m_lastWorldPos = { pickPos[0], pickPos[1], pickPos[2] };
-                picked = true;
-            }
-        }
-
-        // 4) If the picker didn't hit anything, try DisplayToWorld as a fallback
-        if (!picked && self->renderer)
-        {
-            double displayPt[3] = { static_cast<double>(vtkX), static_cast<double>(vtkY), 0.0 };
-            self->renderer->SetDisplayPoint(displayPt);
-            self->renderer->DisplayToWorld();
-            double worldPt[4];
-            self->renderer->GetWorldPoint(worldPt);
-            if (worldPt[3] != 0.0)
-            {
-                self->m_lastWorldPos = { worldPt[0] / worldPt[3], worldPt[1] / worldPt[3], worldPt[2] / worldPt[3] };
-            }
-            else
-            {
-                // If w == 0, the result is invalid — keep previous or zero out
-                self->m_lastWorldPos = { worldPt[0], worldPt[1], worldPt[2] };
-            }
-        }
-
-        // 5) Update the tooltip (now using correct m_lastMousePos and m_lastWorldPos)
-        self->updateToolTip(self->m_lastMousePos);
-    });
-    mouseMoveCallback->SetClientData(this);
-    interactor()->AddObserver(vtkCommand::MouseMoveEvent, mouseMoveCallback);
-}
-
 void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
     vtkRenderWindowInteractor* interactor = static_cast<vtkRenderWindowInteractor*>(caller);
@@ -273,6 +207,75 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
 
         sp->changed = false;
     }
+}
+
+void SceneWidget::connectMouseCallback()
+{
+    vtkNew<vtkCallbackCommand> mouseMoveCallback;
+    mouseMoveCallback->SetCallback(&SceneWidget::mouseCallbackFunction);
+    mouseMoveCallback->SetClientData(this);
+    interactor()->AddObserver(vtkCommand::MouseMoveEvent, mouseMoveCallback);
+}
+
+void SceneWidget::mouseCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
+{
+    auto interactor = static_cast<vtkRenderWindowInteractor*>(caller);
+    auto* self = static_cast<SceneWidget*>(clientData);
+
+    // 1) Get the event position from VTK (origin: bottom-left)
+    int vtkX = interactor->GetEventPosition()[0];
+    int vtkY = interactor->GetEventPosition()[1];
+
+    // 2) Convert to Qt coordinates (origin: top-left) for tooltip/mapToGlobal
+    int size[2];
+    if (self->renderWindow())
+    {
+        size[0] = self->renderWindow()->GetSize()[0];
+        size[1] = self->renderWindow()->GetSize()[1];
+    }
+    else {
+        size[0] = 0; size[1] = 0;
+    }
+    int qtY = size[1] - vtkY;
+
+    self->m_lastMousePos = QPoint(vtkX, qtY);
+
+    // 3) Use a picker to obtain an accurate world position (if something was "hit")
+    vtkNew<vtkPropPicker> picker;
+    bool picked = false;
+    if (self->renderer)
+    {
+        // Pick returns 1 if something was hit (depending on the picker). Pass the renderer.
+        if (picker->Pick(vtkX, vtkY, 0.0, self->renderer))
+        {
+            double pickPos[3];
+            picker->GetPickPosition(pickPos);
+            self->m_lastWorldPos = { pickPos[0], pickPos[1], pickPos[2] };
+            picked = true;
+        }
+    }
+
+    // 4) If the picker didn't hit anything, try DisplayToWorld as a fallback
+    if (!picked && self->renderer)
+    {
+        double displayPt[3] = { static_cast<double>(vtkX), static_cast<double>(vtkY), 0.0 };
+        self->renderer->SetDisplayPoint(displayPt);
+        self->renderer->DisplayToWorld();
+        double worldPt[4];
+        self->renderer->GetWorldPoint(worldPt);
+        if (worldPt[3] != 0.0)
+        {
+            self->m_lastWorldPos = { worldPt[0] / worldPt[3], worldPt[1] / worldPt[3], worldPt[2] / worldPt[3] };
+        }
+        else
+        {
+            // If w == 0, the result is invalid — keep previous or zero out
+            self->m_lastWorldPos = { worldPt[0], worldPt[1], worldPt[2] };
+        }
+    }
+
+    // 5) Update the tooltip (now using correct m_lastMousePos and m_lastWorldPos)
+    self->updateToolTip(self->m_lastMousePos);
 }
 
 void SceneWidget::renderVtkScene()

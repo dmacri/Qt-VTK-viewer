@@ -95,6 +95,24 @@ public:
      * @param callData Event-specific data */
     static void keypressCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
 
+    /** @brief Callback function for VTK mouse move events.
+     *
+     *  This function is triggered whenever a mouse movement event occurs within the VTK
+     *  interactor. It captures the current mouse position in VTK coordinate space
+     *  (origin at bottom-left), converts it into Qt widget coordinates (origin at top-left),
+     *  and updates both the last known mouse position and corresponding world position.
+     *
+     *  The world position is determined using a VTK picker if a prop is hit.
+     *  If no object is detected by the picker, a DisplayToWorld transformation is used
+     *  as a fallback to approximate the world coordinates.
+     *  After updating positions, the tooltip is refreshed to display context information.
+     *
+     * @param caller       The VTK object (typically vtkRenderWindowInteractor) that triggered the event.
+     * @param eventId      The ID of the event (expected to be vtkCommand::MouseMoveEvent).
+     * @param clientData   Pointer to user data passed when registering the callback (used to access the owning SceneWidget instance).
+     * @param callData     Additional event-specific data (unused in this implementation). */
+    static void mouseCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
+
 signals:
     /** @brief Signal emitted when step number is changed using keyboard keys (sent from method keypressCallbackFunction)
      *  @param stepNumber The new step number */
