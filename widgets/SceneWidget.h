@@ -109,6 +109,11 @@ signals:
     void availableStepsReadFromConfigFile(std::vector<StepIndex> availableSteps);
 
 public slots:
+    /** @brief Slot called when color settings need to be reloaded (at least one of them was changed)
+     *
+     * This method is typically connected to a signal indicating that color settings
+     * have changed. It updates all visual elements in the widget to reflect the
+     * current color settings from the ColorSettings singleton. */
     void onColorsReloadRequested();
 
 private slots:
@@ -148,8 +153,24 @@ protected:
      *  @param stepNumber Initial step number to display */
     void setupSettingParameters(const std::string & configFilename, int stepNumber);
 
+    /** @brief Updates the background color from application settings.
+     *
+     * This method retrieves the current background color from the ColorSettings
+     * singleton and applies it to the scene's renderer. It should be called
+     * whenever the background color setting changes. */
     void refreshBackgroundColorFromSettings();
+
+    /** @brief Updates the step number text color from application settings.
+     *
+     * This method retrieves the current text color from the ColorSettings
+     * singleton and applies it to any step number text elements in the scene. */
     void refreshStepNumberTextColorFromSettings();
+
+    /** @brief Updates the grid color from application settings.
+     *
+     * This method retrieves the current grid color from the ColorSettings
+     * singleton and applies it to the scene's grid. It should be called
+     * whenever the grid color setting changes. */
     void refreshGridColorFromSettings();
 
 private:
@@ -187,5 +208,9 @@ private:
     /// @brief Text properties for step display: These text properties are used to customize the appearance of the step number in the scene.
     vtkNew<vtkTextProperty> singleLineTextPropStep;
 
+    /** @brief Collection of line segments used for visualization.
+     *
+     * This vector stores all the line segments that are currently being rendered
+     * in the scene. Each segment is from different node. */
     std::vector<Line> lines;
 };
