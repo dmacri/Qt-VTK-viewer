@@ -116,20 +116,7 @@ public slots:
      * current color settings from the ColorSettings singleton. */
     void onColorsReloadRequested();
 
-private slots:
-    /// @brief Shows a tooltip at the current mouse position
-    void showToolTip();
-
-protected:
-    /** @brief Handles mouse move events. The method is overrided for toolTip with position.
-     *  @param event The mouse event */
-    void mouseMoveEvent(QMouseEvent* event) override;
-    
-    /** @brief Handles the leave event (when mouse leaves the widget).
-     *  The method is overrided to hide toolTip when mouse moved.
-     *  @param event The leave event */
-    void leaveEvent(QEvent* event) override;
-
+protected:   
     /// @brief Renders the VTK scene. It needs to be called when reading from config file
     void renderVtkScene();
 
@@ -193,6 +180,9 @@ protected:
      * singleton and applies it to the scene's grid. It should be called
      * whenever the grid color setting changes. */
     void refreshGridColorFromSettings();
+
+    void connectKeyboardCallback();
+    void connectMouseCallback();
 
 private:
     /** @brief Proxy for the scene widget visualizer

@@ -13,6 +13,7 @@
 #include <vtkPointData.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderWindow.h>
+#include <vtkPropPicker.h>
 #include "SceneWidget.h"
 #include "config/Config.h"
 #include "visualiser/Line.h"
@@ -146,10 +147,82 @@ void SceneWidget::setupVtkScene()
 
     renderWindow()->SetWindowName(QApplication::applicationName().toLocal8Bit().data());
 
+    connectKeyboardCallback();
+    connectMouseCallback();
+}
+
+void SceneWidget::connectKeyboardCallback()
+{
     vtkNew<vtkCallbackCommand> keypressCallback;
     keypressCallback->SetCallback(SceneWidget::keypressCallbackFunction);
     keypressCallback->SetClientData(this);
     interactor()->AddObserver(vtkCommand::KeyPressEvent, keypressCallback);
+}
+
+void SceneWidget::connectMouseCallback()
+{
+    vtkNew<vtkCallbackCommand> mouseMoveCallback;
+    mouseMoveCallback->SetCallback([](vtkObject* caller, long unsigned int, void* clientData, void*){
+        auto interactor = static_cast<vtkRenderWindowInteractor*>(caller);
+        auto* self = static_cast<SceneWidget*>(clientData);
+
+        // 1) Get the event position from VTK (origin: bottom-left)
+        int vtkX = interactor->GetEventPosition()[0];
+        int vtkY = interactor->GetEventPosition()[1];
+
+        // 2) Convert to Qt coordinates (origin: top-left) for tooltip/mapToGlobal
+        int size[2];
+        if (self->renderWindow())
+        {
+            size[0] = self->renderWindow()->GetSize()[0];
+            size[1] = self->renderWindow()->GetSize()[1];
+        }
+        else {
+            size[0] = 0; size[1] = 0;
+        }
+        int qtY = size[1] - vtkY;
+
+        self->m_lastMousePos = QPoint(vtkX, qtY);
+
+        // 3) Use a picker to obtain an accurate world position (if something was "hit")
+        vtkNew<vtkPropPicker> picker;
+        bool picked = false;
+        if (self->renderer)
+        {
+            // Pick returns 1 if something was hit (depending on the picker). Pass the renderer.
+            if (picker->Pick(vtkX, vtkY, 0.0, self->renderer))
+            {
+                double pickPos[3];
+                picker->GetPickPosition(pickPos);
+                self->m_lastWorldPos = { pickPos[0], pickPos[1], pickPos[2] };
+                picked = true;
+            }
+        }
+
+        // 4) If the picker didn't hit anything, try DisplayToWorld as a fallback
+        if (!picked && self->renderer)
+        {
+            double displayPt[3] = { static_cast<double>(vtkX), static_cast<double>(vtkY), 0.0 };
+            self->renderer->SetDisplayPoint(displayPt);
+            self->renderer->DisplayToWorld();
+            double worldPt[4];
+            self->renderer->GetWorldPoint(worldPt);
+            if (worldPt[3] != 0.0)
+            {
+                self->m_lastWorldPos = { worldPt[0] / worldPt[3], worldPt[1] / worldPt[3], worldPt[2] / worldPt[3] };
+            }
+            else
+            {
+                // If w == 0, the result is invalid — keep previous or zero out
+                self->m_lastWorldPos = { worldPt[0], worldPt[1], worldPt[2] };
+            }
+        }
+
+        // 5) Update the tooltip (now using correct m_lastMousePos and m_lastWorldPos)
+        self->updateToolTip(self->m_lastMousePos);
+    });
+    mouseMoveCallback->SetClientData(this);
+    interactor()->AddObserver(vtkCommand::MouseMoveEvent, mouseMoveCallback);
 }
 
 void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
@@ -221,18 +294,6 @@ void SceneWidget::renderVtkScene()
     renderWindow()->Render();
     interactor()->Initialize();
     interactor()->Enable();
-}
-
-void SceneWidget::mouseMoveEvent(QMouseEvent* event)
-{
-    QVTKOpenGLNativeWidget::mouseMoveEvent(event);
-    updateToolTip(event->pos());
-}
-
-void SceneWidget::leaveEvent(QEvent* event)
-{
-    QVTKOpenGLNativeWidget::leaveEvent(event);
-    QToolTip::hideText();
 }
 
 std::array<double, 3> SceneWidget::screenToWorldCoordinates(const QPoint& pos) const
@@ -361,60 +422,45 @@ const Line* SceneWidget::findNearestLine(const std::array<double, 3>& worldPos, 
     return nearestLine;
 }
 
-void SceneWidget::updateToolTip(const QPoint& pos)
+void SceneWidget::updateToolTip(const QPoint& /*pos*/)
 {
     if (!renderer || !renderWindow())
-    {
         return;
-    }
-    
-    m_lastMousePos = pos;
-    m_lastWorldPos = screenToWorldCoordinates(pos);
-    
+
+    // m_lastMousePos is already in Qt coordinates (origin: top-left)
+    // m_lastWorldPos is set by the VTK callback (picker or DisplayToWorld fallback)
+
     // Check if we're over a line
     size_t lineIndex = 0;
     double distanceSq = 0.0;
     const Line* nearestLine = findNearestLine(m_lastWorldPos, lineIndex, distanceSq);
-    
-    // Prepare tooltip text with VTK coordinates
+
+    // Prepare tooltip text --- world coordinates
     QString tooltipText = QString("World Position: (x: %1, y: %2, z: %3)")
-        .arg(m_lastWorldPos[0], 0, 'f', 2)
-        .arg(m_lastWorldPos[1], 0, 'f', 2)
-        .arg(m_lastWorldPos[2], 0, 'f', 2);
-    
+                              .arg(m_lastWorldPos[0], 0, 'f', 2)
+                              .arg(m_lastWorldPos[1], 0, 'f', 2)
+                              .arg(m_lastWorldPos[2], 0, 'f', 2);
+
     if (nearestLine)
     {
-        // Show line information
         tooltipText += QString("\n\nLine %1/%2:").arg(lineIndex).arg(lines.size());
         tooltipText += QString("\n  From: (%1, %2)")
-            .arg(nearestLine->x1, 0, 'f', 2)
-            .arg(nearestLine->y1, 0, 'f', 2);
+                           .arg(nearestLine->x1, 0, 'f', 2)
+                           .arg(nearestLine->y1, 0, 'f', 2);
         tooltipText += QString("\n  To:   (%1, %2)")
-            .arg(nearestLine->x2, 0, 'f', 2)
-            .arg(nearestLine->y2, 0, 'f', 2);
+                           .arg(nearestLine->x2, 0, 'f', 2)
+                           .arg(nearestLine->y2, 0, 'f', 2);
     }
     else
     {
-        // Show node information if not over a line
         QString nodeInfo = getNodeAtWorldPosition(m_lastWorldPos);
         if (!nodeInfo.isEmpty())
-        {
             tooltipText += QString("\n%1").arg(nodeInfo);
-        }
     }
-    
-    // Show tooltip at the current mouse position
-    QPoint globalPos = mapToGlobal(pos);
-    QToolTip::showText(globalPos, 
-                      tooltipText,
-                      this,
-                      QRect(pos, QSize(1, 1)),
-                      0); // Show until mouse moves out
-}
 
-void SceneWidget::showToolTip()
-{
-    updateToolTip(m_lastMousePos);
+    // Use m_lastMousePos (Qt coordinates) to position the tooltip
+    QPoint globalPos = mapToGlobal(m_lastMousePos);
+    QToolTip::showText(globalPos, tooltipText, this, QRect(m_lastMousePos, QSize(1,1)), 0);
 }
 
 void SceneWidget::selectedStepParameter(StepIndex stepNumber)
