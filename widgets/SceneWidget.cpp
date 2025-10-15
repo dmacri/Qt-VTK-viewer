@@ -302,6 +302,65 @@ QString SceneWidget::getNodeAtWorldPosition(const std::array<double, 3>& worldPo
     return {}; // Outside node grid
 }
 
+const Line* SceneWidget::findNearestLine(const std::array<double, 3>& worldPos, size_t& lineIndex, double& distanceSquared) const
+{
+    if (!settingParameter || !sceneWidgetVisualizerProxy)
+    {
+        return nullptr;
+    }
+
+    // const auto& lines = sceneWidgetVisualizerProxy->getVisualizer().getLines();
+    if (lines.empty())
+    {
+        return nullptr;
+    }
+
+    constexpr double threshold = 2; // Threshold for line selection (in world coordinates)
+    constexpr double thresholdSq = threshold * threshold;
+    
+    const Line* nearestLine = nullptr;
+    double minDistanceSq = std::numeric_limits<double>::max();
+    size_t foundIndex = 0;
+
+    for (size_t i = 0; i < lines.size(); ++i)
+    {
+        const auto& line = lines[i];
+        
+        // Calculate squared distance from point to line segment
+        const double lineLengthSq = (line.x2 - line.x1) * (line.x2 - line.x1) + 
+                                   (line.y2 - line.y1) * (line.y2 - line.y1);
+        
+        if (lineLengthSq < 1e-10) // Skip zero-length lines
+            continue;
+            
+        const double t = std::max(0.0, std::min(1.0, 
+            ((worldPos[0] - line.x1) * (line.x2 - line.x1) + 
+             (worldPos[1] - line.y1) * (line.y2 - line.y1)) / lineLengthSq));
+             
+        const double projX = line.x1 + t * (line.x2 - line.x1);
+        const double projY = line.y1 + t * (line.y2 - line.y1);
+        
+        const double dx = worldPos[0] - projX;
+        const double dy = worldPos[1] - projY;
+        const double distSq = dx * dx + dy * dy;
+        
+        if (distSq < minDistanceSq && distSq <= thresholdSq)
+        {
+            minDistanceSq = distSq;
+            nearestLine = &line;
+            foundIndex = i;
+        }
+    }
+
+    if (nearestLine)
+    {
+        lineIndex = foundIndex;
+        distanceSquared = minDistanceSq;
+    }
+    
+    return nearestLine;
+}
+
 void SceneWidget::updateToolTip(const QPoint& pos)
 {
     if (!renderer || !renderWindow())
@@ -312,8 +371,10 @@ void SceneWidget::updateToolTip(const QPoint& pos)
     m_lastMousePos = pos;
     m_lastWorldPos = screenToWorldCoordinates(pos);
     
-    // Get node information using world coordinates
-    QString nodeInfo = getNodeAtWorldPosition(m_lastWorldPos);
+    // Check if we're over a line
+    size_t lineIndex = 0;
+    double distanceSq = 0.0;
+    const Line* nearestLine = findNearestLine(m_lastWorldPos, lineIndex, distanceSq);
     
     // Prepare tooltip text with VTK coordinates
     QString tooltipText = QString("World Position: (x: %1, y: %2, z: %3)")
@@ -321,10 +382,25 @@ void SceneWidget::updateToolTip(const QPoint& pos)
         .arg(m_lastWorldPos[1], 0, 'f', 2)
         .arg(m_lastWorldPos[2], 0, 'f', 2);
     
-    // Add node information if available
-    if (!nodeInfo.isEmpty())
+    if (nearestLine)
     {
-        tooltipText += QString("\n%1").arg(nodeInfo);
+        // Show line information
+        tooltipText += QString("\n\nLine %1:").arg(lineIndex);
+        tooltipText += QString("\n  From: (%1, %2)")
+            .arg(nearestLine->x1, 0, 'f', 2)
+            .arg(nearestLine->y1, 0, 'f', 2);
+        tooltipText += QString("\n  To:   (%1, %2)")
+            .arg(nearestLine->x2, 0, 'f', 2)
+            .arg(nearestLine->y2, 0, 'f', 2);
+    }
+    else
+    {
+        // Show node information if not over a line
+        QString nodeInfo = getNodeAtWorldPosition(m_lastWorldPos);
+        if (!nodeInfo.isEmpty())
+        {
+            tooltipText += QString("\n%1").arg(nodeInfo);
+        }
     }
     
     // Show tooltip at the current mouse position

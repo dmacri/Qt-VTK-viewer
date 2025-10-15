@@ -155,6 +155,13 @@ protected:
      *  @param worldPos The current position in VTK world coordinates
      *  @return A string indicating which node the mouse is over, or empty string if not over any node */
     QString getNodeAtWorldPosition(const std::array<double, 3>& worldPos) const;
+    
+    /** @brief Finds the nearest line to the given world position
+     *  @param worldPos The position to check
+     *  @param[out] lineIndex Index of the found line in the lines vector
+     *  @param[out] distanceSquared Squared distance to the nearest point on the line
+     *  @return Pointer to the nearest line, or nullptr if no lines exist */
+    const Line* findNearestLine(const std::array<double, 3>& worldPos, size_t& lineIndex, double& distanceSquared) const;
 
     /// @brief Reads settings from a configuration file
     /// @param filename Path to the configuration file
