@@ -141,6 +141,11 @@ protected:
 
     /// @brief Enables tooltip display when mouse is above the widget
     void enableToolTipWhenMouseAboveWidget();
+    
+    /** @brief Determines which node the mouse is currently over
+     *  @param mousePos The current mouse position in widget coordinates
+     *  @return A string indicating which node the mouse is over, or empty string if not over any node */
+    QString getNodeAtPosition(const QPoint& mousePos) const;
 
     /// @brief Reads settings from a configuration file
     /// @param filename Path to the configuration file
@@ -198,7 +203,7 @@ private:
     /** @brief Actor for the grid in the scene: This actor is responsible for rendering the grid in the scene.
      *  The grid provides information about what part was calculated by which node */
     vtkNew<vtkActor> gridActor;
-    
+
     /// @brief Actor for load balancing lines: This actor is responsible for rendering the load balancing lines.
     vtkNew<vtkActor2D> actorBuildLine;
     

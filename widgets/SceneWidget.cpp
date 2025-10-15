@@ -247,12 +247,51 @@ void SceneWidget::leaveEvent(QEvent* event)
     QToolTip::hideText();
 }
 
+QString SceneWidget::getNodeAtPosition(const QPoint& mousePos) const
+{
+    if (!settingParameter || !sceneWidgetVisualizerProxy)
+    {
+        return {};
+    }
+
+    // Calculate the width and height of each node's area
+    const int nodeWidth = width() / settingParameter->nNodeX;
+    const int nodeHeight = height() / settingParameter->nNodeY;
+
+    // Calculate which node the mouse is in (0-based indices)
+    const int nodeX = mousePos.x() / nodeWidth;
+    const int nodeY = mousePos.y() / nodeHeight;
+
+    // Check if the calculated node is within bounds
+    if (nodeX >= 0 && nodeX < settingParameter->nNodeX &&
+        nodeY >= 0 && nodeY < settingParameter->nNodeY)
+    {
+        return QString("Node [%1, %2]").arg(nodeX).arg(nodeY);
+    }
+
+    return {};
+}
+
 void SceneWidget::showToolTip()
 {
+    // Get node information
+    QString nodeInfo = getNodeAtPosition(m_lastMousePos);
+    
+    // Prepare tooltip text
+    QString tooltipText = QString("Position: (%1, %2)")
+        .arg(m_lastMousePos.x())
+        .arg(m_lastMousePos.y());
+    
+    // Add node information if available
+    if (!nodeInfo.isEmpty())
+    {
+        tooltipText += QString("\n%1").arg(nodeInfo);
+    }
+    
     // Show tooltip at the current mouse position
     QPoint globalPos = mapToGlobal(m_lastMousePos);
     QToolTip::showText(globalPos, 
-                      QString("X: %1, Y: %2").arg(m_lastMousePos.x()).arg(m_lastMousePos.y()),
+                      tooltipText,
                       this,
                       QRect(m_lastMousePos, QSize(1, 1)),
                       2000); // Show for 2 seconds
