@@ -277,7 +277,7 @@ std::array<double, 3> SceneWidget::screenToWorldCoordinates(const QPoint& pos) c
 
 QString SceneWidget::getNodeAtWorldPosition(const std::array<double, 3>& worldPos) const
 {
-    if (!settingParameter || !sceneWidgetVisualizerProxy)
+    if (!settingParameter || !sceneWidgetVisualizerProxy || !renderer)
     {
         return {};
     }
@@ -287,6 +287,13 @@ QString SceneWidget::getNodeAtWorldPosition(const std::array<double, 3>& worldPo
     if (!bounds)
     {
         return {};
+    }
+
+    // Check if the position is within the scene bounds
+    if (worldPos[0] < bounds[0] || worldPos[0] > bounds[1] ||
+        worldPos[1] < bounds[2] || worldPos[1] > bounds[3])
+    {
+        return {}; // Outside scene bounds
     }
 
     // Calculate the width and height of each node's area in world coordinates
@@ -307,7 +314,7 @@ QString SceneWidget::getNodeAtWorldPosition(const std::array<double, 3>& worldPo
         return QString("Node [%1, %2]").arg(nodeX).arg(nodeY);
     }
 
-    return {};
+    return {}; // Outside node grid
 }
 
 void SceneWidget::showToolTip()
