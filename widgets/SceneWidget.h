@@ -142,10 +142,15 @@ protected:
     /// @brief Enables tooltip display when mouse is above the widget
     void enableToolTipWhenMouseAboveWidget();
     
-    /** @brief Determines which node the mouse is currently over
-     *  @param mousePos The current mouse position in widget coordinates
+    /** @brief Converts screen coordinates to VTK world coordinates
+     *  @param pos The screen position in widget coordinates
+     *  @return The corresponding world coordinates in VTK space */
+    std::array<double, 3> screenToWorldCoordinates(const QPoint& pos) const;
+    
+    /** @brief Determines which node the mouse is currently over using VTK coordinates
+     *  @param worldPos The current position in VTK world coordinates
      *  @return A string indicating which node the mouse is over, or empty string if not over any node */
-    QString getNodeAtPosition(const QPoint& mousePos) const;
+    QString getNodeAtWorldPosition(const std::array<double, 3>& worldPos) const;
 
     /// @brief Reads settings from a configuration file
     /// @param filename Path to the configuration file
@@ -193,9 +198,12 @@ private:
     /// @brief Timer for tooltip display. This timer is used to delay the display of tooltips when the mouse is moved over the widget.
     QTimer m_toolTipTimer;
     
-    /** @brief Last recorded mouse position. This variable keeps track of the last recorded mouse position.
+    /** @brief Last recorded mouse position in screen coordinates. This variable keeps track of the last recorded mouse position.
      *  It is used to determine whether the mouse is still above the widget when the tooltip timer expires. */
     QPoint m_lastMousePos;
+    
+    /** @brief Last recorded position in VTK world coordinates. */
+    std::array<double, 3> m_lastWorldPos;
     
     /// @brief VTK renderer for the scene: This renderer is responsible for rendering the 3D scene.
     vtkNew<vtkRenderer> renderer;

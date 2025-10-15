@@ -235,6 +235,9 @@ void SceneWidget::mouseMoveEvent(QMouseEvent* event)
     // Update the last mouse position
     m_lastMousePos = event->pos();
     
+    // Convert to world coordinates immediately
+    m_lastWorldPos = screenToWorldCoordinates(m_lastMousePos);
+    
     // Restart the tooltip timer
     m_toolTipTimer.stop();
     m_toolTipTimer.start();
@@ -247,20 +250,55 @@ void SceneWidget::leaveEvent(QEvent* event)
     QToolTip::hideText();
 }
 
-QString SceneWidget::getNodeAtPosition(const QPoint& mousePos) const
+std::array<double, 3> SceneWidget::screenToWorldCoordinates(const QPoint& pos) const
+{
+    std::array<double, 3> worldPos = {0.0, 0.0, 0.0};
+    
+    if (!renderer || ! renderWindow())
+    {
+        return worldPos;
+    }
+    
+    // Convert screen coordinates to VTK display coordinates
+    int* size = renderWindow()->GetSize();
+    double displayPos[3] = {
+        static_cast<double>(pos.x()),
+        static_cast<double>(size[1] - pos.y()), // Flip Y coordinate
+        0.0
+    };
+    
+    // Convert display coordinates to world coordinates
+    renderer->SetDisplayPoint(displayPos);
+    renderer->DisplayToWorld();
+    renderer->GetWorldPoint(worldPos.data());
+    
+    return worldPos;
+}
+
+QString SceneWidget::getNodeAtWorldPosition(const std::array<double, 3>& worldPos) const
 {
     if (!settingParameter || !sceneWidgetVisualizerProxy)
     {
         return {};
     }
 
-    // Calculate the width and height of each node's area
-    const int nodeWidth = width() / settingParameter->nNodeX;
-    const int nodeHeight = height() / settingParameter->nNodeY;
+    // Get the bounds of the entire scene
+    double* bounds = renderer->ComputeVisiblePropBounds();
+    if (!bounds)
+    {
+        return {};
+    }
 
-    // Calculate which node the mouse is in (0-based indices)
-    const int nodeX = mousePos.x() / nodeWidth;
-    const int nodeY = mousePos.y() / nodeHeight;
+    // Calculate the width and height of each node's area in world coordinates
+    const double sceneWidth = bounds[1] - bounds[0];
+    const double sceneHeight = bounds[3] - bounds[2];
+    
+    const double nodeWidth = sceneWidth / settingParameter->nNodeX;
+    const double nodeHeight = sceneHeight / settingParameter->nNodeY;
+
+    // Calculate which node the position is in (0-based indices)
+    const int nodeX = (worldPos[0] - bounds[0]) / nodeWidth;
+    const int nodeY = (worldPos[1] - bounds[2]) / nodeHeight;
 
     // Check if the calculated node is within bounds
     if (nodeX >= 0 && nodeX < settingParameter->nNodeX &&
@@ -274,13 +312,22 @@ QString SceneWidget::getNodeAtPosition(const QPoint& mousePos) const
 
 void SceneWidget::showToolTip()
 {
-    // Get node information
-    QString nodeInfo = getNodeAtPosition(m_lastMousePos);
+    if (!renderer || !renderWindow())
+    {
+        return;
+    }
     
-    // Prepare tooltip text
-    QString tooltipText = QString("Position: (%1, %2)")
-        .arg(m_lastMousePos.x())
-        .arg(m_lastMousePos.y());
+    // Convert to world coordinates
+    m_lastWorldPos = screenToWorldCoordinates(m_lastMousePos);
+    
+    // Get node information using world coordinates
+    QString nodeInfo = getNodeAtWorldPosition(m_lastWorldPos);
+    
+    // Prepare tooltip text with VTK coordinates
+    QString tooltipText = QString("World Position: (x: %1, y: %2, z: %3)")
+        .arg(m_lastWorldPos[0], 0, 'f', 2)
+        .arg(m_lastWorldPos[1], 0, 'f', 2)
+        .arg(m_lastWorldPos[2], 0, 'f', 2);
     
     // Add node information if available
     if (!nodeInfo.isEmpty())
