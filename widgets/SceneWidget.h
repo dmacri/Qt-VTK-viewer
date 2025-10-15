@@ -108,6 +108,9 @@ signals:
      *  @param availableSteps Vector of available step numbers */
     void availableStepsReadFromConfigFile(std::vector<StepIndex> availableSteps);
 
+public slots:
+    void onColorsReloadRequested();
+
 private slots:
     /// @brief Shows a tooltip at the current mouse position
     void showToolTip();
@@ -145,6 +148,10 @@ protected:
      *  @param stepNumber Initial step number to display */
     void setupSettingParameters(const std::string & configFilename, int stepNumber);
 
+    void refreshBackgroundColorFromSettings();
+    void refreshStepNumberTextColorFromSettings();
+    void refreshGridColorFromSettings();
+
 private:
     /** @brief Proxy for the scene widget visualizer
      *  This proxy provides access to the visualizer implementation
@@ -179,4 +186,6 @@ private:
     
     /// @brief Text properties for step display: These text properties are used to customize the appearance of the step number in the scene.
     vtkNew<vtkTextProperty> singleLineTextPropStep;
+
+    std::vector<Line> lines;
 };

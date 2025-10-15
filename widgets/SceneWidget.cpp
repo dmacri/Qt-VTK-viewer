@@ -39,6 +39,15 @@ std::string prepareOutputFileName(const std::string& configFile, const std::stri
     // Step 2: build full output file path
     return (outputDir / outputFileNameFromCfg).string();
 }
+
+vtkColor3d toVtkColor(QColor color)
+{
+    return vtkColor3d{
+        color.redF(),
+        color.greenF(),
+        color.blueF()
+    };
+}
 } // namespace
 
 
@@ -50,6 +59,8 @@ SceneWidget::SceneWidget(QWidget* parent)
     , currentModelType{sceneWidgetVisualizerProxy->getModelTypeValue()}
 {
     enableToolTipWhenMouseAboveWidget();
+
+    connect(&ColorSettings::instance(), &ColorSettings::colorsChanged, this, &SceneWidget::onColorsReloadRequested);
 }
 
 void SceneWidget::enableToolTipWhenMouseAboveWidget()
@@ -88,13 +99,18 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename, int
 
     sceneWidgetVisualizerProxy->initMatrix(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY);
 
-    const QColor backgroundColorFromSettings = ColorSettings::instance().backgroundColor();
-    vtkColor3d vtkColor{
-        backgroundColorFromSettings.redF(),
-        backgroundColorFromSettings.greenF(),
-        backgroundColorFromSettings.blueF()
-    };
-    renderer->SetBackground(vtkColor.GetData());
+    refreshBackgroundColorFromSettings();
+}
+
+void SceneWidget::refreshGridColorFromSettings()
+{
+    const auto color = ColorSettings::instance().gridColor();
+
+    actorBuildLine->GetProperty()->SetColor(toVtkColor(color).GetData());
+    actorBuildLine->GetProperty()->Modified();
+
+    renderer->Modified();
+    renderWindow()->Render();
 }
 
 void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
@@ -197,7 +213,7 @@ void SceneWidget::renderVtkScene()
 
     emit availableStepsReadFromConfigFile(sceneWidgetVisualizerProxy->availableSteps());
 
-    std::vector<Line> lines(settingParameter->numberOfLines);
+    lines.resize(settingParameter->numberOfLines);
     sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
 
     sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, renderer, gridActor);
@@ -252,7 +268,7 @@ void SceneWidget::selectedStepParameter(StepIndex stepNumber)
 
 void SceneWidget::updateVisualization()
 {
-    std::vector<Line> lines(settingParameter->numberOfLines);
+    lines.resize(settingParameter->numberOfLines);
 
     sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(
         settingParameter.get(),
@@ -393,4 +409,30 @@ void SceneWidget::loadNewConfiguration(const std::string& configFileName, int st
         std::cerr << "Failed to load configuration: " << e.what() << std::endl;
         throw;
     }
+}
+
+void SceneWidget::onColorsReloadRequested()
+{
+    refreshBackgroundColorFromSettings();
+    refreshStepNumberTextColorFromSettings();
+    refreshGridColorFromSettings();
+}
+void SceneWidget::refreshBackgroundColorFromSettings()
+{
+    const auto color = ColorSettings::instance().backgroundColor();
+    renderer->SetBackground(toVtkColor(color).GetData());
+    renderer->Modified();
+    renderWindow()->Render();
+}
+
+void SceneWidget::refreshStepNumberTextColorFromSettings()
+{
+    const auto color = ColorSettings::instance().textColor();
+
+    auto realTextProp = singleLineTextStep->GetTextProperty();
+    realTextProp->SetColor(toVtkColor(color).GetData());
+    realTextProp->Modified();
+
+    renderer->Modified();
+    renderWindow()->Render();
 }

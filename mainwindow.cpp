@@ -13,6 +13,7 @@
 #include "ui_mainwindow.h"
 #include "widgets/ConfigDetailsDialog.h"
 #include "widgets/ColorSettingsDialog.h"
+#include "widgets/ColorSettings.h"
 #include "visualiser/VideoExporter.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
 
@@ -546,7 +547,8 @@ void MainWindow::onOpenConfigurationRequested()
 
 void MainWindow::onColorSettingsRequested()
 {
-    ColorSettingsDialog* colorSettings = new ColorSettingsDialog(this);
+    auto* colorSettings = new ColorSettingsDialog(this);
+
     colorSettings->show();
 }
 

@@ -7,6 +7,7 @@
 #include <QSettings>
 #include <QMessageBox>
 
+
 ColorSettingsDialog::ColorSettingsDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ColorSettingsDialog)
@@ -35,31 +36,40 @@ ColorSettingsDialog::~ColorSettingsDialog()
     delete ui;
 }
 
-void ColorSettingsDialog::onBackgroundColorClicked() {
-    if (selectColor(m_backgroundColor, tr("Select Background Color"))) {
+void ColorSettingsDialog::onBackgroundColorClicked()
+{
+    if (selectColor(m_backgroundColor, tr("Select Background Color")))
+    {
         updateColorPreviews();
     }
 }
 
-void ColorSettingsDialog::onTextColorClicked() {
-    if (selectColor(m_textColor, tr("Select Text Color"))) {
+void ColorSettingsDialog::onTextColorClicked()
+{
+    if (selectColor(m_textColor, tr("Select Text Color")))
+    {
         updateColorPreviews();
     }
 }
 
-void ColorSettingsDialog::onGridColorClicked() {
-    if (selectColor(m_gridColor, tr("Select Grid Color"))) {
+void ColorSettingsDialog::onGridColorClicked()
+{
+    if (selectColor(m_gridColor, tr("Select Grid Color")))
+    {
         updateColorPreviews();
     }
 }
 
-void ColorSettingsDialog::onHighlightColorClicked() {
-    if (selectColor(m_highlightColor, tr("Select Highlight Color"))) {
+void ColorSettingsDialog::onHighlightColorClicked()
+{
+    if (selectColor(m_highlightColor, tr("Select Highlight Color")))
+    {
         updateColorPreviews();
     }
 }
 
-void ColorSettingsDialog::onResetColors() {
+void ColorSettingsDialog::onResetColors()
+{
     auto reply = QMessageBox::question(this, 
                                      tr("Reset Colors"),
                                      tr("Are you sure you want to reset all colors to their default values?"),
@@ -76,7 +86,8 @@ void ColorSettingsDialog::onResetColors() {
     }
 }
 
-void ColorSettingsDialog::onAccepted() {
+void ColorSettingsDialog::onAccepted()
+{
     // Save settings
     ColorSettings& settings = ColorSettings::instance();
     settings.setBackgroundColor(m_backgroundColor);
@@ -88,13 +99,15 @@ void ColorSettingsDialog::onAccepted() {
     accept();
 }
 
-void ColorSettingsDialog::onRejected() {
+void ColorSettingsDialog::onRejected()
+{
     // Reload settings to discard changes
     loadSettings();
     reject();
 }
 
-void ColorSettingsDialog::updateColorPreviews() {
+void ColorSettingsDialog::updateColorPreviews()
+{
     updateColorButton(ui->btnBackgroundColor, m_backgroundColor);
     updateColorButton(ui->btnTextColor, m_textColor);
     updateColorButton(ui->btnGridColor, m_gridColor);
@@ -106,25 +119,29 @@ void ColorSettingsDialog::updateColorPreviews() {
     ui->lblPreview->setStyleSheet(style);
 }
 
-void ColorSettingsDialog::updateColorButton(QPushButton* button, const QColor& color) {
+void ColorSettingsDialog::updateColorButton(QPushButton* button, const QColor& color)
+{
     QString style = QString("background-color: %1; border: 1px solid #000000; min-width: 80px;")
                     .arg(color.name());
     button->setStyleSheet(style);
 }
 
-bool ColorSettingsDialog::selectColor(QColor& color, const QString& title) {
+bool ColorSettingsDialog::selectColor(QColor& color, const QString& title)
+{
     QColorDialog dialog(color, this);
     dialog.setWindowTitle(title);
     dialog.setOptions(QColorDialog::ShowAlphaChannel | QColorDialog::DontUseNativeDialog);
     
-    if (dialog.exec() == QDialog::Accepted) {
+    if (dialog.exec() == QDialog::Accepted)
+    {
         color = dialog.selectedColor();
         return true;
     }
     return false;
 }
 
-void ColorSettingsDialog::loadSettings() {
+void ColorSettingsDialog::loadSettings()
+{
     ColorSettings& settings = ColorSettings::instance();
     m_backgroundColor = settings.backgroundColor();
     m_textColor = settings.textColor();
@@ -132,7 +149,8 @@ void ColorSettingsDialog::loadSettings() {
     m_highlightColor = settings.highlightColor();
 }
 
-void ColorSettingsDialog::saveSettings() {
+void ColorSettingsDialog::saveSettings()
+{
     ColorSettings& settings = ColorSettings::instance();
     settings.setBackgroundColor(m_backgroundColor);
     settings.setTextColor(m_textColor);
