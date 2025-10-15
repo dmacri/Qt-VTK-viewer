@@ -142,6 +142,10 @@ protected:
     /// @brief Enables tooltip display when mouse is above the widget
     void enableToolTipWhenMouseAboveWidget();
     
+    /** @brief Updates the tooltip with current mouse position
+     *  @param pos Current mouse position in widget coordinates */
+    void updateToolTip(const QPoint& pos);
+    
     /** @brief Converts screen coordinates to VTK world coordinates
      *  @param pos The screen position in widget coordinates
      *  @return The corresponding world coordinates in VTK space */
@@ -195,11 +199,7 @@ private:
     /// @brief Currently active model type
     ModelType currentModelType;
 
-    /// @brief Timer for tooltip display. This timer is used to delay the display of tooltips when the mouse is moved over the widget.
-    QTimer m_toolTipTimer;
-    
-    /** @brief Last recorded mouse position in screen coordinates. This variable keeps track of the last recorded mouse position.
-     *  It is used to determine whether the mouse is still above the widget when the tooltip timer expires. */
+    /** @brief Last recorded mouse position in screen coordinates. */
     QPoint m_lastMousePos;
     
     /** @brief Last recorded position in VTK world coordinates. */

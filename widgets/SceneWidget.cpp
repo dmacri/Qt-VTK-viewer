@@ -65,13 +65,8 @@ SceneWidget::SceneWidget(QWidget* parent)
 
 void SceneWidget::enableToolTipWhenMouseAboveWidget()
 {
-    m_toolTipTimer.setSingleShot(true);
-
-    constexpr int delayBeforeShowingToolTipInMs = 1'000;
-    m_toolTipTimer.setInterval(delayBeforeShowingToolTipInMs);
-    connect(&m_toolTipTimer, &QTimer::timeout, this, &SceneWidget::showToolTip);
-
     setMouseTracking(/*enable=*/true);
+    setAttribute(Qt::WA_AlwaysShowToolTips);
 }
 
 SceneWidget::~SceneWidget() = default;
@@ -231,22 +226,12 @@ void SceneWidget::renderVtkScene()
 void SceneWidget::mouseMoveEvent(QMouseEvent* event)
 {
     QVTKOpenGLNativeWidget::mouseMoveEvent(event);
-    
-    // Update the last mouse position
-    m_lastMousePos = event->pos();
-    
-    // Convert to world coordinates immediately
-    m_lastWorldPos = screenToWorldCoordinates(m_lastMousePos);
-    
-    // Restart the tooltip timer
-    m_toolTipTimer.stop();
-    m_toolTipTimer.start();
+    updateToolTip(event->pos());
 }
 
 void SceneWidget::leaveEvent(QEvent* event)
 {
     QVTKOpenGLNativeWidget::leaveEvent(event);
-    m_toolTipTimer.stop();
     QToolTip::hideText();
 }
 
@@ -317,15 +302,15 @@ QString SceneWidget::getNodeAtWorldPosition(const std::array<double, 3>& worldPo
     return {}; // Outside node grid
 }
 
-void SceneWidget::showToolTip()
+void SceneWidget::updateToolTip(const QPoint& pos)
 {
     if (!renderer || !renderWindow())
     {
         return;
     }
     
-    // Convert to world coordinates
-    m_lastWorldPos = screenToWorldCoordinates(m_lastMousePos);
+    m_lastMousePos = pos;
+    m_lastWorldPos = screenToWorldCoordinates(pos);
     
     // Get node information using world coordinates
     QString nodeInfo = getNodeAtWorldPosition(m_lastWorldPos);
@@ -343,12 +328,17 @@ void SceneWidget::showToolTip()
     }
     
     // Show tooltip at the current mouse position
-    QPoint globalPos = mapToGlobal(m_lastMousePos);
+    QPoint globalPos = mapToGlobal(pos);
     QToolTip::showText(globalPos, 
                       tooltipText,
                       this,
-                      QRect(m_lastMousePos, QSize(1, 1)),
-                      2000); // Show for 2 seconds
+                      QRect(pos, QSize(1, 1)),
+                      0); // Show until mouse moves out
+}
+
+void SceneWidget::showToolTip()
+{
+    updateToolTip(m_lastMousePos);
 }
 
 void SceneWidget::selectedStepParameter(StepIndex stepNumber)
