@@ -220,7 +220,7 @@ void SceneWidget::renderVtkScene()
 
     sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfColumnX+1, renderer, actorBuildLine);
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, singleLineTextPropStep, singleLineTextStep, renderer);
+    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, singleLineTextStep, renderer);
 
     // Render
     renderWindow()->Render();
@@ -297,11 +297,7 @@ void SceneWidget::updateVisualization()
         );
     }
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildStepLine(
-        settingParameter->step,
-        singleLineTextStep,
-        singleLineTextPropStep
-    );
+    sceneWidgetVisualizerProxy->getVisualizer().buildStepLine(settingParameter->step, singleLineTextStep);
 }
 
 void SceneWidget::upgradeModelInCentralPanel()

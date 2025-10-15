@@ -204,9 +204,6 @@ private:
     
     /// @brief Text mapper for step display: This text mapper is responsible for rendering the step number in the scene.
     vtkNew<vtkTextMapper> singleLineTextStep;
-    
-    /// @brief Text properties for step display: These text properties are used to customize the appearance of the step number in the scene.
-    vtkNew<vtkTextProperty> singleLineTextPropStep;
 
     /** @brief Collection of line segments used for visualization.
      *

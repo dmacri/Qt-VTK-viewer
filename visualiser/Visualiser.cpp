@@ -76,14 +76,13 @@ void Visualizer::refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols
     lineActor->GetMapper()->Update();
 }
 
-vtkTextProperty* Visualizer::buildStepLine(StepIndex step, vtkSmartPointer<vtkTextMapper> singleLineTextB, vtkSmartPointer<vtkTextProperty> singleLineTextProp)
+vtkTextProperty* Visualizer::buildStepLine(StepIndex step, vtkSmartPointer<vtkTextMapper> singleLineTextB)
 {
     std::string stepText = "Step " + std::to_string(step);
     singleLineTextB->SetInput(stepText.c_str());
 
-    vtkTextProperty* textProp = singleLineTextB->GetTextProperty();
-    textProp->ShallowCopy(singleLineTextProp);
-    textProp->SetVerticalJustificationToBottom();
+    vtkTextProperty* singleLineTextProp = singleLineTextB->GetTextProperty();
+    singleLineTextProp->SetVerticalJustificationToBottom();
 
     const QColor textColorFromSettings = ColorSettings::instance().textColor();
     vtkColor3d vtkColor{
@@ -91,25 +90,23 @@ vtkTextProperty* Visualizer::buildStepLine(StepIndex step, vtkSmartPointer<vtkTe
         textColorFromSettings.greenF(),
         textColorFromSettings.blueF()
     };
-    textProp->SetColor(vtkColor.GetData());
+    singleLineTextProp->SetColor(vtkColor.GetData());
 
-    return textProp;
+    return singleLineTextProp;
 }
 
-vtkNew<vtkActor2D> Visualizer::buildStepText(StepIndex step, int font_size, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer)
+vtkNew<vtkActor2D> Visualizer::buildStepText(StepIndex step, int font_size, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer)
 {
-    singleLineTextProp->SetFontSize(font_size);
-    singleLineTextProp->SetFontFamilyToArial();
-    singleLineTextProp->BoldOn();
-    singleLineTextProp->ItalicOff();
-    singleLineTextProp->ShadowOff();
+    stepLineTextMapper->SetInput(("Step " + std::to_string(step)).c_str());
 
-    const std::string stringWithStep = "Step " + std::to_string(step);
-    stepLineTextMapper->SetInput(stringWithStep.c_str());
     auto textProp = stepLineTextMapper->GetTextProperty();
-    textProp->ShallowCopy(singleLineTextProp);
-
+    textProp->SetFontSize(font_size);
+    textProp->SetFontFamilyToArial();
+    textProp->BoldOn();
+    textProp->ItalicOff();
+    textProp->ShadowOff();
     textProp->SetVerticalJustificationToBottom();
+
     const QColor textColorFromSettings = ColorSettings::instance().textColor();
     vtkColor3d vtkColor{
         textColorFromSettings.redF(),
