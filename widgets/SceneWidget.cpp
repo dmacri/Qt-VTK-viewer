@@ -385,7 +385,7 @@ void SceneWidget::updateToolTip(const QPoint& pos)
     if (nearestLine)
     {
         // Show line information
-        tooltipText += QString("\n\nLine %1:").arg(lineIndex);
+        tooltipText += QString("\n\nLine %1/%2:").arg(lineIndex).arg(lines.size());
         tooltipText += QString("\n  From: (%1, %2)")
             .arg(nearestLine->x1, 0, 'f', 2)
             .arg(nearestLine->y1, 0, 'f', 2);
