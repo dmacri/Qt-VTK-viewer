@@ -1,23 +1,23 @@
-# Doxyfile.in - szablon Doxyfile konfigurowany przez CMake (nie edytuj w build/)
+# Doxyfile.in - Doxyfile template configured by CMake (do not edit in build/)
 PROJECT_NAME           = @PROJECT_NAME@
 PROJECT_BRIEF          = @PROJECT_BRIEF@
 PROJECT_LOGO           = @PROJECT_LOGO_PATH@
 
-# Gdzie szukać plików źródłowych – CMake podstawia CMAKE_SOURCE_DIR
+# Where to look for source files - CMake substitutes CMAKE_SOURCE_DIR
 INPUT                  = @DOXYGEN_INPUT_DIR@
 RECURSIVE              = YES
-EXCLUDE                = @CMAKE_BINARY_DIR@/        # wyklucz katalog build
+EXCLUDE                = @CMAKE_BINARY_DIR@/        # exclude build directory
 
-# Jakie pliki parsować
+# Which files to parse
 FILE_PATTERNS          = *.cpp *.cxx *.cc *.c *.h *.hpp *.hh *.ui *.qrc
 EXTENSION_MAPPING      = ui=C++ qrc=C++
 
-# Parser / preprocesor
+# Parser / preprocessor
 ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = NO
 
-# Makra Qt i inne przydatne
+# Qt macros and other useful definitions
 PREDEFINED             = Q_OBJECT \
                          signals=public \
                          slots=public \
@@ -28,7 +28,7 @@ PREDEFINED             = Q_OBJECT \
                          Q_DECLARE_PRIVATE(x)= \
                          QT_VERSION
 
-# Wejście/wyjście html/latex
+# HTML/LaTeX input/output
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
@@ -38,15 +38,15 @@ LATEX_OUTPUT           = latex
 USE_PDFLATEX           = YES
 LATEX_BATCHMODE        = YES
 
-# Single-file HTML: Doxygen nie ma natywnej opcji "single file" — pozostawiamy wieloplikowy HTML.
-# (Uwaga: Sphinx potrafi single-file; Doxygen nie — trzeba by to spakować zewnętrznym narzędziem.)
+# Single-file HTML: Doxygen doesn't have a native "single file" option - we're keeping multi-file HTML.
+# (Note: Sphinx supports single-file output; Doxygen doesn't - you'd need an external tool to package it.)
 
-# Index/pomoc
+# Index/help
 GENERATE_TREEVIEW      = YES
 FULL_PATH_NAMES        = YES
 STRIP_FROM_PATH        = @DOXYGEN_INPUT_DIR@
 
-# Diagramy - zależne od Graphviz
+# Diagrams - requires Graphviz
 HAVE_DOT               = @HAVE_DOT@
 DOT_NUM_THREADS        = 0
 CLASS_DIAGRAMS         = YES
@@ -55,12 +55,12 @@ DOT_GRAPH_MAX_NODES    = 200
 CALL_GRAPH             = YES
 CALLER_GRAPH           = YES
 
-# Wygląd i pliki dodatkowe
+# Appearance and additional files
 HTML_HEADER            =
 HTML_FOOTER            =
 HTML_EXTRA_FILES       = @PROJECT_LOGO_PATH@
 
-# Inne przydatne
+# Other useful settings
 GENERATE_RTF           = NO
 GENERATE_XML           = NO
 EXTRACT_ALL            = YES

@@ -18,7 +18,7 @@
 #include "visualiser/Line.h"
 #include "visualiser/Visualizer.hpp"
 #include "visualiser/SettingParameter.h"
-#include "visualiser/SettingRenderParameter.h"
+#include "widgets/ColorSettings.h"
 
 
 namespace
@@ -39,6 +39,15 @@ std::string prepareOutputFileName(const std::string& configFile, const std::stri
     // Step 2: build full output file path
     return (outputDir / outputFileNameFromCfg).string();
 }
+
+vtkColor3d toVtkColor(QColor color)
+{
+    return vtkColor3d{
+        color.redF(),
+        color.greenF(),
+        color.blueF()
+    };
+}
 } // namespace
 
 
@@ -47,21 +56,17 @@ SceneWidget::SceneWidget(QWidget* parent)
     , m_lastMousePos()
     , sceneWidgetVisualizerProxy{SceneWidgetVisualizerFactory::create(ModelType::Ball)}
     , settingParameter{std::make_unique<SettingParameter>()}
-    , settingRenderParameter{std::make_unique<SettingRenderParameter>()}
     , currentModelType{sceneWidgetVisualizerProxy->getModelTypeValue()}
 {
     enableToolTipWhenMouseAboveWidget();
+
+    connect(&ColorSettings::instance(), &ColorSettings::colorsChanged, this, &SceneWidget::onColorsReloadRequested);
 }
 
 void SceneWidget::enableToolTipWhenMouseAboveWidget()
 {
-    m_toolTipTimer.setSingleShot(true);
-
-    constexpr int delayBeforeShowingToolTipInMs = 1'000;
-    m_toolTipTimer.setInterval(delayBeforeShowingToolTipInMs);
-    connect(&m_toolTipTimer, &QTimer::timeout, this, &SceneWidget::showToolTip);
-
     setMouseTracking(/*enable=*/true);
+    setAttribute(Qt::WA_AlwaysShowToolTips);
 }
 
 SceneWidget::~SceneWidget() = default;
@@ -89,7 +94,18 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename, int
 
     sceneWidgetVisualizerProxy->initMatrix(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY);
 
-    settingRenderParameter->m_renderer->SetBackground(colors->GetColor3d("Silver").GetData());
+    refreshBackgroundColorFromSettings();
+}
+
+void SceneWidget::refreshGridColorFromSettings()
+{
+    const auto color = ColorSettings::instance().gridColor();
+
+    actorBuildLine->GetProperty()->SetColor(toVtkColor(color).GetData());
+    actorBuildLine->GetProperty()->Modified();
+
+    renderer->Modified();
+    renderWindow()->Render();
 }
 
 void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
@@ -118,7 +134,7 @@ void SceneWidget::setupVtkScene()
 {
     sceneWidgetVisualizerProxy->prepareStage(settingParameter->nNodeX, settingParameter->nNodeY);
 
-    renderWindow()->AddRenderer(settingRenderParameter->m_renderer);
+    renderWindow()->AddRenderer(renderer);
     interactor()->SetRenderWindow(renderWindow());
 
     renderWindow()->SetSize(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY + 10);
@@ -192,14 +208,14 @@ void SceneWidget::renderVtkScene()
 
     emit availableStepsReadFromConfigFile(sceneWidgetVisualizerProxy->availableSteps());
 
-    std::vector<Line> lines(settingParameter->numberOfLines);
+    lines.resize(settingParameter->numberOfLines);
     sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
 
-    sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, settingRenderParameter->m_renderer, gridActor);
+    sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, renderer, gridActor);
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfColumnX+1, colors, settingRenderParameter->m_renderer, actorBuildLine);
+    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfColumnX+1, renderer, actorBuildLine);
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, colors, singleLineTextPropStep, singleLineTextStep, settingRenderParameter->m_renderer);
+    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, singleLineTextStep, renderer);
 
     // Render
     renderWindow()->Render();
@@ -210,31 +226,195 @@ void SceneWidget::renderVtkScene()
 void SceneWidget::mouseMoveEvent(QMouseEvent* event)
 {
     QVTKOpenGLNativeWidget::mouseMoveEvent(event);
-    
-    // Update the last mouse position
-    m_lastMousePos = event->pos();
-    
-    // Restart the tooltip timer
-    m_toolTipTimer.stop();
-    m_toolTipTimer.start();
+    updateToolTip(event->pos());
 }
 
 void SceneWidget::leaveEvent(QEvent* event)
 {
     QVTKOpenGLNativeWidget::leaveEvent(event);
-    m_toolTipTimer.stop();
     QToolTip::hideText();
+}
+
+std::array<double, 3> SceneWidget::screenToWorldCoordinates(const QPoint& pos) const
+{
+    std::array<double, 3> worldPos = {0.0, 0.0, 0.0};
+    
+    if (!renderer || ! renderWindow())
+    {
+        return worldPos;
+    }
+    
+    // Convert screen coordinates to VTK display coordinates
+    int* size = renderWindow()->GetSize();
+    double displayPos[3] = {
+        static_cast<double>(pos.x()),
+        static_cast<double>(size[1] - pos.y()), // Flip Y coordinate
+        0.0
+    };
+    
+    // Convert display coordinates to world coordinates
+    renderer->SetDisplayPoint(displayPos);
+    renderer->DisplayToWorld();
+    renderer->GetWorldPoint(worldPos.data());
+    
+    return worldPos;
+}
+
+QString SceneWidget::getNodeAtWorldPosition(const std::array<double, 3>& worldPos) const
+{
+    if (!settingParameter || !sceneWidgetVisualizerProxy || !renderer)
+    {
+        return {};
+    }
+
+    // Get the bounds of the entire scene
+    double* bounds = renderer->ComputeVisiblePropBounds();
+    if (!bounds)
+    {
+        return {};
+    }
+
+    // Check if the position is within the scene bounds
+    if (worldPos[0] < bounds[0] || worldPos[0] > bounds[1] ||
+        worldPos[1] < bounds[2] || worldPos[1] > bounds[3])
+    {
+        return {}; // Outside scene bounds
+    }
+
+    // Calculate the width and height of each node's area in world coordinates
+    const double sceneWidth = bounds[1] - bounds[0];
+    const double sceneHeight = bounds[3] - bounds[2];
+    
+    const double nodeWidth = sceneWidth / settingParameter->nNodeX;
+    const double nodeHeight = sceneHeight / settingParameter->nNodeY;
+
+    // Calculate which node the position is in (0-based indices)
+    const int nodeX = (worldPos[0] - bounds[0]) / nodeWidth;
+    const int nodeY = (worldPos[1] - bounds[2]) / nodeHeight;
+
+    // Check if the calculated node is within bounds
+    if (nodeX >= 0 && nodeX < settingParameter->nNodeX &&
+        nodeY >= 0 && nodeY < settingParameter->nNodeY)
+    {
+        return QString("Node [%1, %2]").arg(nodeX).arg(nodeY);
+    }
+
+    return {}; // Outside node grid
+}
+
+const Line* SceneWidget::findNearestLine(const std::array<double, 3>& worldPos, size_t& lineIndex, double& distanceSquared) const
+{
+    if (!settingParameter || !sceneWidgetVisualizerProxy)
+    {
+        return nullptr;
+    }
+
+    // const auto& lines = sceneWidgetVisualizerProxy->getVisualizer().getLines();
+    if (lines.empty())
+    {
+        return nullptr;
+    }
+
+    constexpr double threshold = 2; // Threshold for line selection (in world coordinates)
+    constexpr double thresholdSq = threshold * threshold;
+    
+    const Line* nearestLine = nullptr;
+    double minDistanceSq = std::numeric_limits<double>::max();
+    size_t foundIndex = 0;
+
+    for (size_t i = 0; i < lines.size(); ++i)
+    {
+        const auto& line = lines[i];
+        
+        // Calculate squared distance from point to line segment
+        const double lineLengthSq = (line.x2 - line.x1) * (line.x2 - line.x1) + 
+                                   (line.y2 - line.y1) * (line.y2 - line.y1);
+        
+        if (lineLengthSq < 1e-10) // Skip zero-length lines
+            continue;
+            
+        const double t = std::max(0.0, std::min(1.0, 
+            ((worldPos[0] - line.x1) * (line.x2 - line.x1) + 
+             (worldPos[1] - line.y1) * (line.y2 - line.y1)) / lineLengthSq));
+             
+        const double projX = line.x1 + t * (line.x2 - line.x1);
+        const double projY = line.y1 + t * (line.y2 - line.y1);
+        
+        const double dx = worldPos[0] - projX;
+        const double dy = worldPos[1] - projY;
+        const double distSq = dx * dx + dy * dy;
+        
+        if (distSq < minDistanceSq && distSq <= thresholdSq)
+        {
+            minDistanceSq = distSq;
+            nearestLine = &line;
+            foundIndex = i;
+        }
+    }
+
+    if (nearestLine)
+    {
+        lineIndex = foundIndex;
+        distanceSquared = minDistanceSq;
+    }
+    
+    return nearestLine;
+}
+
+void SceneWidget::updateToolTip(const QPoint& pos)
+{
+    if (!renderer || !renderWindow())
+    {
+        return;
+    }
+    
+    m_lastMousePos = pos;
+    m_lastWorldPos = screenToWorldCoordinates(pos);
+    
+    // Check if we're over a line
+    size_t lineIndex = 0;
+    double distanceSq = 0.0;
+    const Line* nearestLine = findNearestLine(m_lastWorldPos, lineIndex, distanceSq);
+    
+    // Prepare tooltip text with VTK coordinates
+    QString tooltipText = QString("World Position: (x: %1, y: %2, z: %3)")
+        .arg(m_lastWorldPos[0], 0, 'f', 2)
+        .arg(m_lastWorldPos[1], 0, 'f', 2)
+        .arg(m_lastWorldPos[2], 0, 'f', 2);
+    
+    if (nearestLine)
+    {
+        // Show line information
+        tooltipText += QString("\n\nLine %1/%2:").arg(lineIndex).arg(lines.size());
+        tooltipText += QString("\n  From: (%1, %2)")
+            .arg(nearestLine->x1, 0, 'f', 2)
+            .arg(nearestLine->y1, 0, 'f', 2);
+        tooltipText += QString("\n  To:   (%1, %2)")
+            .arg(nearestLine->x2, 0, 'f', 2)
+            .arg(nearestLine->y2, 0, 'f', 2);
+    }
+    else
+    {
+        // Show node information if not over a line
+        QString nodeInfo = getNodeAtWorldPosition(m_lastWorldPos);
+        if (!nodeInfo.isEmpty())
+        {
+            tooltipText += QString("\n%1").arg(nodeInfo);
+        }
+    }
+    
+    // Show tooltip at the current mouse position
+    QPoint globalPos = mapToGlobal(pos);
+    QToolTip::showText(globalPos, 
+                      tooltipText,
+                      this,
+                      QRect(pos, QSize(1, 1)),
+                      0); // Show until mouse moves out
 }
 
 void SceneWidget::showToolTip()
 {
-    // Show tooltip at the current mouse position
-    QPoint globalPos = mapToGlobal(m_lastMousePos);
-    QToolTip::showText(globalPos, 
-                      QString("X: %1, Y: %2").arg(m_lastMousePos.x()).arg(m_lastMousePos.y()),
-                      this,
-                      QRect(m_lastMousePos, QSize(1, 1)),
-                      2000); // Show for 2 seconds
+    updateToolTip(m_lastMousePos);
 }
 
 void SceneWidget::selectedStepParameter(StepIndex stepNumber)
@@ -247,7 +427,7 @@ void SceneWidget::selectedStepParameter(StepIndex stepNumber)
 
 void SceneWidget::updateVisualization()
 {
-    std::vector<Line> lines(settingParameter->numberOfLines);
+    lines.resize(settingParameter->numberOfLines);
 
     sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(
         settingParameter.get(),
@@ -272,19 +452,11 @@ void SceneWidget::updateVisualization()
             settingParameter->numberOfLines, 
             settingParameter->numberOfRowsY + 1,
             settingParameter->numberOfColumnX + 1,
-            actorBuildLine, 
-            colors
+            actorBuildLine
         );
     }
 
-    const std::string stepLineColor{"red"};
-    sceneWidgetVisualizerProxy->getVisualizer().buildStepLine(
-        settingParameter->step,
-        singleLineTextStep,
-        singleLineTextPropStep,
-        colors,
-        stepLineColor
-    );
+    sceneWidgetVisualizerProxy->getVisualizer().buildStepLine(settingParameter->step, singleLineTextStep);
 }
 
 void SceneWidget::upgradeModelInCentralPanel()
@@ -297,7 +469,7 @@ void SceneWidget::upgradeModelInCentralPanel()
         updateVisualization();
         
         // Force renderer update
-        settingRenderParameter->m_renderer->Modified();
+        renderer->Modified();
         renderWindow()->Render();
         QApplication::processEvents();
     }
@@ -361,7 +533,7 @@ void SceneWidget::reloadData()
 void SceneWidget::clearScene()
 {    
     // Clear the renderer
-    settingRenderParameter->m_renderer->RemoveAllViewProps();
+    renderer->RemoveAllViewProps();
     
     // Clear stage data
     sceneWidgetVisualizerProxy->clearStage();
@@ -392,4 +564,30 @@ void SceneWidget::loadNewConfiguration(const std::string& configFileName, int st
         std::cerr << "Failed to load configuration: " << e.what() << std::endl;
         throw;
     }
+}
+
+void SceneWidget::onColorsReloadRequested()
+{
+    refreshBackgroundColorFromSettings();
+    refreshStepNumberTextColorFromSettings();
+    refreshGridColorFromSettings();
+}
+void SceneWidget::refreshBackgroundColorFromSettings()
+{
+    const auto color = ColorSettings::instance().backgroundColor();
+    renderer->SetBackground(toVtkColor(color).GetData());
+    renderer->Modified();
+    renderWindow()->Render();
+}
+
+void SceneWidget::refreshStepNumberTextColorFromSettings()
+{
+    const auto color = ColorSettings::instance().textColor();
+
+    auto realTextProp = singleLineTextStep->GetTextProperty();
+    realTextProp->SetColor(toVtkColor(color).GetData());
+    realTextProp->Modified();
+
+    renderer->Modified();
+    renderWindow()->Render();
 }

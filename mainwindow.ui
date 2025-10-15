@@ -380,6 +380,8 @@
     <addaction name="separator"/>
     <addaction name="actionExport_Video"/>
     <addaction name="separator"/>
+    <addaction name="actionColor_settings"/>
+    <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -473,6 +475,14 @@
    </property>
    <property name="shortcut">
     <string>F5</string>
+   </property>
+  </action>
+  <action name="actionColor_settings">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::PrinterPrinting"/>
+   </property>
+   <property name="text">
+    <string>Color settings</string>
    </property>
   </action>
  </widget>

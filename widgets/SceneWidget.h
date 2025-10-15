@@ -18,7 +18,6 @@
 #include "types.h"
 
 class SettingParameter;
-class SettingRenderParameter;
 
 /** @class SceneWidget
  * @brief A widget for 3D visualization using VTK in Qt app.
@@ -109,6 +108,14 @@ signals:
      *  @param availableSteps Vector of available step numbers */
     void availableStepsReadFromConfigFile(std::vector<StepIndex> availableSteps);
 
+public slots:
+    /** @brief Slot called when color settings need to be reloaded (at least one of them was changed)
+     *
+     * This method is typically connected to a signal indicating that color settings
+     * have changed. It updates all visual elements in the widget to reflect the
+     * current color settings from the ColorSettings singleton. */
+    void onColorsReloadRequested();
+
 private slots:
     /// @brief Shows a tooltip at the current mouse position
     void showToolTip();
@@ -134,6 +141,27 @@ protected:
 
     /// @brief Enables tooltip display when mouse is above the widget
     void enableToolTipWhenMouseAboveWidget();
+    
+    /** @brief Updates the tooltip with current mouse position
+     *  @param pos Current mouse position in widget coordinates */
+    void updateToolTip(const QPoint& pos);
+    
+    /** @brief Converts screen coordinates to VTK world coordinates
+     *  @param pos The screen position in widget coordinates
+     *  @return The corresponding world coordinates in VTK space */
+    std::array<double, 3> screenToWorldCoordinates(const QPoint& pos) const;
+    
+    /** @brief Determines which node the mouse is currently over using VTK coordinates
+     *  @param worldPos The current position in VTK world coordinates
+     *  @return A string indicating which node the mouse is over, or empty string if not over any node */
+    QString getNodeAtWorldPosition(const std::array<double, 3>& worldPos) const;
+    
+    /** @brief Finds the nearest line to the given world position
+     *  @param worldPos The position to check
+     *  @param[out] lineIndex Index of the found line in the lines vector
+     *  @param[out] distanceSquared Squared distance to the nearest point on the line
+     *  @return Pointer to the nearest line, or nullptr if no lines exist */
+    const Line* findNearestLine(const std::array<double, 3>& worldPos, size_t& lineIndex, double& distanceSquared) const;
 
     /// @brief Reads settings from a configuration file
     /// @param filename Path to the configuration file
@@ -146,6 +174,26 @@ protected:
      *  @param stepNumber Initial step number to display */
     void setupSettingParameters(const std::string & configFilename, int stepNumber);
 
+    /** @brief Updates the background color from application settings.
+     *
+     * This method retrieves the current background color from the ColorSettings
+     * singleton and applies it to the scene's renderer. It should be called
+     * whenever the background color setting changes. */
+    void refreshBackgroundColorFromSettings();
+
+    /** @brief Updates the step number text color from application settings.
+     *
+     * This method retrieves the current text color from the ColorSettings
+     * singleton and applies it to any step number text elements in the scene. */
+    void refreshStepNumberTextColorFromSettings();
+
+    /** @brief Updates the grid color from application settings.
+     *
+     * This method retrieves the current grid color from the ColorSettings
+     * singleton and applies it to the scene's grid. It should be called
+     * whenever the grid color setting changes. */
+    void refreshGridColorFromSettings();
+
 private:
     /** @brief Proxy for the scene widget visualizer
      *  This proxy provides access to the visualizer implementation
@@ -155,21 +203,14 @@ private:
     /// @brief Current setting parameter for the visualization.
     std::unique_ptr<SettingParameter> settingParameter;
     
-    /// @brief Current render parameter settings
-    std::unique_ptr<SettingRenderParameter> settingRenderParameter;
-    
     /// @brief Currently active model type
     ModelType currentModelType;
 
-    /// @brief Timer for tooltip display. This timer is used to delay the display of tooltips when the mouse is moved over the widget.
-    QTimer m_toolTipTimer;
-    
-    /** @brief Last recorded mouse position. This variable keeps track of the last recorded mouse position.
-     *  It is used to determine whether the mouse is still above the widget when the tooltip timer expires. */
+    /** @brief Last recorded mouse position in screen coordinates. */
     QPoint m_lastMousePos;
-
-    /// @brief VTK colors utility: it provides access to a set of predefined colors.
-    vtkNew<vtkNamedColors> colors;
+    
+    /** @brief Last recorded position in VTK world coordinates. */
+    std::array<double, 3> m_lastWorldPos;
     
     /// @brief VTK renderer for the scene: This renderer is responsible for rendering the 3D scene.
     vtkNew<vtkRenderer> renderer;
@@ -177,13 +218,16 @@ private:
     /** @brief Actor for the grid in the scene: This actor is responsible for rendering the grid in the scene.
      *  The grid provides information about what part was calculated by which node */
     vtkNew<vtkActor> gridActor;
-    
+
     /// @brief Actor for load balancing lines: This actor is responsible for rendering the load balancing lines.
     vtkNew<vtkActor2D> actorBuildLine;
     
     /// @brief Text mapper for step display: This text mapper is responsible for rendering the step number in the scene.
     vtkNew<vtkTextMapper> singleLineTextStep;
-    
-    /// @brief Text properties for step display: These text properties are used to customize the appearance of the step number in the scene.
-    vtkNew<vtkTextProperty> singleLineTextPropStep;
+
+    /** @brief Collection of line segments used for visualization.
+     *
+     * This vector stores all the line segments that are currently being rendered
+     * in the scene. Each segment is from different node. */
+    std::vector<Line> lines;
 };
