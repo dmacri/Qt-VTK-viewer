@@ -199,7 +199,29 @@ protected:
      * whenever the grid color setting changes. */
     void refreshGridColorFromSettings();
 
+    /** @brief Connects the VTK keyboard callback to the interactor.
+     *
+     * This method registers a key press observer on the VTK interactor associated
+     * with the widget. It binds the static callback function SceneWidget::keypressCallbackFunction to vtkCommand::KeyPressEvent.
+     *
+     * The callback enables keyboard-based navigation through simulation steps
+     * (e.g., using the Up and Down arrow keys) and triggers visualization updates.
+     *
+     * @note The callback uses SetClientData(this) to pass the owning SceneWidget
+     *       instance so that visualization state can be modified from within the static callback function. */
     void connectKeyboardCallback();
+
+    /** @brief Connects the VTK mouse movement callback to the interactor.
+     *
+     * This method registers a mouse move observer on the VTK interactor tied to
+     * the widget. It binds the static callback function SceneWidget::mouseCallbackFunction to vtkCommand::MouseMoveEvent.
+     *
+     * The callback captures live mouse movement, converts the VTK event position
+     * into Qt widget coordinates, updates the last known world position using
+     * a picker or DisplayToWorld transformation, and triggers tooltip updates.
+     *
+     * @note Similar to the keyboard callback, SetClientData(this) is used to allow
+     *       the static callback function to interact with the SceneWidget instance. */
     void connectMouseCallback();
 
 private:
