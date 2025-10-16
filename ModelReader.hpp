@@ -196,7 +196,7 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
     const auto totalNodes = sp->nNodeX * sp->nNodeY;
     const auto columnsAndRows = giveMeLocalColsAndRowsForAllSteps(sp->step, sp->nNodeX, sp->nNodeY, sp->outputFileName);
 
-    /// Lambda responsible for reading and processing a single node’s file
+    /// Lambda responsible for reading and processing a single node's file
     auto processNode = [&, this/*, m, sp, lines, columnsAndRows*/](NodeIndex node) /*mutable*/
     {
         const auto offsetXY = ReaderHelpers::calculateXYOffset(node, sp->nNodeX, sp->nNodeY, columnsAndRows);
@@ -210,9 +210,27 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
         static thread_local char fileBuffer[1 << 16];
         fp.rdbuf()->pubsetbuf(fileBuffer, sizeof(fileBuffer));
 
-        // Define boundary lines for the node
+        // Define boundary lines for the node (top and left edges)
         lines[node * 2]     = Line(offsetXY.x(), offsetXY.y(), offsetXY.x() + columnAndRow.column, offsetXY.y());
         lines[node * 2 + 1] = Line(offsetXY.x(), offsetXY.y(), offsetXY.x(), offsetXY.y() + columnAndRow.row);
+        
+        // Add bottom edge line for nodes in the last row (y = 0)
+        const int nodeRow = node / sp->nNodeX;
+        if (nodeRow == 0)  // Bottom row
+        {
+            const int bottomLineIndex = 2 * totalNodes + (node % sp->nNodeX);
+            lines[bottomLineIndex] = Line(offsetXY.x(), offsetXY.y() + columnAndRow.row, 
+                                         offsetXY.x() + columnAndRow.column, offsetXY.y() + columnAndRow.row);
+        }
+        
+        // Add right edge line for nodes in the last column (x = max)
+        const int nodeCol = node % sp->nNodeX;
+        if (nodeCol == sp->nNodeX - 1)  // Rightmost column
+        {
+            const int rightLineIndex = 2 * totalNodes + sp->nNodeX + nodeRow;
+            lines[rightLineIndex] = Line(offsetXY.x() + columnAndRow.column, offsetXY.y(), 
+                                        offsetXY.x() + columnAndRow.column, offsetXY.y() + columnAndRow.row);
+        }
 
         // Reserve a large line buffer to minimize reallocations
         constexpr std::size_t numbersPerLine = 10'000;

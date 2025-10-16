@@ -88,7 +88,9 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename, int
 {
     readSettingsFromConfigFile(configFilename);
 
-    settingParameter->numberOfLines = 2 * (settingParameter->nNodeX * settingParameter->nNodeY);
+    // Each node has 2 lines (top and left edges)
+    // Plus additional lines for bottom edge (nNodeX lines) and right edge (nNodeY lines)
+    settingParameter->numberOfLines = 2 * (settingParameter->nNodeX * settingParameter->nNodeY) + settingParameter->nNodeX + settingParameter->nNodeY;
     settingParameter->step = stepNumber;
     settingParameter->changed = false;
 
