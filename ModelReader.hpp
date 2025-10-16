@@ -210,20 +210,20 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
         static thread_local char fileBuffer[1 << 16];
         fp.rdbuf()->pubsetbuf(fileBuffer, sizeof(fileBuffer));
 
-        // Define boundary lines for the node (top and left edges)
+        // Define boundary lines for the node (bottom and left edges)
         lines[node * 2]     = Line(offsetXY.x(), offsetXY.y(), offsetXY.x() + columnAndRow.column, offsetXY.y());
         lines[node * 2 + 1] = Line(offsetXY.x(), offsetXY.y(), offsetXY.x(), offsetXY.y() + columnAndRow.row);
         
-        // Add bottom edge line for nodes in the last row (y = 0)
+        // Add top edge line for nodes in the last row (highest y)
         const int nodeRow = node / sp->nNodeX;
-        if (nodeRow == 0)  // Bottom row
+        if (nodeRow == sp->nNodeY - 1)  // Top row
         {
-            const int bottomLineIndex = 2 * totalNodes + (node % sp->nNodeX);
-            lines[bottomLineIndex] = Line(offsetXY.x(), offsetXY.y() + columnAndRow.row, 
-                                         offsetXY.x() + columnAndRow.column, offsetXY.y() + columnAndRow.row);
+            const int topLineIndex = 2 * totalNodes + (node % sp->nNodeX);
+            lines[topLineIndex] = Line(offsetXY.x(), offsetXY.y() + columnAndRow.row, 
+                                       offsetXY.x() + columnAndRow.column, offsetXY.y() + columnAndRow.row);
         }
         
-        // Add right edge line for nodes in the last column (x = max)
+        // Add right edge line for nodes in the last column (highest x)
         const int nodeCol = node % sp->nNodeX;
         if (nodeCol == sp->nNodeX - 1)  // Rightmost column
         {
