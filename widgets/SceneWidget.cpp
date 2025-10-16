@@ -1,18 +1,30 @@
 /** @file SceneWidget.cpp
  * @brief Implementation of the SceneWidget class for 3D visualization. */
 
-#include <filesystem>
 #include <iostream> // std::cout
+#include <cmath> // std::isfinite
+#include <filesystem>
 #include <QApplication>
 #include <vtkCallbackCommand.h>
 #include <vtkInteractorStyleImage.h>
+#include <vtkInteractorStyleTrackballCamera.h>
+#include <vtkCamera.h>
 #include <vtkNamedColors.h>
+#include <vtkOrientationMarkerWidget.h>
+#include <vtkAxesActor.h>
+#include <vtkAxisActor2D.h>
+#include <vtkProperty.h>
+#include <vtkProperty2D.h>
+#include <vtkCaptionActor2D.h>
+#include <vtkTextProperty.h>
+#include <vtkCoordinate.h>
 #include <vtkNew.h>
 #include <vtkObjectFactory.h>
 #include <vtkPolyData.h>
 #include <vtkPointData.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderWindow.h>
+#include <vtkPropPicker.h>
 #include "SceneWidget.h"
 #include "config/Config.h"
 #include "visualiser/Line.h"
@@ -53,7 +65,6 @@ vtkColor3d toVtkColor(QColor color)
 
 SceneWidget::SceneWidget(QWidget* parent)
     : QVTKOpenGLNativeWidget(parent)
-    , m_lastMousePos()
     , sceneWidgetVisualizerProxy{SceneWidgetVisualizerFactory::create(ModelType::Ball)}
     , settingParameter{std::make_unique<SettingParameter>()}
     , currentModelType{sceneWidgetVisualizerProxy->getModelTypeValue()}
@@ -88,7 +99,9 @@ void SceneWidget::setupSettingParameters(const std::string & configFilename, int
 {
     readSettingsFromConfigFile(configFilename);
 
-    settingParameter->numberOfLines = 2 * (settingParameter->nNodeX * settingParameter->nNodeY);
+    // Each node has 2 lines (top and left edges)
+    // Plus additional lines for bottom edge (nNodeX lines) and right edge (nNodeY lines)
+    settingParameter->numberOfLines = 2 * (settingParameter->nNodeX * settingParameter->nNodeY) + settingParameter->nNodeX + settingParameter->nNodeY;
     settingParameter->step = stepNumber;
     settingParameter->changed = false;
 
@@ -146,6 +159,110 @@ void SceneWidget::setupVtkScene()
 
     renderWindow()->SetWindowName(QApplication::applicationName().toLocal8Bit().data());
 
+    // Setup orientation axes widget
+    setupAxesWidget();
+    
+    // Setup 2D ruler axes (bounds will be updated when data is loaded)
+    setup2DRulerAxes();
+
+    connectKeyboardCallback();
+    connectMouseCallback();
+}
+
+void SceneWidget::setupAxesWidget()
+{
+    // Configure axes actor
+    axesActor->SetShaftTypeToCylinder();
+    axesActor->SetXAxisLabelText("X");
+    axesActor->SetYAxisLabelText("Y");
+    axesActor->SetZAxisLabelText("Z");
+    axesActor->SetTotalLength(1.0, 1.0, 1.0);
+    axesActor->SetCylinderRadius(0.02);
+    axesActor->SetConeRadius(0.05);
+    axesActor->SetSphereRadius(0.03);
+    
+    // Make labels more readable
+    axesActor->GetXAxisCaptionActor2D()->GetCaptionTextProperty()->SetFontSize(20);
+    axesActor->GetYAxisCaptionActor2D()->GetCaptionTextProperty()->SetFontSize(20);
+    axesActor->GetZAxisCaptionActor2D()->GetCaptionTextProperty()->SetFontSize(20);
+    
+    // Configure orientation marker widget
+    axesWidget->SetOrientationMarker(axesActor);
+    axesWidget->SetInteractor(interactor());
+    axesWidget->SetViewport(0.0, 0.0, 0.2, 0.2); // Bottom-left corner, 20% size
+    axesWidget->SetEnabled(false); // Hidden by default (2D mode)
+    axesWidget->InteractiveOff(); // Non-interactive
+}
+
+void SceneWidget::setup2DRulerAxes()
+{
+    // Configure X axis (horizontal, bottom)
+    // Use World coordinates so the axis matches the actual data coordinates
+    rulerAxisX->GetPositionCoordinate()->SetCoordinateSystemToWorld();
+    rulerAxisX->GetPosition2Coordinate()->SetCoordinateSystemToWorld();
+    rulerAxisX->SetTitle("X");
+    rulerAxisX->SetNumberOfLabels(5);
+    rulerAxisX->SetLabelFormat("%.1f");
+    rulerAxisX->GetTitleTextProperty()->SetColor(1.0, 1.0, 1.0);
+    rulerAxisX->GetLabelTextProperty()->SetColor(1.0, 1.0, 1.0);
+    rulerAxisX->GetProperty()->SetColor(0.8, 0.8, 0.8);
+    
+    // Configure Y axis (vertical, right side)
+    // Use World coordinates so the axis matches the actual data coordinates
+    rulerAxisY->GetPositionCoordinate()->SetCoordinateSystemToWorld();
+    rulerAxisY->GetPosition2Coordinate()->SetCoordinateSystemToWorld();
+    rulerAxisY->SetTitle("Y");
+    rulerAxisY->SetNumberOfLabels(5);
+    rulerAxisY->SetLabelFormat("%.1f");
+    rulerAxisY->GetTitleTextProperty()->SetColor(1.0, 1.0, 1.0);
+    rulerAxisY->GetLabelTextProperty()->SetColor(1.0, 1.0, 1.0);
+    rulerAxisY->GetProperty()->SetColor(0.8, 0.8, 0.8);
+    
+    // Adjust title position to move "Y" label to the right of the axis
+    rulerAxisY->SetTitlePosition(1.2); // Move title further from axis (default is ~0.5)
+    
+    // Add to renderer but keep hidden initially
+    renderer->AddActor2D(rulerAxisX);
+    renderer->AddActor2D(rulerAxisY);
+    rulerAxisX->SetVisibility(false);
+    rulerAxisY->SetVisibility(false);
+}
+
+void SceneWidget::update2DRulerAxesBounds()
+{
+    if (!renderer || !renderWindow())
+        return;
+    
+    // Get grid actor bounds (actual data coordinates)
+    double bounds[6];
+    gridActor->GetBounds(bounds);
+    
+    // Check if bounds are valid
+    if (bounds[0] >= bounds[1] || bounds[2] >= bounds[3] || 
+        !std::isfinite(bounds[0]) || !std::isfinite(bounds[1]) ||
+        !std::isfinite(bounds[2]) || !std::isfinite(bounds[3]))
+    {
+        return; // Invalid bounds
+    }
+    
+    // Set range for axes (this determines the numeric labels)
+    rulerAxisX->SetRange(bounds[0], bounds[1]);
+    rulerAxisY->SetRange(bounds[2], bounds[3]);
+    
+    // Position X axis at the bottom of the data (horizontal line)
+    rulerAxisX->GetPositionCoordinate()->SetValue(bounds[0], bounds[2], 0.0);
+    rulerAxisX->GetPosition2Coordinate()->SetValue(bounds[1], bounds[2], 0.0);
+    
+    // Position Y axis at the RIGHT of the data (vertical line) - labels won't overlap scene
+    rulerAxisY->GetPositionCoordinate()->SetValue(bounds[1], bounds[2], 0.0);
+    rulerAxisY->GetPosition2Coordinate()->SetValue(bounds[1], bounds[3], 0.0);
+    
+    std::cout << "Ruler axes updated: X=[" << bounds[0] << ", " << bounds[1] 
+              << "], Y=[" << bounds[2] << ", " << bounds[3] << "]" << std::endl;
+}
+
+void SceneWidget::connectKeyboardCallback()
+{
     vtkNew<vtkCallbackCommand> keypressCallback;
     keypressCallback->SetCallback(SceneWidget::keypressCallbackFunction);
     keypressCallback->SetClientData(this);
@@ -202,6 +319,75 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
     }
 }
 
+void SceneWidget::connectMouseCallback()
+{
+    vtkNew<vtkCallbackCommand> mouseMoveCallback;
+    mouseMoveCallback->SetCallback(&SceneWidget::mouseCallbackFunction);
+    mouseMoveCallback->SetClientData(this);
+    interactor()->AddObserver(vtkCommand::MouseMoveEvent, mouseMoveCallback);
+}
+
+void SceneWidget::mouseCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
+{
+    auto interactor = static_cast<vtkRenderWindowInteractor*>(caller);
+    auto* self = static_cast<SceneWidget*>(clientData);
+
+    // 1) Get the event position from VTK (origin: bottom-left)
+    int vtkX = interactor->GetEventPosition()[0];
+    int vtkY = interactor->GetEventPosition()[1];
+
+    // 2) Convert to Qt coordinates (origin: top-left) for tooltip/mapToGlobal
+    int size[2];
+    if (self->renderWindow())
+    {
+        size[0] = self->renderWindow()->GetSize()[0];
+        size[1] = self->renderWindow()->GetSize()[1];
+    }
+    else {
+        size[0] = 0; size[1] = 0;
+    }
+    int qtY = size[1] - vtkY;
+
+    const auto lastMousePos = QPoint(vtkX, qtY);
+
+    // 3) Use a picker to obtain an accurate world position (if something was "hit")
+    vtkNew<vtkPropPicker> picker;
+    bool picked = false;
+    if (self->renderer)
+    {
+        // Pick returns 1 if something was hit (depending on the picker). Pass the renderer.
+        if (picker->Pick(vtkX, vtkY, 0.0, self->renderer))
+        {
+            double pickPos[3];
+            picker->GetPickPosition(pickPos);
+            self->m_lastWorldPos = { pickPos[0], pickPos[1], pickPos[2] };
+            picked = true;
+        }
+    }
+
+    // 4) If the picker didn't hit anything, try DisplayToWorld as a fallback
+    if (!picked && self->renderer)
+    {
+        double displayPt[3] = { static_cast<double>(vtkX), static_cast<double>(vtkY), 0.0 };
+        self->renderer->SetDisplayPoint(displayPt);
+        self->renderer->DisplayToWorld();
+        double worldPt[4];
+        self->renderer->GetWorldPoint(worldPt);
+        if (worldPt[3] != 0.0)
+        {
+            self->m_lastWorldPos = { worldPt[0] / worldPt[3], worldPt[1] / worldPt[3], worldPt[2] / worldPt[3] };
+        }
+        else
+        {
+            // If w == 0, the result is invalid — keep previous or zero out
+            self->m_lastWorldPos = { worldPt[0], worldPt[1], worldPt[2] };
+        }
+    }
+
+    // 5) Update the tooltip (now using correct lastMousePos and m_lastWorldPos)
+    self->updateToolTip(lastMousePos);
+}
+
 void SceneWidget::renderVtkScene()
 {
     sceneWidgetVisualizerProxy->readStepsOffsetsForAllNodesFromFiles(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
@@ -217,22 +403,18 @@ void SceneWidget::renderVtkScene()
 
     sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, singleLineTextStep, renderer);
 
+    // Update 2D ruler axes bounds now that data is loaded
+    if (currentViewMode == ViewMode::Mode2D)
+    {
+        update2DRulerAxesBounds();
+        rulerAxisX->SetVisibility(true);
+        rulerAxisY->SetVisibility(true);
+    }
+
     // Render
     renderWindow()->Render();
     interactor()->Initialize();
     interactor()->Enable();
-}
-
-void SceneWidget::mouseMoveEvent(QMouseEvent* event)
-{
-    QVTKOpenGLNativeWidget::mouseMoveEvent(event);
-    updateToolTip(event->pos());
-}
-
-void SceneWidget::leaveEvent(QEvent* event)
-{
-    QVTKOpenGLNativeWidget::leaveEvent(event);
-    QToolTip::hideText();
 }
 
 std::array<double, 3> SceneWidget::screenToWorldCoordinates(const QPoint& pos) const
@@ -361,60 +543,47 @@ const Line* SceneWidget::findNearestLine(const std::array<double, 3>& worldPos, 
     return nearestLine;
 }
 
-void SceneWidget::updateToolTip(const QPoint& pos)
+void SceneWidget::updateToolTip(const QPoint& lastMousePos)
 {
     if (!renderer || !renderWindow())
-    {
         return;
-    }
-    
-    m_lastMousePos = pos;
-    m_lastWorldPos = screenToWorldCoordinates(pos);
-    
+
+    // m_lastMousePos is already in Qt coordinates (origin: top-left)
+    // m_lastWorldPos is set by the VTK callback (picker or DisplayToWorld fallback)
+
     // Check if we're over a line
     size_t lineIndex = 0;
     double distanceSq = 0.0;
     const Line* nearestLine = findNearestLine(m_lastWorldPos, lineIndex, distanceSq);
-    
-    // Prepare tooltip text with VTK coordinates
-    QString tooltipText = QString("World Position: (x: %1, y: %2, z: %3)")
-        .arg(m_lastWorldPos[0], 0, 'f', 2)
-        .arg(m_lastWorldPos[1], 0, 'f', 2)
-        .arg(m_lastWorldPos[2], 0, 'f', 2);
-    
+
+    // Prepare tooltip text
+    QString tooltipText;
+
     if (nearestLine)
     {
-        // Show line information
-        tooltipText += QString("\n\nLine %1/%2:").arg(lineIndex).arg(lines.size());
-        tooltipText += QString("\n  From: (%1, %2)")
-            .arg(nearestLine->x1, 0, 'f', 2)
-            .arg(nearestLine->y1, 0, 'f', 2);
-        tooltipText += QString("\n  To:   (%1, %2)")
-            .arg(nearestLine->x2, 0, 'f', 2)
-            .arg(nearestLine->y2, 0, 'f', 2);
+        tooltipText += QString("Line %1/%2:").arg(lineIndex).arg(lines.size());
+        tooltipText += QString("\n  From: (x1=%1, y1=%2)")
+                           .arg(nearestLine->x1, 0, 'f', 2)
+                           .arg(nearestLine->y1, 0, 'f', 2);
+        tooltipText += QString("\n  To:   (x2=%1, y2=%2)")
+                           .arg(nearestLine->x2, 0, 'f', 2)
+                           .arg(nearestLine->y2, 0, 'f', 2);
+    }
+    else if (QString nodeInfo = getNodeAtWorldPosition(m_lastWorldPos); ! nodeInfo.isEmpty())
+    {
+        tooltipText = QString("World Position: (x: %1, y: %2, z: %3)")
+                          .arg(m_lastWorldPos[0], 0, 'f', 2)
+                          .arg(m_lastWorldPos[1], 0, 'f', 2)
+                          .arg(m_lastWorldPos[2], 0, 'f', 2);
+
+        tooltipText += QString("\n%1").arg(nodeInfo);
     }
     else
-    {
-        // Show node information if not over a line
-        QString nodeInfo = getNodeAtWorldPosition(m_lastWorldPos);
-        if (!nodeInfo.isEmpty())
-        {
-            tooltipText += QString("\n%1").arg(nodeInfo);
-        }
-    }
-    
-    // Show tooltip at the current mouse position
-    QPoint globalPos = mapToGlobal(pos);
-    QToolTip::showText(globalPos, 
-                      tooltipText,
-                      this,
-                      QRect(pos, QSize(1, 1)),
-                      0); // Show until mouse moves out
-}
+        tooltipText = "(Outside the grid)";
 
-void SceneWidget::showToolTip()
-{
-    updateToolTip(m_lastMousePos);
+    // Use m_lastMousePos (Qt coordinates) to position the tooltip
+    QPoint globalPos = mapToGlobal(lastMousePos);
+    QToolTip::showText(globalPos, tooltipText, this, QRect(lastMousePos, QSize(1,1)), 0);
 }
 
 void SceneWidget::selectedStepParameter(StepIndex stepNumber)
@@ -589,5 +758,130 @@ void SceneWidget::refreshStepNumberTextColorFromSettings()
     realTextProp->Modified();
 
     renderer->Modified();
+    renderWindow()->Render();
+}
+
+void SceneWidget::setViewMode2D()
+{
+    if (!interactor())
+        return;
+
+    currentViewMode = ViewMode::Mode2D;
+
+    // Use vtkInteractorStyleImage which blocks rotation
+    vtkNew<vtkInteractorStyleImage> style;
+    interactor()->SetInteractorStyle(style);
+
+    // Reset camera angles
+    cameraAzimuth = {};
+    cameraElevation = {};
+
+    // Set camera to top-down view
+    auto camera = renderer->GetActiveCamera();
+    if (camera)
+    {
+        // Reset camera position and orientation
+        camera->SetPosition(0, 0, 1);
+        camera->SetFocalPoint(0, 0, 0);
+        camera->SetViewUp(0, 1, 0);
+        
+        renderer->ResetCamera();
+        renderWindow()->Render();
+    }
+
+    std::cout << "Switched to 2D view mode" << std::endl;
+    
+    // Hide orientation axes in 2D mode
+    setAxesWidgetVisible(false);
+    
+    // Update and show 2D ruler axes only if we have valid data
+    double bounds[6];
+    renderer->ComputeVisiblePropBounds(bounds);
+    if (bounds[0] < bounds[1] && bounds[2] < bounds[3] && 
+        std::isfinite(bounds[0]) && std::isfinite(bounds[1]))
+    {
+        update2DRulerAxesBounds();
+        rulerAxisX->SetVisibility(true);
+        rulerAxisY->SetVisibility(true);
+    }
+    else
+    {
+        // No data yet, keep ruler axes hidden
+        rulerAxisX->SetVisibility(false);
+        rulerAxisY->SetVisibility(false);
+    }
+}
+
+void SceneWidget::setViewMode3D()
+{
+    if (!interactor())
+        return;
+
+    currentViewMode = ViewMode::Mode3D;
+
+    // Use vtkInteractorStyleTrackballCamera which allows full 3D rotation
+    vtkNew<vtkInteractorStyleTrackballCamera> style;
+    interactor()->SetInteractorStyle(style);
+    
+    // Show orientation axes in 3D mode
+    setAxesWidgetVisible(true);
+    
+    // Hide 2D ruler axes in 3D mode
+    rulerAxisX->SetVisibility(false);
+    rulerAxisY->SetVisibility(false);
+
+    std::cout << "Switched to 3D view mode" << std::endl;
+}
+
+void SceneWidget::setAxesWidgetVisible(bool visible)
+{
+    if (axesWidget)
+    {
+        axesWidget->SetEnabled(visible);
+        renderWindow()->Render();
+    }
+}
+
+void SceneWidget::setCameraAzimuth(double angle)
+{
+    auto camera = renderer->GetActiveCamera();
+    if (!camera)
+        return;
+
+    // Store the new azimuth value
+    cameraAzimuth = angle;
+
+    // Reset to default position
+    camera->SetPosition(0, 0, 1);
+    camera->SetFocalPoint(0, 0, 0);
+    camera->SetViewUp(0, 1, 0);
+    
+    // Apply transformations in order: azimuth first, then elevation
+    camera->Azimuth(cameraAzimuth);
+    camera->Elevation(cameraElevation);
+    
+    renderer->ResetCamera();
+    renderWindow()->Render();
+}
+
+void SceneWidget::setCameraElevation(double angle)
+{
+    auto camera = renderer->GetActiveCamera();
+    if (!camera)
+        return;
+
+    // Store the new elevation value
+    cameraElevation = angle;
+
+    // Reset to default position
+    camera->SetPosition(0, 0, 1);
+    camera->SetFocalPoint(0, 0, 0);
+    camera->SetViewUp(0, 1, 0);
+    
+    // Apply transformations in order: azimuth first, then elevation
+    camera->Azimuth(cameraAzimuth);
+    camera->Elevation(cameraElevation);
+    
+    renderer->ResetCamera();
     renderWindow()->Render();
 }

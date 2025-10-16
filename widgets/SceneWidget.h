@@ -13,9 +13,22 @@
 #include <vtkSmartPointer.h>
 #include <vtkNamedColors.h>
 #include <vtkTextMapper.h>
+#include <vtkOrientationMarkerWidget.h>
+#include <vtkAxesActor.h>
+#include <vtkAxisActor2D.h>
 #include "visualiserProxy/ISceneWidgetVisualizer.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
 #include "types.h"
+
+/** @enum ViewMode
+ * @brief Defines the camera view mode for the scene.
+ * 
+ * This enum is used to switch between 2D (top-down orthographic) and 3D (perspective with rotation) views. */
+enum class ViewMode
+{
+    Mode2D,  ///< 2D top-down view with rotation disabled
+    Mode3D   ///< 3D perspective view with full camera control
+};
 
 class SettingParameter;
 
@@ -85,6 +98,53 @@ public:
         return settingParameter.get();
     }
 
+    /** @brief Set the view mode to 2D (top-down view with rotation disabled).
+     * 
+     * This method configures the camera for a 2D orthographic view from above
+     * and disables rotation controls. */
+    void setViewMode2D();
+
+    /** @brief Set the view mode to 3D (perspective view with full camera control).
+     * 
+     * This method enables full 3D camera controls including rotation and elevation. */
+    void setViewMode3D();
+
+    /** @brief Show or hide the orientation axes widget.
+     * 
+     * @param visible If true, shows the axes widget; if false, hides it */
+    void setAxesWidgetVisible(bool visible);
+
+    /** @brief Get the current view mode.
+     * 
+     * @return The current ViewMode (2D or 3D) */
+    ViewMode getViewMode() const { return currentViewMode; }
+
+    /** @brief Set camera azimuth (rotation around Z axis).
+     * 
+     * @param angle Azimuth angle in degrees */
+    void setCameraAzimuth(double angle);
+
+    /** @brief Set camera elevation (rotation around X axis).
+     * 
+     * @param angle Elevation angle in degrees */
+    void setCameraElevation(double angle);
+
+    /** @brief Get current camera azimuth.
+     * 
+     * @return Current azimuth angle in degrees */
+    double getCameraAzimuth() const
+    {
+        return cameraAzimuth;
+    }
+
+    /** @brief Get current camera elevation.
+     * 
+     * @return Current elevation angle in degrees */
+    double getCameraElevation() const
+    {
+        return cameraElevation;
+    }
+
     /** @brief Callback function for VTK keypress events.
      *  It handles arrow_up and arrow_down keys pressed and changes view of the widget.
      *  Provided argument types are compatible with vtkCallbackCommand::SetCallback
@@ -94,6 +154,24 @@ public:
      * @param clientData User data passed to the callback
      * @param callData Event-specific data */
     static void keypressCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
+
+    /** @brief Callback function for VTK mouse move events.
+     *
+     *  This function is triggered whenever a mouse movement event occurs within the VTK
+     *  interactor. It captures the current mouse position in VTK coordinate space
+     *  (origin at bottom-left), converts it into Qt widget coordinates (origin at top-left),
+     *  and updates both the last known mouse position and corresponding world position.
+     *
+     *  The world position is determined using a VTK picker if a prop is hit.
+     *  If no object is detected by the picker, a DisplayToWorld transformation is used
+     *  as a fallback to approximate the world coordinates.
+     *  After updating positions, the tooltip is refreshed to display context information.
+     *
+     * @param caller       The VTK object (typically vtkRenderWindowInteractor) that triggered the event.
+     * @param eventId      The ID of the event (expected to be vtkCommand::MouseMoveEvent).
+     * @param clientData   Pointer to user data passed when registering the callback (used to access the owning SceneWidget instance).
+     * @param callData     Additional event-specific data (unused in this implementation). */
+    static void mouseCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
 
 signals:
     /** @brief Signal emitted when step number is changed using keyboard keys (sent from method keypressCallbackFunction)
@@ -116,20 +194,7 @@ public slots:
      * current color settings from the ColorSettings singleton. */
     void onColorsReloadRequested();
 
-private slots:
-    /// @brief Shows a tooltip at the current mouse position
-    void showToolTip();
-
-protected:
-    /** @brief Handles mouse move events. The method is overrided for toolTip with position.
-     *  @param event The mouse event */
-    void mouseMoveEvent(QMouseEvent* event) override;
-    
-    /** @brief Handles the leave event (when mouse leaves the widget).
-     *  The method is overrided to hide toolTip when mouse moved.
-     *  @param event The leave event */
-    void leaveEvent(QEvent* event) override;
-
+protected:   
     /// @brief Renders the VTK scene. It needs to be called when reading from config file
     void renderVtkScene();
 
@@ -143,8 +208,8 @@ protected:
     void enableToolTipWhenMouseAboveWidget();
     
     /** @brief Updates the tooltip with current mouse position
-     *  @param pos Current mouse position in widget coordinates */
-    void updateToolTip(const QPoint& pos);
+     *  @param lastMousePos Current mouse position in widget coordinates */
+    void updateToolTip(const QPoint& lastMousePos);
     
     /** @brief Converts screen coordinates to VTK world coordinates
      *  @param pos The screen position in widget coordinates
@@ -170,6 +235,15 @@ protected:
     /// @brief Sets up the VTK scene, it is called when reading config file
     void setupVtkScene();
     
+    /// @brief Sets up the orientation axes widget
+    void setupAxesWidget();
+    
+    /// @brief Sets up the 2D ruler axes
+    void setup2DRulerAxes();
+    
+    /// @brief Updates the 2D ruler axes bounds based on current data
+    void update2DRulerAxesBounds();
+    
     /** @param configFilename Path to the configuration file and move view to provided step
      *  @param stepNumber Initial step number to display */
     void setupSettingParameters(const std::string & configFilename, int stepNumber);
@@ -194,6 +268,31 @@ protected:
      * whenever the grid color setting changes. */
     void refreshGridColorFromSettings();
 
+    /** @brief Connects the VTK keyboard callback to the interactor.
+     *
+     * This method registers a key press observer on the VTK interactor associated
+     * with the widget. It binds the static callback function SceneWidget::keypressCallbackFunction to vtkCommand::KeyPressEvent.
+     *
+     * The callback enables keyboard-based navigation through simulation steps
+     * (e.g., using the Up and Down arrow keys) and triggers visualization updates.
+     *
+     * @note The callback uses SetClientData(this) to pass the owning SceneWidget
+     *       instance so that visualization state can be modified from within the static callback function. */
+    void connectKeyboardCallback();
+
+    /** @brief Connects the VTK mouse movement callback to the interactor.
+     *
+     * This method registers a mouse move observer on the VTK interactor tied to
+     * the widget. It binds the static callback function SceneWidget::mouseCallbackFunction to vtkCommand::MouseMoveEvent.
+     *
+     * The callback captures live mouse movement, converts the VTK event position
+     * into Qt widget coordinates, updates the last known world position using
+     * a picker or DisplayToWorld transformation, and triggers tooltip updates.
+     *
+     * @note Similar to the keyboard callback, SetClientData(this) is used to allow
+     *       the static callback function to interact with the SceneWidget instance. */
+    void connectMouseCallback();
+
 private:
     /** @brief Proxy for the scene widget visualizer
      *  This proxy provides access to the visualizer implementation
@@ -205,9 +304,15 @@ private:
     
     /// @brief Currently active model type
     ModelType currentModelType;
-
-    /** @brief Last recorded mouse position in screen coordinates. */
-    QPoint m_lastMousePos;
+    
+    /// @brief Current view mode (2D or 3D)
+    ViewMode currentViewMode = ViewMode::Mode2D;
+    
+    /// @brief Current camera azimuth angle (cached to avoid recalculation)
+    double cameraAzimuth{};
+    
+    /// @brief Current camera elevation angle (cached to avoid recalculation)
+    double cameraElevation{};
     
     /** @brief Last recorded position in VTK world coordinates. */
     std::array<double, 3> m_lastWorldPos;
@@ -224,6 +329,16 @@ private:
     
     /// @brief Text mapper for step display: This text mapper is responsible for rendering the step number in the scene.
     vtkNew<vtkTextMapper> singleLineTextStep;
+
+    /// @brief Axes actor for showing coordinate system orientation
+    vtkNew<vtkAxesActor> axesActor;
+    
+    /// @brief Orientation marker widget for displaying axes in corner
+    vtkNew<vtkOrientationMarkerWidget> axesWidget;
+    
+    /// @brief 2D ruler axes for showing scale in 2D mode (X and Y axes)
+    vtkNew<vtkAxisActor2D> rulerAxisX;
+    vtkNew<vtkAxisActor2D> rulerAxisY;
 
     /** @brief Collection of line segments used for visualization.
      *

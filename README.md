@@ -108,11 +108,36 @@ The application now supports **dynamic model switching and configuration loading
 - Automatically clears scene and reloads with new parameters
 - Updates GUI (steps, dimensions) automatically
 
+### 🎥 2D and 3D View Modes
+
+The application supports switching between **2D** and **3D** visualization modes!
+
+**2D Mode (Default):**
+- Top-down orthographic view optimized for 2D cellular automata
+- Rotation disabled to prevent accidental camera movement
+- Zoom and pan enabled
+- **2D Ruler axes** with scale, tick marks, and grid lines around the scene
+
+**3D Mode:**
+- Full 3D perspective view with interactive camera controls
+- Mouse-based rotation, pan, and zoom
+- Precise camera control via sliders:
+  - **Azimuth** slider: Horizontal rotation (-180° to +180°)
+  - **Elevation** slider: Vertical tilt (-90° to +90°)
+- **Orientation axes widget** in bottom-left corner (X=red, Y=green, Z=blue)
+- Perfect for examining data from different angles
+
+**How to Use:**
+- Switch modes via **View → 2D Mode** or **View → 3D Mode**
+- In 3D mode, camera control sliders appear above playback controls
+- See [VIEW_MODES.md](doc/VIEW_MODES.md) for detailed documentation
+
 **Quick Start:**
 1. Run the application
 2. **Model** → Select model (Ball or SciddicaT)
 3. **File → Open Configuration** → Select config file
-4. Done! Visualization loaded
+4. **View** → Choose 2D or 3D mode
+5. Done! Visualization loaded
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

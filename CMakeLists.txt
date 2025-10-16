@@ -51,6 +51,8 @@ find_package(VTK COMPONENTS
     CommonDataModel
     FiltersSources
     InteractionStyle
+    InteractionWidgets
+    RenderingAnnotation
     RenderingContextOpenGL2
     RenderingCore
     RenderingFreeType

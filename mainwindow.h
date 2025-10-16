@@ -38,6 +38,11 @@ private slots:
     void onOpenConfigurationRequested();
     void onColorSettingsRequested();
 
+    void on2DModeRequested();
+    void on3DModeRequested();
+    void onAzimuthChanged(int value);
+    void onElevationChanged(int value);
+
     void onModelSelected();
     void onReloadDataRequested();
 
@@ -88,6 +93,9 @@ private:
     
     void switchToModel(const QString& modelName);
     void createModelMenuActions();
+    void createViewModeActionGroup();
+    void updateCameraControlsVisibility();
+    void syncCameraSliders();
 
     Ui::MainWindow* ui;
     
