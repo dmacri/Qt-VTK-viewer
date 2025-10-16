@@ -116,6 +116,7 @@ The application supports switching between **2D** and **3D** visualization modes
 - Top-down orthographic view optimized for 2D cellular automata
 - Rotation disabled to prevent accidental camera movement
 - Zoom and pan enabled
+- **2D Ruler axes** with scale, tick marks, and grid lines around the scene
 
 **3D Mode:**
 - Full 3D perspective view with interactive camera controls

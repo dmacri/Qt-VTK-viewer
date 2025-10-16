@@ -11,6 +11,11 @@ The Qt-VTK-viewer now supports switching between **2D** and **3D** view modes, a
 - **Rotation disabled** - Prevents accidental camera rotation
 - **Zoom enabled** - You can still zoom in/out using mouse wheel
 - **Pan enabled** - Click and drag to pan the view
+- **2D Ruler axes** - Frame around the scene showing:
+  - **X axis ruler** - Horizontal scale with tick marks and labels
+  - **Y axis ruler** - Vertical scale with tick marks and labels
+  - **Grid lines** - Optional grid overlay for precise measurements
+  - Positioned on outer edges, doesn't obscure the scene
 - Best for analyzing 2D cellular automata simulations
 
 ### 3D Mode

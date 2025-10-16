@@ -2,6 +2,7 @@
  * @brief Implementation of the SceneWidget class for 3D visualization. */
 
 #include <iostream> // std::cout
+#include <cmath> // std::isfinite
 #include <filesystem>
 #include <QApplication>
 #include <vtkCallbackCommand.h>
@@ -11,9 +12,12 @@
 #include <vtkNamedColors.h>
 #include <vtkOrientationMarkerWidget.h>
 #include <vtkAxesActor.h>
+#include <vtkAxisActor2D.h>
 #include <vtkProperty.h>
+#include <vtkProperty2D.h>
 #include <vtkCaptionActor2D.h>
 #include <vtkTextProperty.h>
+#include <vtkCoordinate.h>
 #include <vtkNew.h>
 #include <vtkObjectFactory.h>
 #include <vtkPolyData.h>
@@ -157,6 +161,9 @@ void SceneWidget::setupVtkScene()
 
     // Setup orientation axes widget
     setupAxesWidget();
+    
+    // Setup 2D ruler axes (bounds will be updated when data is loaded)
+    setup2DRulerAxes();
 
     connectKeyboardCallback();
     connectMouseCallback();
@@ -185,6 +192,70 @@ void SceneWidget::setupAxesWidget()
     axesWidget->SetViewport(0.0, 0.0, 0.2, 0.2); // Bottom-left corner, 20% size
     axesWidget->SetEnabled(false); // Hidden by default (2D mode)
     axesWidget->InteractiveOff(); // Non-interactive
+}
+
+void SceneWidget::setup2DRulerAxes()
+{
+    // Configure X axis (horizontal, bottom)
+    // Use World coordinates so the axis matches the actual data coordinates
+    rulerAxisX->GetPositionCoordinate()->SetCoordinateSystemToWorld();
+    rulerAxisX->GetPosition2Coordinate()->SetCoordinateSystemToWorld();
+    rulerAxisX->SetTitle("X");
+    rulerAxisX->SetNumberOfLabels(5);
+    rulerAxisX->SetLabelFormat("%.1f");
+    rulerAxisX->GetTitleTextProperty()->SetColor(1.0, 1.0, 1.0);
+    rulerAxisX->GetLabelTextProperty()->SetColor(1.0, 1.0, 1.0);
+    rulerAxisX->GetProperty()->SetColor(0.8, 0.8, 0.8);
+    
+    // Configure Y axis (vertical, right side)
+    // Use World coordinates so the axis matches the actual data coordinates
+    rulerAxisY->GetPositionCoordinate()->SetCoordinateSystemToWorld();
+    rulerAxisY->GetPosition2Coordinate()->SetCoordinateSystemToWorld();
+    rulerAxisY->SetTitle("Y");
+    rulerAxisY->SetNumberOfLabels(5);
+    rulerAxisY->SetLabelFormat("%.1f");
+    rulerAxisY->GetTitleTextProperty()->SetColor(1.0, 1.0, 1.0);
+    rulerAxisY->GetLabelTextProperty()->SetColor(1.0, 1.0, 1.0);
+    rulerAxisY->GetProperty()->SetColor(0.8, 0.8, 0.8);
+    
+    // Add to renderer but keep hidden initially
+    renderer->AddActor2D(rulerAxisX);
+    renderer->AddActor2D(rulerAxisY);
+    rulerAxisX->SetVisibility(false);
+    rulerAxisY->SetVisibility(false);
+}
+
+void SceneWidget::update2DRulerAxesBounds()
+{
+    if (!renderer || !renderWindow())
+        return;
+    
+    // Get grid actor bounds (actual data coordinates)
+    double bounds[6];
+    gridActor->GetBounds(bounds);
+    
+    // Check if bounds are valid
+    if (bounds[0] >= bounds[1] || bounds[2] >= bounds[3] || 
+        !std::isfinite(bounds[0]) || !std::isfinite(bounds[1]) ||
+        !std::isfinite(bounds[2]) || !std::isfinite(bounds[3]))
+    {
+        return; // Invalid bounds
+    }
+    
+    // Set range for axes (this determines the numeric labels)
+    rulerAxisX->SetRange(bounds[0], bounds[1]);
+    rulerAxisY->SetRange(bounds[2], bounds[3]);
+    
+    // Position X axis at the bottom of the data (horizontal line)
+    rulerAxisX->GetPositionCoordinate()->SetValue(bounds[0], bounds[2], 0.0);
+    rulerAxisX->GetPosition2Coordinate()->SetValue(bounds[1], bounds[2], 0.0);
+    
+    // Position Y axis at the RIGHT of the data (vertical line) - labels won't overlap scene
+    rulerAxisY->GetPositionCoordinate()->SetValue(bounds[1], bounds[2], 0.0);
+    rulerAxisY->GetPosition2Coordinate()->SetValue(bounds[1], bounds[3], 0.0);
+    
+    std::cout << "Ruler axes updated: X=[" << bounds[0] << ", " << bounds[1] 
+              << "], Y=[" << bounds[2] << ", " << bounds[3] << "]" << std::endl;
 }
 
 void SceneWidget::connectKeyboardCallback()
@@ -328,6 +399,14 @@ void SceneWidget::renderVtkScene()
     sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfColumnX+1, renderer, actorBuildLine);
 
     sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, singleLineTextStep, renderer);
+
+    // Update 2D ruler axes bounds now that data is loaded
+    if (currentViewMode == ViewMode::Mode2D)
+    {
+        update2DRulerAxesBounds();
+        rulerAxisX->SetVisibility(true);
+        rulerAxisY->SetVisibility(true);
+    }
 
     // Render
     renderWindow()->Render();
@@ -711,6 +790,23 @@ void SceneWidget::setViewMode2D()
     
     // Hide orientation axes in 2D mode
     setAxesWidgetVisible(false);
+    
+    // Update and show 2D ruler axes only if we have valid data
+    double bounds[6];
+    renderer->ComputeVisiblePropBounds(bounds);
+    if (bounds[0] < bounds[1] && bounds[2] < bounds[3] && 
+        std::isfinite(bounds[0]) && std::isfinite(bounds[1]))
+    {
+        update2DRulerAxesBounds();
+        rulerAxisX->SetVisibility(true);
+        rulerAxisY->SetVisibility(true);
+    }
+    else
+    {
+        // No data yet, keep ruler axes hidden
+        rulerAxisX->SetVisibility(false);
+        rulerAxisY->SetVisibility(false);
+    }
 }
 
 void SceneWidget::setViewMode3D()
@@ -726,6 +822,10 @@ void SceneWidget::setViewMode3D()
     
     // Show orientation axes in 3D mode
     setAxesWidgetVisible(true);
+    
+    // Hide 2D ruler axes in 3D mode
+    rulerAxisX->SetVisibility(false);
+    rulerAxisY->SetVisibility(false);
 
     std::cout << "Switched to 3D view mode" << std::endl;
 }

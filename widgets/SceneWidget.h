@@ -15,6 +15,7 @@
 #include <vtkTextMapper.h>
 #include <vtkOrientationMarkerWidget.h>
 #include <vtkAxesActor.h>
+#include <vtkAxisActor2D.h>
 #include "visualiserProxy/ISceneWidgetVisualizer.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
 #include "types.h"
@@ -237,6 +238,12 @@ protected:
     /// @brief Sets up the orientation axes widget
     void setupAxesWidget();
     
+    /// @brief Sets up the 2D ruler axes
+    void setup2DRulerAxes();
+    
+    /// @brief Updates the 2D ruler axes bounds based on current data
+    void update2DRulerAxesBounds();
+    
     /** @param configFilename Path to the configuration file and move view to provided step
      *  @param stepNumber Initial step number to display */
     void setupSettingParameters(const std::string & configFilename, int stepNumber);
@@ -328,6 +335,10 @@ private:
     
     /// @brief Orientation marker widget for displaying axes in corner
     vtkNew<vtkOrientationMarkerWidget> axesWidget;
+    
+    /// @brief 2D ruler axes for showing scale in 2D mode (X and Y axes)
+    vtkNew<vtkAxisActor2D> rulerAxisX;
+    vtkNew<vtkAxisActor2D> rulerAxisY;
 
     /** @brief Collection of line segments used for visualization.
      *
