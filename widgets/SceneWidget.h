@@ -124,12 +124,18 @@ public:
     /** @brief Get current camera azimuth.
      * 
      * @return Current azimuth angle in degrees */
-    double getCameraAzimuth() const;
+    double getCameraAzimuth() const
+    {
+        return cameraAzimuth;
+    }
 
     /** @brief Get current camera elevation.
      * 
      * @return Current elevation angle in degrees */
-    double getCameraElevation() const;
+    double getCameraElevation() const
+    {
+        return cameraElevation;
+    }
 
     /** @brief Callback function for VTK keypress events.
      *  It handles arrow_up and arrow_down keys pressed and changes view of the widget.
@@ -283,7 +289,13 @@ private:
     ModelType currentModelType;
     
     /// @brief Current view mode (2D or 3D)
-    ViewMode currentViewMode;
+    ViewMode currentViewMode = ViewMode::Mode2D;
+    
+    /// @brief Current camera azimuth angle (cached to avoid recalculation)
+    double cameraAzimuth{};
+    
+    /// @brief Current camera elevation angle (cached to avoid recalculation)
+    double cameraElevation{};
     
     /** @brief Last recorded position in VTK world coordinates. */
     std::array<double, 3> m_lastWorldPos;

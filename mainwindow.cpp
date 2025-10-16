@@ -650,8 +650,14 @@ void MainWindow::on2DModeRequested()
 void MainWindow::on3DModeRequested()
 {
     ui->sceneWidget->setViewMode3D();
+    
+    // Reset sliders to default position (0, 0) when entering 3D mode
+    QSignalBlocker azimuthBlocker(ui->azimuthSlider);
+    QSignalBlocker elevationBlocker(ui->elevationSlider);
+    ui->azimuthSlider->setValue(0);
+    ui->elevationSlider->setValue(0);
+    
     updateCameraControlsVisibility();
-    syncCameraSliders();
     
     QMessageBox::information(this, tr("View Mode Changed"),
                              tr("Switched to 3D mode.\nYou can now rotate the camera using mouse or the sliders below."));

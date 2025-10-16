@@ -2,7 +2,6 @@
  * @brief Implementation of the SceneWidget class for 3D visualization. */
 
 #include <iostream> // std::cout
-#include <numbers> // std::numbers::pi
 #include <filesystem>
 #include <QApplication>
 #include <vtkCallbackCommand.h>
@@ -60,7 +59,6 @@ SceneWidget::SceneWidget(QWidget* parent)
     , sceneWidgetVisualizerProxy{SceneWidgetVisualizerFactory::create(ModelType::Ball)}
     , settingParameter{std::make_unique<SettingParameter>()}
     , currentModelType{sceneWidgetVisualizerProxy->getModelTypeValue()}
-    , currentViewMode{ViewMode::Mode2D}
 {
     enableToolTipWhenMouseAboveWidget();
 
@@ -659,6 +657,10 @@ void SceneWidget::setViewMode2D()
     vtkNew<vtkInteractorStyleImage> style;
     interactor()->SetInteractorStyle(style);
 
+    // Reset camera angles
+    cameraAzimuth = {};
+    cameraElevation = {};
+
     // Set camera to top-down view
     auto camera = renderer->GetActiveCamera();
     if (camera)
@@ -695,12 +697,17 @@ void SceneWidget::setCameraAzimuth(double angle)
     if (!camera)
         return;
 
-    // Reset to default position first, then apply azimuth
+    // Store the new azimuth value
+    cameraAzimuth = angle;
+
+    // Reset to default position
     camera->SetPosition(0, 0, 1);
     camera->SetFocalPoint(0, 0, 0);
     camera->SetViewUp(0, 1, 0);
     
-    camera->Azimuth(angle);
+    // Apply transformations in order: azimuth first, then elevation
+    camera->Azimuth(cameraAzimuth);
+    camera->Elevation(cameraElevation);
     
     renderer->ResetCamera();
     renderWindow()->Render();
@@ -712,43 +719,18 @@ void SceneWidget::setCameraElevation(double angle)
     if (!camera)
         return;
 
-    camera->Elevation(angle);
+    // Store the new elevation value
+    cameraElevation = angle;
+
+    // Reset to default position
+    camera->SetPosition(0, 0, 1);
+    camera->SetFocalPoint(0, 0, 0);
+    camera->SetViewUp(0, 1, 0);
+    
+    // Apply transformations in order: azimuth first, then elevation
+    camera->Azimuth(cameraAzimuth);
+    camera->Elevation(cameraElevation);
     
     renderer->ResetCamera();
     renderWindow()->Render();
-}
-
-double SceneWidget::getCameraAzimuth() const
-{
-    auto camera = renderer->GetActiveCamera();
-    if (!camera)
-        return 0.0;
-
-    // Calculate azimuth from camera position
-    double* pos = camera->GetPosition();
-    double* focal = camera->GetFocalPoint();
-    
-    double dx = pos[0] - focal[0];
-    double dy = pos[1] - focal[1];
-    
-    return std::atan2(dy, dx) * 180.0 / std::numbers::pi;
-}
-
-double SceneWidget::getCameraElevation() const
-{
-    auto camera = renderer->GetActiveCamera();
-    if (!camera)
-        return 0.0;
-
-    // Calculate elevation from camera position
-    double* pos = camera->GetPosition();
-    double* focal = camera->GetFocalPoint();
-    
-    double dx = pos[0] - focal[0];
-    double dy = pos[1] - focal[1];
-    double dz = pos[2] - focal[2];
-    
-    double distXY = std::sqrt(dx*dx + dy*dy);
-    
-    return std::atan2(dz, distXY) * 180.0 / std::numbers::pi;
 }
