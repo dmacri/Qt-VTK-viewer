@@ -439,28 +439,30 @@ void SceneWidget::updateToolTip(const QPoint& lastMousePos)
     double distanceSq = 0.0;
     const Line* nearestLine = findNearestLine(m_lastWorldPos, lineIndex, distanceSq);
 
-    // Prepare tooltip text --- world coordinates
-    QString tooltipText = QString("World Position: (x: %1, y: %2, z: %3)")
-                              .arg(m_lastWorldPos[0], 0, 'f', 2)
-                              .arg(m_lastWorldPos[1], 0, 'f', 2)
-                              .arg(m_lastWorldPos[2], 0, 'f', 2);
+    // Prepare tooltip text
+    QString tooltipText;
 
     if (nearestLine)
     {
-        tooltipText += QString("\n\nLine %1/%2:").arg(lineIndex).arg(lines.size());
-        tooltipText += QString("\n  From: (%1, %2)")
+        tooltipText += QString("Line %1/%2:").arg(lineIndex).arg(lines.size());
+        tooltipText += QString("\n  From: (x1=%1, y1=%2)")
                            .arg(nearestLine->x1, 0, 'f', 2)
                            .arg(nearestLine->y1, 0, 'f', 2);
-        tooltipText += QString("\n  To:   (%1, %2)")
+        tooltipText += QString("\n  To:   (x2=%1, y2=%2)")
                            .arg(nearestLine->x2, 0, 'f', 2)
                            .arg(nearestLine->y2, 0, 'f', 2);
     }
-    else
+    else if (QString nodeInfo = getNodeAtWorldPosition(m_lastWorldPos); ! nodeInfo.isEmpty())
     {
-        QString nodeInfo = getNodeAtWorldPosition(m_lastWorldPos);
-        if (!nodeInfo.isEmpty())
-            tooltipText += QString("\n%1").arg(nodeInfo);
+        tooltipText = QString("World Position: (x: %1, y: %2, z: %3)")
+                          .arg(m_lastWorldPos[0], 0, 'f', 2)
+                          .arg(m_lastWorldPos[1], 0, 'f', 2)
+                          .arg(m_lastWorldPos[2], 0, 'f', 2);
+
+        tooltipText += QString("\n%1").arg(nodeInfo);
     }
+    else
+        tooltipText = "(Outside the grid)";
 
     // Use m_lastMousePos (Qt coordinates) to position the tooltip
     QPoint globalPos = mapToGlobal(lastMousePos);
