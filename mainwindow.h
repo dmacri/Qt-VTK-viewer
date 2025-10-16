@@ -42,6 +42,8 @@ private slots:
     void on3DModeRequested();
     void onAzimuthChanged(int value);
     void onElevationChanged(int value);
+    void onCameraOrientationChanged(double azimuth, double elevation);
+    void syncCameraSliders();
 
     void onModelSelected();
     void onReloadDataRequested();
@@ -95,7 +97,6 @@ private:
     void createModelMenuActions();
     void createViewModeActionGroup();
     void updateCameraControlsVisibility();
-    void syncCameraSliders();
 
     Ui::MainWindow* ui;
     

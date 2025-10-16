@@ -173,6 +173,17 @@ public:
      * @param callData     Additional event-specific data (unused in this implementation). */
     static void mouseCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
 
+    /** @brief Callback function for VTK camera modified events.
+     *
+     * This function is triggered whenever the camera is modified (e.g., rotated via mouse).
+     * It emits a Qt signal to notify UI elements (like sliders) to update.
+     *
+     * @param caller       The VTK camera object that was modified.
+     * @param eventId      The ID of the event (expected to be vtkCommand::ModifiedEvent).
+     * @param clientData   Pointer to user data (the owning SceneWidget instance).
+     * @param callData     Additional event-specific data (unused). */
+    static void cameraCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
+
 signals:
     /** @brief Signal emitted when step number is changed using keyboard keys (sent from method keypressCallbackFunction)
      *  @param stepNumber The new step number */
@@ -185,6 +196,13 @@ signals:
     /** @brief Signal emitted when available steps are read from config file.
      *  @param availableSteps Vector of available step numbers */
     void availableStepsReadFromConfigFile(std::vector<StepIndex> availableSteps);
+
+    /** @brief Signal emitted when camera orientation changes (e.g., via mouse interaction).
+     * 
+     * This allows UI elements (like sliders) to update when the user rotates the camera.
+     * @param azimuth Current camera azimuth in degrees
+     * @param elevation Current camera elevation in degrees */
+    void cameraOrientationChanged(double azimuth, double elevation);
 
 public slots:
     /** @brief Slot called when color settings need to be reloaded (at least one of them was changed)
@@ -240,6 +258,9 @@ protected:
     
     /// @brief Sets up the 2D ruler axes
     void setup2DRulerAxes();
+    
+    /// @brief Connects the VTK camera modified callback to track camera changes
+    void connectCameraCallback();
     
     /// @brief Updates the 2D ruler axes bounds based on current data
     void update2DRulerAxesBounds();

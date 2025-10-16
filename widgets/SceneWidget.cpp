@@ -167,6 +167,7 @@ void SceneWidget::setupVtkScene()
 
     connectKeyboardCallback();
     connectMouseCallback();
+    connectCameraCallback();
 }
 
 void SceneWidget::setupAxesWidget()
@@ -269,6 +270,19 @@ void SceneWidget::connectKeyboardCallback()
     interactor()->AddObserver(vtkCommand::KeyPressEvent, keypressCallback);
 }
 
+void SceneWidget::connectCameraCallback()
+{
+    if (!interactor())
+        return;
+        
+    // Use EndInteractionEvent instead of camera ModifiedEvent
+    // This is only called when user finishes rotating (releases mouse button)
+    vtkNew<vtkCallbackCommand> cameraCallback;
+    cameraCallback->SetCallback(SceneWidget::cameraCallbackFunction);
+    cameraCallback->SetClientData(this);
+    interactor()->AddObserver(vtkCommand::EndInteractionEvent, cameraCallback);
+}
+
 void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
     vtkRenderWindowInteractor* interactor = static_cast<vtkRenderWindowInteractor*>(caller);
@@ -325,6 +339,44 @@ void SceneWidget::connectMouseCallback()
     mouseMoveCallback->SetCallback(&SceneWidget::mouseCallbackFunction);
     mouseMoveCallback->SetClientData(this);
     interactor()->AddObserver(vtkCommand::MouseMoveEvent, mouseMoveCallback);
+}
+
+void SceneWidget::cameraCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
+{
+    Q_UNUSED(caller);
+    Q_UNUSED(eventId);
+    Q_UNUSED(callData);
+    
+    auto* self = static_cast<SceneWidget*>(clientData);
+    if (!self)
+        return;
+    
+    // Only emit signal in 3D mode (user finished rotating the camera)
+    if (self->currentViewMode == ViewMode::Mode3D && self->renderer)
+    {
+        vtkCamera* camera = self->renderer->GetActiveCamera();
+        if (camera)
+        {
+            // Get actual camera orientation from VTK
+            double* position = camera->GetPosition();
+            double* focalPoint = camera->GetFocalPoint();
+            
+            // Calculate azimuth and elevation from camera position
+            double dx = position[0] - focalPoint[0];
+            double dy = position[1] - focalPoint[1];
+            double dz = position[2] - focalPoint[2];
+            
+            double azimuth = std::atan2(dy, dx) * 180.0 / vtkMath::Pi();
+            double elevation = std::atan2(dz, std::sqrt(dx*dx + dy*dy)) * 180.0 / vtkMath::Pi();
+            
+            // Update internal state
+            self->cameraAzimuth = azimuth;
+            self->cameraElevation = elevation;
+            
+            // Emit signal with actual values
+            emit self->cameraOrientationChanged(azimuth, elevation);
+        }
+    }
 }
 
 void SceneWidget::mouseCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
