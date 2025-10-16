@@ -37,6 +37,7 @@ MainWindow::MainWindow(QWidget* parent)
     configureButtons();
     loadStrings();
     createModelMenuActions();
+    createViewModeActionGroup();
     
     enterNoConfigurationFileMode();
 }
@@ -81,6 +82,10 @@ void MainWindow::connectMenuActions()
     connect(ui->actionOpenConfiguration, &QAction::triggered, this, &MainWindow::onOpenConfigurationRequested);
     connect(ui->actionReloadData, &QAction::triggered, this, &MainWindow::onReloadDataRequested);
     connect(ui->actionColor_settings, &QAction::triggered, this, &MainWindow::onColorSettingsRequested);
+
+    // View mode actions
+    connect(ui->action2DMode, &QAction::triggered, this, &MainWindow::on2DModeRequested);
+    connect(ui->action3DMode, &QAction::triggered, this, &MainWindow::on3DModeRequested);
 
     /// Model selection actions are connected dynamically in createModelMenuActions()
 }
@@ -161,6 +166,15 @@ void MainWindow::connectButtons()
 void MainWindow::connectSliders()
 {
     connect(ui->updatePositionSlider, &QSlider::valueChanged, this, &MainWindow::onUpdatePositionOnSlider);
+    
+    // Camera control sliders
+    connect(ui->azimuthSlider, &QSlider::valueChanged, this, &MainWindow::onAzimuthChanged);
+    connect(ui->azimuthSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), ui->azimuthSlider, &QSlider::setValue);
+    connect(ui->azimuthSlider, &QSlider::valueChanged, ui->azimuthSpinBox, &QSpinBox::setValue);
+    
+    connect(ui->elevationSlider, &QSlider::valueChanged, this, &MainWindow::onElevationChanged);
+    connect(ui->elevationSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), ui->elevationSlider, &QSlider::setValue);
+    connect(ui->elevationSlider, &QSlider::valueChanged, ui->elevationSpinBox, &QSpinBox::setValue);
 }
 
 void MainWindow::loadStrings()
@@ -611,6 +625,67 @@ void MainWindow::createModelMenuActions()
     std::cout << "Created " << availableModels.size() << " model menu actions" << std::endl;
 }
 
+void MainWindow::createViewModeActionGroup()
+{
+    // Create action group for exclusive selection between 2D and 3D modes
+    QActionGroup* viewModeGroup = new QActionGroup(this);
+    viewModeGroup->setExclusive(true);
+    
+    viewModeGroup->addAction(ui->action2DMode);
+    viewModeGroup->addAction(ui->action3DMode);
+    
+    // 2D mode is checked by default
+    ui->action2DMode->setChecked(true);    
+}
+
+void MainWindow::on2DModeRequested()
+{
+    ui->sceneWidget->setViewMode2D();
+    updateCameraControlsVisibility();
+    
+    QMessageBox::information(this, tr("View Mode Changed"),
+                             tr("Switched to 2D mode.\nCamera is now in top-down view with rotation disabled."));
+}
+
+void MainWindow::on3DModeRequested()
+{
+    ui->sceneWidget->setViewMode3D();
+    updateCameraControlsVisibility();
+    syncCameraSliders();
+    
+    QMessageBox::information(this, tr("View Mode Changed"),
+                             tr("Switched to 3D mode.\nYou can now rotate the camera using mouse or the sliders below."));
+}
+
+void MainWindow::updateCameraControlsVisibility()
+{
+    const bool is3DMode = (ui->sceneWidget->getViewMode() == ViewMode::Mode3D);
+    ui->camera3DControlsWidget->setVisible(is3DMode);
+}
+
+void MainWindow::syncCameraSliders()
+{
+    // Sync sliders with current camera position
+    const double azimuth = ui->sceneWidget->getCameraAzimuth();
+    const double elevation = ui->sceneWidget->getCameraElevation();
+    
+    QSignalBlocker azimuthBlocker(ui->azimuthSlider);
+    QSignalBlocker elevationBlocker(ui->elevationSlider);
+    
+    ui->azimuthSlider->setValue(static_cast<int>(azimuth));
+    ui->elevationSlider->setValue(static_cast<int>(elevation));
+}
+
+void MainWindow::onAzimuthChanged(int value)
+{
+    ui->sceneWidget->setCameraAzimuth(value);
+}
+
+void MainWindow::onElevationChanged(int value)
+{
+    ui->sceneWidget->setCameraElevation(value);
+}
+
 void MainWindow::setWidgetsEnabledState(bool enabled)
 {
     // Playback controls
@@ -642,4 +717,8 @@ void MainWindow::setWidgetsEnabledState(bool enabled)
     ui->actionShow_config_details->setEnabled(enabled);
     ui->actionExport_Video->setEnabled(enabled);
     ui->actionReloadData->setEnabled(enabled);
+    
+    // View mode actions should always be enabled
+    ui->action2DMode->setEnabled(true);
+    ui->action3DMode->setEnabled(true);
 }

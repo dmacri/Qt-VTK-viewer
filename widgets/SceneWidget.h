@@ -17,6 +17,16 @@
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
 #include "types.h"
 
+/** @enum ViewMode
+ * @brief Defines the camera view mode for the scene.
+ * 
+ * This enum is used to switch between 2D (top-down orthographic) and 3D (perspective with rotation) views. */
+enum class ViewMode
+{
+    Mode2D,  ///< 2D top-down view with rotation disabled
+    Mode3D   ///< 3D perspective view with full camera control
+};
+
 class SettingParameter;
 
 /** @class SceneWidget
@@ -84,6 +94,42 @@ public:
     {
         return settingParameter.get();
     }
+
+    /** @brief Set the view mode to 2D (top-down view with rotation disabled).
+     * 
+     * This method configures the camera for a 2D orthographic view from above
+     * and disables rotation controls. */
+    void setViewMode2D();
+
+    /** @brief Set the view mode to 3D (perspective view with full camera control).
+     * 
+     * This method enables full 3D camera controls including rotation and elevation. */
+    void setViewMode3D();
+
+    /** @brief Get the current view mode.
+     * 
+     * @return The current ViewMode (2D or 3D) */
+    ViewMode getViewMode() const { return currentViewMode; }
+
+    /** @brief Set camera azimuth (rotation around Z axis).
+     * 
+     * @param angle Azimuth angle in degrees */
+    void setCameraAzimuth(double angle);
+
+    /** @brief Set camera elevation (rotation around X axis).
+     * 
+     * @param angle Elevation angle in degrees */
+    void setCameraElevation(double angle);
+
+    /** @brief Get current camera azimuth.
+     * 
+     * @return Current azimuth angle in degrees */
+    double getCameraAzimuth() const;
+
+    /** @brief Get current camera elevation.
+     * 
+     * @return Current elevation angle in degrees */
+    double getCameraElevation() const;
 
     /** @brief Callback function for VTK keypress events.
      *  It handles arrow_up and arrow_down keys pressed and changes view of the widget.
@@ -235,6 +281,9 @@ private:
     
     /// @brief Currently active model type
     ModelType currentModelType;
+    
+    /// @brief Current view mode (2D or 3D)
+    ViewMode currentViewMode;
     
     /** @brief Last recorded position in VTK world coordinates. */
     std::array<double, 3> m_lastWorldPos;

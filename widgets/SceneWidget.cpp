@@ -1,11 +1,14 @@
 /** @file SceneWidget.cpp
  * @brief Implementation of the SceneWidget class for 3D visualization. */
 
-#include <filesystem>
 #include <iostream> // std::cout
+#include <numbers> // std::numbers::pi
+#include <filesystem>
 #include <QApplication>
 #include <vtkCallbackCommand.h>
 #include <vtkInteractorStyleImage.h>
+#include <vtkInteractorStyleTrackballCamera.h>
+#include <vtkCamera.h>
 #include <vtkNamedColors.h>
 #include <vtkNew.h>
 #include <vtkObjectFactory.h>
@@ -57,6 +60,7 @@ SceneWidget::SceneWidget(QWidget* parent)
     , sceneWidgetVisualizerProxy{SceneWidgetVisualizerFactory::create(ModelType::Ball)}
     , settingParameter{std::make_unique<SettingParameter>()}
     , currentModelType{sceneWidgetVisualizerProxy->getModelTypeValue()}
+    , currentViewMode{ViewMode::Mode2D}
 {
     enableToolTipWhenMouseAboveWidget();
 
@@ -642,4 +646,109 @@ void SceneWidget::refreshStepNumberTextColorFromSettings()
 
     renderer->Modified();
     renderWindow()->Render();
+}
+
+void SceneWidget::setViewMode2D()
+{
+    if (!interactor())
+        return;
+
+    currentViewMode = ViewMode::Mode2D;
+
+    // Use vtkInteractorStyleImage which blocks rotation
+    vtkNew<vtkInteractorStyleImage> style;
+    interactor()->SetInteractorStyle(style);
+
+    // Set camera to top-down view
+    auto camera = renderer->GetActiveCamera();
+    if (camera)
+    {
+        // Reset camera position and orientation
+        camera->SetPosition(0, 0, 1);
+        camera->SetFocalPoint(0, 0, 0);
+        camera->SetViewUp(0, 1, 0);
+        
+        renderer->ResetCamera();
+        renderWindow()->Render();
+    }
+
+    std::cout << "Switched to 2D view mode" << std::endl;
+}
+
+void SceneWidget::setViewMode3D()
+{
+    if (!interactor())
+        return;
+
+    currentViewMode = ViewMode::Mode3D;
+
+    // Use vtkInteractorStyleTrackballCamera which allows full 3D rotation
+    vtkNew<vtkInteractorStyleTrackballCamera> style;
+    interactor()->SetInteractorStyle(style);
+
+    std::cout << "Switched to 3D view mode" << std::endl;
+}
+
+void SceneWidget::setCameraAzimuth(double angle)
+{
+    auto camera = renderer->GetActiveCamera();
+    if (!camera)
+        return;
+
+    // Reset to default position first, then apply azimuth
+    camera->SetPosition(0, 0, 1);
+    camera->SetFocalPoint(0, 0, 0);
+    camera->SetViewUp(0, 1, 0);
+    
+    camera->Azimuth(angle);
+    
+    renderer->ResetCamera();
+    renderWindow()->Render();
+}
+
+void SceneWidget::setCameraElevation(double angle)
+{
+    auto camera = renderer->GetActiveCamera();
+    if (!camera)
+        return;
+
+    camera->Elevation(angle);
+    
+    renderer->ResetCamera();
+    renderWindow()->Render();
+}
+
+double SceneWidget::getCameraAzimuth() const
+{
+    auto camera = renderer->GetActiveCamera();
+    if (!camera)
+        return 0.0;
+
+    // Calculate azimuth from camera position
+    double* pos = camera->GetPosition();
+    double* focal = camera->GetFocalPoint();
+    
+    double dx = pos[0] - focal[0];
+    double dy = pos[1] - focal[1];
+    
+    return std::atan2(dy, dx) * 180.0 / std::numbers::pi;
+}
+
+double SceneWidget::getCameraElevation() const
+{
+    auto camera = renderer->GetActiveCamera();
+    if (!camera)
+        return 0.0;
+
+    // Calculate elevation from camera position
+    double* pos = camera->GetPosition();
+    double* focal = camera->GetFocalPoint();
+    
+    double dx = pos[0] - focal[0];
+    double dy = pos[1] - focal[1];
+    double dz = pos[2] - focal[2];
+    
+    double distXY = std::sqrt(dx*dx + dy*dy);
+    
+    return std::atan2(dz, distXY) * 180.0 / std::numbers::pi;
 }
