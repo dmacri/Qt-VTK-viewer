@@ -54,7 +54,6 @@ vtkColor3d toVtkColor(QColor color)
 
 SceneWidget::SceneWidget(QWidget* parent)
     : QVTKOpenGLNativeWidget(parent)
-    , m_lastMousePos()
     , sceneWidgetVisualizerProxy{SceneWidgetVisualizerFactory::create(ModelType::Ball)}
     , settingParameter{std::make_unique<SettingParameter>()}
     , currentModelType{sceneWidgetVisualizerProxy->getModelTypeValue()}
@@ -238,7 +237,7 @@ void SceneWidget::mouseCallbackFunction(vtkObject* caller, long unsigned int eve
     }
     int qtY = size[1] - vtkY;
 
-    self->m_lastMousePos = QPoint(vtkX, qtY);
+    const auto lastMousePos = QPoint(vtkX, qtY);
 
     // 3) Use a picker to obtain an accurate world position (if something was "hit")
     vtkNew<vtkPropPicker> picker;
@@ -274,8 +273,8 @@ void SceneWidget::mouseCallbackFunction(vtkObject* caller, long unsigned int eve
         }
     }
 
-    // 5) Update the tooltip (now using correct m_lastMousePos and m_lastWorldPos)
-    self->updateToolTip(self->m_lastMousePos);
+    // 5) Update the tooltip (now using correct lastMousePos and m_lastWorldPos)
+    self->updateToolTip(lastMousePos);
 }
 
 void SceneWidget::renderVtkScene()
@@ -425,7 +424,7 @@ const Line* SceneWidget::findNearestLine(const std::array<double, 3>& worldPos, 
     return nearestLine;
 }
 
-void SceneWidget::updateToolTip(const QPoint& /*pos*/)
+void SceneWidget::updateToolTip(const QPoint& lastMousePos)
 {
     if (!renderer || !renderWindow())
         return;
@@ -462,8 +461,8 @@ void SceneWidget::updateToolTip(const QPoint& /*pos*/)
     }
 
     // Use m_lastMousePos (Qt coordinates) to position the tooltip
-    QPoint globalPos = mapToGlobal(m_lastMousePos);
-    QToolTip::showText(globalPos, tooltipText, this, QRect(m_lastMousePos, QSize(1,1)), 0);
+    QPoint globalPos = mapToGlobal(lastMousePos);
+    QToolTip::showText(globalPos, tooltipText, this, QRect(lastMousePos, QSize(1,1)), 0);
 }
 
 void SceneWidget::selectedStepParameter(StepIndex stepNumber)

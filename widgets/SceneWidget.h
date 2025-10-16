@@ -148,8 +148,8 @@ protected:
     void enableToolTipWhenMouseAboveWidget();
     
     /** @brief Updates the tooltip with current mouse position
-     *  @param pos Current mouse position in widget coordinates */
-    void updateToolTip(const QPoint& pos);
+     *  @param lastMousePos Current mouse position in widget coordinates */
+    void updateToolTip(const QPoint& lastMousePos);
     
     /** @brief Converts screen coordinates to VTK world coordinates
      *  @param pos The screen position in widget coordinates
@@ -213,9 +213,6 @@ private:
     
     /// @brief Currently active model type
     ModelType currentModelType;
-
-    /** @brief Last recorded mouse position in screen coordinates. */
-    QPoint m_lastMousePos;
     
     /** @brief Last recorded position in VTK world coordinates. */
     std::array<double, 3> m_lastWorldPos;
