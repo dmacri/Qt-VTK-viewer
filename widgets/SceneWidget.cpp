@@ -218,6 +218,9 @@ void SceneWidget::setup2DRulerAxes()
     rulerAxisY->GetLabelTextProperty()->SetColor(1.0, 1.0, 1.0);
     rulerAxisY->GetProperty()->SetColor(0.8, 0.8, 0.8);
     
+    // Adjust title position to move "Y" label to the right of the axis
+    rulerAxisY->SetTitlePosition(1.2); // Move title further from axis (default is ~0.5)
+    
     // Add to renderer but keep hidden initially
     renderer->AddActor2D(rulerAxisX);
     renderer->AddActor2D(rulerAxisY);
