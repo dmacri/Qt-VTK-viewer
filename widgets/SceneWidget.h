@@ -13,6 +13,8 @@
 #include <vtkSmartPointer.h>
 #include <vtkNamedColors.h>
 #include <vtkTextMapper.h>
+#include <vtkOrientationMarkerWidget.h>
+#include <vtkAxesActor.h>
 #include "visualiserProxy/ISceneWidgetVisualizer.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
 #include "types.h"
@@ -105,6 +107,11 @@ public:
      * 
      * This method enables full 3D camera controls including rotation and elevation. */
     void setViewMode3D();
+
+    /** @brief Show or hide the orientation axes widget.
+     * 
+     * @param visible If true, shows the axes widget; if false, hides it */
+    void setAxesWidgetVisible(bool visible);
 
     /** @brief Get the current view mode.
      * 
@@ -227,6 +234,9 @@ protected:
     /// @brief Sets up the VTK scene, it is called when reading config file
     void setupVtkScene();
     
+    /// @brief Sets up the orientation axes widget
+    void setupAxesWidget();
+    
     /** @param configFilename Path to the configuration file and move view to provided step
      *  @param stepNumber Initial step number to display */
     void setupSettingParameters(const std::string & configFilename, int stepNumber);
@@ -312,6 +322,12 @@ private:
     
     /// @brief Text mapper for step display: This text mapper is responsible for rendering the step number in the scene.
     vtkNew<vtkTextMapper> singleLineTextStep;
+
+    /// @brief Axes actor for showing coordinate system orientation
+    vtkNew<vtkAxesActor> axesActor;
+    
+    /// @brief Orientation marker widget for displaying axes in corner
+    vtkNew<vtkOrientationMarkerWidget> axesWidget;
 
     /** @brief Collection of line segments used for visualization.
      *

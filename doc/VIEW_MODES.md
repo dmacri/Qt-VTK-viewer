@@ -20,6 +20,11 @@ The Qt-VTK-viewer now supports switching between **2D** and **3D** view modes, a
   - **Azimuth** (-180° to +180°) - Rotation around the Z axis (horizontal rotation)
   - **Elevation** (-90° to +90°) - Rotation around the X axis (vertical tilt)
 - **Interactive manipulation** - Use mouse to freely explore the 3D scene
+- **Orientation axes widget** - Small 3D axes indicator in the bottom-left corner showing:
+  - **Red axis** = X direction
+  - **Green axis** = Y direction
+  - **Blue axis** = Z direction
+  - Rotates with the camera to show current viewing orientation
 - Useful for 3D models and examining data from different angles
 
 ## How to Use

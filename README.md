@@ -123,6 +123,7 @@ The application supports switching between **2D** and **3D** visualization modes
 - Precise camera control via sliders:
   - **Azimuth** slider: Horizontal rotation (-180° to +180°)
   - **Elevation** slider: Vertical tilt (-90° to +90°)
+- **Orientation axes widget** in bottom-left corner (X=red, Y=green, Z=blue)
 - Perfect for examining data from different angles
 
 **How to Use:**

@@ -9,6 +9,11 @@
 #include <vtkInteractorStyleTrackballCamera.h>
 #include <vtkCamera.h>
 #include <vtkNamedColors.h>
+#include <vtkOrientationMarkerWidget.h>
+#include <vtkAxesActor.h>
+#include <vtkProperty.h>
+#include <vtkCaptionActor2D.h>
+#include <vtkTextProperty.h>
 #include <vtkNew.h>
 #include <vtkObjectFactory.h>
 #include <vtkPolyData.h>
@@ -150,8 +155,36 @@ void SceneWidget::setupVtkScene()
 
     renderWindow()->SetWindowName(QApplication::applicationName().toLocal8Bit().data());
 
+    // Setup orientation axes widget
+    setupAxesWidget();
+
     connectKeyboardCallback();
     connectMouseCallback();
+}
+
+void SceneWidget::setupAxesWidget()
+{
+    // Configure axes actor
+    axesActor->SetShaftTypeToCylinder();
+    axesActor->SetXAxisLabelText("X");
+    axesActor->SetYAxisLabelText("Y");
+    axesActor->SetZAxisLabelText("Z");
+    axesActor->SetTotalLength(1.0, 1.0, 1.0);
+    axesActor->SetCylinderRadius(0.02);
+    axesActor->SetConeRadius(0.05);
+    axesActor->SetSphereRadius(0.03);
+    
+    // Make labels more readable
+    axesActor->GetXAxisCaptionActor2D()->GetCaptionTextProperty()->SetFontSize(20);
+    axesActor->GetYAxisCaptionActor2D()->GetCaptionTextProperty()->SetFontSize(20);
+    axesActor->GetZAxisCaptionActor2D()->GetCaptionTextProperty()->SetFontSize(20);
+    
+    // Configure orientation marker widget
+    axesWidget->SetOrientationMarker(axesActor);
+    axesWidget->SetInteractor(interactor());
+    axesWidget->SetViewport(0.0, 0.0, 0.2, 0.2); // Bottom-left corner, 20% size
+    axesWidget->SetEnabled(false); // Hidden by default (2D mode)
+    axesWidget->InteractiveOff(); // Non-interactive
 }
 
 void SceneWidget::connectKeyboardCallback()
@@ -675,6 +708,9 @@ void SceneWidget::setViewMode2D()
     }
 
     std::cout << "Switched to 2D view mode" << std::endl;
+    
+    // Hide orientation axes in 2D mode
+    setAxesWidgetVisible(false);
 }
 
 void SceneWidget::setViewMode3D()
@@ -687,8 +723,20 @@ void SceneWidget::setViewMode3D()
     // Use vtkInteractorStyleTrackballCamera which allows full 3D rotation
     vtkNew<vtkInteractorStyleTrackballCamera> style;
     interactor()->SetInteractorStyle(style);
+    
+    // Show orientation axes in 3D mode
+    setAxesWidgetVisible(true);
 
     std::cout << "Switched to 3D view mode" << std::endl;
+}
+
+void SceneWidget::setAxesWidgetVisible(bool visible)
+{
+    if (axesWidget)
+    {
+        axesWidget->SetEnabled(visible);
+        renderWindow()->Render();
+    }
 }
 
 void SceneWidget::setCameraAzimuth(double angle)
