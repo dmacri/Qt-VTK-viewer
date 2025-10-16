@@ -83,6 +83,78 @@ void SceneWidget::enableToolTipWhenMouseAboveWidget()
 SceneWidget::~SceneWidget() = default;
 
 
+void SceneWidget::triggerRenderUpdate()
+{
+    // Mark renderer as modified and request a render pass
+    renderer->Modified();
+    renderWindow()->Render();
+}
+
+void SceneWidget::applyCameraAngles()
+{
+    // Reset camera to default position
+    auto camera = renderer->GetActiveCamera();
+    if (! camera)
+        return;
+        
+    camera->SetPosition(0, 0, 1);
+    camera->SetFocalPoint(0, 0, 0);
+    camera->SetViewUp(0, 1, 0);
+    
+    // Apply stored transformations in order: azimuth first, then elevation
+    camera->Azimuth(cameraAzimuth);
+    camera->Elevation(cameraElevation);
+    
+    // Reset camera bounds and render
+    renderer->ResetCamera();
+    triggerRenderUpdate();
+}
+
+void SceneWidget::loadAndUpdateVisualizationForCurrentStep()
+{
+    // Resize lines vector to match expected number of lines
+    lines.resize(settingParameter->numberOfLines);
+
+    // Read stage state from files for the current step
+    sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(
+        settingParameter.get(),
+        &lines[0]
+    );
+
+    // Refresh VTK visualization elements
+    sceneWidgetVisualizerProxy->refreshWindowsVTK(
+        settingParameter->numberOfRowsY,
+        settingParameter->numberOfColumnX,
+        settingParameter->step,
+        &lines[0],
+        settingParameter->numberOfLines,
+        gridActor
+    );
+
+    //visualiserProxy->vis->refreshBuildLoadBalanceLine(lines, cam->numberOfLines, cam->dimY+1, cam->dimX+1, actorBuildLine, colors, pts, cellLines, grid);
+
+    // Update load balancing lines if we have any
+    if (settingParameter->numberOfLines > 0)
+    {
+        sceneWidgetVisualizerProxy->getVisualizer().refreshBuildLoadBalanceLine(
+            &lines[0],
+            settingParameter->numberOfLines,
+            settingParameter->numberOfRowsY + 1,
+            settingParameter->numberOfColumnX + 1,
+            actorBuildLine
+        );
+    }
+
+    // Update step number display
+    sceneWidgetVisualizerProxy->getVisualizer().buildStepLine(settingParameter->step, singleLineTextStep);
+}
+
+void SceneWidget::prepareStageWithCurrentNodeConfiguration()
+{
+    // Initialize the visualizer stage with current node configuration
+    sceneWidgetVisualizerProxy->prepareStage(settingParameter->nNodeX, settingParameter->nNodeY);
+}
+
 void SceneWidget::addVisualizer(const std::string &filename, int stepNumber)
 {
     if (! std::filesystem::exists(filename))
@@ -117,8 +189,7 @@ void SceneWidget::refreshGridColorFromSettings()
     actorBuildLine->GetProperty()->SetColor(toVtkColor(color).GetData());
     actorBuildLine->GetProperty()->Modified();
 
-    renderer->Modified();
-    renderWindow()->Render();
+    triggerRenderUpdate();
 }
 
 void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
@@ -314,11 +385,11 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
     {
         try
         {
-            sw->updateVisualization();
+            // Load and update visualization using helper method
+            sw->loadAndUpdateVisualizationForCurrentStep();
 
-            // Force renderer update for keyboard callback too
-            sw->renderWindow()->Modified();
-            sw->renderWindow()->Render();
+            // Trigger render update
+            sw->triggerRenderUpdate();
         }
         catch(const std::runtime_error& re)
         {
@@ -645,41 +716,6 @@ void SceneWidget::selectedStepParameter(StepIndex stepNumber)
     upgradeModelInCentralPanel();
 }
 
-
-void SceneWidget::updateVisualization()
-{
-    lines.resize(settingParameter->numberOfLines);
-
-    sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(
-        settingParameter.get(),
-        &lines[0]
-    );
-
-    sceneWidgetVisualizerProxy->refreshWindowsVTK(
-        settingParameter->numberOfRowsY,
-        settingParameter->numberOfColumnX,
-        settingParameter->step,
-        &lines[0],
-        settingParameter->numberOfLines,
-        gridActor
-    );
-
-    //visualiserProxy->vis->refreshBuildLoadBalanceLine(lines, cam->numberOfLines, cam->dimY+1, cam->dimX+1, actorBuildLine, colors, pts, cellLines, grid);
-
-    if (settingParameter->numberOfLines > 0)
-    {
-        sceneWidgetVisualizerProxy->getVisualizer().refreshBuildLoadBalanceLine(
-            &lines[0], 
-            settingParameter->numberOfLines, 
-            settingParameter->numberOfRowsY + 1,
-            settingParameter->numberOfColumnX + 1,
-            actorBuildLine
-        );
-    }
-
-    sceneWidgetVisualizerProxy->getVisualizer().buildStepLine(settingParameter->step, singleLineTextStep);
-}
-
 void SceneWidget::upgradeModelInCentralPanel()
 {
     if (!settingParameter->changed)
@@ -687,11 +723,11 @@ void SceneWidget::upgradeModelInCentralPanel()
 
     try
     {
-        updateVisualization();
+        // Load and update visualization using helper method
+        loadAndUpdateVisualizationForCurrentStep();
         
-        // Force renderer update
-        renderer->Modified();
-        renderWindow()->Render();
+        // Trigger render update
+        triggerRenderUpdate();
         QApplication::processEvents();
     }
     catch(const std::runtime_error& re)
@@ -732,8 +768,10 @@ void SceneWidget::reloadData()
         // Clear existing stage data to avoid duplicates
         sceneWidgetVisualizerProxy->clearStage();
         
-        // Reinitialize and load data
-        sceneWidgetVisualizerProxy->prepareStage(settingParameter->nNodeX, settingParameter->nNodeY);
+        // Reinitialize stage with current node configuration using helper
+        prepareStageWithCurrentNodeConfiguration();
+        
+        // Load step offsets from files
         sceneWidgetVisualizerProxy->readStepsOffsetsForAllNodesFromFiles(
             settingParameter->nNodeX, 
             settingParameter->nNodeY, 
@@ -774,8 +812,8 @@ void SceneWidget::loadNewConfiguration(const std::string& configFileName, int st
         // Setup new parameters from config file
         setupSettingParameters(configFileName, stepNumber);
         
-        // Setup VTK scene (without adding renderer again - it's already added)
-        sceneWidgetVisualizerProxy->prepareStage(settingParameter->nNodeX, settingParameter->nNodeY);
+        // Setup VTK scene using helper method
+        prepareStageWithCurrentNodeConfiguration();
         
         // Render the scene with new data
         renderVtkScene();        
@@ -797,8 +835,7 @@ void SceneWidget::refreshBackgroundColorFromSettings()
 {
     const auto color = ColorSettings::instance().backgroundColor();
     renderer->SetBackground(toVtkColor(color).GetData());
-    renderer->Modified();
-    renderWindow()->Render();
+    triggerRenderUpdate();
 }
 
 void SceneWidget::refreshStepNumberTextColorFromSettings()
@@ -809,8 +846,7 @@ void SceneWidget::refreshStepNumberTextColorFromSettings()
     realTextProp->SetColor(toVtkColor(color).GetData());
     realTextProp->Modified();
 
-    renderer->Modified();
-    renderWindow()->Render();
+    triggerRenderUpdate();
 }
 
 void SceneWidget::setViewMode2D()
@@ -890,50 +926,24 @@ void SceneWidget::setAxesWidgetVisible(bool visible)
     if (axesWidget)
     {
         axesWidget->SetEnabled(visible);
-        renderWindow()->Render();
+        triggerRenderUpdate();
     }
 }
 
 void SceneWidget::setCameraAzimuth(double angle)
 {
-    auto camera = renderer->GetActiveCamera();
-    if (!camera)
-        return;
-
     // Store the new azimuth value
     cameraAzimuth = angle;
 
-    // Reset to default position
-    camera->SetPosition(0, 0, 1);
-    camera->SetFocalPoint(0, 0, 0);
-    camera->SetViewUp(0, 1, 0);
-    
-    // Apply transformations in order: azimuth first, then elevation
-    camera->Azimuth(cameraAzimuth);
-    camera->Elevation(cameraElevation);
-    
-    renderer->ResetCamera();
-    renderWindow()->Render();
+    // Apply camera angles using helper method
+    applyCameraAngles();
 }
 
 void SceneWidget::setCameraElevation(double angle)
 {
-    auto camera = renderer->GetActiveCamera();
-    if (!camera)
-        return;
-
     // Store the new elevation value
     cameraElevation = angle;
 
-    // Reset to default position
-    camera->SetPosition(0, 0, 1);
-    camera->SetFocalPoint(0, 0, 0);
-    camera->SetViewUp(0, 1, 0);
-    
-    // Apply transformations in order: azimuth first, then elevation
-    camera->Azimuth(cameraAzimuth);
-    camera->Elevation(cameraElevation);
-    
-    renderer->ResetCamera();
-    renderWindow()->Render();
+    // Apply camera angles using helper method
+    applyCameraAngles();
 }

@@ -218,9 +218,6 @@ protected:
 
     /// @brief Upgrades the model in the central panel
     void upgradeModelInCentralPanel();
-    
-    /// @brief Updates the visualization with current settings
-    void updateVisualization();
 
     /// @brief Enables tooltip display when mouse is above the widget
     void enableToolTipWhenMouseAboveWidget();
@@ -314,6 +311,33 @@ protected:
      *       the static callback function to interact with the SceneWidget instance. */
     void connectMouseCallback();
 
+    /** @brief Trigger a render update of the VTK scene.
+     * 
+     * This helper marks the renderer as modified and requests a render pass.
+     * Used throughout the class to update the display after modifications. */
+    void triggerRenderUpdate();
+    
+    /** @brief Reset camera to default position and apply stored azimuth and elevation angles.
+     * 
+     * This method resets the camera to the default top-down view, then applies
+     * the currently stored azimuth and elevation transformations. This ensures
+     * consistent camera positioning when angles are modified. */
+    void applyCameraAngles();
+    
+    /** @brief Load and update visualization data for the current step.
+     * 
+     * This helper reads stage state from files for the current step and refreshes
+     * all VTK visualization elements (grid, lines, text). It's used when the step
+     * number changes or when data needs to be refreshed. */
+    void loadAndUpdateVisualizationForCurrentStep();
+    
+    /** @brief Prepare the stage for visualization with current node configuration.
+     * 
+     * This helper initializes the visualizer stage using the current nNodeX and nNodeY
+     * settings from settingParameter. It's called during initialization and when
+     * reloading data. */
+    void prepareStageWithCurrentNodeConfiguration();
+    
 private:
     /** @brief Proxy for the scene widget visualizer
      *  This proxy provides access to the visualizer implementation
