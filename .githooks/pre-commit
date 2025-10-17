@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Sprawdź czy clang-format jest dostępny
+# Check if clang-format is installed in system
 if ! command -v clang-format >/dev/null 2>&1; then
     echo "clang-format not found – skipping formatting."
     exit 0
