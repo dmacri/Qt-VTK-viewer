@@ -16,8 +16,7 @@
  * - Support for multiple model types
  * - Video export functionality
  *
- * @include README.md
- */
+ * @include README.md */
 
 #include "mainwindow.h"
 
