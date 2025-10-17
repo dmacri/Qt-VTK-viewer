@@ -52,8 +52,7 @@ public:
      *  @param stepNumber The simulation step to display **/
     void addVisualizer(const std::string &filename, int stepNumber);
 
-    /** @brief Updates the visualization widget to show the specified step.
-     *  @param stepNumber The step number to display */
+    /// @brief Updates the visualization widget to show the specified step number
     void selectedStepParameter(StepIndex stepNumber);
 
     /** @brief Switch to a different model type.
@@ -83,16 +82,13 @@ public:
      * @param stepNumber Initial step number to display */
     void loadNewConfiguration(const std::string& configFileName, int stepNumber = 0);
 
-    /** @brief Get the current model name.
-     * 
-     * @return std::string The name of the currently active model */
+    /// @brief Get the current model name of the currently active model
     auto getCurrentModelName() const
     {
         return sceneWidgetVisualizerProxy->getModelName();
     }
 
-    /** @brief Get the current setting parameter
-     *  @return Pointer to the current SettingParameter object */
+    /// @brief Get the current SettingParameter object
     const SettingParameter* getSettingParameter() const
     {
         return settingParameter.get();
@@ -109,19 +105,16 @@ public:
      * This method enables full 3D camera controls including rotation and elevation. */
     void setViewMode3D();
 
-    /** @brief Show or hide the orientation axes widget.
-     * 
-     * @param visible If true, shows the axes widget; if false, hides it */
+    /// @brief Show or hide the orientation axes widget. If true, shows the axes widget; if false, hides it
     void setAxesWidgetVisible(bool visible);
 
-    /** @brief Get the current view mode.
-     * 
-     * @return The current ViewMode (2D or 3D) */
-    ViewMode getViewMode() const { return currentViewMode; }
+    /// @brief Get the current ViewMode (2D or 3D)
+    ViewMode getViewMode() const
+    {
+        return currentViewMode;
+    }
 
-    /** @brief Set camera azimuth (rotation around Z axis).
-     * 
-     * @param angle Azimuth angle in degrees */
+    /// @brief Set camera azimuth (rotation around Z axis) in degrees
     void setCameraAzimuth(double angle);
 
     /** @brief Set camera elevation (rotation around X axis).
@@ -173,6 +166,17 @@ public:
      * @param callData     Additional event-specific data (unused in this implementation). */
     static void mouseCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
 
+    /** @brief Callback function for VTK camera modified events.
+     *
+     * This function is triggered whenever the camera is modified (e.g., rotated via mouse).
+     * It emits a Qt signal to notify UI elements (like sliders) to update.
+     *
+     * @param caller       The VTK camera object that was modified.
+     * @param eventId      The ID of the event (expected to be vtkCommand::ModifiedEvent).
+     * @param clientData   Pointer to user data (the owning SceneWidget instance).
+     * @param callData     Additional event-specific data (unused). */
+    static void cameraCallbackFunction(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
+
 signals:
     /** @brief Signal emitted when step number is changed using keyboard keys (sent from method keypressCallbackFunction)
      *  @param stepNumber The new step number */
@@ -185,6 +189,13 @@ signals:
     /** @brief Signal emitted when available steps are read from config file.
      *  @param availableSteps Vector of available step numbers */
     void availableStepsReadFromConfigFile(std::vector<StepIndex> availableSteps);
+
+    /** @brief Signal emitted when camera orientation changes (e.g., via mouse interaction).
+     * 
+     * This allows UI elements (like sliders) to update when the user rotates the camera.
+     * @param azimuth Current camera azimuth in degrees
+     * @param elevation Current camera elevation in degrees */
+    void cameraOrientationChanged(double azimuth, double elevation);
 
 public slots:
     /** @brief Slot called when color settings need to be reloaded (at least one of them was changed)
@@ -200,9 +211,6 @@ protected:
 
     /// @brief Upgrades the model in the central panel
     void upgradeModelInCentralPanel();
-    
-    /// @brief Updates the visualization with current settings
-    void updateVisualization();
 
     /// @brief Enables tooltip display when mouse is above the widget
     void enableToolTipWhenMouseAboveWidget();
@@ -240,6 +248,9 @@ protected:
     
     /// @brief Sets up the 2D ruler axes
     void setup2DRulerAxes();
+    
+    /// @brief Connects the VTK camera modified callback to track camera changes
+    void connectCameraCallback();
     
     /// @brief Updates the 2D ruler axes bounds based on current data
     void update2DRulerAxesBounds();
@@ -293,6 +304,33 @@ protected:
      *       the static callback function to interact with the SceneWidget instance. */
     void connectMouseCallback();
 
+    /** @brief Trigger a render update of the VTK scene.
+     * 
+     * This helper marks the renderer as modified and requests a render pass.
+     * Used throughout the class to update the display after modifications. */
+    void triggerRenderUpdate();
+    
+    /** @brief Reset camera to default position and apply stored azimuth and elevation angles.
+     * 
+     * This method resets the camera to the default top-down view, then applies
+     * the currently stored azimuth and elevation transformations. This ensures
+     * consistent camera positioning when angles are modified. */
+    void applyCameraAngles();
+    
+    /** @brief Load and update visualization data for the current step.
+     * 
+     * This helper reads stage state from files for the current step and refreshes
+     * all VTK visualization elements (grid, lines, text). It's used when the step
+     * number changes or when data needs to be refreshed. */
+    void loadAndUpdateVisualizationForCurrentStep();
+    
+    /** @brief Prepare the stage for visualization with current node configuration.
+     * 
+     * This helper initializes the visualizer stage using the current nNodeX and nNodeY
+     * settings from settingParameter. It's called during initialization and when
+     * reloading data. */
+    void prepareStageWithCurrentNodeConfiguration();
+    
 private:
     /** @brief Proxy for the scene widget visualizer
      *  This proxy provides access to the visualizer implementation

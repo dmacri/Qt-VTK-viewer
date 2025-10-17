@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <string>
 #include <vtkActor2D.h>
 #include <vtkCellArray.h>
 #include <vtkCoordinate.h>
@@ -37,12 +36,12 @@ class Visualizer
 {
 public:
     template<class Matrix>
-    void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, StepIndex step, vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
+    void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
     template<class Matrix>
-    void refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, StepIndex step, Line *lines, int dimLines,  vtkSmartPointer<vtkActor> gridActor);
+    void refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor);
     void buildLoadBalanceLine(const std::vector<Line>& lines, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine);
-    void refreshBuildLoadBalanceLine(Line *lines, int dimLines, int nCols, int nRows, vtkActor2D* lineActor);
-    vtkTextProperty* buildStepLine(StepIndex step, vtkSmartPointer<vtkTextMapper>);
+    void refreshBuildLoadBalanceLine(const std::vector<Line> &lines, int nCols, vtkActor2D* lineActor);
+    vtkTextProperty* buildStepLine(StepIndex step, vtkSmartPointer<vtkTextMapper> singleLineTextB);
     vtkNew<vtkActor2D> buildStepText(StepIndex step, int font_size, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer);
 
 private:
@@ -53,7 +52,7 @@ private:
 ////////////////////////////////////////////////////////////////////
 
 template <class Matrix>
-void Visualizer::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, StepIndex step, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor)
+void Visualizer::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor)
 {
     const auto numberOfPoints = nRows * nCols;
     vtkNew<vtkDoubleArray> pointValues;
@@ -93,7 +92,7 @@ void Visualizer::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, StepInde
 }
 
 template <class Matrix>
-void Visualizer::refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, StepIndex step, Line *lines, int dimLines, vtkSmartPointer<vtkActor> gridActor)
+void Visualizer::refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor)
 {
     if (vtkLookupTable* lut = dynamic_cast<vtkLookupTable*>(gridActor->GetMapper()->GetLookupTable()))
     {
@@ -134,7 +133,7 @@ void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, Matrix& p)
     {
         for (int c = 0; c < nCols; ++c)
         {
-            rgb *color = p[r][c].outputValue();
+            rgb *color = p[r][c].outputValue(nullptr);
             lut->SetTableValue(
                 (nRows - 1 - r) * nCols + c,
                 toUnitColor(color->getRed()),

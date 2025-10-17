@@ -13,7 +13,6 @@
 #include "ui_mainwindow.h"
 #include "widgets/ConfigDetailsDialog.h"
 #include "widgets/ColorSettingsDialog.h"
-#include "widgets/ColorSettings.h"
 #include "visualiser/VideoExporter.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
 
@@ -175,6 +174,9 @@ void MainWindow::connectSliders()
     connect(ui->elevationSlider, &QSlider::valueChanged, this, &MainWindow::onElevationChanged);
     connect(ui->elevationSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), ui->elevationSlider, &QSlider::setValue);
     connect(ui->elevationSlider, &QSlider::valueChanged, ui->elevationSpinBox, &QSpinBox::setValue);
+    
+    // Update sliders when camera changes (e.g., via mouse rotation in 3D mode)
+    connect(ui->sceneWidget, &SceneWidget::cameraOrientationChanged, this, &MainWindow::onCameraOrientationChanged);
 }
 
 void MainWindow::loadStrings()
@@ -690,6 +692,20 @@ void MainWindow::onAzimuthChanged(int value)
 void MainWindow::onElevationChanged(int value)
 {
     ui->sceneWidget->setCameraElevation(value);
+}
+
+void MainWindow::onCameraOrientationChanged(double azimuth, double elevation)
+{
+    // Block signals to avoid circular updates
+    QSignalBlocker azimuthBlocker(ui->azimuthSlider);
+    QSignalBlocker elevationBlocker(ui->elevationSlider);
+    QSignalBlocker azimuthSpinBoxBlocker(ui->azimuthSpinBox);
+    QSignalBlocker elevationSpinBoxBlocker(ui->elevationSpinBox);
+
+    ui->azimuthSlider->setValue(static_cast<int>(azimuth));
+    ui->azimuthSpinBox->setValue(static_cast<int>(azimuth));
+    ui->elevationSlider->setValue(static_cast<int>(elevation));
+    ui->elevationSpinBox->setValue(static_cast<int>(elevation));
 }
 
 void MainWindow::setWidgetsEnabledState(bool enabled)

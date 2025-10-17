@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# Check if clang-format is installed in system
+if ! command -v clang-format >/dev/null 2>&1; then
+    echo "clang-format not found – skipping formatting."
+    exit 0
+fi
+
+# Path to clang-format file
+CLANG_FORMAT_CONFIG=".clang-format"
+if [ ! -f "$CLANG_FORMAT_CONFIG" ]; then
+    echo "Warning: .clang-format not found in repository root – using default clang-format style."
+fi
+
+# Find files prepared to commit
+FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(cpp|cxx|hpp|h)$')
+
+if [ -n "$FILES" ]; then
+    echo "Running clang-format on staged C/C++ files..."
+    for FILE in $FILES; do
+        # Format in place
+        clang-format -i --style=file "$FILE"
+        # Add files to index, if they were changed
+        git add "$FILE"
+    done
+fi
+
+exit 0

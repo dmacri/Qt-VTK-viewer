@@ -74,16 +74,14 @@ public:
         m_impl.modelReader.readStageStateFromFilesForStep(m_impl.p, sp, lines);
     }
 
-    void drawWithVTK(int nRows, int nCols, int step, vtkSmartPointer<vtkRenderer> renderer,
-                     vtkSmartPointer<vtkActor> gridActor) override
+    void drawWithVTK(int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor) override
     {
-        m_impl.visualiser.drawWithVTK(m_impl.p, nRows, nCols, step, renderer, gridActor);
+        m_impl.visualiser.drawWithVTK(m_impl.p, nRows, nCols, renderer, gridActor);
     }
 
-    void refreshWindowsVTK(int nRows, int nCols, int step, Line* lines,
-                          int dimLines, vtkSmartPointer<vtkActor> gridActor) override
+    void refreshWindowsVTK(int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor) override
     {
-        m_impl.visualiser.refreshWindowsVTK(m_impl.p, nRows, nCols, step, lines, dimLines, gridActor);
+        m_impl.visualiser.refreshWindowsVTK(m_impl.p, nRows, nCols, gridActor);
     }
 
     Visualizer& getVisualizer() override

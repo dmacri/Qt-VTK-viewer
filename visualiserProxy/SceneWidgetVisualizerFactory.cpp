@@ -23,7 +23,7 @@ std::unique_ptr<ISceneWidgetVisualizer> SceneWidgetVisualizerFactory::create(Mod
     }
 }
 
-std::unique_ptr<ISceneWidgetVisualizer> SceneWidgetVisualizerFactory::createFromName(const string &modelName)
+std::unique_ptr<ISceneWidgetVisualizer> SceneWidgetVisualizerFactory::createFromName(const std::string &modelName)
 {
     // Try each model type and check if name matches
     for (int i = 0; i < static_cast<int>(ModelType::SciddicaT) + 1; ++i)
@@ -37,7 +37,7 @@ std::unique_ptr<ISceneWidgetVisualizer> SceneWidgetVisualizerFactory::createFrom
     throw std::invalid_argument("Unknown model name: " + modelName);
 }
 
-std::vector<string> SceneWidgetVisualizerFactory::getAvailableModels()
+std::vector<std::string> SceneWidgetVisualizerFactory::getAvailableModels()
 {
     std::vector<std::string> models;
 

@@ -45,7 +45,7 @@ void Visualizer::buildLoadBalanceLine(const std::vector<Line> &lines, int nCols,
     renderer->AddActor2D(actorBuildLine);
 }
 
-void Visualizer::refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows, vtkActor2D* lineActor)
+void Visualizer::refreshBuildLoadBalanceLine(const std::vector<Line>& lines, int nCols, vtkActor2D* lineActor)
 {
     vtkPolyDataMapper2D* mapper = (vtkPolyDataMapper2D*) lineActor->GetMapper();
     mapper->Update();
@@ -53,7 +53,7 @@ void Visualizer::refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols
     vtkNew<vtkPoints> pts;
     vtkNew<vtkCellArray> cellLines;
 
-    for (int i = 0; i < dimLines; i++)
+    for (int i = 0; i < lines.size(); i++)
     {
         pts->InsertNextPoint((lines[i].x1 * 1), ( nCols-1-lines[i].y1 * 1), 0.0);
         pts->InsertNextPoint((lines[i].x2 * 1), ( nCols-1-lines[i].y2 * 1), 0.0);
