@@ -5,7 +5,7 @@
 
 /** @struct Line
  * @brief Represents a 2D line segment with start and end points.
- * 
+ *
  * This structure is used to define 2D line segments in the visualization. */
 struct Line
 {

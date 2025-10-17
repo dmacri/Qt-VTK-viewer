@@ -70,7 +70,7 @@ AllowShortCaseExpressionOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortCompoundRequirementOnASingleLine: true
 AllowShortEnumsOnASingleLine: true
-AllowShortFunctionsOnASingleLine: Inline
+AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: false
@@ -134,12 +134,18 @@ ForEachMacros:
   - BOOST_FOREACH
 IfMacros:
   - KJ_IF_MAYBE
-IncludeBlocks:   Preserve
+IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:           '^<Q.*'
-    Priority:        200
-    SortPriority:    200
-    CaseSensitive:   true
+  - Regex:           '^<([a-zA-Z0-9_]+|c[a-z]+)>$'   # <vector>, <string>, <memory>...
+    Priority:        1
+  - Regex:           '^<[Qv].*>'                        # headers from Qt and vtk
+    Priority:        2
+  - Regex:           '^<.*>'                         # Other in <> (e.g. <boost/...>)
+    Priority:        3
+  - Regex:           '^".*"'                         # Lokal files "..."
+    Priority:        4
+  - Regex:           '^$'                            # double empty line
+    Priority:        5
 IncludeIsMainRegex: '(Test)?$'
 IncludeIsMainSourceRegex: ''
 IndentAccessModifiers: false

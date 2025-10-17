@@ -31,14 +31,13 @@ file(GLOB Resources *.qrc)
 file(GLOB Styles *.qss)
 file(GLOB UIs *.ui)
 file(GLOB_RECURSE Docs *.md)
-set(OTHER_FILES LICENSE .github/workflows/release--deb-package--ubuntu24.04.yml .githooks/pre-commit)
+set(OTHER_FILES LICENSE .github/workflows/release--deb-package--ubuntu24.04.yml .githooks/pre-commit .clang-format)
 
 
 # ============================================
 # Qt setup
 # ============================================
 set(CMAKE_AUTORCC ON)
-set(CMAKE_INCLUDE_CURRENT_DIR "YES")
 set(CMAKE_AUTOMOC "YES")
 set(CMAKE_AUTOUIC "YES")
 
@@ -223,42 +222,44 @@ endif()
 # ============================================
 # Formatting source code: clang-format
 # ============================================
-# Find clang-format
-find_program(CLANG_FORMAT_EXE NAMES clang-format clang-format-14 clang-format-13 clang-format-12 clang-format-11 clang-format-10 clang-format-9 clang-format-8 clang-format-7)
+
+# Collect all relevant source and header files into a single list.
+# This makes it easy to maintain and avoids hardcoded directory paths.
+set(FORMAT_SOURCES
+    ${Sources}
+    ${Headers}
+)
+
+# Find clang-format executable
+find_program(CLANG_FORMAT_EXE NAMES clang-format clang-format-14 clang-format-13 clang-format-12)
 
 if(CLANG_FORMAT_EXE)
-    message(STATUS "clang-format found: ${CLANG_FORMAT_EXE}, adding target")
-    # Add a target that runs clang-format on all source files
-    add_custom_target(clang-format
-        COMMAND ${CLANG_FORMAT_EXE}
-        -i
-        -style=file
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/widgets/*.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/widgets/*.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/visualiser/*.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/visualiser/*.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/visualiserProxy/*.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/visualiserProxy/*.h
-        COMMENT "Running clang-format"
-    )
+    message(STATUS "clang-format found: ${CLANG_FORMAT_EXE}, adding format targets")
 
-    # Option to check formatting without modifying files
-    add_custom_target(clang-format-check
-        COMMAND ${CLANG_FORMAT_EXE}
-        -style=file
-        -output-replacements-xml
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/widgets/*.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/widgets/*.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/visualiser/*.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/visualiser/*.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/visualiserProxy/*.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/visualiserProxy/*.h
-        | grep -q "replacement offset"
-        && echo "Files need reformatting" && exit 1 || echo "Files are properly formatted"
-        COMMENT "Checking code formatting with clang-format"
-    )
+    # Create a command-safe list by quoting paths (handles spaces in filenames).
+    foreach(file ${FORMAT_SOURCES})
+        if(EXISTS "${file}")
+            list(APPEND FORMAT_SOURCES_SAFE "${file}")
+        endif()
+    endforeach()
+
+    # Only add the target if there are files to format
+    if(FORMAT_SOURCES_SAFE)
+        add_custom_target(clang-format
+            COMMAND ${CLANG_FORMAT_EXE} -i -style=file ${FORMAT_SOURCES_SAFE}
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Running clang-format on project sources"
+        )
+
+        add_custom_target(clang-format-check
+            COMMAND ${CLANG_FORMAT_EXE} -style=file -output-replacements-xml ${FORMAT_SOURCES_SAFE}
+                | grep -q "replacement offset"
+                && (echo \"Files need reformatting\" && exit 1) || echo \"Everything is properly formatted\"
+            COMMENT "Checking formatting with clang-format (no changes applied)"
+        )
+    else()
+        message(WARNING "No source files found to format.")
+    endif()
+else()
+    message(STATUS "clang-format not found, skipping format targets")
 endif()

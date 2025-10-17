@@ -40,7 +40,7 @@ struct ColumnAndRow
      * @return A new ColumnAndRow instance */
     static ColumnAndRow xy(CoordinateType x, CoordinateType y)
     {
-        return ColumnAndRow {.column=x, .row=y};
+        return ColumnAndRow{.column = x, .row = y};
     }
 
     /// @brief Gets the x-coordinate (same as column)
