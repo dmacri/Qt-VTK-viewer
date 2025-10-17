@@ -31,6 +31,7 @@ file(GLOB Resources *.qrc)
 file(GLOB Styles *.qss)
 file(GLOB UIs *.ui)
 file(GLOB_RECURSE Docs *.md)
+set(OTHER_FILES LICENSE .github/workflows/release--deb-package--ubuntu24.04.yml .githooks/pre-commit)
 
 
 # ============================================
@@ -69,7 +70,7 @@ find_package(VTK COMPONENTS
 # Executable target
 # ============================================
 add_executable(${PROJECT_NAME} MACOSX_BUNDLE
-    ${Sources} ${Headers} ${Resources} ${UIs} ${Styles} ${Docs} LICENSE .github/workflows/release--deb-package--ubuntu24.04.yml
+    ${Sources} ${Headers} ${Resources} ${UIs} ${Styles} ${Docs} ${OTHER_FILES}
 )
 
 
@@ -217,4 +218,47 @@ if (IWYU_PATH)
     set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
 else()
     message(WARNING "include-what-you-use not found. Consider installing it for header optimization.")
+endif()
+
+# ============================================
+# Formatting source code: clang-format
+# ============================================
+# Find clang-format
+find_program(CLANG_FORMAT_EXE NAMES clang-format clang-format-14 clang-format-13 clang-format-12 clang-format-11 clang-format-10 clang-format-9 clang-format-8 clang-format-7)
+
+if(CLANG_FORMAT_EXE)
+    message(STATUS "clang-format found: ${CLANG_FORMAT_EXE}, adding target")
+    # Add a target that runs clang-format on all source files
+    add_custom_target(clang-format
+        COMMAND ${CLANG_FORMAT_EXE}
+        -i
+        -style=file
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/widgets/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/widgets/*.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/visualiser/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/visualiser/*.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/visualiserProxy/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/visualiserProxy/*.h
+        COMMENT "Running clang-format"
+    )
+
+    # Option to check formatting without modifying files
+    add_custom_target(clang-format-check
+        COMMAND ${CLANG_FORMAT_EXE}
+        -style=file
+        -output-replacements-xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/widgets/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/widgets/*.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/visualiser/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/visualiser/*.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/visualiserProxy/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/visualiserProxy/*.h
+        | grep -q "replacement offset"
+        && echo "Files need reformatting" && exit 1 || echo "Files are properly formatted"
+        COMMENT "Checking code formatting with clang-format"
+    )
 endif()
