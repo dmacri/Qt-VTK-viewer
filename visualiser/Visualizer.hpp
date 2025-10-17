@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <string>
 #include <vtkActor2D.h>
 #include <vtkCellArray.h>
 #include <vtkCoordinate.h>
@@ -134,7 +133,7 @@ void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, Matrix& p)
     {
         for (int c = 0; c < nCols; ++c)
         {
-            rgb *color = p[r][c].outputValue();
+            rgb *color = p[r][c].outputValue(nullptr);
             lut->SetTableValue(
                 (nRows - 1 - r) * nCols + c,
                 toUnitColor(color->getRed()),

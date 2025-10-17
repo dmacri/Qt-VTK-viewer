@@ -159,7 +159,7 @@ void SceneWidget::addVisualizer(const std::string &filename, int stepNumber)
 {
     if (! std::filesystem::exists(filename))
     {
-        throw std::invalid_argument("File '"s + filename + "' does not exist!");
+        throw std::invalid_argument(std::string("File '") + filename + "' does not exist!");
     }
 
     setupSettingParameters(filename, stepNumber);
@@ -358,7 +358,7 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
 {
     vtkRenderWindowInteractor* interactor = static_cast<vtkRenderWindowInteractor*>(caller);
 
-    const string keyPressed = interactor->GetKeySym();
+    const std::string keyPressed = interactor->GetKeySym();
     SceneWidget* sw = static_cast<SceneWidget*>(clientData);
     SettingParameter* sp = sw->settingParameter.get();
 
