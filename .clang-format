@@ -1,5 +1,3 @@
-# yaml-language-server: $schema=https://json.schemastore.org/clang-format.json
----
 Language:        Cpp
 AccessModifierOffset: -4
 AlignAfterOpenBracket: DontAlign
@@ -83,16 +81,17 @@ AttributeMacros:
 BinPackArguments: false
 BinPackParameters: false
 BitFieldColonSpacing: Both
+BreakBeforeBraces: Allman
 BraceWrapping:
   AfterCaseLabel:  false
-  AfterClass:      true
-  AfterControlStatement: Never
-  AfterEnum:       false
+  AfterClass:      true     # Put '{' of classes on a new line
+  AfterControlStatement: Always # if, for, while – jeśli też chcesz Allman wszędzie
+  AfterEnum:       true     # (opcjonalnie) enums też w nowej linii
   AfterExternBlock: false
-  AfterFunction:   true
-  AfterNamespace:  false
+  AfterFunction:   true     # Put '{' of functions on a new line
+  AfterNamespace:  true     # (opcjonalnie) namespace { w nowej linii
   AfterObjCDeclaration: false
-  AfterStruct:     true
+  AfterStruct:     true     # Put '{' of structs on a new line
   AfterUnion:      false
   BeforeCatch:     false
   BeforeElse:      false
@@ -109,7 +108,6 @@ BreakAfterReturnType: None
 BreakArrays:     true
 BreakBeforeBinaryOperators: All
 BreakBeforeConceptDeclarations: Always
-BreakBeforeBraces: Allman
 BreakBeforeInlineASMColon: OnlyMultiline
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeComma
@@ -239,7 +237,7 @@ SpacesInAngles:  Never
 SpacesInContainerLiterals: false
 SpacesInLineCommentPrefix:
   Minimum:         1
-  Maximum:         -1
+  Maximum:         2
 SpacesInParens:  Never
 SpacesInParensOptions:
   ExceptDoubleParentheses: false

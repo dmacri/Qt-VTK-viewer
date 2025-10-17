@@ -1,5 +1,5 @@
 /** @file mainwindow.h
- * @brief Declaration of the MainWindow class - the main application window. */
+ *  @brief Declaration of the MainWindow class - the main application window. */
 
 #pragma once
 
@@ -7,17 +7,17 @@
 #include <QStyle>
 #include "types.h"
 
-namespace Ui {
+namespace Ui
+{
 class MainWindow;
 }
 
 class QPushButton;
 class QActionGroup;
 
-
 /** @class MainWindow
  * @brief The main application window class that manages the user interface.
- * 
+ *
  * This class handles the main window's user interface, including menu actions,
  * toolbars, and interaction with the 3D visualization widget. */
 class MainWindow : public QMainWindow
@@ -25,10 +25,10 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget* parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    
-    void loadInitialConfiguration(const QString& configFileName);
+
+    void loadInitialConfiguration(const QString &configFileName);
 
 private slots:
     void showAboutThisApplicationDialog();
@@ -70,37 +70,37 @@ private:
 
     void playingRequested(PlayingDirection direction);
 
-    void configureUIElements(const QString& configFileName);
+    void configureUIElements(const QString &configFileName);
     void setupConnections();
     void configureButtons();
-    void configureButton(QPushButton* button, QStyle::StandardPixmap icon);
-    void initializeSceneWidget(const QString& configFileName);
+    void configureButton(QPushButton *button, QStyle::StandardPixmap icon);
+    void initializeSceneWidget(const QString &configFileName);
     void connectButtons();
     void connectSliders();
     void connectMenuActions();
-    void showInputFilePathOnBarLabel(const QString& inputFilePath);
+    void showInputFilePathOnBarLabel(const QString &inputFilePath);
 
     void loadStrings();
 
-    bool setPositionOnWidgets(int stepPosition, bool updateSlider=true);
+    bool setPositionOnWidgets(int stepPosition, bool updateSlider = true);
 
     int totalSteps() const;
 
     void changeWhichButtonsAreEnabled();
 
-    void recordVideoToFile(const QString& outputFilePath, int fps);
+    void recordVideoToFile(const QString &outputFilePath, int fps);
 
     void setWidgetsEnabledState(bool enabled);
     void enterNoConfigurationFileMode();
-    
-    void switchToModel(const QString& modelName);
+
+    void switchToModel(const QString &modelName);
     void createModelMenuActions();
     void createViewModeActionGroup();
     void updateCameraControlsVisibility();
 
-    Ui::MainWindow* ui;
-    
-    QActionGroup* modelActionGroup;
+    Ui::MainWindow *ui;
+
+    QActionGroup *modelActionGroup;
 
     int currentStep;
     bool isPlaying = false;
