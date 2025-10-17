@@ -116,33 +116,17 @@ void SceneWidget::loadAndUpdateVisualizationForCurrentStep()
     lines.resize(settingParameter->numberOfLines);
 
     // Read stage state from files for the current step
-    sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(
-        settingParameter.get(),
-        &lines[0]
-    );
+    sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
 
     // Refresh VTK visualization elements
-    sceneWidgetVisualizerProxy->refreshWindowsVTK(
-        settingParameter->numberOfRowsY,
-        settingParameter->numberOfColumnX,
-        settingParameter->step,
-        &lines[0],
-        settingParameter->numberOfLines,
-        gridActor
-    );
+    sceneWidgetVisualizerProxy->refreshWindowsVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, gridActor);
 
     //visualiserProxy->vis->refreshBuildLoadBalanceLine(lines, cam->numberOfLines, cam->dimY+1, cam->dimX+1, actorBuildLine, colors, pts, cellLines, grid);
 
     // Update load balancing lines if we have any
     if (settingParameter->numberOfLines > 0)
     {
-        sceneWidgetVisualizerProxy->getVisualizer().refreshBuildLoadBalanceLine(
-            &lines[0],
-            settingParameter->numberOfLines,
-            settingParameter->numberOfRowsY + 1,
-            settingParameter->numberOfColumnX + 1,
-            actorBuildLine
-        );
+        sceneWidgetVisualizerProxy->getVisualizer().refreshBuildLoadBalanceLine(lines, settingParameter->numberOfColumnX + 1, actorBuildLine);
     }
 
     // Update step number display
@@ -520,7 +504,7 @@ void SceneWidget::renderVtkScene()
     lines.resize(settingParameter->numberOfLines);
     sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
 
-    sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, settingParameter->step, renderer, gridActor);
+    sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, renderer, gridActor);
 
     sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfColumnX+1, renderer, actorBuildLine);
 
