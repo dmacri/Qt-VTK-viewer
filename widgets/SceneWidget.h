@@ -52,8 +52,7 @@ public:
      *  @param stepNumber The simulation step to display **/
     void addVisualizer(const std::string &filename, int stepNumber);
 
-    /** @brief Updates the visualization widget to show the specified step.
-     *  @param stepNumber The step number to display */
+    /// @brief Updates the visualization widget to show the specified step number
     void selectedStepParameter(StepIndex stepNumber);
 
     /** @brief Switch to a different model type.
@@ -83,16 +82,13 @@ public:
      * @param stepNumber Initial step number to display */
     void loadNewConfiguration(const std::string& configFileName, int stepNumber = 0);
 
-    /** @brief Get the current model name.
-     * 
-     * @return std::string The name of the currently active model */
+    /// @brief Get the current model name of the currently active model
     auto getCurrentModelName() const
     {
         return sceneWidgetVisualizerProxy->getModelName();
     }
 
-    /** @brief Get the current setting parameter
-     *  @return Pointer to the current SettingParameter object */
+    /// @brief Get the current SettingParameter object
     const SettingParameter* getSettingParameter() const
     {
         return settingParameter.get();
@@ -109,19 +105,16 @@ public:
      * This method enables full 3D camera controls including rotation and elevation. */
     void setViewMode3D();
 
-    /** @brief Show or hide the orientation axes widget.
-     * 
-     * @param visible If true, shows the axes widget; if false, hides it */
+    /// @brief Show or hide the orientation axes widget. If true, shows the axes widget; if false, hides it
     void setAxesWidgetVisible(bool visible);
 
-    /** @brief Get the current view mode.
-     * 
-     * @return The current ViewMode (2D or 3D) */
-    ViewMode getViewMode() const { return currentViewMode; }
+    /// @brief Get the current ViewMode (2D or 3D)
+    ViewMode getViewMode() const
+    {
+        return currentViewMode;
+    }
 
-    /** @brief Set camera azimuth (rotation around Z axis).
-     * 
-     * @param angle Azimuth angle in degrees */
+    /// @brief Set camera azimuth (rotation around Z axis) in degrees
     void setCameraAzimuth(double angle);
 
     /** @brief Set camera elevation (rotation around X axis).

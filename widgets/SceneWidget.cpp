@@ -723,10 +723,8 @@ void SceneWidget::upgradeModelInCentralPanel()
 
     try
     {
-        // Load and update visualization using helper method
         loadAndUpdateVisualizationForCurrentStep();
         
-        // Trigger render update
         triggerRenderUpdate();
         QApplication::processEvents();
     }
