@@ -263,3 +263,5 @@ if(CLANG_FORMAT_EXE)
 else()
     message(STATUS "clang-format not found, skipping format targets")
 endif()
+
+add_subdirectory(examples/custom_model_plugin)
