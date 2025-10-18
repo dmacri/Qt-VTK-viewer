@@ -468,11 +468,13 @@ void MainWindow::switchToModel(const QString& modelName)
 {
     try
     {
-        // Find the model type from factory
-        const auto visualizer = SceneWidgetVisualizerFactory::createFromName(modelName.toStdString());
-        ModelType modelType = static_cast<ModelType>(visualizer->getModelTypeValue());
+        // Verify that model is registered
+        if (!SceneWidgetVisualizerFactory::isModelRegistered(modelName.toStdString()))
+        {
+            throw std::invalid_argument("Model not registered: " + modelName.toStdString());
+        }
         
-        ui->sceneWidget->switchModel(modelType);
+        ui->sceneWidget->switchModel(modelName.toStdString());
         
         QMessageBox::information(this, tr("Model Changed"),
                                  tr("Successfully switched to %1 model, but no data was reloaded from files.\n"

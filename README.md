@@ -36,13 +36,24 @@ OOPENCAL_DIR=~/BestSoftwareEver
 
 ## Documentation
 
-Comprehensive API documentation is available and can be generated using Doxygen. To generate the documentation:
+### API Documentation
+
+Comprehensive API documentation is available and can be generated using Doxygen:
 
 ```bash
 doxygen Doxyfile
 ```
 
-The generated documentation will be available in the `doc/html` directory. Open `index.html` in a web browser to view it.
+The generated documentation will be available in the `doc/html` directory.
+
+### Additional Documentation
+
+- **[doc/PLUGIN_SYSTEM.md](doc/PLUGIN_SYSTEM.md)** - Complete guide to creating and loading plugins
+- **[doc/REFACTORING_SUMMARY.md](doc/REFACTORING_SUMMARY.md)** - Details of the plugin system refactoring
+- **[doc/CHANGELOG_RUNTIME_MODELS.md](doc/CHANGELOG_RUNTIME_MODELS.md)** - History of runtime model system
+- **[doc/VIEW_MODES.md](doc/VIEW_MODES.md)** - 2D/3D view modes documentation
+- **[doc/Build-VTK.md](doc/Build-VTK.md)** - VTK compilation instructions
+- **[examples/custom_model_plugin/](examples/custom_model_plugin/)** - Working example of a plugin
 
 ## Project Structure
 
@@ -94,13 +105,34 @@ Done. Happy coding :)
 
 ## Features
 
+### 🔌 Plugin System for Custom Models (NEW!)
+
+The application now supports **loading custom models as plugins** without recompiling the application!
+
+**Key Benefits:**
+- ✅ Add custom models as shared libraries (.so files)
+- ✅ No recompilation of the main application needed
+- ✅ Hot-swappable models - just drop a plugin in `./plugins/`
+- ✅ Full example plugin included in `examples/custom_model_plugin/`
+
+**Quick Start:**
+```bash
+# Create your custom cell model inheriting from Element
+# Compile it as a plugin (.so)
+# Place in ./plugins/ directory
+# Launch QtVtkViewer - your model appears in the Model menu!
+```
+
+See **[doc/PLUGIN_SYSTEM.md](doc/PLUGIN_SYSTEM.md)** for complete documentation and examples.
+
 ### ✨ Runtime Model Switching & Configuration Loading
 
-The application now supports **dynamic model switching and configuration loading at runtime** without recompilation!
+The application supports **dynamic model switching and configuration loading at runtime**:
 
 **Model Switching:**
-- Switch between different cell models (Ball, SciddicaT) via the **Model menu**
-- No need to edit `SceneWidgetVisualizerProxyDefault.h` and recompile
+- Switch between different cell models via the **Model menu**
+- Built-in models: Ball, SciddicaT
+- Add your own via plugins (no recompilation!)
 - Easy to extend with new models
 
 **Configuration Loading:**

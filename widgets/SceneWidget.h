@@ -55,13 +55,13 @@ public:
     /// @brief Updates the visualization widget to show the specified step number
     void selectedStepParameter(StepIndex stepNumber);
 
-    /** @brief Switch to a different model type.
+    /** @brief Switch to a different model by name.
      * 
      * This method allows changing the visualization model at runtime.
      * @note This does NOT reload data files. Use reloadData() after switching.
      * 
-     * @param modelType The new model type to use */
-    void switchModel(ModelType modelType);
+     * @param modelName The name of the model to use (e.g., "Ball", "SciddicaT") */
+    void switchModel(const std::string& modelName);
 
     /** @brief Reload data files for the current model.
      * 
@@ -340,8 +340,8 @@ private:
     /// @brief Current setting parameter for the visualization.
     std::unique_ptr<SettingParameter> settingParameter;
     
-    /// @brief Currently active model type
-    ModelType currentModelType;
+    /// @brief Currently active model name
+    std::string currentModelName;
     
     /// @brief Current view mode (2D or 3D)
     ViewMode currentViewMode = ViewMode::Mode2D;

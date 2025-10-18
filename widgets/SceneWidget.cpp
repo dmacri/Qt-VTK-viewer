@@ -65,9 +65,9 @@ vtkColor3d toVtkColor(QColor color)
 
 SceneWidget::SceneWidget(QWidget* parent)
     : QVTKOpenGLNativeWidget(parent)
-    , sceneWidgetVisualizerProxy{SceneWidgetVisualizerFactory::create(ModelType::Ball)}
+    , sceneWidgetVisualizerProxy{SceneWidgetVisualizerFactory::defaultModel()}
     , settingParameter{std::make_unique<SettingParameter>()}
-    , currentModelType{sceneWidgetVisualizerProxy->getModelTypeValue()}
+    , currentModelName{sceneWidgetVisualizerProxy->getModelName()}
 {
     enableToolTipWhenMouseAboveWidget();
 
@@ -726,16 +726,16 @@ void SceneWidget::upgradeModelInCentralPanel()
     settingParameter->changed = false;
 }
 
-void SceneWidget::switchModel(ModelType modelType)
+void SceneWidget::switchModel(const std::string& modelName)
 {
-    if (modelType == currentModelType)
+    if (modelName == currentModelName)
     {
         return; // Already using this model
     }
 
     // Create new visualizer with the selected model
-    sceneWidgetVisualizerProxy = SceneWidgetVisualizerFactory::create(modelType);
-    currentModelType = modelType;
+    sceneWidgetVisualizerProxy = SceneWidgetVisualizerFactory::create(modelName);
+    currentModelName = modelName;
 
     // Reinitialize the matrix with current dimensions
     sceneWidgetVisualizerProxy->initMatrix(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY);

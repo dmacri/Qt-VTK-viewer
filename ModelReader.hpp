@@ -154,15 +154,15 @@ ColumnAndRow calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std
 }
 /////////////////////////////
 
-template <class T>
-ColumnAndRow ModelReader<T>::readColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node)
+template <class Cell>
+ColumnAndRow ModelReader<Cell>::readColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node)
 {
     ColumnAndRow columnAndRow;
     std::ifstream file = readColumnAndRowForStepFromFileReturningStream(step, fileName, node, columnAndRow);
     return columnAndRow;
 }
-template <class T>
-std::ifstream ModelReader<T>::readColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName, NodeIndex node, ColumnAndRow &columnAndRow)
+template <class Cell>
+std::ifstream ModelReader<Cell>::readColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName, NodeIndex node, ColumnAndRow &columnAndRow)
 {
     const auto fileNameTmp = ReaderHelpers::giveMeFileName(fileName, node);
 
@@ -189,9 +189,9 @@ std::ifstream ModelReader<T>::readColumnAndRowForStepFromFileReturningStream(Ste
     return file;
 }
 
-template<class T>
+template<class Cell>
 template<class Matrix>
-void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line* lines)
+void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParameter* sp, Line* lines)
 {
     const auto totalNodes = sp->nNodeX * sp->nNodeY;
     const auto columnsAndRows = giveMeLocalColsAndRowsForAllSteps(sp->step, sp->nNodeX, sp->nNodeY, sp->outputFileName);
@@ -258,7 +258,7 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
             {
                 if (!localStartStepDone) [[unlikely]]
                 {
-                    m[row + offsetXY.y()][col + offsetXY.x()].T::startStep(sp->step);
+                    m[row + offsetXY.y()][col + offsetXY.x()].Cell::startStep(sp->step);
                     localStartStepDone = true;
                 }
 
@@ -266,7 +266,7 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
                 char* nextTokenPtr = std::find(currentTokenPtr, line.data() + line.size(), '\0');
                 ++nextTokenPtr; // skip '\0'
 
-                m[row + offsetXY.y()][col + offsetXY.x()].T::composeElement(currentTokenPtr);
+                m[row + offsetXY.y()][col + offsetXY.x()].Cell::composeElement(currentTokenPtr);
 
                 currentTokenPtr = nextTokenPtr;
             }
@@ -287,8 +287,8 @@ void ModelReader<T>::readStageStateFromFilesForStep(Matrix& m, SettingParameter*
     // Wait for all async tasks to complete
     std::ranges::for_each(futures, [](std::future<void>& f){ f.get(); });
 }
-template<class T>
-std::vector<ColumnAndRow> ModelReader<T>::giveMeLocalColsAndRowsForAllSteps(StepIndex step, int nNodeX, int nNodeY, const std::string& fileName)
+template<class Cell>
+std::vector<ColumnAndRow> ModelReader<Cell>::giveMeLocalColsAndRowsForAllSteps(StepIndex step, int nNodeX, int nNodeY, const std::string& fileName)
 {
     const auto nodesCount = nNodeX * nNodeY;
     std::vector<ColumnAndRow> allColumnsAndRows(nodesCount);
@@ -301,8 +301,8 @@ std::vector<ColumnAndRow> ModelReader<T>::giveMeLocalColsAndRowsForAllSteps(Step
     return allColumnsAndRows;
 }
 
-template <class T>
-void ModelReader<T>::readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, NodeIndex nNodeY, const std::string& filename)
+template <class Cell>
+void ModelReader<Cell>::readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, NodeIndex nNodeY, const std::string& filename)
 {
     const auto totalNodes = nNodeX * nNodeY;
     for (NodeIndex node = 0; node < totalNodes; ++node)

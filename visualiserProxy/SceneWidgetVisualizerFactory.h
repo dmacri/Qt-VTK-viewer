@@ -2,13 +2,13 @@
  * @brief Factory for creating scene widget visualizers.
  * 
  * This file contains the SceneWidgetVisualizerFactory class, which is responsible for
- * creating appropriate visualizer instances based on the model type. The factory
+ * creating appropriate visualizer instances based on the model name. The factory
  * enables dynamic model selection at runtime and provides a unified way to create
  * visualizers without exposing the underlying implementation details.
  * 
- * The factory supports all model types defined in the ModelType enum and provides
- * methods to create visualizers either by type or by name. It serves as the main
- * entry point for the visualization system to obtain visualizer instances.
+ * The factory uses a registry-based approach where models can be registered at startup.
+ * This design enables a plugin system where new models can be added dynamically without
+ * recompiling the application. Models are identified by their string names.
  * 
  * @see ISceneWidgetVisualizer
  * @see SceneWidgetVisualizerAdapter
@@ -19,56 +19,70 @@
 #include <string>
 #include <memory> // std::unique_ptr<>
 #include <vector>
+#include <map>
+#include <functional>
 
-// Forward declaration
 class ISceneWidgetVisualizer;
 
-/** @enum ModelType
- * @brief Enumerates the supported model types for visualization.
- * 
- * This enum defines all model types that can be visualized by the system.
- * Each value corresponds to a specific model implementation with its own
- * visualization requirements and behaviors. */
-enum class ModelType: int
-{
-    Ball,       ///< Ball model for granular material simulation
-    SciddicaT   ///< SCIDDICA-T model for debris flows simulation
-};
-
 /** @class SceneWidgetVisualizerFactory
- * @brief Factory class for creating visualizer instances based on model type.
+ * @brief Factory class for creating visualizer instances based on model name.
  * 
  * This factory is responsible for creating the appropriate visualizer instances
- * for different model types. It provides a simple interface for creating visualizers
- * without requiring knowledge of the specific implementation details of each model.
+ * for different model types identified by their string names. It provides a simple
+ * interface for creating visualizers without requiring knowledge of the specific
+ * implementation details of each model.
  * 
- * The factory uses the Adapter pattern internally to wrap template-based visualizers
- * in a polymorphic interface, allowing for runtime model selection and visualization.
+ * The factory uses a registry pattern where models are registered with factory functions.
+ * This allows for a plugin system where new models can be added at runtime by registering
+ * their creation functions, enabling dynamic model loading without recompilation.
  * 
- * @note This class follows the Singleton pattern, though it's not enforced, to ensure
- *       a single point of control for visualizer creation. */
+ * Built-in models are registered automatically at startup via the static initialization
+ * mechanism. Plugin models can be registered by calling registerModel() with appropriate
+ * creation functions.
+ * 
+ * @note This class uses static methods and a static registry for simplicity. */
 class SceneWidgetVisualizerFactory
 {
 public:
-    /** @brief Create a visualizer for the specified model type.
-     * 
-     * @param type The model type to create
-     * @return std::unique_ptr<ISceneWidgetVisualizer> Pointer to the created visualizer
-     * @throws std::invalid_argument if the model type is not supported */
-    static std::unique_ptr<ISceneWidgetVisualizer> create(ModelType type);
+    /// Type for model creation functions
+    using ModelCreator = std::function<std::unique_ptr<ISceneWidgetVisualizer>()>;
 
     /** @brief Create a visualizer from a string name.
      * 
-     * @param modelName The name of the model (e.g., from Cell::name())
+     * @param modelName The name of the model (e.g., "Ball", "SciddicaT")
      * @return std::unique_ptr<ISceneWidgetVisualizer> Pointer to the created visualizer
      * @throws std::invalid_argument if the model name is not recognized */
-    static std::unique_ptr<ISceneWidgetVisualizer> createFromName(const std::string& modelName);
+    static std::unique_ptr<ISceneWidgetVisualizer> create(const std::string& modelName);
 
-    /** @brief Get all available model names.
+    /// @brief Create a visualizer for default model
+    static std::unique_ptr<ISceneWidgetVisualizer> defaultModel();
+
+    /** @brief Register a new model with the factory.
      * 
-     * This method creates temporary instances of each model to get their names
-     * from the overrides from ISceneWidgetVisualizer::getModelName() method.
+     * This method allows adding new models at runtime. The creator function will be
+     * called whenever a visualizer for this model is requested.
      * 
-     * @return std::vector<std::string> List of available model names */
+     * @param modelName The unique name of the model
+     * @param creator Function that creates a new instance of the visualizer
+     * @return true if registration succeeded, false if model already exists */
+    static bool registerModel(const std::string& modelName, ModelCreator creator);
+
+    /// @brief Get all available model names
     static std::vector<std::string> getAvailableModels();
+
+    /** @brief Check if a model is registered.
+     * 
+     * @param modelName The name of the model to check
+     * @return true if the model is registered, false otherwise */
+    static bool isModelRegistered(const std::string& modelName);
+
+private:
+    /// Registry of model creation functions
+    static std::map<std::string, ModelCreator>& getRegistry();
+    
+    /// Initialize built-in models (called automatically)
+    static void initializeBuiltInModels();
+    
+    /// Flag to track if built-in models are initialized
+    static inline bool isInitializedWithBuildInModels = false;
 };
