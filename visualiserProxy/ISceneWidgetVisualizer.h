@@ -18,7 +18,7 @@
 #pragma once
 
 #include <vtkRenderer.h>
-#include "types.h"
+#include "utilities/types.h"
 
 // Forward declarations
 class SettingParameter;

@@ -14,7 +14,7 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "PluginLoader.h"
+#include "utilities/PluginLoader.h"
 #include "widgets/ConfigDetailsDialog.h"
 #include "widgets/ColorSettingsDialog.h"
 #include "visualiser/VideoExporter.h"

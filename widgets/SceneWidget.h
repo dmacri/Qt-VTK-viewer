@@ -18,7 +18,7 @@
 #include <vtkAxisActor2D.h>
 #include "visualiserProxy/ISceneWidgetVisualizer.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
-#include "types.h"
+#include "utilities/types.h"
 
 /** @enum ViewMode
  * @brief Defines the camera view mode for the scene.

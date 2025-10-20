@@ -3,9 +3,9 @@
  *
  * This file initializes the Qt application, sets up the main window,
  * handles command-line arguments for loading initial configurations,
- * and loads model plugins from the plugins directory. */
-
-/** @mainpage Qt-VTK Viewer
+ * and loads model plugins from the plugins directory.
+ *
+ * @mainpage Qt-VTK Viewer
  * @tableofcontents
  *
  * @section intro_sec Introduction
@@ -20,9 +20,6 @@
  *
  * @include README.md */
 
-#include "mainwindow.h"
-#include "PluginLoader.h"
-
 #include <filesystem>
 #include <QApplication>
 #include <QFile>
@@ -30,6 +27,9 @@
 #include <QSurfaceFormat>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <QVTKOpenGLNativeWidget.h>
+#include "mainwindow.h"
+#include "utilities/PluginLoader.h"
+
 
 int main(int argc, char *argv[])
 {

@@ -5,7 +5,7 @@
 
 #include <QMainWindow>
 #include <QStyle>
-#include "types.h"
+#include "utilities/types.h"
 
 namespace Ui
 {

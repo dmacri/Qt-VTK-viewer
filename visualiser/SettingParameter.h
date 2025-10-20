@@ -5,7 +5,7 @@
 
 #include <iosfwd>
 #include <string>
-#include "types.h"
+#include "utilities/types.h"
 
 /** @struct SettingParameter
  * @brief Contains parameters for visualization settings and simulation configuration.

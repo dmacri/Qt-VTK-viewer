@@ -15,7 +15,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 file(GLOB_RECURSE Headers *.h *.hpp)
 file(GLOB Sources *.cpp)
 list(APPEND Sources
-    PluginLoader.cpp
     config/Config.cpp
     config/ConfigCategory.cpp
     visualiser/SettingParameter.cpp
@@ -27,6 +26,8 @@ list(APPEND Sources
     widgets/SceneWidget.cpp
     widgets/ColorSettingsDialog.cpp
     widgets/ColorSettings.cpp
+    utilities/PluginLoader.cpp
+    utilities/ModelReader.cpp
 )
 file(GLOB Resources *.qrc)
 file(GLOB Styles *.qss)
