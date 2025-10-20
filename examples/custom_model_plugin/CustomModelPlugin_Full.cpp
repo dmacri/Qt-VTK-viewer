@@ -14,29 +14,31 @@
 #include "visualiserProxy/SceneWidgetVisualizerAdapter.h"  // for SceneWidge...
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"  // for SceneWidge...
 
+#define MODEL_NAME "CustomModel"
+
 extern "C"
 {
 /// Plugin entry point - this gets called when the plugin is loaded
 __attribute__((visibility("default")))
 void registerPlugin()
 {
-    std::cout << "Registering CustomModel plugin..." << std::endl;
+    std::cout << "Registering " MODEL_NAME " plugin..." << std::endl;
     
     // Register the custom model with the factory
-    bool success = SceneWidgetVisualizerFactory::registerModel("CustomModel", []() {
+    bool success = SceneWidgetVisualizerFactory::registerModel(MODEL_NAME, []() {
         return std::make_unique<SceneWidgetVisualizerAdapter<CustomCell>>(
-            "CustomModel"  // Model name - this will appear in the menu
+            MODEL_NAME  // - this will appear in the menu
         );
     });
     
     if (success)
     {
-        std::cout << "✓ CustomModel plugin registered successfully!" << std::endl;
+        std::cout << "✓ " MODEL_NAME " plugin registered successfully!" << std::endl;
         std::cout << "  The model is now available in Model menu" << std::endl;
     }
     else
     {
-        std::cerr << "✗ Failed to register CustomModel - name may already exist" << std::endl;
+        std::cerr << "✗ Failed to register " MODEL_NAME " - name may already exist" << std::endl;
     }
 }
 
@@ -44,8 +46,8 @@ void registerPlugin()
 __attribute__((visibility("default")))
 const char* getPluginInfo()
 {
-    return "CustomModel Plugin v1.0\n"
-           "Author: Example Developer\n"
+    return MODEL_NAME " Plugin v1.0\n"
+           "Author: Developers of Qt-VTK-viewer\n"
            "Description: Example custom cell model with color gradient visualization\n"
            "Compatible with: Qt-VTK-viewer 2.x";
 }
@@ -61,6 +63,6 @@ int getPluginVersion()
 __attribute__((visibility("default")))
 const char* getModelName()
 {
-    return "CustomModel";
+    return MODEL_NAME;
 }
 } // extern "C"

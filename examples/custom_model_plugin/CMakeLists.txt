@@ -68,20 +68,20 @@ include_directories(
 # Build the plugin as a shared library
 # ============================================================================
 
-add_library(CustomModelPlugin SHARED
+add_library(${PROJECT_NAME} SHARED
     CustomModelPlugin_Full.cpp
     # Do NOT compile Factory - use symbols from main app!
     README.md
 )
 
 # Link with VTK (minimal linking - main app has most dependencies)
-target_link_libraries(CustomModelPlugin
+target_link_libraries(${PROJECT_NAME}
     PRIVATE
     ${VTK_LIBRARIES}
 )
 
 # Ensure symbols are exported
-set_target_properties(CustomModelPlugin PROPERTIES
+set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_VISIBILITY_PRESET default
     VERSION ${PROJECT_VERSION}
     SOVERSION 1
@@ -93,7 +93,7 @@ set_target_properties(CustomModelPlugin PROPERTIES
 # ============================================================================
 
 # Install to plugins directory relative to build directory
-install(TARGETS CustomModelPlugin
+install(TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins
     RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins
 )
@@ -103,7 +103,7 @@ install(TARGETS CustomModelPlugin
 # ============================================================================
 
 message(STATUS "========================================")
-message(STATUS "CustomModelPlugin Configuration")
+message(STATUS "${PROJECT_NAME} Configuration")
 message(STATUS "========================================")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Qt-VTK-viewer source: ${QTVTKVIEWER_DIR}")
