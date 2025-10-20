@@ -63,6 +63,7 @@ include_directories(
 add_library(CustomModelPlugin SHARED
     CustomModelPlugin_Full.cpp
     # Do NOT compile Factory - use symbols from main app!
+    README.md
 )
 
 # Link with VTK (minimal linking - main app has most dependencies)

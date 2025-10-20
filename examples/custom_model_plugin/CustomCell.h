@@ -48,10 +48,8 @@ public:
         return zstr;
     }
 
-    /**
-     * Determine the output color based on the cell value
-     * Blue (0) -> Cyan -> Green -> Yellow -> Red (255)
-     */
+    /** Determine the output color based on the cell value
+     * Blue (0) -> Cyan -> Green -> Yellow -> Red (255) */
     rgb* outputValue(char* str) override
     {
         // Normalize value to 0-1 range (assuming 0-255 input)

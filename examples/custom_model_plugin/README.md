@@ -93,7 +93,8 @@ Add this to `main.cpp`:
 void loadPlugin(const char* path)
 {
     void* handle = dlopen(path, RTLD_LAZY);
-    if (!handle) {
+    if (!handle) 
+    {
         std::cerr << "Failed to load: " << dlerror() << std::endl;
         return;
     }
@@ -101,7 +102,8 @@ void loadPlugin(const char* path)
     typedef void (*RegisterFunc)();
     auto registerPlugin = (RegisterFunc)dlsym(handle, "registerPlugin");
     
-    if (registerPlugin) {
+    if (registerPlugin) 
+    {
         registerPlugin();
         std::cout << "Plugin loaded: " << path << std::endl;
     }
@@ -202,27 +204,29 @@ registerPlugin()                    // Entry point
 The plugin can export additional functions:
 
 ```cpp
-extern "C" {
-
+extern "C" 
+{
 // Plugin info
 __attribute__((visibility("default")))
-const char* getPluginInfo() {
+const char* getPluginInfo() 
+{
     return "My Plugin v1.0 - Model description";
 }
 
 // Plugin version
 __attribute__((visibility("default")))
-int getPluginVersion() {
+int getPluginVersion() 
+{
     return 100; // 1.00
 }
 
 // Model name
 __attribute__((visibility("default")))
-const char* getModelName() {
+const char* getModelName() 
+{
     return "MyModel";
 }
-
-}
+} // extern "C" 
 ```
 
 The application can call these to display plugin information.
