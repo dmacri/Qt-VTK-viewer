@@ -18,6 +18,8 @@ set(OOPENCAL_DIR "${QTVTKVIEWER_DIR}/.." CACHE PATH "Path to OOpenCAL directory"
 # Find required packages
 # ============================================================================
 
+# Only find packages if not already found by parent project
+if(NOT VTK_FOUND)
 find_package(VTK COMPONENTS
     CommonColor
     CommonCore
@@ -37,9 +39,15 @@ find_package(VTK COMPONENTS
         GUISupportQt
         IOLegacy
 )
+endif()
+
+# Qt is optional for plugins (only needed if plugin uses Qt types in headers)
+# If building as subdirectory, Qt should already be found by main project
+if(NOT Qt6_FOUND AND NOT Qt5_FOUND)
 find_package(Qt6 COMPONENTS Core Widgets QUIET)
 if(NOT Qt6_FOUND)
-    find_package(Qt5 5.15 REQUIRED COMPONENTS Core Widgets)
+        find_package(Qt5 5.15 COMPONENTS Core Widgets QUIET)
+    endif()
 endif()
 
 # ============================================================================
@@ -97,14 +105,24 @@ install(TARGETS CustomModelPlugin
 message(STATUS "========================================")
 message(STATUS "CustomModelPlugin Configuration")
 message(STATUS "========================================")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Qt-VTK-viewer source: ${QTVTKVIEWER_DIR}")
 message(STATUS "OOpenCAL directory:   ${OOPENCAL_DIR}")
 message(STATUS "VTK version:          ${VTK_VERSION}")
+
+# Check if building as subdirectory or standalone
+get_directory_property(HAS_PARENT PARENT_DIRECTORY)
+if(HAS_PARENT)
+    message(STATUS "Building as subdirectory of main project")
+else()
+    message(STATUS "Building standalone")
 message(STATUS "")
 message(STATUS "To build:")
 message(STATUS "  mkdir build && cd build")
 message(STATUS "  cmake ..")
 message(STATUS "  make")
+endif()
+
 message(STATUS "")
 message(STATUS "Output: libCustomModelPlugin.so")
 message(STATUS "========================================")

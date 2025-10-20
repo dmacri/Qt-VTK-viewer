@@ -37,6 +37,10 @@ The plugin **MUST NOT** compile its own copy of `SceneWidgetVisualizerFactory.cp
 * The main application is linked with `-rdynamic` to export symbols
 * The plugin accesses these symbols via `RTLD_GLOBAL`
 
+**Note:** The plugin's `CMakeLists.txt` is designed to work in two modes:
+* **Standalone build** - Find packages independently
+* **Subdirectory build** - Reuse packages from main project (avoids CMake conflicts)
+
 ## Plugin Compilation
 
 ### Requirements
@@ -208,21 +212,21 @@ extern "C"
 {
 // Plugin info
 __attribute__((visibility("default")))
-const char* getPluginInfo() 
+const char* getPluginInfo()
 {
     return "My Plugin v1.0 - Model description";
 }
 
 // Plugin version
 __attribute__((visibility("default")))
-int getPluginVersion() 
+int getPluginVersion()
 {
     return 100; // 1.00
 }
 
 // Model name
 __attribute__((visibility("default")))
-const char* getModelName() 
+const char* getModelName()
 {
     return "MyModel";
 }
