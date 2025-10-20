@@ -778,6 +778,7 @@ void MainWindow::onCameraOrientationChanged(double azimuth, double elevation)
 void MainWindow::updateRecentFilesMenu()
 {
     ui->menuRecentFiles->clear();
+    ui->menuRecentFiles->setToolTipsVisible(true);
     
     QStringList recentFiles = loadRecentFiles();
     
@@ -869,6 +870,10 @@ QString MainWindow::getSmartDisplayName(const QString& filePath, const QStringLi
 {
     QFileInfo fileInfo(filePath);
     QString fileName = fileInfo.fileName();
+    QDir fileDir = fileInfo.dir();
+    
+    // Start with parent/filename as default (depth = 1)
+    QString displayName = fileDir.dirName() + "/" + fileName;
     
     // Count how many files have the same filename
     int sameNameCount = 0;
@@ -880,19 +885,23 @@ QString MainWindow::getSmartDisplayName(const QString& filePath, const QStringLi
         }
     }
     
-    // If unique, just return filename
+    // If unique filename, return parent/filename
     if (sameNameCount == 1)
     {
-        return fileName;
+        return displayName;
     }
     
-    // Otherwise, add parent directories until unique
-    QDir fileDir = fileInfo.dir();
-    QString displayName = fileName;
-    
-    for (int depth = 1; depth <= 3; ++depth)  // Try up to 3 parent directories
+    // Otherwise, check if parent/filename is already unique
+    for (int depth = 1; depth <= 4; ++depth)  // Try up to 4 parent directories
     {
-        displayName = fileDir.dirName() + "/" + displayName;
+        // Build display name with current depth
+        QDir currentDir = fileInfo.dir();
+        QString currentDisplayName = fileInfo.fileName();
+        for (int d = 0; d < depth; ++d)
+        {
+            currentDisplayName = currentDir.dirName() + "/" + currentDisplayName;
+            currentDir.cdUp();
+        }
         
         // Check if this display name is unique among conflicting files
         bool isUnique = true;
@@ -914,7 +923,7 @@ QString MainWindow::getSmartDisplayName(const QString& filePath, const QStringLi
                 otherDir.cdUp();
             }
             
-            if (otherDisplayName == displayName)
+            if (otherDisplayName == currentDisplayName)
             {
                 isUnique = false;
                 break;
@@ -923,10 +932,8 @@ QString MainWindow::getSmartDisplayName(const QString& filePath, const QStringLi
         
         if (isUnique)
         {
-            return displayName;
+            return currentDisplayName;
         }
-        
-        fileDir.cdUp();
     }
     
     // If still not unique, return full path
