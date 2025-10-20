@@ -488,6 +488,16 @@
     </property>
     <addaction name="actionOpenConfiguration"/>
     <addaction name="separator"/>
+    <widget class="QMenu" name="menuRecentFiles">
+     <property name="title">
+      <string>Recent Files</string>
+     </property>
+     <property name="toolTip">
+      <string>Recent model configuration files</string>
+     </property>
+    </widget>
+    <addaction name="menuRecentFiles"/>
+    <addaction name="separator"/>
     <addaction name="actionShow_config_details"/>
     <addaction name="separator"/>
     <addaction name="actionExport_Video"/>

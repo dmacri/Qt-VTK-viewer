@@ -85,7 +85,7 @@ void registerPlugin()
         //                                        ^^^^^^^
         //                                     Change here!
         return std::make_unique<SceneWidgetVisualizerAdapter<CustomCell>>(
-            999, "MyModel"  // And here!
+            "MyModel"  // And here!
         );
     });
     
@@ -166,8 +166,7 @@ Your model must inherit from `Element`:
 
 ```cpp
 // MyModelCell.h
-#ifndef MYMODELCELL_H
-#define MYMODELCELL_H
+#pragma once
 
 #include "Element.h"
 
@@ -186,8 +185,6 @@ public:
     rgb* outputValue(char* str) override;
     void startStep(int step) override;
 };
-
-#endif
 ```
 
 ### 2. Create Plugin Registration
@@ -223,7 +220,6 @@ int getPluginVersion()
 {
     return 100; // Version 1.00
 }
-
 }
 ```
 
@@ -507,4 +503,3 @@ rgb(0, 0, 0)       // Black
 
 **Last Updated:** 2025-10-20  
 **Status:** ✅ Current and Complete
-

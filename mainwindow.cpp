@@ -11,6 +11,9 @@
 #include <QFileDialog>
 #include <QActionGroup>
 #include <QProgressDialog>
+#include <QFileInfo>
+#include <QDateTime>
+#include <QDir>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -19,6 +22,7 @@
 #include "widgets/ColorSettingsDialog.h"
 #include "visualiser/VideoExporter.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
+#include "config/Config.h"
 
 
 namespace
@@ -41,15 +45,17 @@ MainWindow::MainWindow(QWidget* parent)
     loadStrings();
     recreateModelMenuActions();
     createViewModeActionGroup();
+    updateRecentFilesMenu();
     
     enterNoConfigurationFileMode();
 }
 
 void MainWindow::loadInitialConfiguration(const QString& configFileName)
 {
-    if (!configFileName.isEmpty())
+    if (! configFileName.isEmpty())
     {
         configureUIElements(configFileName);
+        addToRecentFiles(configFileName);
     }
 }
 
@@ -307,7 +313,7 @@ void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
     
     progress.setValue(totalSteps());
 }
-
+// TODO: Consider using QTimer to periodic events instead of speeping
 void MainWindow::playingRequested(PlayingDirection direction)
 {
     currentStep = std::clamp(currentStep + std::to_underlying(direction), FIRST_STEP_NUMBER, totalSteps());
@@ -532,6 +538,11 @@ void MainWindow::onOpenConfigurationRequested()
         return; // User cancelled
     }
     
+    openConfigurationFile(configFileName);
+}
+
+void MainWindow::openConfigurationFile(const QString& configFileName)
+{
     try
     {
         // Stop any ongoing playback
@@ -557,6 +568,9 @@ void MainWindow::onOpenConfigurationRequested()
         
         // Enable all widgets now that we have configuration
         setWidgetsEnabledState(true);
+        
+        // Add to recent files
+        addToRecentFiles(configFileName);
         
         QMessageBox::information(this, tr("Configuration Loaded"),
                                  tr("Successfully loaded configuration:\n%1").arg(configFileName));
@@ -756,6 +770,246 @@ void MainWindow::onCameraOrientationChanged(double azimuth, double elevation)
     ui->elevationSlider->setValue(static_cast<int>(elevation));
     ui->elevationSpinBox->setValue(static_cast<int>(elevation));
 }
+
+// ============================================================================
+// Recent Files Management
+// ============================================================================
+
+void MainWindow::updateRecentFilesMenu()
+{
+    ui->menuRecentFiles->clear();
+    
+    QStringList recentFiles = loadRecentFiles();
+    
+    // Remove files that don't exist anymore
+    recentFiles.erase(
+        std::remove_if(recentFiles.begin(), recentFiles.end(),
+                      [](const QString& path) { return !QFileInfo::exists(path); }),
+        recentFiles.end()
+    );
+    
+    if (recentFiles.isEmpty())
+    {
+        QAction* noFilesAction = ui->menuRecentFiles->addAction(tr("No recent files"));
+        noFilesAction->setEnabled(false);
+        return;
+    }
+    
+    // Save cleaned list
+    saveRecentFiles(recentFiles);
+    
+    for (const QString& filePath : recentFiles)
+    {
+        QString displayName = getSmartDisplayName(filePath, recentFiles);
+        
+        // Get last opened time from QSettings
+        QSettings settings;
+        QString timeKey = QString("recentFiles/time_%1").arg(QString(filePath.toUtf8().toBase64()));
+        QDateTime lastOpened = settings.value(timeKey, QDateTime::currentDateTime()).toDateTime();
+        
+        // Format: "filename [2024-10-20 15:30:25]"
+        QString actionText = QString("%1 [%2]")
+            .arg(displayName)
+            .arg(lastOpened.toString("yyyy-MM-dd HH:mm:ss"));
+        
+        QAction* action = ui->menuRecentFiles->addAction(actionText);
+        action->setData(filePath);
+        action->setToolTip(generateTooltipForFile(filePath));
+        
+        connect(action, &QAction::triggered, this, &MainWindow::onRecentFileTriggered);
+    }
+    
+    ui->menuRecentFiles->addSeparator();
+    QAction* clearAction = ui->menuRecentFiles->addAction(tr("Clear Recent Files"));
+    connect(clearAction, &QAction::triggered, this, [this]() {
+        saveRecentFiles(QStringList());
+        updateRecentFilesMenu();
+    });
+}
+
+void MainWindow::addToRecentFiles(const QString& filePath)
+{
+    QStringList recentFiles = loadRecentFiles();
+    
+    // Remove if already exists (to move it to the top)
+    recentFiles.removeAll(filePath);
+    
+    // Add to the beginning
+    recentFiles.prepend(filePath);
+    
+    // Limit to MAX_RECENT_FILES
+    while (recentFiles.size() > MAX_RECENT_FILES)
+    {
+        recentFiles.removeLast();
+    }
+    
+    saveRecentFiles(recentFiles);
+    
+    // Store the timestamp when this file was opened
+    QSettings settings;
+    QString timeKey = QString("recentFiles/time_%1").arg(QString(filePath.toUtf8().toBase64()));
+    settings.setValue(timeKey, QDateTime::currentDateTime());
+    
+    updateRecentFilesMenu();
+}
+
+QStringList MainWindow::loadRecentFiles() const
+{
+    QSettings settings;
+    return settings.value("recentFiles/list").toStringList();
+}
+
+void MainWindow::saveRecentFiles(const QStringList& files) const
+{
+    QSettings settings;
+    settings.setValue("recentFiles/list", files);
+}
+
+QString MainWindow::getSmartDisplayName(const QString& filePath, const QStringList& allPaths) const
+{
+    QFileInfo fileInfo(filePath);
+    QString fileName = fileInfo.fileName();
+    
+    // Count how many files have the same filename
+    int sameNameCount = 0;
+    for (const QString& otherPath : allPaths)
+    {
+        if (QFileInfo(otherPath).fileName() == fileName)
+        {
+            sameNameCount++;
+        }
+    }
+    
+    // If unique, just return filename
+    if (sameNameCount == 1)
+    {
+        return fileName;
+    }
+    
+    // Otherwise, add parent directories until unique
+    QDir fileDir = fileInfo.dir();
+    QString displayName = fileName;
+    
+    for (int depth = 1; depth <= 3; ++depth)  // Try up to 3 parent directories
+    {
+        displayName = fileDir.dirName() + "/" + displayName;
+        
+        // Check if this display name is unique among conflicting files
+        bool isUnique = true;
+        for (const QString& otherPath : allPaths)
+        {
+            if (otherPath == filePath)
+                continue;
+                
+            QFileInfo otherInfo(otherPath);
+            if (otherInfo.fileName() != fileName)
+                continue;  // Not a conflicting file
+            
+            // Build same-depth display name for other file
+            QDir otherDir = otherInfo.dir();
+            QString otherDisplayName = otherInfo.fileName();
+            for (int d = 0; d < depth; ++d)
+            {
+                otherDisplayName = otherDir.dirName() + "/" + otherDisplayName;
+                otherDir.cdUp();
+            }
+            
+            if (otherDisplayName == displayName)
+            {
+                isUnique = false;
+                break;
+            }
+        }
+        
+        if (isUnique)
+        {
+            return displayName;
+        }
+        
+        fileDir.cdUp();
+    }
+    
+    // If still not unique, return full path
+    return filePath;
+}
+
+QString MainWindow::generateTooltipForFile(const QString& filePath) const
+{
+    QFileInfo fileInfo(filePath);
+    
+    if (!fileInfo.exists())
+    {
+        return tr("File does not exist:\n%1").arg(filePath);
+    }
+    
+    QString tooltip = QString("<b>%1</b><br/>").arg(tr("Full path:"));
+    tooltip += QString("%1<br/><br/>").arg(filePath);
+    
+    tooltip += QString("<b>%1</b> %2<br/>")
+        .arg(tr("Created:"))
+        .arg(fileInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
+    
+    tooltip += QString("<b>%1</b> %2<br/><br/>")
+        .arg(tr("Modified:"))
+        .arg(fileInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
+    
+    // Try to read configuration parameters
+    try
+    {
+        Config config(filePath.toStdString());
+        
+        tooltip += QString("<b>%1</b><br/>").arg(tr("Configuration parameters:"));
+        
+        auto addParam = [&](const QString& category, const QString& paramName) {
+            ConfigCategory* cat = config.getConfigCategory(category.toStdString(), /*ignoreCase=*/true);
+            if (cat)
+            {
+                ConfigParameter* param = cat->getConfigParameter(paramName.toStdString());
+                if (param)
+                {
+                    tooltip += QString("&nbsp;&nbsp;• <b>%1:</b> %2<br/>")
+                        .arg(paramName)
+                        .arg(QString::fromStdString(param->getDefaultValue()));
+                }
+            }
+        };
+        
+        addParam("GENERAL", "number_steps");
+        addParam("GENERAL", "number_of_rows");
+        addParam("GENERAL", "number_of_columns");
+        addParam("DISTRIBUTED", "number_node_x");
+        addParam("DISTRIBUTED", "number_node_y");
+    }
+    catch (const std::exception& e)
+    {
+        tooltip += QString("<br/><i>%1: %2</i>")
+            .arg(tr("Could not read configuration"))
+            .arg(e.what());
+    }
+    
+    return tooltip;
+}
+
+void MainWindow::onRecentFileTriggered()
+{
+    QAction* action = qobject_cast<QAction*>(sender());
+    if (!action)
+        return;
+    
+    QString filePath = action->data().toString();
+    
+    if (!QFileInfo::exists(filePath))
+    {
+        QMessageBox::warning(this, tr("File Not Found"),
+            tr("The file no longer exists:\n%1").arg(filePath));
+        updateRecentFilesMenu();
+        return;
+    }
+    
+    openConfigurationFile(filePath);
+}
+
+// ============================================================================
 
 void MainWindow::setWidgetsEnabledState(bool enabled)
 {
