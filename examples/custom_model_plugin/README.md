@@ -237,11 +237,10 @@ The application can call these to display plugin information.
 
 ## License
 
-This example is part of Qt-VTK-viewer and is available under the same license terms.
+This example is part of Qt-VTK-viewer
 
-## Further Reading
+## See Also
 
-See also:
-
-* `../../doc/PLUGIN_SYSTEM.md` – Full plugin system documentation
-* `../../doc/CHANGELOG_RUNTIME_MODELS.md` – Runtime model system changelog
+- **[../../doc/PLUGIN_USER_GUIDE.md](../../doc/PLUGIN_USER_GUIDE.md)** – Complete user guide for creating plugins
+- **[../../doc/PLUGIN_ARCHITECTURE.md](../../doc/PLUGIN_ARCHITECTURE.md)** – Technical implementation details
+- **[../crowdsimulation_model_plugin/](../crowdsimulation_model_plugin/)** – Another example plugin

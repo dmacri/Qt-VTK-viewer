@@ -48,10 +48,8 @@ The generated documentation will be available in the `doc/html` directory.
 
 ### Additional Documentation
 
-- **[doc/PLUGIN_SYSTEM.md](doc/PLUGIN_SYSTEM.md)** - Complete guide to creating and loading plugins
-- **[doc/PLUGIN_GUI_LOADER.md](doc/PLUGIN_GUI_LOADER.md)** - GUI plugin loader user guide
-- **[doc/PLUGIN_QUICKSTART.md](doc/PLUGIN_QUICKSTART.md)** - Create a plugin in 5 minutes
-- **[doc/CHANGELOG_RUNTIME_MODELS.md](doc/CHANGELOG_RUNTIME_MODELS.md)** - History of runtime model system
+- **[doc/PLUGIN_USER_GUIDE.md](doc/PLUGIN_USER_GUIDE.md)** - Complete guide to creating and using plugins
+- **[doc/PLUGIN_ARCHITECTURE.md](doc/PLUGIN_ARCHITECTURE.md)** - Technical implementation details
 - **[doc/VIEW_MODES.md](doc/VIEW_MODES.md)** - 2D/3D view modes documentation
 - **[doc/Build-VTK.md](doc/Build-VTK.md)** - VTK compilation instructions
 - **[examples/custom_model_plugin/](examples/custom_model_plugin/)** - Working example of a plugin
@@ -131,7 +129,7 @@ The application now supports **loading custom models as plugins** without recomp
 # Launch QtVtkViewer - your model appears automatically!
 ```
 
-See **[doc/PLUGIN_SYSTEM.md](doc/PLUGIN_SYSTEM.md)** and **[doc/PLUGIN_GUI_LOADER.md](doc/PLUGIN_GUI_LOADER.md)** for complete documentation and examples.
+See **[doc/PLUGIN_USER_GUIDE.md](doc/PLUGIN_USER_GUIDE.md)** for complete guide and examples.
 
 ### ✨ Runtime Model Switching & Configuration Loading
 

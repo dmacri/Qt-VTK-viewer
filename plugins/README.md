@@ -36,6 +36,6 @@ plugins/
 
 ## See Also
 
-* [../doc/PLUGIN_QUICKSTART.md](../doc/PLUGIN_QUICKSTART.md) - Quick start guide
-* [../doc/PLUGIN_SYSTEM.md](../doc/PLUGIN_SYSTEM.md) - Full documentation
+* [../doc/PLUGIN_USER_GUIDE.md](../doc/PLUGIN_USER_GUIDE.md) - Complete user guide for creating plugins
+* [../doc/PLUGIN_ARCHITECTURE.md](../doc/PLUGIN_ARCHITECTURE.md) - Technical implementation details
 * [../examples/custom_model_plugin/](../examples/custom_model_plugin/) - Sample plugin implementation
