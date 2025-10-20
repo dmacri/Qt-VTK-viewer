@@ -620,6 +620,7 @@ void MainWindow::createModelMenuActions()
         ui->menuModel->addAction(action);
         
         connect(action, &QAction::triggered, this, &MainWindow::onModelSelected);
+        cout << "+ Model: " << modelName << endl;
     }
     
     // Add separator and Reload Data action

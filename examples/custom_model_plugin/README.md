@@ -16,20 +16,36 @@ This directory contains a complete plugin example for Qt-VTK-viewer that adds a 
 
 * Stores a single integer value (0–255)
 * Displays it using a color gradient:
-
   * 0–63: Blue → Cyan
   * 64–127: Cyan → Green
   * 128–191: Green → Yellow
   * 192–255: Yellow → Red
 
-## Building the Plugin
+## ⚠️ IMPORTANT: Symbols from the Main Application
+
+The plugin **MUST NOT** compile its own copy of `SceneWidgetVisualizerFactory.cpp`!
+
+**Why?**
+
+* The plugin relies on symbols (functions, static variables) defined in the main application
+* If the plugin compiles its own copy of the Factory, it will create **a separate, isolated registry**
+* Result: models registered inside the plugin **will not be visible** to the main application
+
+**Solution used in this example:**
+
+* `CMakeLists.txt` only builds `CustomModelPlugin_Full.cpp`
+* The main application is linked with `-rdynamic` to export symbols
+* The plugin accesses these symbols via `RTLD_GLOBAL`
+
+## Plugin Compilation
 
 ### Requirements
 
 * CMake 3.16+
 * C++17 compiler (g++, clang++)
-* VTK (same version as used in the main app)
-* Qt5/Qt6 (optional, depending on headers)
+* VTK (same version as in the main application)
+* Qt5/Qt6 (optional, only if referenced in headers)
+* The main application **must be linked with `-rdynamic`**
 
 ### Build Steps
 

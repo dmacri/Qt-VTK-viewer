@@ -40,7 +40,8 @@ namespace {
  * @return true if plugin was loaded successfully, false otherwise */
 bool loadPlugin(const std::string& pluginPath)
 {
-    void* handle = dlopen(pluginPath.c_str(), RTLD_LAZY | RTLD_LOCAL);
+    // Use RTLD_GLOBAL so plugin can access symbols from main app
+    void* handle = dlopen(pluginPath.c_str(), RTLD_LAZY | RTLD_GLOBAL);
     if (!handle)
     {
         std::cerr << "Failed to load plugin: " << pluginPath << std::endl;

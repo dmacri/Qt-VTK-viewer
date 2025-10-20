@@ -133,6 +133,10 @@ endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE ${VTK_LIBRARIES})
 #target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Widgets Qt5::OpenGL VTK::GUISupportQt VTK::IOLegacy)
 
+# Export symbols for plugins to use
+# This allows plugins to call functions from the main executable
+target_link_options(${PROJECT_NAME} PRIVATE -rdynamic)
+
 vtk_module_autoinit(
     TARGETS ${PROJECT_NAME}
     MODULES VTK::GUISupportQt VTK::IOLegacy

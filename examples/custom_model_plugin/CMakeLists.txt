@@ -62,7 +62,7 @@ include_directories(
 
 add_library(CustomModelPlugin SHARED
     CustomModelPlugin_Full.cpp
-    ${QTVTKVIEWER_DIR}/visualiserProxy/SceneWidgetVisualizerFactory.cpp
+    # Do NOT compile Factory - use symbols from main app!
 )
 
 # Link with VTK (minimal linking - main app has most dependencies)
