@@ -219,7 +219,7 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
         if (nodeRow == sp->nNodeY - 1)  // Top row
         {
             const int topLineIndex = 2 * totalNodes + (node % sp->nNodeX);
-            lines[topLineIndex] = Line(offsetXY.x(), offsetXY.y() + columnAndRow.row, 
+            lines[topLineIndex] = Line(offsetXY.x(), offsetXY.y() + columnAndRow.row,
                                        offsetXY.x() + columnAndRow.column, offsetXY.y() + columnAndRow.row);
         }
         
@@ -228,7 +228,7 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
         if (nodeCol == sp->nNodeX - 1)  // Rightmost column
         {
             const int rightLineIndex = 2 * totalNodes + sp->nNodeX + nodeRow;
-            lines[rightLineIndex] = Line(offsetXY.x() + columnAndRow.column, offsetXY.y(), 
+            lines[rightLineIndex] = Line(offsetXY.x() + columnAndRow.column, offsetXY.y(),
                                         offsetXY.x() + columnAndRow.column, offsetXY.y() + columnAndRow.row);
         }
 

@@ -141,13 +141,6 @@ void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> avail
                              tr("Total number of steps from config file is %1, but last step number from index file is %2")
                                  .arg(totalSteps()).arg(availableSteps.back()));
     }
-
-    std::cout << "Available steps:";
-    for (auto s : availableSteps)
-    {
-        std::cout << "\t" << s;
-    }
-    std::cout << std::endl;
 }
 
 void MainWindow::totalStepsNumberChanged(int totalStepsValue)
