@@ -49,7 +49,8 @@ The generated documentation will be available in the `doc/html` directory.
 ### Additional Documentation
 
 - **[doc/PLUGIN_SYSTEM.md](doc/PLUGIN_SYSTEM.md)** - Complete guide to creating and loading plugins
-- **[doc/REFACTORING_SUMMARY.md](doc/REFACTORING_SUMMARY.md)** - Details of the plugin system refactoring
+- **[doc/PLUGIN_GUI_LOADER.md](doc/PLUGIN_GUI_LOADER.md)** - GUI plugin loader user guide
+- **[doc/PLUGIN_QUICKSTART.md](doc/PLUGIN_QUICKSTART.md)** - Create a plugin in 5 minutes
 - **[doc/CHANGELOG_RUNTIME_MODELS.md](doc/CHANGELOG_RUNTIME_MODELS.md)** - History of runtime model system
 - **[doc/VIEW_MODES.md](doc/VIEW_MODES.md)** - 2D/3D view modes documentation
 - **[doc/Build-VTK.md](doc/Build-VTK.md)** - VTK compilation instructions
@@ -112,18 +113,25 @@ The application now supports **loading custom models as plugins** without recomp
 **Key Benefits:**
 - ✅ Add custom models as shared libraries (.so files)
 - ✅ No recompilation of the main application needed
-- ✅ Hot-swappable models - just drop a plugin in `./plugins/`
+- ✅ **Load plugins via GUI** - Model → Load Plugin... (Ctrl+P)
+- ✅ Auto-load from `./plugins/` directory at startup
 - ✅ Full example plugin included in `examples/custom_model_plugin/`
 
-**Quick Start:**
+**Quick Start (GUI Method):**
+1. Launch QtVtkViewer
+2. Go to **Model → Load Plugin...** (or press Ctrl+P)
+3. Select your `.so` file
+4. Your model appears in the Model menu immediately!
+
+**Quick Start (Auto-load Method):**
 ```bash
 # Create your custom cell model inheriting from Element
 # Compile it as a plugin (.so)
 # Place in ./plugins/ directory
-# Launch QtVtkViewer - your model appears in the Model menu!
+# Launch QtVtkViewer - your model appears automatically!
 ```
 
-See **[doc/PLUGIN_SYSTEM.md](doc/PLUGIN_SYSTEM.md)** for complete documentation and examples.
+See **[doc/PLUGIN_SYSTEM.md](doc/PLUGIN_SYSTEM.md)** and **[doc/PLUGIN_GUI_LOADER.md](doc/PLUGIN_GUI_LOADER.md)** for complete documentation and examples.
 
 ### ✨ Runtime Model Switching & Configuration Loading
 

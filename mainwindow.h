@@ -47,6 +47,7 @@ private slots:
 
     void onModelSelected();
     void onReloadDataRequested();
+    void onLoadPluginRequested();
 
     void onPlayButtonClicked();
     void onStopButtonClicked();
@@ -94,7 +95,7 @@ private:
     void enterNoConfigurationFileMode();
 
     void switchToModel(const QString &modelName);
-    void createModelMenuActions();
+    void recreateModelMenuActions();
     void createViewModeActionGroup();
     void updateCameraControlsVisibility();
 

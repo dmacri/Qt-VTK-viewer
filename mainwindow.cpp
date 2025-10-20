@@ -4,13 +4,17 @@
 #include <QThread> // QThread::msleep
 #include <QDebug>
 #include <QMessageBox>
-#include <QPushButton>
+#include <QTextStream>
+#include <iostream>
+#include <QColorDialog>
+#include <QStandardPaths>
 #include <QFileDialog>
-#include <QProgressDialog>
 #include <QActionGroup>
+#include <QProgressDialog>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "PluginLoader.h"
 #include "widgets/ConfigDetailsDialog.h"
 #include "widgets/ColorSettingsDialog.h"
 #include "visualiser/VideoExporter.h"
@@ -35,7 +39,7 @@ MainWindow::MainWindow(QWidget* parent)
     setupConnections();
     configureButtons();
     loadStrings();
-    createModelMenuActions();
+    recreateModelMenuActions();
     createViewModeActionGroup();
     
     enterNoConfigurationFileMode();
@@ -80,6 +84,7 @@ void MainWindow::connectMenuActions()
     connect(ui->actionExport_Video, &QAction::triggered, this, &MainWindow::exportVideoDialog);
     connect(ui->actionOpenConfiguration, &QAction::triggered, this, &MainWindow::onOpenConfigurationRequested);
     connect(ui->actionReloadData, &QAction::triggered, this, &MainWindow::onReloadDataRequested);
+    connect(ui->actionLoadPlugin, &QAction::triggered, this, &MainWindow::onLoadPluginRequested);
     connect(ui->actionColor_settings, &QAction::triggered, this, &MainWindow::onColorSettingsRequested);
 
     // View mode actions
@@ -587,7 +592,7 @@ void MainWindow::enterNoConfigurationFileMode()
     setWidgetsEnabledState(false);
 }
 
-void MainWindow::createModelMenuActions()
+void MainWindow::recreateModelMenuActions()
 {
     const auto availableModels = SceneWidgetVisualizerFactory::getAvailableModels();
     
@@ -623,11 +628,52 @@ void MainWindow::createModelMenuActions()
         cout << "+ Model: " << modelName << endl;
     }
     
-    // Add separator and Reload Data action
+    // Add separator and actions
     ui->menuModel->addSeparator();
+    ui->menuModel->addAction(ui->actionLoadPlugin);
     ui->menuModel->addAction(ui->actionReloadData);
     
     std::cout << "Created " << availableModels.size() << " model menu actions" << std::endl;
+}
+
+void MainWindow::onLoadPluginRequested()
+{
+    QString pluginPath = QFileDialog::getOpenFileName(
+        this,
+        tr("Load Plugin"),
+        "./plugins",
+        tr("Shared Libraries (*.so);;All Files (*)")
+    );
+
+    if (pluginPath.isEmpty())
+    {
+        return;  // User cancelled
+    }
+
+    // Load the plugin
+    PluginLoader& loader = PluginLoader::instance();
+    if (loader.loadPlugin(pluginPath.toStdString()))
+    {
+        // Refresh the models menu to show new model
+        recreateModelMenuActions();
+        
+        QMessageBox::information(
+            this, 
+            tr("Plugin Loaded"),
+            tr("Plugin loaded successfully!\n\nNew models are now available in the Model menu.\n\nPath: %1")
+                .arg(pluginPath)
+        );
+    }
+    else
+    {
+        QMessageBox::critical(
+            this,
+            tr("Plugin Load Failed"),
+            tr("Failed to load plugin:\n%1\n\nError: %2")
+                .arg(pluginPath)
+                .arg(QString::fromStdString(loader.getLastError()))
+        );
+    }
 }
 
 void MainWindow::createViewModeActionGroup()
