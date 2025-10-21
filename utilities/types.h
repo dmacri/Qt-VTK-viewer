@@ -18,7 +18,8 @@ using NodeIndex = unsigned;
 /** @brief Type alias for file position or offset.
  *
  * Used for file I/O operations to represent positions or sizes within files.
- * Uses long long to handle large files. */
+ * Uses long long to handle large files.
+ * @note: The type should be (according to standard) `std::streampos`, but the type can not be used in streams */
 using FilePosition = long long;
 
 /** @struct ColumnAndRow

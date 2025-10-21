@@ -10,7 +10,6 @@ void Visualizer::buildLoadBalanceLine(const std::vector<Line> &lines, int nCols,
 
     for (size_t i{}; i < lines.size(); i++)
     {
-        std::cout << "Line (" << lines[i].x1 << ", " << lines[i].y1 << ") -> (" <<lines[i].x2 << ", " <<lines[i].y2 << ")" << std::endl;
         pts->InsertNextPoint(lines[i].x1 * 1, nCols-1-lines[i].y1 * 1, 0.0);
         pts->InsertNextPoint(lines[i].x2 * 1, nCols-1-lines[i].y2 * 1, 0.0);
         cellLines->InsertNextCell(2);

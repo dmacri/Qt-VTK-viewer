@@ -20,7 +20,6 @@
 #include "ISceneWidgetVisualizer.h"
 #include "SceneWidgetVisualizerProxy.h"
 
-// Forward declarations
 class Line;
 class SettingParameter;
 
@@ -44,9 +43,8 @@ template<typename Cell>
 class SceneWidgetVisualizerAdapter : public ISceneWidgetVisualizer
 {
 public:
-    SceneWidgetVisualizerAdapter(int modelTypeValue, const std::string& modelName)
-        : m_modelTypeValue(modelTypeValue)
-        , m_modelName(modelName)
+    SceneWidgetVisualizerAdapter(const std::string& modelName)
+        : m_modelName(modelName)
     {}
 
     void initMatrix(int dimX, int dimY) override
@@ -94,12 +92,7 @@ public:
         return m_modelName;
     }
 
-    int getModelTypeValue() const override
-    {
-        return m_modelTypeValue;
-    }
-
-    std::vector<StepIndex> availableSteps() const
+    std::vector<StepIndex> availableSteps() const override
     {
         return m_impl.modelReader.availableSteps();
     }
@@ -107,5 +100,5 @@ public:
 private:
     SceneWidgetVisualizerTemplate<Cell> m_impl;
     const std::string m_modelName;
-    const int m_modelTypeValue;
 };
+// TODO: GB: IMO the class can be removed, but model name moved to SceneWidgetVisualizerTemplate

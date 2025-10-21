@@ -22,7 +22,7 @@
 #include <vtkTextProperty.h>
 
 #include "OOpenCAL/base/Element.h" // rgb
-#include "types.h" // StepIndex
+#include "utilities/types.h" // StepIndex
 
 class Line;
 

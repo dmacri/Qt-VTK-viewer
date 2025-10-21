@@ -2,9 +2,10 @@
  * @brief Main entry point for the Qt-VTK Viewer application.
  *
  * This file initializes the Qt application, sets up the main window,
- * and handles command-line arguments for loading initial configurations. */
-
-/** @mainpage Qt-VTK Viewer
+ * handles command-line arguments for loading initial configurations,
+ * and loads model plugins from the plugins directory.
+ *
+ * @mainpage Qt-VTK Viewer
  * @tableofcontents
  *
  * @section intro_sec Introduction
@@ -13,12 +14,11 @@
  * @section features_sec Features
  * - Load and visualize VTK data files
  * - Interactive 3D visualization
- * - Support for multiple model types
+ * - Support for multiple model types (runtime switchable)
+ * - Plugin system for custom models (no recompilation needed)
  * - Video export functionality
  *
  * @include README.md */
-
-#include "mainwindow.h"
 
 #include <filesystem>
 #include <QApplication>
@@ -27,6 +27,8 @@
 #include <QSurfaceFormat>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <QVTKOpenGLNativeWidget.h>
+#include "mainwindow.h"
+#include "utilities/PluginLoader.h"
 
 
 int main(int argc, char *argv[])
@@ -38,6 +40,15 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     QApplication::setStyle(QStyleFactory::create("Fusion"));
     QApplication::setApplicationName("Visualiser");
+
+    // Load plugins from standard locations
+    // This happens before MainWindow creation so models are available immediately
+    PluginLoader& pluginLoader = PluginLoader::instance();
+    pluginLoader.loadFromStandardDirectories({
+        "./plugins",                    // Current directory
+        "../plugins",                   // Parent directory
+        "./build/plugins"               // Build directory
+    });
 
     MainWindow mainWindow;
 

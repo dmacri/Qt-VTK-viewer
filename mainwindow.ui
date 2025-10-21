@@ -488,6 +488,16 @@
     </property>
     <addaction name="actionOpenConfiguration"/>
     <addaction name="separator"/>
+    <widget class="QMenu" name="menuRecentFiles">
+     <property name="title">
+      <string>Recent Files</string>
+     </property>
+     <property name="toolTip">
+      <string>Recent model configuration files</string>
+     </property>
+    </widget>
+    <addaction name="menuRecentFiles"/>
+    <addaction name="separator"/>
     <addaction name="actionShow_config_details"/>
     <addaction name="separator"/>
     <addaction name="actionExport_Video"/>
@@ -595,6 +605,20 @@
    </property>
    <property name="shortcut">
     <string>F5</string>
+   </property>
+  </action>
+  <action name="actionLoadPlugin">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::ListAdd"/>
+   </property>
+   <property name="text">
+    <string>Load Plugin...</string>
+   </property>
+   <property name="toolTip">
+    <string>Load a plugin to add custom model</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
    </property>
   </action>
   <action name="actionColor_settings">

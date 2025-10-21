@@ -1,60 +1,103 @@
 #include <stdexcept> // std::invalid_argument
+#include <OOpenCAL/models/Ball/BallCell.h>
+#include <OOpenCAL/models/SciddicaT/SciddicaTCell.h>
 #include "ISceneWidgetVisualizer.h"
 #include "SceneWidgetVisualizerFactory.h"
 #include "SceneWidgetVisualizerAdapter.h"
-#include <OOpenCAL/models/Ball/BallCell.h>
-#include <OOpenCAL/models/SciddicaT/SciddicaTCell.h>
 
 
-std::unique_ptr<ISceneWidgetVisualizer> SceneWidgetVisualizerFactory::create(ModelType type)
+std::map<std::string, SceneWidgetVisualizerFactory::ModelCreator>& SceneWidgetVisualizerFactory::getRegistry()
 {
-    switch (type)
-    {
-    case ModelType::Ball:
-        return std::make_unique<SceneWidgetVisualizerAdapter<BallCell>>(
-            static_cast<int>(ModelType::Ball), "Ball");
-
-    case ModelType::SciddicaT:
-        return std::make_unique<SceneWidgetVisualizerAdapter<SciddicaTCell>>(
-            static_cast<int>(ModelType::SciddicaT), "SciddicaT");
-
-    default:
-        throw std::invalid_argument("Unsupported model type");
-    }
+    static std::map<std::string, ModelCreator> registry;
+    return registry;
 }
 
-std::unique_ptr<ISceneWidgetVisualizer> SceneWidgetVisualizerFactory::createFromName(const std::string &modelName)
+void SceneWidgetVisualizerFactory::initializeBuiltInModels()
 {
-    // Try each model type and check if name matches
-    for (int i = 0; i < static_cast<int>(ModelType::SciddicaT) + 1; ++i)
+    if (isInitializedWithBuildInModels)
     {
-        auto visualizer = create(static_cast<ModelType>(i));
-        if (visualizer->getModelName() == modelName)
-        {
-            return visualizer;
-        }
+        return;
     }
-    throw std::invalid_argument("Unknown model name: " + modelName);
+
+    // Register built-in models
+    registerModel("Ball", []() {
+        return std::make_unique<SceneWidgetVisualizerAdapter<BallCell>>("Ball");
+    });
+
+    registerModel("SciddicaT", []() {
+        return std::make_unique<SceneWidgetVisualizerAdapter<SciddicaTCell>>("SciddicaT");
+    });
+
+    isInitializedWithBuildInModels = true;
+}
+
+std::unique_ptr<ISceneWidgetVisualizer> SceneWidgetVisualizerFactory::create(const std::string& modelName)
+{
+    // Ensure built-in models are registered
+    initializeBuiltInModels();
+
+    auto& registry = getRegistry();
+    auto it = registry.find(modelName);
+    
+    if (it == registry.end())
+    {
+        throw std::invalid_argument("Unknown model name: " + modelName);
+    }
+
+    return it->second();
+}
+
+std::unique_ptr<ISceneWidgetVisualizer> SceneWidgetVisualizerFactory::defaultModel()
+{
+    // Ensure built-in models are registered
+    initializeBuiltInModels();
+
+    auto registry = getRegistry();
+    if (registry.empty())
+    {
+        throw std::runtime_error("No models!");
+    }
+
+    auto firstModel = registry.begin();
+    std::cout << "Using default model '" << firstModel->first << "'" << endl;
+    return firstModel->second();
+}
+
+bool SceneWidgetVisualizerFactory::registerModel(const std::string& modelName, ModelCreator creator)
+{
+    auto& registry = getRegistry();
+    
+    // Check if model already exists
+    if (registry.find(modelName) != registry.end())
+    {
+        return false;
+    }
+
+    registry[modelName] = std::move(creator);
+    return true;
 }
 
 std::vector<std::string> SceneWidgetVisualizerFactory::getAvailableModels()
 {
-    std::vector<std::string> models;
+    // Ensure built-in models are registered
+    initializeBuiltInModels();
 
-    // Iterate through all model types
-    using IterationType = std::underlying_type_t<ModelType>;
-    for (IterationType i = {}; i <= static_cast<IterationType>(ModelType::SciddicaT); ++i)
+    std::vector<std::string> models;
+    auto& registry = getRegistry();
+
+    for (const auto& [name, creator] : registry)
     {
-        try
-        {
-            auto visualizer = create(static_cast<ModelType>(i));
-            models.push_back(visualizer->getModelName());
-        }
-        catch (...)
-        {
-            // Skip models that fail to create
-        }
+        models.push_back(name);
     }
 
     return models;
+}
+
+bool SceneWidgetVisualizerFactory::isModelRegistered(const std::string& modelName)
+{
+    // Ensure built-in models are registered
+    initializeBuiltInModels();
+
+    auto& registry = getRegistry();
+    return registry.find(modelName) != registry.end();
 }

@@ -17,7 +17,7 @@
 #pragma once
 
 #include "visualiser/Visualizer.hpp"
-#include "ModelReader.hpp"
+#include "utilities/ModelReader.hpp"
 
 /** @class SceneWidgetVisualizerTemplate
  * @tparam Cell The cell type used in the model (must inherit from Element in OOpenCal)

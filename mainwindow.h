@@ -5,7 +5,7 @@
 
 #include <QMainWindow>
 #include <QStyle>
-#include "types.h"
+#include "utilities/types.h"
 
 namespace Ui
 {
@@ -47,6 +47,7 @@ private slots:
 
     void onModelSelected();
     void onReloadDataRequested();
+    void onLoadPluginRequested();
 
     void onPlayButtonClicked();
     void onStopButtonClicked();
@@ -60,6 +61,8 @@ private slots:
 
     void totalStepsNumberChanged(int totalStepsValue);
     void availableStepsLoadedFromConfigFile(std::vector<StepIndex> availableSteps);
+    
+    void onRecentFileTriggered();
 
 private:
     enum class PlayingDirection
@@ -94,13 +97,24 @@ private:
     void enterNoConfigurationFileMode();
 
     void switchToModel(const QString &modelName);
-    void createModelMenuActions();
+    void recreateModelMenuActions();
     void createViewModeActionGroup();
     void updateCameraControlsVisibility();
+    
+    // Recent files management
+    void updateRecentFilesMenu();
+    void addToRecentFiles(const QString &filePath);
+    QStringList loadRecentFiles() const;
+    void saveRecentFiles(const QStringList &files) const;
+    QString getSmartDisplayName(const QString &filePath, const QStringList &allPaths) const;
+    QString generateTooltipForFile(const QString &filePath) const;
+    void openConfigurationFile(const QString &configFileName);
 
     Ui::MainWindow *ui;
 
     QActionGroup *modelActionGroup;
+    
+    static constexpr int MAX_RECENT_FILES = 10;
 
     int currentStep;
     bool isPlaying = false;

@@ -65,9 +65,9 @@ vtkColor3d toVtkColor(QColor color)
 
 SceneWidget::SceneWidget(QWidget* parent)
     : QVTKOpenGLNativeWidget(parent)
-    , sceneWidgetVisualizerProxy{SceneWidgetVisualizerFactory::create(ModelType::Ball)}
+    , sceneWidgetVisualizerProxy{SceneWidgetVisualizerFactory::defaultModel()}
     , settingParameter{std::make_unique<SettingParameter>()}
-    , currentModelType{sceneWidgetVisualizerProxy->getModelTypeValue()}
+    , currentModelName{sceneWidgetVisualizerProxy->getModelName()}
 {
     enableToolTipWhenMouseAboveWidget();
 
@@ -244,10 +244,11 @@ void SceneWidget::setupAxesWidget()
     
     // Configure orientation marker widget
     axesWidget->SetOrientationMarker(axesActor);
-    axesWidget->SetInteractor(interactor());
     axesWidget->SetViewport(0.0, 0.0, 0.2, 0.2); // Bottom-left corner, 20% size
+    axesWidget->SetInteractor(interactor());
+    // Note: InteractiveOff() is not called here to avoid VTK warning
+    // The widget is non-interactive by default when disabled
     axesWidget->SetEnabled(false); // Hidden by default (2D mode)
-    axesWidget->InteractiveOff(); // Non-interactive
 }
 
 void SceneWidget::setup2DRulerAxes()
@@ -726,16 +727,16 @@ void SceneWidget::upgradeModelInCentralPanel()
     settingParameter->changed = false;
 }
 
-void SceneWidget::switchModel(ModelType modelType)
+void SceneWidget::switchModel(const std::string& modelName)
 {
-    if (modelType == currentModelType)
+    if (modelName == currentModelName)
     {
         return; // Already using this model
     }
 
     // Create new visualizer with the selected model
-    sceneWidgetVisualizerProxy = SceneWidgetVisualizerFactory::create(modelType);
-    currentModelType = modelType;
+    sceneWidgetVisualizerProxy = SceneWidgetVisualizerFactory::create(modelName);
+    currentModelName = modelName;
 
     // Reinitialize the matrix with current dimensions
     sceneWidgetVisualizerProxy->initMatrix(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY);
@@ -775,17 +776,17 @@ void SceneWidget::clearScene()
 {    
     // Clear the renderer
     renderer->RemoveAllViewProps();
-    
+
     // Clear stage data
     sceneWidgetVisualizerProxy->clearStage();
-    
+
     // Reset VTK actors
-    gridActor.Reset();
-    actorBuildLine.Reset();
+    gridActor = vtkNew<vtkActor>();
+    actorBuildLine = vtkNew<vtkActor2D>();
 }
 
 void SceneWidget::loadNewConfiguration(const std::string& configFileName, int stepNumber)
-{    
+{
     try
     {
         // Clear existing scene

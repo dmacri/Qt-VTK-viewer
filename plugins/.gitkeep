@@ -1,0 +1,2 @@
+# This directory is for plugin files (.so)
+# Place your compiled plugins here and they will be automatically loaded at application startup

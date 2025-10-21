@@ -18,7 +18,7 @@
 #pragma once
 
 #include <vtkRenderer.h>
-#include "types.h"
+#include "utilities/types.h"
 
 // Forward declarations
 class SettingParameter;
@@ -72,9 +72,6 @@ public:
      * 
      * This should return the name from the Cell type's static name() method. */
     virtual std::string getModelName() const = 0;
-
-    /// @brief Get the ModelType enum value for this visualizer.
-    virtual int getModelTypeValue() const = 0;
 
     /// @brief Returns available steps from index file.
     virtual std::vector<StepIndex> availableSteps() const = 0;
