@@ -308,8 +308,6 @@ void ModelReader<Cell>::readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, N
     for (NodeIndex node = 0; node < totalNodes; ++node)
     {
         const auto fileNameIndex = ReaderHelpers::giveMeFileNameIndex(filename, node);
-        std::cout << "Reading file: " << fileNameIndex << '\n';
-
         if (! std::filesystem::exists(fileNameIndex))
         {
             throw std::runtime_error("File not found: " + fileNameIndex);

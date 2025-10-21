@@ -776,17 +776,17 @@ void SceneWidget::clearScene()
 {    
     // Clear the renderer
     renderer->RemoveAllViewProps();
-    
+
     // Clear stage data
     sceneWidgetVisualizerProxy->clearStage();
-    
+
     // Reset VTK actors
-    gridActor.Reset();
-    actorBuildLine.Reset();
+    gridActor = vtkNew<vtkActor>();
+    actorBuildLine = vtkNew<vtkActor2D>();
 }
 
 void SceneWidget::loadNewConfiguration(const std::string& configFileName, int stepNumber)
-{    
+{
     try
     {
         // Clear existing scene
