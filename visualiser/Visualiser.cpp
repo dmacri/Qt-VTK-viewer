@@ -3,15 +3,15 @@
 #include "widgets/ColorSettings.h"
 
 
-void Visualizer::buildLoadBalanceLine(const std::vector<Line> &lines, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine)
+void Visualizer::buildLoadBalanceLine(const std::vector<Line> &lines, int nRows, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine)
 {
     vtkNew<vtkCellArray> cellLines;
     vtkNew<vtkPoints> pts;
 
     for (size_t i{}; i < lines.size(); i++)
     {
-        pts->InsertNextPoint(lines[i].x1 * 1, nCols-1-lines[i].y1 * 1, 0.0);
-        pts->InsertNextPoint(lines[i].x2 * 1, nCols-1-lines[i].y2 * 1, 0.0);
+        pts->InsertNextPoint(lines[i].x1, nRows-1-lines[i].y1, 0.0);
+        pts->InsertNextPoint(lines[i].x2, nRows-1-lines[i].y2, 0.0);
         cellLines->InsertNextCell(2);
         cellLines->InsertCellPoint(i*2);
         cellLines->InsertCellPoint(i*2+1);
@@ -44,7 +44,7 @@ void Visualizer::buildLoadBalanceLine(const std::vector<Line> &lines, int nCols,
     renderer->AddActor2D(actorBuildLine);
 }
 
-void Visualizer::refreshBuildLoadBalanceLine(const std::vector<Line>& lines, int nCols, vtkActor2D* lineActor)
+void Visualizer::refreshBuildLoadBalanceLine(const std::vector<Line>& lines, int nRows, vtkActor2D* lineActor)
 {
     vtkPolyDataMapper2D* mapper = (vtkPolyDataMapper2D*) lineActor->GetMapper();
     mapper->Update();
@@ -54,8 +54,8 @@ void Visualizer::refreshBuildLoadBalanceLine(const std::vector<Line>& lines, int
 
     for (int i = 0; i < lines.size(); i++)
     {
-        pts->InsertNextPoint((lines[i].x1 * 1), ( nCols-1-lines[i].y1 * 1), 0.0);
-        pts->InsertNextPoint((lines[i].x2 * 1), ( nCols-1-lines[i].y2 * 1), 0.0);
+        pts->InsertNextPoint(lines[i].x1, nRows-1-lines[i].y1, 0.0);
+        pts->InsertNextPoint(lines[i].x2, nRows-1-lines[i].y2, 0.0);
         cellLines->InsertNextCell(2);
         cellLines->InsertCellPoint(i*2);
         cellLines->InsertCellPoint(i*2+1);

@@ -128,7 +128,7 @@ void SceneWidget::loadAndUpdateVisualizationForCurrentStep()
     // Update load balancing lines if we have any
     if (settingParameter->numberOfLines > 0)
     {
-        sceneWidgetVisualizerProxy->getVisualizer().refreshBuildLoadBalanceLine(lines, settingParameter->numberOfColumnX + 1, actorBuildLine);
+        sceneWidgetVisualizerProxy->getVisualizer().refreshBuildLoadBalanceLine(lines, settingParameter->numberOfRowsY + 1, actorBuildLine);
     }
 
     // Update step number display
@@ -509,7 +509,7 @@ void SceneWidget::renderVtkScene()
 
     sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, renderer, gridActor);
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfColumnX+1, renderer, actorBuildLine);
+    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfRowsY+1, renderer, actorBuildLine);
 
     sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, singleLineTextStep, renderer);
 

@@ -39,8 +39,8 @@ public:
     void drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer,vtkSmartPointer<vtkActor> gridActor);
     template<class Matrix>
     void refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor);
-    void buildLoadBalanceLine(const std::vector<Line>& lines, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine);
-    void refreshBuildLoadBalanceLine(const std::vector<Line> &lines, int nCols, vtkActor2D* lineActor);
+    void buildLoadBalanceLine(const std::vector<Line>& lines, int nRows, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine);
+    void refreshBuildLoadBalanceLine(const std::vector<Line> &lines, int nRows, vtkActor2D* lineActor);
     vtkTextProperty* buildStepLine(StepIndex step, vtkSmartPointer<vtkTextMapper> singleLineTextB);
     vtkNew<vtkActor2D> buildStepText(StepIndex step, int font_size, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer);
 
