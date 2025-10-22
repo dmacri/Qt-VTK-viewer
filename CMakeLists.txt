@@ -220,8 +220,18 @@ find_program(IWYU_PATH NAMES include-what-you-use iwyu)
 
 if (IWYU_PATH)
     message(STATUS "Found include-what-you-use: ${IWYU_PATH}")
-    # Basic activation without mapping file
-    set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+    set(IWYU_MAPPING_FILE "${CMAKE_SOURCE_DIR}/config/iwyu.imp")
+    if (EXISTS "${IWYU_MAPPING_FILE}")
+        list(APPEND CMAKE_CXX_INCLUDE_WHAT_YOU_USE
+            ${IWYU_PATH}
+            -Xiwyu
+            --mapping_file=${IWYU_MAPPING_FILE}
+        )
+        message(STATUS "IWYU mapping file: ${IWYU_MAPPING_FILE}")
+    else()
+        message(WARNING "IWYU mapping file not found at ${IWYU_MAPPING_FILE}; running without mapping")
+        set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+    endif()
 else()
     message(WARNING "include-what-you-use not found. Consider installing it for header optimization.")
 endif()
