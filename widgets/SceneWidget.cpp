@@ -68,6 +68,8 @@ SceneWidget::SceneWidget(QWidget* parent)
     , sceneWidgetVisualizerProxy{SceneWidgetVisualizerFactory::defaultModel()}
     , settingParameter{std::make_unique<SettingParameter>()}
     , currentModelName{sceneWidgetVisualizerProxy->getModelName()}
+    , gridActor{vtkSmartPointer<vtkActor>::New()}
+    , actorBuildLine{vtkSmartPointer<vtkActor2D>::New()}
 {
     enableToolTipWhenMouseAboveWidget();
 
@@ -781,8 +783,8 @@ void SceneWidget::clearScene()
     sceneWidgetVisualizerProxy->clearStage();
 
     // Reset VTK actors
-    gridActor = vtkNew<vtkActor>();
-    actorBuildLine = vtkNew<vtkActor2D>();
+    gridActor = vtkSmartPointer<vtkActor>::New();
+    actorBuildLine = vtkSmartPointer<vtkActor2D>::New();
 }
 
 void SceneWidget::loadNewConfiguration(const std::string& configFileName, int stepNumber)

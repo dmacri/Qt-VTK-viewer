@@ -359,12 +359,14 @@ private:
     vtkNew<vtkRenderer> renderer;
     
     /** @brief Actor for the grid in the scene: This actor is responsible for rendering the grid in the scene.
-     *  The grid provides information about what part was calculated by which node */
-    vtkNew<vtkActor> gridActor;
+     *  The grid provides information about what part was calculated by which node
+     *  @note: The type is vtkSmartPointer instead of auto-maintained vtkNew because we need to be able to reset the object */
+    vtkSmartPointer<vtkActor> gridActor;
 
-    /// @brief Actor for load balancing lines: This actor is responsible for rendering the load balancing lines.
-    vtkNew<vtkActor2D> actorBuildLine;
-    
+    /** @brief Actor for load balancing lines: This actor is responsible for rendering the load balancing lines.
+     *  @note: The type is vtkSmartPointer instead of auto-maintained vtkNew because we need to be able to reset the object */
+    vtkSmartPointer<vtkActor2D> actorBuildLine;
+
     /// @brief Text mapper for step display: This text mapper is responsible for rendering the step number in the scene.
     vtkNew<vtkTextMapper> singleLineTextStep;
 
