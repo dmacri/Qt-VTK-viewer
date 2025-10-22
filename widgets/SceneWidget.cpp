@@ -123,8 +123,6 @@ void SceneWidget::loadAndUpdateVisualizationForCurrentStep()
     // Refresh VTK visualization elements
     sceneWidgetVisualizerProxy->refreshWindowsVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, gridActor);
 
-    //visualiserProxy->vis->refreshBuildLoadBalanceLine(lines, cam->numberOfLines, cam->dimY+1, cam->dimX+1, actorBuildLine, colors, pts, cellLines, grid);
-
     // Update load balancing lines if we have any
     if (settingParameter->numberOfLines > 0)
     {
