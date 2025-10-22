@@ -47,6 +47,12 @@ public:
 private:
     template<class Matrix>
     void buidColor(vtkLookupTable* lut, int nCols, int nRows, Matrix& p);
+
+    /** @brief Creates a vtkPolyData representing a set of 2D lines.
+      * @param lines Vector of Line objects (each defines a line segment)
+      * @param nRows Number of grid rows (used to invert Y coordinates)
+      * @return vtkSmartPointer<vtkPolyData> with points and lines set */
+    vtkSmartPointer<vtkPolyData> createLinePolyData(const std::vector<Line> &lines, int nRows);
 };
 
 ////////////////////////////////////////////////////////////////////
