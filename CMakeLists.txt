@@ -12,8 +12,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ============================================
 # Sources and resources
 # ============================================
-file(GLOB_RECURSE Headers *.h *.hpp)
-file(GLOB Sources *.cpp)
+file(GLOB_RECURSE Headers
+    LIST_DIRECTORIES false
+    CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/*.h"
+    "${CMAKE_SOURCE_DIR}/*.hpp"
+)
+file(GLOB Sources
+    LIST_DIRECTORIES false
+    CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/*.cpp"
+)
 list(APPEND Sources
     config/Config.cpp
     config/ConfigCategory.cpp
@@ -29,10 +38,26 @@ list(APPEND Sources
     utilities/PluginLoader.cpp
     utilities/ModelReader.cpp
 )
-file(GLOB Resources *.qrc)
-file(GLOB Styles *.qss)
-file(GLOB UIs *.ui)
-file(GLOB_RECURSE Docs *.md)
+file(GLOB Resources
+    LIST_DIRECTORIES false
+    CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/*.qrc"
+)
+file(GLOB Styles
+    LIST_DIRECTORIES false
+    CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/*.qss"
+)
+file(GLOB UIs
+    LIST_DIRECTORIES false
+    CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/*.ui"
+)
+file(GLOB_RECURSE Docs
+    LIST_DIRECTORIES false
+    CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/*.md"
+)
 set(OTHER_FILES LICENSE .github/workflows/release--deb-package--ubuntu24.04.yml .githooks/pre-commit .clang-format)
 
 
