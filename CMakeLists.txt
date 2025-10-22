@@ -92,40 +92,64 @@ endif()
 
 
 # ============================================
-# inih library (manual integration)
+# inih library (prefer system, fallback FetchContent)
 # ============================================
-# NOTE:
-# The inih library does not provide a CMake build system.
-# It only contains sources and a Meson build definition.
-# Therefore we must manually add the relevant .c/.cpp files
-# and include directories here.
-#
-# Sources:
-#   - ini.c / ini.h   (C parser)
-#   - cpp/INIReader.* (C++ wrapper)
-#
-# We fetch the repository using FetchContent and then
-# register its sources into our target manually.
-include(FetchContent)
+set(USE_SYSTEM_INIH ON CACHE BOOL "Prefer system-provided inih when available")
+set(INIH_USE_FETCH TRUE)
 
-FetchContent_Declare(
-    inih
-    GIT_REPOSITORY https://github.com/benhoyt/inih.git
-    GIT_TAG        master
-)
+if(USE_SYSTEM_INIH)
+    find_package(inih CONFIG QUIET)
+    if(inih_FOUND AND (TARGET inih::INIReader OR TARGET inih::inih))
+        set(INIH_USE_FETCH FALSE)
+        message(STATUS "Using system inih via CMake package")
+        if(TARGET inih::INIReader)
+            target_link_libraries(${PROJECT_NAME} PRIVATE inih::INIReader)
+        else()
+            target_link_libraries(${PROJECT_NAME} PRIVATE inih::inih)
+        endif()
+    endif()
 
-FetchContent_MakeAvailable(inih)
+    if(INIH_USE_FETCH)
+        find_path(INIH_INCLUDE_DIR NAMES ini.h)
+        find_path(INIH_CPP_INCLUDE_DIR NAMES INIReader.h)
+        find_library(INIH_LIBRARY NAMES inih)
+        find_library(INIH_CPP_LIBRARY NAMES INIReader inireader inihcpp)
 
-FetchContent_GetProperties(inih)
-if(inih_SOURCE_DIR)
-    target_sources(${PROJECT_NAME} PRIVATE
-        ${inih_SOURCE_DIR}/ini.c
-        ${inih_SOURCE_DIR}/cpp/INIReader.cpp
+        if(INIH_INCLUDE_DIR AND INIH_CPP_INCLUDE_DIR AND INIH_LIBRARY AND INIH_CPP_LIBRARY)
+            set(INIH_USE_FETCH FALSE)
+            message(STATUS "Using system inih (manual discovery)")
+            target_include_directories(${PROJECT_NAME} PRIVATE
+                ${INIH_INCLUDE_DIR}
+                ${INIH_CPP_INCLUDE_DIR}
+            )
+            target_link_libraries(${PROJECT_NAME} PRIVATE ${INIH_LIBRARY} ${INIH_CPP_LIBRARY})
+        endif()
+    endif()
+endif()
+
+if(INIH_USE_FETCH)
+    message(STATUS "Fetching inih from upstream")
+    include(FetchContent)
+
+    FetchContent_Declare(
+        inih
+        GIT_REPOSITORY https://github.com/benhoyt/inih.git
+        GIT_TAG        master
     )
-    target_include_directories(${PROJECT_NAME} PRIVATE
-        ${inih_SOURCE_DIR}
-        ${inih_SOURCE_DIR}/cpp
-    )
+
+    FetchContent_MakeAvailable(inih)
+
+    FetchContent_GetProperties(inih)
+    if(inih_SOURCE_DIR)
+        target_sources(${PROJECT_NAME} PRIVATE
+            ${inih_SOURCE_DIR}/ini.c
+            ${inih_SOURCE_DIR}/cpp/INIReader.cpp
+        )
+        target_include_directories(${PROJECT_NAME} PRIVATE
+            ${inih_SOURCE_DIR}
+            ${inih_SOURCE_DIR}/cpp
+        )
+    endif()
 endif()
 
 
