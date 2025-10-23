@@ -12,8 +12,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ============================================
 # Sources and resources
 # ============================================
-file(GLOB_RECURSE Headers *.h *.hpp)
-file(GLOB Sources *.cpp)
+file(GLOB_RECURSE Headers
+    LIST_DIRECTORIES false
+    CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/*.h"
+    "${CMAKE_SOURCE_DIR}/*.hpp"
+)
+file(GLOB Sources
+    LIST_DIRECTORIES false
+    CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/*.cpp"
+)
 list(APPEND Sources
     config/Config.cpp
     config/ConfigCategory.cpp
@@ -29,10 +38,26 @@ list(APPEND Sources
     utilities/PluginLoader.cpp
     utilities/ModelReader.cpp
 )
-file(GLOB Resources *.qrc)
-file(GLOB Styles *.qss)
-file(GLOB UIs *.ui)
-file(GLOB_RECURSE Docs *.md)
+file(GLOB Resources
+    LIST_DIRECTORIES false
+    CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/*.qrc"
+)
+file(GLOB Styles
+    LIST_DIRECTORIES false
+    CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/*.qss"
+)
+file(GLOB UIs
+    LIST_DIRECTORIES false
+    CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/*.ui"
+)
+file(GLOB_RECURSE Docs
+    LIST_DIRECTORIES false
+    CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/*.md"
+)
 set(OTHER_FILES LICENSE .github/workflows/release--deb-package--ubuntu24.04.yml .githooks/pre-commit .clang-format)
 
 
@@ -92,26 +117,25 @@ endif()
 
 
 # ============================================
-# inih library (manual integration)
+# inih library (FetchContent, offline-friendly)
 # ============================================
-# NOTE:
-# The inih library does not provide a CMake build system.
-# It only contains sources and a Meson build definition.
-# Therefore we must manually add the relevant .c/.cpp files
-# and include directories here.
-#
-# Sources:
-#   - ini.c / ini.h   (C parser)
-#   - cpp/INIReader.* (C++ wrapper)
-#
-# We fetch the repository using FetchContent and then
-# register its sources into our target manually.
+# The dependency is fetched once and then reused without attempting updates
+# (useful when working without network access).
+set(INIH_SKIP_UPDATES ON CACHE BOOL "Skip updating the inih FetchContent dependency after initial download")
+
 include(FetchContent)
+
+if(INIH_SKIP_UPDATES)
+    set(_INI_UPDATE_ARGS UPDATE_DISCONNECTED ON)
+else()
+    set(_INI_UPDATE_ARGS)
+endif()
 
 FetchContent_Declare(
     inih
     GIT_REPOSITORY https://github.com/benhoyt/inih.git
     GIT_TAG        master
+    ${_INI_UPDATE_ARGS}
 )
 
 FetchContent_MakeAvailable(inih)
@@ -126,6 +150,8 @@ if(inih_SOURCE_DIR)
         ${inih_SOURCE_DIR}
         ${inih_SOURCE_DIR}/cpp
     )
+else()
+    message(FATAL_ERROR "inih source directory not found. Ensure initial FetchContent download succeeded.")
 endif()
 
 
@@ -219,8 +245,18 @@ find_program(IWYU_PATH NAMES include-what-you-use iwyu)
 
 if (IWYU_PATH)
     message(STATUS "Found include-what-you-use: ${IWYU_PATH}")
-    # Basic activation without mapping file
-    set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+    set(IWYU_MAPPING_FILE "${CMAKE_SOURCE_DIR}/config/iwyu.imp")
+    if (EXISTS "${IWYU_MAPPING_FILE}")
+        list(APPEND CMAKE_CXX_INCLUDE_WHAT_YOU_USE
+            ${IWYU_PATH}
+            -Xiwyu
+            --mapping_file=${IWYU_MAPPING_FILE}
+        )
+        message(STATUS "IWYU mapping file: ${IWYU_MAPPING_FILE}")
+    else()
+        message(WARNING "IWYU mapping file not found at ${IWYU_MAPPING_FILE}; running without mapping")
+        set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+    endif()
 else()
     message(WARNING "include-what-you-use not found. Consider installing it for header optimization.")
 endif()

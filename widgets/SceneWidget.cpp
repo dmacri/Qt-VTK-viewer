@@ -68,6 +68,8 @@ SceneWidget::SceneWidget(QWidget* parent)
     , sceneWidgetVisualizerProxy{SceneWidgetVisualizerFactory::defaultModel()}
     , settingParameter{std::make_unique<SettingParameter>()}
     , currentModelName{sceneWidgetVisualizerProxy->getModelName()}
+    , gridActor{vtkSmartPointer<vtkActor>::New()}
+    , actorBuildLine{vtkSmartPointer<vtkActor2D>::New()}
 {
     enableToolTipWhenMouseAboveWidget();
 
@@ -121,12 +123,10 @@ void SceneWidget::loadAndUpdateVisualizationForCurrentStep()
     // Refresh VTK visualization elements
     sceneWidgetVisualizerProxy->refreshWindowsVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, gridActor);
 
-    //visualiserProxy->vis->refreshBuildLoadBalanceLine(lines, cam->numberOfLines, cam->dimY+1, cam->dimX+1, actorBuildLine, colors, pts, cellLines, grid);
-
     // Update load balancing lines if we have any
     if (settingParameter->numberOfLines > 0)
     {
-        sceneWidgetVisualizerProxy->getVisualizer().refreshBuildLoadBalanceLine(lines, settingParameter->numberOfColumnX + 1, actorBuildLine);
+        sceneWidgetVisualizerProxy->getVisualizer().refreshBuildLoadBalanceLine(lines, settingParameter->numberOfRowsY + 1, actorBuildLine);
     }
 
     // Update step number display
@@ -507,7 +507,7 @@ void SceneWidget::renderVtkScene()
 
     sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, renderer, gridActor);
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfColumnX+1, renderer, actorBuildLine);
+    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfRowsY+1, renderer, actorBuildLine);
 
     sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, singleLineTextStep, renderer);
 
@@ -781,8 +781,8 @@ void SceneWidget::clearScene()
     sceneWidgetVisualizerProxy->clearStage();
 
     // Reset VTK actors
-    gridActor = vtkNew<vtkActor>();
-    actorBuildLine = vtkNew<vtkActor2D>();
+    gridActor = vtkSmartPointer<vtkActor>::New();
+    actorBuildLine = vtkSmartPointer<vtkActor2D>::New();
 }
 
 void SceneWidget::loadNewConfiguration(const std::string& configFileName, int stepNumber)

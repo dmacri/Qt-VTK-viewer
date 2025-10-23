@@ -3,73 +3,86 @@
 #include "widgets/ColorSettings.h"
 
 
-void Visualizer::buildLoadBalanceLine(const std::vector<Line> &lines, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine)
+namespace
 {
-    vtkNew<vtkCellArray> cellLines;
-    vtkNew<vtkPoints> pts;
+vtkColor3d toVtkColor(QColor color)
+{
+    return vtkColor3d{
+        color.redF(),
+        color.greenF(),
+        color.blueF()
+    };
+}
+} // namespace
 
-    for (size_t i{}; i < lines.size(); i++)
-    {
-        pts->InsertNextPoint(lines[i].x1 * 1, nCols-1-lines[i].y1 * 1, 0.0);
-        pts->InsertNextPoint(lines[i].x2 * 1, nCols-1-lines[i].y2 * 1, 0.0);
-        cellLines->InsertNextCell(2);
-        cellLines->InsertCellPoint(i*2);
-        cellLines->InsertCellPoint(i*2+1);
-    }
 
-    vtkNew<vtkPolyData> grid;
-    grid->SetPoints(pts);
-    grid->SetLines(cellLines);
-    // Set up the coordinate system.
+void Visualizer::buildLoadBalanceLine(const std::vector<Line>& lines, int nRows, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine)
+{
+    // 1. Build line geometry data
+    auto grid = createLinePolyData(lines, nRows);
+
+    // 2. Setup coordinate system
     vtkNew<vtkCoordinate> normCoords;
     normCoords->SetCoordinateSystemToWorld();
 
+    // 3. Create 2D mapper
     vtkNew<vtkPolyDataMapper2D> mapper;
     mapper->SetInputData(grid);
-    mapper->Update();
     mapper->SetTransformCoordinate(normCoords);
+    mapper->Update();
 
+    // 4. Configure actor
     actorBuildLine->SetMapper(mapper);
     actorBuildLine->GetMapper()->Update();
 
-    const QColor gridColorFromSettings = ColorSettings::instance().gridColor();
-    vtkColor3d vtkColor{
-        gridColorFromSettings.redF(),
-        gridColorFromSettings.greenF(),
-        gridColorFromSettings.blueF()
-    };
-    actorBuildLine->GetProperty()->SetColor(vtkColor.GetData());
-
+    const QColor gridColor = ColorSettings::instance().gridColor();
+    actorBuildLine->GetProperty()->SetColor(toVtkColor(gridColor).GetData());
     // actorBuildLine->GetProperty()->SetLineWidth(1.5);
+
+    // 5. Add to renderer
     renderer->AddActor2D(actorBuildLine);
 }
 
-void Visualizer::refreshBuildLoadBalanceLine(const std::vector<Line>& lines, int nCols, vtkActor2D* lineActor)
+vtkSmartPointer<vtkPolyData> Visualizer::createLinePolyData(const std::vector<Line>& lines, int nRows)
 {
-    vtkPolyDataMapper2D* mapper = (vtkPolyDataMapper2D*) lineActor->GetMapper();
-    mapper->Update();
-    vtkNew<vtkPolyData> grid;
     vtkNew<vtkPoints> pts;
     vtkNew<vtkCellArray> cellLines;
 
-    for (int i = 0; i < lines.size(); i++)
+    for (size_t i = 0; i < lines.size(); ++i)
     {
-        pts->InsertNextPoint((lines[i].x1 * 1), ( nCols-1-lines[i].y1 * 1), 0.0);
-        pts->InsertNextPoint((lines[i].x2 * 1), ( nCols-1-lines[i].y2 * 1), 0.0);
+        pts->InsertNextPoint(lines[i].x1, nRows - 1 - lines[i].y1, 0.0);
+        pts->InsertNextPoint(lines[i].x2, nRows - 1 - lines[i].y2, 0.0);
         cellLines->InsertNextCell(2);
-        cellLines->InsertCellPoint(i*2);
-        cellLines->InsertCellPoint(i*2+1);
+        cellLines->InsertCellPoint(i * 2);
+        cellLines->InsertCellPoint(i * 2 + 1);
     }
 
-    grid->SetPoints(pts);
-    grid->SetLines(cellLines);
-    // Set up the coordinate system.
+    vtkNew<vtkPolyData> polyData;
+    polyData->SetPoints(pts);
+    polyData->SetLines(cellLines);
+    return polyData;
+}
+
+void Visualizer::refreshBuildLoadBalanceLine(const std::vector<Line>& lines, int nRows, vtkActor2D* lineActor)
+{
+    if (! lineActor)
+        return;
+
+    // 1. Rebuild geometry
+    auto grid = createLinePolyData(lines, nRows);
+
+    // 2. Get existing mapper (assumes it’s a vtkPolyDataMapper2D)
+    auto* mapper = vtkPolyDataMapper2D::SafeDownCast(lineActor->GetMapper());
+    if (!mapper)
+        return;
+
     vtkNew<vtkCoordinate> normCoords;
     normCoords->SetCoordinateSystemToWorld();
 
+    // 3. Update mapper input
     mapper->SetInputData(grid);
-    mapper->Update();
     mapper->SetTransformCoordinate(normCoords);
+    mapper->Update();
 
     lineActor->SetMapper(mapper);
     lineActor->GetMapper()->Update();
@@ -84,12 +97,7 @@ vtkTextProperty* Visualizer::buildStepLine(StepIndex step, vtkSmartPointer<vtkTe
     singleLineTextProp->SetVerticalJustificationToBottom();
 
     const QColor textColorFromSettings = ColorSettings::instance().textColor();
-    vtkColor3d vtkColor{
-        textColorFromSettings.redF(),
-        textColorFromSettings.greenF(),
-        textColorFromSettings.blueF()
-    };
-    singleLineTextProp->SetColor(vtkColor.GetData());
+    singleLineTextProp->SetColor(toVtkColor(textColorFromSettings).GetData());
 
     return singleLineTextProp;
 }
@@ -107,12 +115,7 @@ vtkNew<vtkActor2D> Visualizer::buildStepText(StepIndex step, int font_size, vtkS
     textProp->SetVerticalJustificationToBottom();
 
     const QColor textColorFromSettings = ColorSettings::instance().textColor();
-    vtkColor3d vtkColor{
-        textColorFromSettings.redF(),
-        textColorFromSettings.greenF(),
-        textColorFromSettings.blueF()
-    };
-    textProp->SetColor(vtkColor.GetData());
+    textProp->SetColor(toVtkColor(textColorFromSettings).GetData());
 
     vtkNew<vtkActor2D> stepLineTextActor;
     stepLineTextActor->SetMapper(stepLineTextMapper);

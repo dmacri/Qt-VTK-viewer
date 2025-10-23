@@ -34,20 +34,6 @@ public:
         : name{std::move(name)}, configParameters{std::move(params)}
     {}
 
-    /** @brief Placeholder for file reading functionality.
-     * 
-     * @note This method is currently not implemented and contains a TODO comment.
-     *       Consult with the development team for the intended implementation.
-     * 
-     * @param name Unused parameter
-     * @param configuration_path Unused parameter
-     * 
-     * @todo Implement this method or remove it if not needed */
-    void readFile(const char* /*name*/, const char* /*configuration_path*/)
-    {
-        #warning "Ask Alessio or Andrea about the function - how it should be implemented, or should it be removed?"
-    }
-
     /// @brief Gets the name of this configuration category.
     const std::string& getName() const
     {

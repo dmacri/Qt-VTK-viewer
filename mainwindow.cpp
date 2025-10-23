@@ -1,7 +1,6 @@
 #include <utility> // std::to_underlying, which requires C++23
 #include <QCommonStyle>
 #include <QSettings>
-#include <QThread> // QThread::msleep
 #include <QDebug>
 #include <QMessageBox>
 #include <QTextStream>
@@ -14,6 +13,7 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QDir>
+#include <QTimer>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -36,6 +36,7 @@ MainWindow::MainWindow(QWidget* parent)
     , ui(new Ui::MainWindow)
     , currentStep{FIRST_STEP_NUMBER}
     , modelActionGroup(nullptr)
+    , playbackTimer(new QTimer(this))
 {
     ui->setupUi(this);
     setWindowTitle(QApplication::applicationName());
@@ -80,6 +81,8 @@ void MainWindow::setupConnections()
     connect(ui->sceneWidget, &SceneWidget::changedStepNumberWithKeyboardKeys, ui->updatePositionSlider, &QSlider::setValue);
     connect(ui->sceneWidget, &SceneWidget::totalNumberOfStepsReadFromConfigFile, this, &MainWindow::totalStepsNumberChanged);
     connect(ui->sceneWidget, &SceneWidget::availableStepsReadFromConfigFile, this, &MainWindow::availableStepsLoadedFromConfigFile);
+
+    connect(playbackTimer, &QTimer::timeout, this, &MainWindow::onPlaybackTimerTick);
 }
 
 void MainWindow::connectMenuActions()
@@ -257,8 +260,8 @@ void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
 {
     // Save current state
     const int originalStep = currentStep;
-    const bool wasPlaying = isPlaying;
-    isPlaying = false;
+    const bool wasPlaying = playbackTimer->isActive();
+    playbackTimer->stop();
     
     // Create progress dialog
     QProgressDialog progress(tr("Exporting video..."), tr("Cancel"), 1, totalSteps(), this);
@@ -302,65 +305,72 @@ void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
     // Restore original state
     currentStep = originalStep;
     setPositionOnWidgets(currentStep);
-    isPlaying = wasPlaying;
+    if (wasPlaying)
+    {
+        playbackTimer->start(ui->sleepSpinBox->value());
+    }
     
     progress.setValue(totalSteps());
 }
-// TODO: Consider using QTimer to periodic events instead of speeping
 void MainWindow::playingRequested(PlayingDirection direction)
 {
-    currentStep = std::clamp(currentStep + std::to_underlying(direction), FIRST_STEP_NUMBER, totalSteps());
-
-    while (true)
+    if (playbackTimer->isActive() && playbackDirection == direction)
     {
-        currentStep = std::clamp(currentStep, FIRST_STEP_NUMBER, totalSteps());
-
-        {
-            QSignalBlocker blockSlider(ui->updatePositionSlider);
-            if (bool changingPositionSuccess = setPositionOnWidgets(currentStep); ! changingPositionSuccess)
-            {
-                isPlaying = false;
-                break;
-            }
-        }
-
-        QThread::msleep(ui->sleepSpinBox->value());
-
-        QApplication::processEvents();
-
-        if (! isPlaying || (std::to_underlying(direction) < 0 && currentStep == 0))
-        {
-            break;
-        }
-
-        if (PlayingDirection::Forward == direction && currentStep == totalSteps()
-            || PlayingDirection::Backward == direction && currentStep == FIRST_STEP_NUMBER)
-        {
-            break;
-        }
-
-        currentStep += std::to_underlying(direction)*ui->speedSpinBox->value();
+        // Already playing in this direction, stop it
+        playbackTimer->stop();
+        return;
     }
+    
+    // Start playback in the specified direction
+    playbackDirection = direction;
+    
+    // Start timer with interval from sleepSpinBox
+    playbackTimer->start(ui->sleepSpinBox->value());
+}
+
+void MainWindow::onPlaybackTimerTick()
+{
+    // Update current step
+    currentStep += std::to_underlying(playbackDirection) * ui->speedSpinBox->value();
+    currentStep = std::clamp(currentStep, FIRST_STEP_NUMBER, totalSteps());
+    
+    // Update UI
+    {
+        QSignalBlocker blockSlider(ui->updatePositionSlider);
+        if (bool changingPositionSuccess = setPositionOnWidgets(currentStep); !changingPositionSuccess)
+        {
+            playbackTimer->stop();
+            return;
+        }
+    }
+    
+    // Check if we reached the end
+    if ((playbackDirection == PlayingDirection::Forward && currentStep >= totalSteps())
+        || (playbackDirection == PlayingDirection::Backward && currentStep <= FIRST_STEP_NUMBER))
+    {
+        playbackTimer->stop();
+    }
+    
+    // Update timer interval in case sleepSpinBox changed
+    playbackTimer->setInterval(ui->sleepSpinBox->value());
 }
 
 
 void MainWindow::onPlayButtonClicked()
 {
-    if (isPlaying)
+    if (playbackTimer->isActive())
     {
-        isPlaying = false;
+        playbackTimer->stop();
     }
     else
     {
-        isPlaying = true;
-        isBacking = false;
         playingRequested(PlayingDirection::Forward);
     }
 }
 
 void MainWindow::onStopButtonClicked()
 {
-    isPlaying = false;
+    playbackTimer->stop();
     ui->playButton->setIcon(QCommonStyle().standardIcon(QStyle::SP_MediaPlay));
 }
 
@@ -378,8 +388,6 @@ void MainWindow::onSkipBackwardButtonClicked()
 
 void MainWindow::onBackButtonClicked()
 {
-    isPlaying = true;
-    isBacking = true;
     playingRequested(PlayingDirection::Backward);
 }
 
@@ -539,8 +547,7 @@ void MainWindow::openConfigurationFile(const QString& configFileName)
     try
     {
         // Stop any ongoing playback
-        isPlaying = false;
-        isBacking = false;
+        playbackTimer->stop();
 
         if (bool isFirstConfiguration = ui->inputFilePathLabel->getFileName().isEmpty())
         {

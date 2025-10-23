@@ -14,6 +14,7 @@ class MainWindow;
 
 class QPushButton;
 class QActionGroup;
+class QTimer;
 
 /** @class MainWindow
  * @brief The main application window class that manages the user interface.
@@ -63,6 +64,7 @@ private slots:
     void availableStepsLoadedFromConfigFile(std::vector<StepIndex> availableSteps);
     
     void onRecentFileTriggered();
+    void onPlaybackTimerTick();
 
 private:
     enum class PlayingDirection
@@ -113,12 +115,14 @@ private:
     Ui::MainWindow *ui;
 
     QActionGroup *modelActionGroup;
+    QTimer *playbackTimer;
     
     static constexpr int MAX_RECENT_FILES = 10;
 
     int currentStep;
-    bool isPlaying = false;
-    bool isBacking = false;
+    
+    // Playback state for timer-based playback
+    PlayingDirection playbackDirection = PlayingDirection::Forward;
 
     QString noSelectionMessage;
     QString directorySelectionMessage;
