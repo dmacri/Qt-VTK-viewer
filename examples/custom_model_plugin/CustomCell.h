@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdio>
 #include <cstdlib>
 #include <algorithm> // std::max, std::min
 #include "OOpenCAL/base/Element.h"
@@ -15,9 +14,7 @@
  * gradient from blue (low values) to red (high values). */
 class CustomCell : public Element
 {
-private:
     int value;
-    rgb outputColor{128, 128, 128};
 
 public:
     OPENCALF CustomCell() : value(0) {}
@@ -41,17 +38,17 @@ public:
     }
 
     /// Convert cell state to string representation
-    char* stringEncoding() override
+    std::string stringEncoding(char *) override
     {
-        char* zstr = new char[16];
-        sprintf(zstr, "%d", value);
-        return zstr;
+        return std::to_string(value);
     }
 
     /** Determine the output color based on the cell value
      * Blue (0) -> Cyan -> Green -> Yellow -> Red (255) */
-    rgb* outputValue(char* str) override
+    rgb outputValue(char* str) override
     {
+        rgb outputColor{128, 128, 128};
+
         // Normalize value to 0-1 range (assuming 0-255 input)
         double normalized = value / 255.0;
         normalized = std::max(0.0, std::min(1.0, normalized));
@@ -81,7 +78,7 @@ public:
             outputColor = rgb(255, static_cast<int>(255 * (1 - t)), 0);
         }
 
-        return &outputColor;
+        return outputColor;
     }
 
     /// Called at the start of each simulation step
