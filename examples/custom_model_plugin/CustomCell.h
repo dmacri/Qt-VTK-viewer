@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 #include <algorithm> // std::max, std::min
-#include "OOpenCAL/base/Element.h"
+#include "OOpenCAL/base/Cell.h"
 
 
 /** CustomCell - Example custom model for Qt-VTK-viewer plugin system
@@ -12,7 +12,7 @@
  * 
  * This model stores a single integer value and displays it with a color
  * gradient from blue (low values) to red (high values). */
-class CustomCell : public Element
+class CustomCell : public Cell
 {
     int value;
 
@@ -38,16 +38,16 @@ public:
     }
 
     /// Convert cell state to string representation
-    std::string stringEncoding(char *) override
+    std::string stringEncoding(const char *) const override
     {
         return std::to_string(value);
     }
 
     /** Determine the output color based on the cell value
      * Blue (0) -> Cyan -> Green -> Yellow -> Red (255) */
-    rgb outputValue(char* str) override
+    Color outputValue(const char* str) const override
     {
-        rgb outputColor{128, 128, 128};
+        Color outputColor{128, 128, 128};
 
         // Normalize value to 0-1 range (assuming 0-255 input)
         double normalized = value / 255.0;
@@ -57,25 +57,25 @@ public:
         {
             // Blue -> Cyan
             double t = normalized * 4.0;
-            outputColor = rgb(0, static_cast<int>(255 * t), 255);
+            outputColor = Color(0, static_cast<int>(255 * t), 255);
         }
         else if (normalized < 0.5)
         {
             // Cyan -> Green
             double t = (normalized - 0.25) * 4.0;
-            outputColor = rgb(0, 255, static_cast<int>(255 * (1 - t)));
+            outputColor = Color(0, 255, static_cast<int>(255 * (1 - t)));
         }
         else if (normalized < 0.75)
         {
             // Green -> Yellow
             double t = (normalized - 0.5) * 4.0;
-            outputColor = rgb(static_cast<int>(255 * t), 255, 0);
+            outputColor = Color(static_cast<int>(255 * t), 255, 0);
         }
         else
         {
             // Yellow -> Red
             double t = (normalized - 0.75) * 4.0;
-            outputColor = rgb(255, static_cast<int>(255 * (1 - t)), 0);
+            outputColor = Color(255, static_cast<int>(255 * (1 - t)), 0);
         }
 
         return outputColor;

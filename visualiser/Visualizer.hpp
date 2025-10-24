@@ -21,7 +21,7 @@
 #include <vtkTextMapper.h>
 #include <vtkTextProperty.h>
 
-#include "OOpenCAL/base/Element.h" // rgb
+#include "OOpenCAL/base/Cell.h" // Color
 #include "utilities/types.h" // StepIndex
 
 class Line;
