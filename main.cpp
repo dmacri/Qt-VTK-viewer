@@ -20,17 +20,18 @@
  *
  * @include README.md */
 
-#include <filesystem>
 #include <QApplication>
 #include <QFile>
 #include <QStyleFactory>
 #include <QSurfaceFormat>
-#include <vtkGenericOpenGLRenderWindow.h>
-#include <QVTKOpenGLNativeWidget.h>
-#include "mainwindow.h"
-#include "utilities/PluginLoader.h"
-#include "utilities/CommandLineParser.h"
+#include <filesystem>
 
+#include <QVTKOpenGLNativeWidget.h>
+#include <vtkGenericOpenGLRenderWindow.h>
+
+#include "mainwindow.h"
+#include "utilities/CommandLineParser.h"
+#include "utilities/PluginLoader.h"
 
 int main(int argc, char* argv[])
 {

@@ -31,7 +31,7 @@
  * 
  * @tparam Cell The cell type used in the model 
  * Note: Cell is derived class from Element (which is header from OOpenCal) */
-template <class Cell>
+template<class Cell>
 class ModelReader
 {
     std::vector<std::unordered_map<StepIndex, FilePosition>> nodeStepOffsets; ///< Maps node indices to their file positions for each step
@@ -110,7 +110,7 @@ public:
      * @throws std::runtime_error If `throwOnMismatch` is true and:
      *         - the `stage` is empty, or
      *         - the step sets differ between nodes. */
-    std::vector<StepIndex> availableSteps(bool throwOnMismatch=false) const;
+    std::vector<StepIndex> availableSteps(bool throwOnMismatch = false) const;
 
 private:
     FilePosition getStepStartingPositionInFile(StepIndex step, NodeIndex node) const;
@@ -143,18 +143,18 @@ namespace ReaderHelpers /// functions which are not templates
 {
     return std::format("{}{}.txt", fileName, node);
 }
-[[nodiscard]] inline std::string giveMeFileNameIndex(const std::string &fileName, NodeIndex node)
+[[nodiscard]] inline std::string giveMeFileNameIndex(const std::string& fileName, NodeIndex node)
 {
     return std::format("{}{}_index.txt", fileName, node);
 }
 
 ColumnAndRow getColumnAndRowFromLine(const std::string& line);
 
-ColumnAndRow calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std::vector<ColumnAndRow> &columnsAndRows);
-}
+ColumnAndRow calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std::vector<ColumnAndRow>& columnsAndRows);
+} // namespace ReaderHelpers
 /////////////////////////////
 
-template <class Cell>
+template<class Cell>
 ColumnAndRow ModelReader<Cell>::readColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node)
 {
     ColumnAndRow columnAndRow;
@@ -197,7 +197,7 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
     const auto columnsAndRows = giveMeLocalColsAndRowsForAllSteps(sp->step, sp->nNodeX, sp->nNodeY, sp->outputFileName);
 
     /// Lambda responsible for reading and processing a single node's file
-    auto processNode = [&, this/*, m, sp, lines, columnsAndRows*/](NodeIndex node) /*mutable*/
+    auto processNode = [&, this](NodeIndex node)
     {
         const auto offsetXY = ReaderHelpers::calculateXYOffset(node, sp->nNodeX, sp->nNodeY, columnsAndRows);
 
@@ -250,13 +250,13 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
             }
 
             // Replace spaces with '\0' to tokenize more efficiently
-            std::replace(line.begin(), line.end(), ' ', '\0');  /// this is faster than using std::ranges::replace
+            std::replace(line.begin(), line.end(), ' ', '\0'); /// this is faster than using std::ranges::replace
 
             // Tokenize and fill the corresponding part of the matrix
             char* currentTokenPtr = line.data();
             for (int col = 0; col < columnAndRow.column && *currentTokenPtr; ++col)
             {
-                if (!localStartStepDone) [[unlikely]]
+                if (! localStartStepDone) [[unlikely]]
                 {
                     m[row + offsetXY.y()][col + offsetXY.x()].Cell::startStep(sp->step);
                     localStartStepDone = true;
@@ -301,7 +301,7 @@ std::vector<ColumnAndRow> ModelReader<Cell>::giveMeLocalColsAndRowsForAllSteps(S
     return allColumnsAndRows;
 }
 
-template <class Cell>
+template<class Cell>
 void ModelReader<Cell>::readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, NodeIndex nNodeY, const std::string& filename)
 {
     const auto totalNodes = nNodeX * nNodeY;
