@@ -59,81 +59,31 @@ bool CommandLineParser::parse(int argc, char* argv[])
         }
 
         // Parse positional config file argument
-        try
+        if (auto cfg = program.present<std::vector<std::string>>(ARG_CONFIG))
         {
-            auto configArg = program.get<std::vector<std::string>>(ARG_CONFIG);
-            if (! configArg.empty())
+            if (! cfg->empty())
             {
-                configFile = configArg[0];
+                configFile = cfg->at(0);
             }
         }
-        catch (const std::logic_error&)
-        {
-            // argument not provided, which is fine
-        }
 
-        try
-        {
-            loadModelPaths = program.get<std::vector<std::string>>(ARG_LOAD_MODEL);
-        }
-        catch (const std::logic_error&)
-        {
-        }
+        if (auto models = program.present<std::vector<std::string>>(ARG_LOAD_MODEL))
+            loadModelPaths = *models;
 
-        try
-        {
-            startingModel = program.get<std::string>(ARG_STARTING_MODEL);
-        }
-        catch (const std::logic_error&)
-        {
-            // argument not provided
-        }
+        if (auto model = program.present<std::string>(ARG_STARTING_MODEL))
+            startingModel = *model;
 
-        // Parse generateMoviePath
-        try
-        {
-            generateMoviePath = program.get<std::string>(ARG_GENERATE_MOVIE);
-        }
-        catch (const std::logic_error&)
-        {
-            // argument not provided
-        }
+        if (auto path = program.present<std::string>(ARG_GENERATE_MOVIE))
+            generateMoviePath = *path;
 
-        try
-        {
-            generateImagePath = program.get<std::string>(ARG_GENERATE_IMAGE);
-        }
-        catch (const std::logic_error&)
-        {
-            // argument not provided
-        }
+        if (auto path = program.present<std::string>(ARG_GENERATE_IMAGE))
+            generateImagePath = *path;
 
-        try
-        {
-            step = program.get<int>(ARG_STEP);
-        }
-        catch (const std::logic_error&)
-        {
-            // argument not provided
-        }
+        if (auto st = program.present<int>(ARG_STEP))
+            step = *st;
 
-        try
-        {
-            exitAfterLastStep = program.get<bool>(ARG_EXIT_AFTER_LAST);
-        }
-        catch (const std::logic_error&)
-        {
-            // argument not provided
-        }
-
-        try
-        {
-            silentMode = program.get<bool>(ARG_SILENT);
-        }
-        catch (const std::logic_error&)
-        {
-            // argument not provided
-        }
+        exitAfterLastStep = program.is_used(ARG_EXIT_AFTER_LAST);
+        silentMode        = program.is_used(ARG_SILENT);
 
         return true;
     }
