@@ -82,51 +82,7 @@ void SceneWidget::enableToolTipWhenMouseAboveWidget()
     setAttribute(Qt::WA_AlwaysShowToolTips);
 }
 
-SceneWidget::~SceneWidget()
-{
-    // Clean up VTK scene properly to avoid segfaults on exit
-    // This is especially important when plugins are loaded
-    
-    try
-    {
-        // Clear the visualizer stage FIRST before removing actors
-        // This ensures plugin-specific cleanup happens before VTK cleanup
-        if (sceneWidgetVisualizerProxy)
-        {
-            try
-            {
-                sceneWidgetVisualizerProxy->clearStage();
-            }
-            catch (const std::exception& e)
-            {
-                std::cerr << "Warning: Error clearing stage in destructor: " << e.what() << std::endl;
-            }
-        }
-        
-        // Reset visualizer proxy to release any plugin resources
-        sceneWidgetVisualizerProxy.reset();
-        
-        // Now remove all actors from renderer
-        if (renderer)
-        {
-            renderer->RemoveAllViewProps();
-        }
-        
-        // Explicitly reset smart pointers to ensure VTK cleanup order
-        gridActor = nullptr;
-        actorBuildLine = nullptr;
-        
-        // Reset setting parameter
-        settingParameter.reset();
-        
-        // Clear lines vector
-        lines.clear();
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Error in SceneWidget destructor: " << e.what() << std::endl;
-    }
-}
+SceneWidget::~SceneWidget() = default;
 
 
 void SceneWidget::triggerRenderUpdate()
