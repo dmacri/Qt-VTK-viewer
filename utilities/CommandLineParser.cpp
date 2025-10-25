@@ -43,6 +43,10 @@ bool CommandLineParser::parse(int argc, char* argv[])
             .help("Exit after last step (useful with --generateMoviePath)")
             .flag();
 
+        program.add_argument(ARG_SILENT)
+            .help("Silent mode: Skip displaying information dialogs (usefull when we use commandline arguments)")
+            .flag();
+
         try
         {
             program.parse_args(argc, argv);
@@ -122,6 +126,15 @@ bool CommandLineParser::parse(int argc, char* argv[])
             // argument not provided
         }
 
+        try
+        {
+            silentMode = program.get<bool>(ARG_SILENT);
+        }
+        catch (const std::logic_error&)
+        {
+            // argument not provided
+        }
+
         return true;
     }
     catch (const std::exception& err)
@@ -134,19 +147,20 @@ bool CommandLineParser::parse(int argc, char* argv[])
 
 void CommandLineParser::printHelp() const
 {
+    constexpr int WIDTH = 24;
     const auto appName = QApplication::applicationName().toStdString();
-
     std::cout << std::format("Usage: {} [CONFIG_FILE] [OPTIONS]\n\n", appName)
               << "Positional Arguments:\n"
-              << "  CONFIG_FILE           Path to configuration file (optional)\n\n"
+              << std::format("  {: <{}} Path to configuration file (optional)\n\n", "CONFIG_FILE", WIDTH)
               << "Optional Arguments:\n"
-              << std::format("  {} PATH   Load custom model plugin (can be repeated)\n", ARG_LOAD_MODEL)
-              << std::format("  {} NAME   Start with specific model\n", ARG_STARTING_MODEL)
-              << std::format("  {} PATH   Generate movie by running all steps\n", ARG_GENERATE_MOVIE)
-              << std::format("  {} PATH   Generate image for current step\n", ARG_GENERATE_IMAGE)
-              << std::format("  {} NUMBER Go to specific step directly\n", ARG_STEP)
-              << std::format("  {}        Exit after last step\n", ARG_EXIT_AFTER_LAST)
-              << "  -h, --help            Show this help message\n\n"
+              << std::format("  {: <{}} Load custom model plugin (can be repeated)\n", ARG_LOAD_MODEL, WIDTH)
+              << std::format("  {: <{}} Start with specific model\n", ARG_STARTING_MODEL, WIDTH)
+              << std::format("  {: <{}} Generate movie by running all steps\n", ARG_GENERATE_MOVIE, WIDTH)
+              << std::format("  {: <{}} Generate image for current step\n", ARG_GENERATE_IMAGE, WIDTH)
+              << std::format("  {: <{}} Go to specific step directly\n", ARG_STEP, WIDTH)
+              << std::format("  {: <{}} Exit after last step\n", ARG_EXIT_AFTER_LAST, WIDTH)
+              << std::format("  {: <{}} Suppress error dialogs and messages\n", ARG_SILENT, WIDTH)
+              << std::format("  {: <{}} Show this help message\n\n", "-h, --help", WIDTH)
               << "Examples:\n"
               << std::format("  {} config.txt\n", appName)
               << std::format("  {} config.txt {}=MyModel\n", appName, ARG_STARTING_MODEL)

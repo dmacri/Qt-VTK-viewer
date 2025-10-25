@@ -131,4 +131,7 @@ private:
     QString compilationFailedMessage;
     QString deleteSuccessfulMessage;
     QString deleteFailedMessage;
+
+    // Command-line options
+    bool silentMode = false;
 };

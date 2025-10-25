@@ -139,7 +139,7 @@ void MainWindow::initializeSceneWidget(const QString& configFileName)
 void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> availableSteps)
 {
     const auto lastStepAvailableInAvailableSteps = std::ranges::contains(availableSteps, totalSteps());
-    if ( ! lastStepAvailableInAvailableSteps)
+    if ( ! lastStepAvailableInAvailableSteps && ! silentMode)
     {
         QMessageBox::warning(this, tr("Number of steps mismatch"),
                              tr("Total number of steps from config file is %1, but last step number from index file is %2")
@@ -247,8 +247,11 @@ void MainWindow::exportVideoDialog()
     try
     {
         recordVideoToFile(outputFilePath, fps);
-        QMessageBox::information(this, tr("Export Complete"),
-                               tr("Video exported successfully to:\n%1").arg(outputFilePath));
+        if(! silentMode)
+        {
+            QMessageBox::information(this, tr("Export Complete"),
+                                     tr("Video exported successfully to:\n%1").arg(outputFilePath));
+        }
     }
     catch (const std::exception& e)
     {
@@ -423,8 +426,11 @@ bool MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
     }
     catch (const std::exception& e)
     {
-        QMessageBox::warning(this, "Changing position error",
-                             tr("It was impossible to change position to %1, because:\n").arg(stepPosition) + e.what());
+        if (! silentMode)
+        {
+            QMessageBox::warning(this, "Changing position error",
+                                 tr("It was impossible to change position to %1, because:\n").arg(stepPosition) + e.what());
+        }
         currentStep = stepBeforeTrying2ChangePosition;
         changingPositionSuccess = false;
     }
@@ -489,10 +495,13 @@ void MainWindow::switchToModel(const QString& modelName)
         
         ui->sceneWidget->switchModel(modelName.toStdString());
         
-        QMessageBox::information(this, tr("Model Changed"),
-                                 tr("Successfully switched to %1 model, but no data was reloaded from files.\n"
-                                    "Use 'Reload Data' (F5), or open another configuration file to load data files.\n"
-                                    "Notice: Model has to be compatible with configuration file, if not - the behaviour is undefined").arg(modelName));
+        if (! silentMode)
+        {
+            QMessageBox::information(this, tr("Model Changed"),
+                                     tr("Successfully switched to %1 model, but no data was reloaded from files.\n"
+                                        "Use 'Reload Data' (F5), or open another configuration file to load data files.\n"
+                                        "Notice: Model has to be compatible with configuration file, if not - the behaviour is undefined").arg(modelName));
+        }
     }
     catch (const std::exception& e)
     {
@@ -514,9 +523,12 @@ void MainWindow::onReloadDataRequested()
     {
         ui->sceneWidget->reloadData();
         
-        QMessageBox::information(this, tr("Data Reloaded"),
-                               tr("Data files successfully reloaded for model: %1")
-                               .arg(QString::fromStdString(ui->sceneWidget->getCurrentModelName())));
+        if (! silentMode)
+        {
+            QMessageBox::information(this, tr("Data Reloaded"),
+                                     tr("Data files successfully reloaded for model: %1")
+                                        .arg(QString::fromStdString(ui->sceneWidget->getCurrentModelName())));
+        }
     }
     catch (const std::exception& e)
     {
@@ -573,8 +585,11 @@ void MainWindow::openConfigurationFile(const QString& configFileName)
         // Add to recent files
         addToRecentFiles(configFileName);
         
-        QMessageBox::information(this, tr("Configuration Loaded"),
-                                 tr("Successfully loaded configuration:\n%1").arg(configFileName));
+        if (! silentMode)
+        {
+            QMessageBox::information(this, tr("Configuration Loaded"),
+                                     tr("Successfully loaded configuration:\n%1").arg(configFileName));
+        }
     }
     catch (const std::exception& e)
     {
@@ -1057,6 +1072,9 @@ void MainWindow::setWidgetsEnabledState(bool enabled)
 
 void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
 {
+    // Store silent mode flag
+    silentMode = cmdParser.isSilentMode();
+
     // Set starting model if specified
     if (cmdParser.getStartingModel())
     {
@@ -1073,6 +1091,16 @@ void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
                 {
                     action->setChecked(true);
                     switchToModel(modelQStr);
+
+                    // Reload data with the new model
+                    try
+                    {
+                        ui->sceneWidget->reloadData();
+                    }
+                    catch (const std::exception& e)
+                    {
+                        std::cerr << "Error reloading data with new model: " << e.what() << std::endl;
+                    }
                     break;
                 }
             }

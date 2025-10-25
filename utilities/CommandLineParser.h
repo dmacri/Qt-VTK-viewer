@@ -21,6 +21,7 @@
  * - exitAfterLastStep: Exit after last step (useful with generateMoviePath)
  * - step=<number>: Go to specific step directly
  * - generateImagePath=<path>: Generate image for current step and save to file
+ * - silent: Suppress error dialogs
  * - configFile: Path to configuration file (positional argument) */
 class CommandLineParser
 {
@@ -70,6 +71,10 @@ public:
     {
         return exitAfterLastStep;
     }
+    bool isSilentMode() const
+    {
+        return silentMode;
+    }
 
     /// @brief Print help message with available arguments.
     void printHelp() const;
@@ -82,4 +87,5 @@ private:
     std::optional<int> step;
     std::optional<std::string> configFile;
     bool exitAfterLastStep = false;
+    bool silentMode = false;
 };
