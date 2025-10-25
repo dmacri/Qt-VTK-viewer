@@ -1,9 +1,9 @@
 #pragma once
 
-#include <cstdlib>
 #include <algorithm> // std::max, std::min
-#include "OOpenCAL/base/Cell.h"
+#include <cstdlib>
 
+#include "OOpenCAL/base/Cell.h"
 
 /** CustomCell - Example custom model for Qt-VTK-viewer plugin system
  * 
@@ -17,18 +17,24 @@ class CustomCell : public Cell
     int value;
 
 public:
-    OPENCALF CustomCell() : value(0) {}
-    
-    OPENCALF CustomCell(int val) : value(val) {}
-
-    OPENCALF void setValue(int v) 
-    { 
-        value = v; 
+    OPENCALF CustomCell()
+        : value(0)
+    {
     }
-    
-    OPENCALF int getValue() const 
-    { 
-        return value; 
+
+    OPENCALF CustomCell(int val)
+        : value(val)
+    {
+    }
+
+    OPENCALF void setValue(int v)
+    {
+        value = v;
+    }
+
+    OPENCALF int getValue() const
+    {
+        return value;
     }
 
     /// Parse a string representation and set the cell value
@@ -38,7 +44,7 @@ public:
     }
 
     /// Convert cell state to string representation
-    std::string stringEncoding(const char *) const override
+    std::string stringEncoding(const char*) const override
     {
         return std::to_string(value);
     }
@@ -52,7 +58,7 @@ public:
         // Normalize value to 0-1 range (assuming 0-255 input)
         double normalized = value / 255.0;
         normalized = std::max(0.0, std::min(1.0, normalized));
-        
+
         if (normalized < 0.25)
         {
             // Blue -> Cyan
@@ -82,7 +88,7 @@ public:
     }
 
     /// Called at the start of each simulation step
-    void startStep(int /*step*/) override 
+    void startStep(int /*step*/) override
     {
         // Custom initialization for each step if needed
     }

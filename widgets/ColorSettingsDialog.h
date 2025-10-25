@@ -11,8 +11,8 @@
  * The dialog integrates with ColorSettings to persist changes and notify other components about color updates. */
 #pragma once
 
-#include <QDialog>
 #include <QColor>
+#include <QDialog>
 
 namespace Ui
 {
@@ -37,7 +37,7 @@ class ColorSettingsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit ColorSettingsDialog(QWidget *parent = nullptr);
+    explicit ColorSettingsDialog(QWidget* parent = nullptr);
     ~ColorSettingsDialog();
 
 private slots:
@@ -57,7 +57,7 @@ protected:
     void saveSettings();
 
 private:
-    Ui::ColorSettingsDialog *ui;
+    Ui::ColorSettingsDialog* ui;
 
     QColor m_backgroundColor;
     QColor m_textColor;

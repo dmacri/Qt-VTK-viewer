@@ -139,7 +139,7 @@ void MainWindow::initializeSceneWidget(const QString& configFileName)
 void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> availableSteps)
 {
     const auto lastStepAvailableInAvailableSteps = std::ranges::contains(availableSteps, totalSteps());
-    if ( ! lastStepAvailableInAvailableSteps && ! silentMode)
+    if (! lastStepAvailableInAvailableSteps && ! silentMode)
     {
         QMessageBox::warning(this, tr("Number of steps mismatch"),
                              tr("Total number of steps from config file is %1, but last step number from index file is %2")
@@ -173,16 +173,16 @@ void MainWindow::connectButtons()
 void MainWindow::connectSliders()
 {
     connect(ui->updatePositionSlider, &QSlider::valueChanged, this, &MainWindow::onUpdatePositionOnSlider);
-    
+
     // Camera control sliders
     connect(ui->azimuthSlider, &QSlider::valueChanged, this, &MainWindow::onAzimuthChanged);
     connect(ui->azimuthSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), ui->azimuthSlider, &QSlider::setValue);
     connect(ui->azimuthSlider, &QSlider::valueChanged, ui->azimuthSpinBox, &QSpinBox::setValue);
-    
+
     connect(ui->elevationSlider, &QSlider::valueChanged, this, &MainWindow::onElevationChanged);
     connect(ui->elevationSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), ui->elevationSlider, &QSlider::setValue);
     connect(ui->elevationSlider, &QSlider::valueChanged, ui->elevationSpinBox, &QSpinBox::setValue);
-    
+
     // Update sliders when camera changes (e.g., via mouse rotation in 3D mode)
     connect(ui->sceneWidget, &SceneWidget::cameraOrientationChanged, this, &MainWindow::onCameraOrientationChanged);
 }
@@ -229,25 +229,25 @@ void MainWindow::exportVideoDialog()
                                                           tr("Export Video"),
                                                           /*dir=*/QString(),
                                                           tr("OGG Video Files (*.ogv);;All Files (*)"));
-    
+
     if (outputFilePath.isEmpty())
     {
         return; // User cancelled
     }
-    
+
     // Ensure .ogv extension
     if (! outputFilePath.endsWith(".ogv", Qt::CaseInsensitive))
     {
         outputFilePath += ".ogv";
     }
-    
+
     const int fps = ui->speedSpinBox->value();
-    
+
     // Record video
     try
     {
         recordVideoToFile(outputFilePath, fps);
-        if(! silentMode)
+        if (! silentMode)
         {
             QMessageBox::information(this, tr("Export Complete"),
                                      tr("Video exported successfully to:\n%1").arg(outputFilePath));
@@ -255,8 +255,7 @@ void MainWindow::exportVideoDialog()
     }
     catch (const std::exception& e)
     {
-        QMessageBox::critical(this, tr("Export Failed"),
-                            tr("Failed to export video:\n%1").arg(e.what()));
+        QMessageBox::critical(this, tr("Export Failed"), tr("Failed to export video:\n%1").arg(e.what()));
     }
 }
 
@@ -272,24 +271,26 @@ void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
     progress.setWindowModality(Qt::WindowModal);
     progress.setMinimumDuration(0);
     progress.setValue(0);
-    
+
     // Create video exporter
     VideoExporter exporter;
-    
+
     // Define callback to update visualization for each step
-    auto updateStepCallback = [this](int step) {
+    auto updateStepCallback = [this](int step)
+    {
         currentStep = step;
         QSignalBlocker blockSlider(ui->updatePositionSlider);
         setPositionOnWidgets(currentStep);
         QApplication::processEvents();
     };
-    
+
     // Define callback to report progress
-    auto progressCallback = [&progress, this](int step, int total) {
+    auto progressCallback = [&progress, this](int step, int total)
+    {
         progress.setValue(step);
         progress.setLabelText(tr("Exporting video... Step %1 of %2").arg(step).arg(total));
     };
-    
+
     // Define callback to check if cancelled
     auto cancelledCallback = [&progress]() -> bool {
         return progress.wasCanceled();
@@ -313,7 +314,7 @@ void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
     {
         playbackTimer->start(ui->sleepSpinBox->value());
     }
-    
+
     progress.setValue(totalSteps());
 }
 void MainWindow::playingRequested(PlayingDirection direction)
@@ -324,10 +325,10 @@ void MainWindow::playingRequested(PlayingDirection direction)
         playbackTimer->stop();
         return;
     }
-    
+
     // Start playback in the specified direction
     playbackDirection = direction;
-    
+
     // Start timer with interval from sleepSpinBox
     playbackTimer->start(ui->sleepSpinBox->value());
 }
@@ -337,24 +338,24 @@ void MainWindow::onPlaybackTimerTick()
     // Update current step
     currentStep += std::to_underlying(playbackDirection) * ui->speedSpinBox->value();
     currentStep = std::clamp(currentStep, FIRST_STEP_NUMBER, totalSteps());
-    
+
     // Update UI
     {
         QSignalBlocker blockSlider(ui->updatePositionSlider);
-        if (bool changingPositionSuccess = setPositionOnWidgets(currentStep); !changingPositionSuccess)
+        if (bool changingPositionSuccess = setPositionOnWidgets(currentStep); ! changingPositionSuccess)
         {
             playbackTimer->stop();
             return;
         }
     }
-    
+
     // Check if we reached the end
     if ((playbackDirection == PlayingDirection::Forward && currentStep >= totalSteps())
         || (playbackDirection == PlayingDirection::Backward && currentStep <= FIRST_STEP_NUMBER))
     {
         playbackTimer->stop();
     }
-    
+
     // Update timer interval in case sleepSpinBox changed
     playbackTimer->setInterval(ui->sleepSpinBox->value());
 }
@@ -476,9 +477,9 @@ void MainWindow::onUpdatePositionOnSlider(int value)
 void MainWindow::onModelSelected()
 {
     QAction* action = qobject_cast<QAction*>(sender());
-    if (!action)
+    if (! action)
         return;
-    
+
     QString modelName = action->text();
     switchToModel(modelName);
 }
@@ -488,26 +489,27 @@ void MainWindow::switchToModel(const QString& modelName)
     try
     {
         // Verify that model is registered
-        if (!SceneWidgetVisualizerFactory::isModelRegistered(modelName.toStdString()))
+        if (! SceneWidgetVisualizerFactory::isModelRegistered(modelName.toStdString()))
         {
             throw std::invalid_argument("Model not registered: " + modelName.toStdString());
         }
-        
+
         ui->sceneWidget->switchModel(modelName.toStdString());
-        
+
         if (! silentMode)
         {
-            QMessageBox::information(this, tr("Model Changed"),
-                                     tr("Successfully switched to %1 model, but no data was reloaded from files.\n"
-                                        "Use 'Reload Data' (F5), or open another configuration file to load data files.\n"
-                                        "Notice: Model has to be compatible with configuration file, if not - the behaviour is undefined").arg(modelName));
+            QMessageBox::information(
+                this, tr("Model Changed"),
+                tr("Successfully switched to %1 model, but no data was reloaded from files.\n"
+                   "Use 'Reload Data' (F5), or open another configuration file to load data files.\n"
+                   "Notice: Model has to be compatible with configuration file, if not - the behaviour is undefined")
+                    .arg(modelName));
         }
     }
     catch (const std::exception& e)
     {
-        QMessageBox::critical(this, tr("Model Switch Failed"),
-                              tr("Failed to switch model:\n%1").arg(e.what()));
-        
+        QMessageBox::critical(this, tr("Model Switch Failed"), tr("Failed to switch model:\n%1").arg(e.what()));
+
         // Revert checkbox state to current model
         const auto currentModel = QString::fromStdString(ui->sceneWidget->getCurrentModelName());
         for (QAction* action : modelActionGroup->actions())
@@ -571,20 +573,20 @@ void MainWindow::openConfigurationFile(const QString& configFileName)
             // Reload with new configuration
             ui->sceneWidget->loadNewConfiguration(configFileName.toStdString(), 0);
         }
-        
+
         // Update UI with new configuration
         showInputFilePathOnBarLabel(configFileName);
-        
+
         // Reset to first step
         currentStep = 0;
         setPositionOnWidgets(currentStep);
-        
+
         // Enable all widgets now that we have configuration
         setWidgetsEnabledState(true);
-        
+
         // Add to recent files
         addToRecentFiles(configFileName);
-        
+
         if (! silentMode)
         {
             QMessageBox::information(this, tr("Configuration Loaded"),
@@ -593,8 +595,7 @@ void MainWindow::openConfigurationFile(const QString& configFileName)
     }
     catch (const std::exception& e)
     {
-        QMessageBox::critical(this, tr("Load Failed"),
-                              tr("Failed to load configuration:\n%1").arg(e.what()));
+        QMessageBox::critical(this, tr("Load Failed"), tr("Failed to load configuration:\n%1").arg(e.what()));
     }
 }
 
@@ -959,8 +960,8 @@ QString MainWindow::getSmartDisplayName(const QString& filePath, const QStringLi
 QString MainWindow::generateTooltipForFile(const QString& filePath) const
 {
     QFileInfo fileInfo(filePath);
-    
-    if (!fileInfo.exists())
+
+    if (! fileInfo.exists())
     {
         return tr("File does not exist:\n%1").arg(filePath);
     }

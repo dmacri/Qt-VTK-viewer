@@ -32,7 +32,7 @@
 #include "utilities/CommandLineParser.h"
 
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     // vtkObject::GlobalWarningDisplayOff();
 
@@ -46,16 +46,16 @@ int main(int argc, char *argv[])
     // This happens before MainWindow creation so models are available immediately
     PluginLoader& pluginLoader = PluginLoader::instance();
     pluginLoader.loadFromStandardDirectories({
-        "./plugins",                    // Current directory
-        "../plugins",                   // Parent directory
-        "./build/plugins"               // Build directory
+        "./plugins",      // Current directory
+        "../plugins",     // Parent directory
+        "./build/plugins" // Build directory
     });
 
     // Parse command-line arguments
     CommandLineParser cmdParser;
     if (! cmdParser.parse(argc, argv))
     {
-        return 1;  // Parsing failed
+        return 1; // Parsing failed
     }
 
     // Load custom model plugins if specified

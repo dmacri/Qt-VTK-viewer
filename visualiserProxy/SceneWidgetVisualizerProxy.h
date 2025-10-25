@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "visualiser/Visualizer.hpp"
 #include "utilities/ModelReader.hpp"
+#include "visualiser/Visualizer.hpp"
 
 /** @class SceneWidgetVisualizerTemplate
  * @tparam Cell The cell type used in the model (must inherit from Element in OOpenCal)
@@ -39,9 +39,9 @@
 template<typename Cell>
 struct SceneWidgetVisualizerTemplate
 {
-    Visualizer visualiser;                ///< The visualizer instance for rendering the model
-    ModelReader<Cell> modelReader;        ///< The reader for loading and managing model data
-    std::vector<std::vector<Cell>> p;     ///< 2D vector storing the cell data
+    Visualizer visualiser;            ///< The visualizer instance for rendering the model
+    ModelReader<Cell> modelReader;    ///< The reader for loading and managing model data
+    std::vector<std::vector<Cell>> p; ///< 2D vector storing the cell data
 
     /** @brief Initializes the internal matrix with the specified dimensions.
      *

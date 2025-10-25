@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+
 #include "ConfigParameter.h"
 
 /** @class ConfigCategory
@@ -31,8 +32,10 @@ public:
      *
      * @note: After construction it is impossible to add more config parameters. */
     ConfigCategory(std::string name, std::vector<ConfigParameter> params)
-        : name{std::move(name)}, configParameters{std::move(params)}
-    {}
+        : name{std::move(name)}
+        , configParameters{std::move(params)}
+    {
+    }
 
     /// @brief Gets the name of this configuration category.
     const std::string& getName() const

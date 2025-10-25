@@ -5,6 +5,7 @@
 
 #include <QMainWindow>
 #include <QStyle>
+
 #include "utilities/types.h"
 
 namespace Ui
@@ -30,7 +31,7 @@ public:
     ~MainWindow();
 
     void loadInitialConfiguration(const QString &configFileName);
-    void applyCommandLineOptions(class CommandLineParser& cmdParser);
+    void applyCommandLineOptions(class CommandLineParser &cmdParser);
 
     void setSilentMode(bool newSilentMode)
     {
@@ -68,7 +69,7 @@ private slots:
 
     void totalStepsNumberChanged(int totalStepsValue);
     void availableStepsLoadedFromConfigFile(std::vector<StepIndex> availableSteps);
-    
+
     void onRecentFileTriggered();
     void onPlaybackTimerTick();
 
@@ -108,7 +109,7 @@ private:
     void recreateModelMenuActions();
     void createViewModeActionGroup();
     void updateCameraControlsVisibility();
-    
+
     // Recent files management
     void updateRecentFilesMenu();
     void addToRecentFiles(const QString &filePath);
@@ -122,11 +123,11 @@ private:
 
     QActionGroup *modelActionGroup;
     QTimer *playbackTimer;
-    
+
     static constexpr int MAX_RECENT_FILES = 10;
 
     int currentStep;
-    
+
     // Playback state for timer-based playback
     PlayingDirection playbackDirection = PlayingDirection::Forward;
 

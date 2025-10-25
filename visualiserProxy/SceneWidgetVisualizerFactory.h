@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include <string>
-#include <memory> // std::unique_ptr<>
-#include <vector>
-#include <map>
 #include <functional>
+#include <map>
+#include <memory> // std::unique_ptr<>
+#include <string>
+#include <vector>
 
 class ISceneWidgetVisualizer;
 
@@ -79,10 +79,10 @@ public:
 private:
     /// Registry of model creation functions
     static std::map<std::string, ModelCreator>& getRegistry();
-    
+
     /// Initialize built-in models (called automatically)
     static void initializeBuiltInModels();
-    
+
     /// Flag to track if built-in models are initialized
     static inline bool isInitializedWithBuildInModels = false;
 };

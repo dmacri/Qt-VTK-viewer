@@ -7,9 +7,9 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
 
 /** @class CommandLineParser
  * @brief Parses and stores command-line arguments for the Visualizer.
