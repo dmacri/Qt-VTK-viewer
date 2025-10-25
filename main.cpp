@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
     }
 
     MainWindow mainWindow;
+    mainWindow.setSilentMode(cmdParser.isSilentMode());
 
     // Load configuration file if provided
     if (cmdParser.getConfigFile())

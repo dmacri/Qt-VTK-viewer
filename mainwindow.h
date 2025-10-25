@@ -32,6 +32,11 @@ public:
     void loadInitialConfiguration(const QString &configFileName);
     void applyCommandLineOptions(class CommandLineParser& cmdParser);
 
+    void setSilentMode(bool newSilentMode)
+    {
+        silentMode = newSilentMode;
+    }
+
 private slots:
     void showAboutThisApplicationDialog();
     void showConfigDetailsDialog();
