@@ -25,6 +25,16 @@
 class CommandLineParser
 {
 public:
+    // Argument names as constants
+    static constexpr const char ARG_CONFIG[] = "config";
+    static constexpr const char ARG_LOAD_MODEL[] = "--loadModel";
+    static constexpr const char ARG_STARTING_MODEL[] = "--startingModel";
+    static constexpr const char ARG_GENERATE_MOVIE[] = "--generateMoviePath";
+    static constexpr const char ARG_GENERATE_IMAGE[] = "--generateImagePath";
+    static constexpr const char ARG_STEP[] = "--step";
+    static constexpr const char ARG_EXIT_AFTER_LAST[] = "--exitAfterLastStep";
+    static constexpr const char ARG_SILENT[] = "--silent";
+
     /** @brief Parse command-line arguments.
      * @param argc Number of arguments
      * @param argv Array of argument strings

@@ -1104,21 +1104,26 @@ void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
         const auto& imagePath = cmdParser.getGenerateImagePath().value();
         try
         {
-            // Generate image for current step
-            // Note: VTK screenshot functionality will be implemented in a future update
-            // For now, we just log that the feature was requested
-            std::cout << "Image generation requested for: " << imagePath << std::endl;
-            std::cout << "Note: Image generation feature is not yet fully implemented" << std::endl;
+            // Generate image using Qt's screenshot functionality
+            QPixmap screenshot = ui->sceneWidget->grab();
+            if (screenshot.save(QString::fromStdString(imagePath)))
+            {
+                std::cout << "Image saved to: " << imagePath << std::endl;
+            }
+            else
+            {
+                std::cerr << "Error: Failed to save image to: " << imagePath << std::endl;
+            }
         }
         catch (const std::exception& e)
         {
             std::cerr << "Error: " << e.what() << std::endl;
         }
-        
-        // Exit if requested
+
+        // Exit if requested - schedule it for after event loop processes
         if (cmdParser.shouldExitAfterLastStep())
         {
-            QApplication::quit();
+            QTimer::singleShot(100, this, &MainWindow::close);
         }
     }
 
@@ -1130,7 +1135,8 @@ void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
         // Use existing video export functionality
         try
         {
-            recordVideoToFile(QString::fromStdString(moviePath), 1);  // 1 FPS for testing
+            const int fps = ui->speedSpinBox->value();
+            recordVideoToFile(QString::fromStdString(moviePath), fps);
             std::cout << "Movie saved to: " << moviePath << std::endl;
         }
         catch (const std::exception& e)
@@ -1141,7 +1147,7 @@ void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
         // Exit if requested
         if (cmdParser.shouldExitAfterLastStep())
         {
-            QApplication::quit();
+            QTimer::singleShot(100, this, &MainWindow::close);
         }
     }
 }
