@@ -41,14 +41,14 @@ MainWindow::MainWindow(QWidget* parent)
 {
     ui->setupUi(this);
     setWindowTitle(QApplication::applicationName());
-    
+
     setupConnections();
     configureButtons();
     loadStrings();
     recreateModelMenuActions();
     createViewModeActionGroup();
     updateRecentFilesMenu();
-    
+
     enterNoConfigurationFileMode();
 }
 
@@ -65,7 +65,7 @@ void MainWindow::configureUIElements(const QString& configFileName)
 {
     initializeSceneWidget(configFileName);
     showInputFilePathOnBarLabel(configFileName);
-    
+
     setWidgetsEnabledState(true);
     changeWhichButtonsAreEnabled();
 }
@@ -266,7 +266,7 @@ void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
     const int originalStep = currentStep;
     const bool wasPlaying = playbackTimer->isActive();
     playbackTimer->stop();
-    
+
     // Create progress dialog
     QProgressDialog progress(tr("Exporting video..."), tr("Cancel"), 1, totalSteps(), this);
     progress.setWindowModality(Qt::WindowModal);
@@ -1018,7 +1018,7 @@ void MainWindow::onRecentFileTriggered()
     QAction* action = qobject_cast<QAction*>(sender());
     if (!action)
         return;
-    
+
     QString filePath = action->data().toString();
     
     if (!QFileInfo::exists(filePath))
@@ -1028,7 +1028,7 @@ void MainWindow::onRecentFileTriggered()
         updateRecentFilesMenu();
         return;
     }
-    
+
     openConfigurationFile(filePath);
 }
 
@@ -1042,28 +1042,28 @@ void MainWindow::setWidgetsEnabledState(bool enabled)
     ui->rightButton->setEnabled(enabled);
     ui->skipForwardButton->setEnabled(enabled);
     ui->skipBackwardButton->setEnabled(enabled);
-    
+
     // Position controls
     ui->updatePositionSlider->setEnabled(enabled);
     ui->positionSpinBox->setEnabled(enabled);
-    
+
     // Speed/sleep controls (if they exist)
     if (ui->speedSpinBox)
         ui->speedSpinBox->setEnabled(enabled);
     if (ui->sleepSpinBox)
         ui->sleepSpinBox->setEnabled(enabled);
-    
+
     // Menu actions - some should remain enabled
     // actionQuit - always enabled
     // actionAbout - always enabled
     // actionOpenConfiguration - always enabled
     // Model actions - always enabled (can switch before loading config)
-    
+
     // These should be disabled without configuration:
     ui->actionShow_config_details->setEnabled(enabled);
     ui->actionExport_Video->setEnabled(enabled);
     ui->actionReloadData->setEnabled(enabled);
-    
+
     // View mode actions should always be enabled
     ui->action2DMode->setEnabled(true);
     ui->action3DMode->setEnabled(true);
@@ -1080,7 +1080,7 @@ void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
     {
         const auto& modelName = cmdParser.getStartingModel().value();
         const QString modelQStr = QString::fromStdString(modelName);
-        
+
         // Check if model is registered
         if (SceneWidgetVisualizerFactory::isModelRegistered(modelName))
         {
@@ -1162,7 +1162,7 @@ void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
     if (cmdParser.getGenerateMoviePath())
     {
         const auto& moviePath = cmdParser.getGenerateMoviePath().value();
-        
+
         // Use existing video export functionality
         try
         {
@@ -1174,7 +1174,7 @@ void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
         {
             std::cerr << "Error saving movie: " << e.what() << std::endl;
         }
-        
+
         // Exit if requested
         if (cmdParser.shouldExitAfterLastStep())
         {
