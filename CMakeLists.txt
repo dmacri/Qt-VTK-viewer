@@ -331,4 +331,111 @@ else()
     message(STATUS "clang-format not found, skipping format targets")
 endif()
 
+# ============================================
+# Development tools: Static analysis & linting
+# ============================================
+
+# --------------------------------------------
+# make cpplint
+# Runs Google's cpplint to check for coding style issues
+# (here focused on whitespace and tabs only)
+# --------------------------------------------
+find_program(CPPLINT_TOOL NAMES cpplint)
+if (CPPLINT_TOOL)
+    message(STATUS "Adding command: cpplint (checks trailing whitespaces and tabs)")
+
+    add_custom_target(cpplint
+        COMMAND ${CPPLINT_TOOL}
+            --filter=+whitespace/end_of_line,+whitespace/tab,-build,-readability,-runtime,-legal
+            ${SOURCES} ${HEADERS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Running cpplint to check for tabs and trailing whitespace"
+        USES_TERMINAL
+    )
+else()
+    message(STATUS "cpplint not found: skipping cpplint target")
+endif()
+
+
+# --------------------------------------------
+# make clang_tidy
+# Runs clang-tidy for static code analysis
+# --------------------------------------------
+find_program(CLANG_TIDY NAMES clang-tidy)
+if (CLANG_TIDY)
+    message(STATUS "Adding command: clang-tidy (static analysis)")
+
+    add_custom_target(clang_tidy
+        DEPENDS ${PROJECT_NAME}
+        COMMAND ${CLANG_TIDY}
+            -p="${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json"
+            ${SOURCES} ${HEADERS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Running clang-tidy to perform static analysis on source files"
+        USES_TERMINAL
+    )
+else()
+    message(STATUS "clang-tidy not found: skipping clang_tidy target")
+endif()
+
+
+# --------------------------------------------
+# make flawfinder
+# Security vulnerability scanner for C/C++ code
+# --------------------------------------------
+find_program(FLAWFINDER_TOOL NAMES flawfinder)
+if (FLAWFINDER_TOOL)
+    message(STATUS "Adding command: flawfinder (security analysis)")
+
+    add_custom_target(flawfinder
+        COMMAND ${FLAWFINDER_TOOL}
+            --quiet --dataonly --nolink --columns --context --singleline --minlevel=0
+            ${HEADERS} ${SOURCES}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Running flawfinder to perform security analysis"
+        USES_TERMINAL
+    )
+else()
+    message(STATUS "flawfinder not found: skipping flawfinder target")
+endif()
+
+
+# --------------------------------------------
+# make cppcheck_<project>
+# Runs cppcheck using compile_commands.json
+# --------------------------------------------
+find_program(CPPCHECK NAMES cppcheck)
+if (CPPCHECK)
+    message(STATUS "Adding command: cppcheck")
+
+    # Cppcheck expects include/exclude directories, not lists of files.
+    # Exclude build directory and optionally the main source dir.
+    set(CPPCHECK_EXCLUDES
+        "-i${CMAKE_BINARY_DIR}"
+        "-i${CMAKE_SOURCE_DIR}/external"
+    )
+
+    add_custom_target(cppcheck
+        COMMAND ${CPPCHECK}
+            --project=${CMAKE_BINARY_DIR}/compile_commands.json
+            --force
+            --enable=warning,performance,unusedFunction,style,information
+            --template=gcc
+            --inline-suppr
+            --library=gnu.cfg --library=std.cfg --library=cppcheck-lib.cfg
+            --library=motif.cfg --library=qt.cfg --library=windows.cfg
+            --library=posix.cfg --library=avr.cfg
+            --suppress=missingIncludeSystem
+            ${CPPCHECK_EXCLUDES}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Running cppcheck static analysis"
+        USES_TERMINAL
+    )
+else()
+    message(STATUS "cppcheck not found: skipping cppcheck target")
+endif()
+
+# ============================================
+# Subproject:
+# ============================================
 add_subdirectory(examples/custom_model_plugin)
