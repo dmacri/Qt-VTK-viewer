@@ -97,7 +97,7 @@ bool CommandLineParser::parse(int argc, char* argv[])
 
 void CommandLineParser::printHelp() const
 {
-    constexpr int WIDTH = 24;
+    constexpr int WIDTH = 24; // variable min width
     const auto appName = QApplication::applicationName().toStdString();
     std::cout << std::format("Usage: {} [CONFIG_FILE] [OPTIONS]\n\n", appName)
               << "Positional Arguments:\n"

@@ -1092,14 +1092,17 @@ void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
                     action->setChecked(true);
                     switchToModel(modelQStr);
 
-                    // Reload data with the new model
-                    try
+                    // Reload data with the new model only if configuration was loaded
+                    if (cmdParser.getConfigFile())
                     {
-                        ui->sceneWidget->reloadData();
-                    }
-                    catch (const std::exception& e)
-                    {
-                        std::cerr << "Error reloading data with new model: " << e.what() << std::endl;
+                        try
+                        {
+                            ui->sceneWidget->reloadData();
+                        }
+                        catch (const std::exception& e)
+                        {
+                            std::cerr << "Error reloading data with new model: " << e.what() << std::endl;
+                        }
                     }
                     break;
                 }
