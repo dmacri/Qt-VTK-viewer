@@ -30,6 +30,7 @@ public:
     ~MainWindow();
 
     void loadInitialConfiguration(const QString &configFileName);
+    void applyCommandLineOptions(class CommandLineParser& cmdParser);
 
 private slots:
     void showAboutThisApplicationDialog();

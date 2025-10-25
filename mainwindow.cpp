@@ -18,6 +18,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "utilities/PluginLoader.h"
+#include "utilities/CommandLineParser.h"
 #include "widgets/ConfigDetailsDialog.h"
 #include "widgets/ColorSettingsDialog.h"
 #include "visualiser/VideoExporter.h"
@@ -1016,8 +1017,6 @@ void MainWindow::onRecentFileTriggered()
     openConfigurationFile(filePath);
 }
 
-// ============================================================================
-
 void MainWindow::setWidgetsEnabledState(bool enabled)
 {
     // Playback controls
@@ -1053,4 +1052,96 @@ void MainWindow::setWidgetsEnabledState(bool enabled)
     // View mode actions should always be enabled
     ui->action2DMode->setEnabled(true);
     ui->action3DMode->setEnabled(true);
+}
+
+
+void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
+{
+    // Set starting model if specified
+    if (cmdParser.getStartingModel())
+    {
+        const auto& modelName = cmdParser.getStartingModel().value();
+        const QString modelQStr = QString::fromStdString(modelName);
+        
+        // Check if model is registered
+        if (SceneWidgetVisualizerFactory::isModelRegistered(modelName))
+        {
+            // Find and check the corresponding action in the menu
+            for (QAction* action : modelActionGroup->actions())
+            {
+                if (action->text() == modelQStr)
+                {
+                    action->setChecked(true);
+                    switchToModel(modelQStr);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            std::cerr << "Warning: Starting model not found: " << modelName << std::endl;
+        }
+    }
+
+    // Set step if specified
+    if (cmdParser.getStep())
+    {
+        const int stepValue = cmdParser.getStep().value();
+        if (stepValue >= 0 && stepValue <= totalSteps())
+        {
+            currentStep = stepValue;
+            setPositionOnWidgets(currentStep);
+        }
+        else
+        {
+            std::cerr << "Warning: Invalid step value: " << stepValue << std::endl;
+        }
+    }
+
+    // Handle generateImagePath - generate image and optionally exit
+    if (cmdParser.getGenerateImagePath())
+    {
+        const auto& imagePath = cmdParser.getGenerateImagePath().value();
+        try
+        {
+            // Generate image for current step
+            // Note: VTK screenshot functionality will be implemented in a future update
+            // For now, we just log that the feature was requested
+            std::cout << "Image generation requested for: " << imagePath << std::endl;
+            std::cout << "Note: Image generation feature is not yet fully implemented" << std::endl;
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Error: " << e.what() << std::endl;
+        }
+        
+        // Exit if requested
+        if (cmdParser.shouldExitAfterLastStep())
+        {
+            QApplication::quit();
+        }
+    }
+
+    // Handle generateMoviePath - run all steps and optionally exit
+    if (cmdParser.getGenerateMoviePath())
+    {
+        const auto& moviePath = cmdParser.getGenerateMoviePath().value();
+        
+        // Use existing video export functionality
+        try
+        {
+            recordVideoToFile(QString::fromStdString(moviePath), 1);  // 1 FPS for testing
+            std::cout << "Movie saved to: " << moviePath << std::endl;
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Error saving movie: " << e.what() << std::endl;
+        }
+        
+        // Exit if requested
+        if (cmdParser.shouldExitAfterLastStep())
+        {
+            QApplication::quit();
+        }
+    }
 }

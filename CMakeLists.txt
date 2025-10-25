@@ -37,6 +37,7 @@ list(APPEND Sources
     widgets/ColorSettings.cpp
     utilities/PluginLoader.cpp
     utilities/ModelReader.cpp
+    utilities/CommandLineParser.cpp
 )
 file(GLOB Resources
     LIST_DIRECTORIES false
@@ -117,25 +118,28 @@ endif()
 
 
 # ============================================
-# inih library (FetchContent, offline-friendly)
+# FetchContent setup (offline-friendly)
 # ============================================
-# The dependency is fetched once and then reused without attempting updates
+# The dependencies are fetched once and then reused without attempting updates
 # (useful when working without network access).
-set(INIH_SKIP_UPDATES ON CACHE BOOL "Skip updating the inih FetchContent dependency after initial download")
-
 include(FetchContent)
 
-if(INIH_SKIP_UPDATES)
-    set(_INI_UPDATE_ARGS UPDATE_DISCONNECTED ON)
+set(SKIP_UPDATES ON CACHE BOOL "Skip updating FetchContent dependencies after initial download")
+
+if(SKIP_UPDATES)
+    set(_UPDATE_ARGS UPDATE_DISCONNECTED ON)
 else()
-    set(_INI_UPDATE_ARGS)
+    set(_UPDATE_ARGS)
 endif()
 
+# ============================================
+# inih library (FetchContent)
+# ============================================
 FetchContent_Declare(
     inih
     GIT_REPOSITORY https://github.com/benhoyt/inih.git
     GIT_TAG        master
-    ${_INI_UPDATE_ARGS}
+    ${_UPDATE_ARGS}
 )
 
 FetchContent_MakeAvailable(inih)
@@ -152,6 +156,27 @@ if(inih_SOURCE_DIR)
     )
 else()
     message(FATAL_ERROR "inih source directory not found. Ensure initial FetchContent download succeeded.")
+endif()
+
+# ============================================
+# argparse library (FetchContent)
+# ============================================
+FetchContent_Declare(
+    argparse
+    GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+    GIT_TAG        v3.0
+    ${_UPDATE_ARGS}
+)
+
+FetchContent_MakeAvailable(argparse)
+
+FetchContent_GetProperties(argparse)
+if(argparse_SOURCE_DIR)
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        ${argparse_SOURCE_DIR}/include
+    )
+else()
+    message(FATAL_ERROR "argparse source directory not found. Ensure initial FetchContent download succeeded.")
 endif()
 
 
