@@ -7,20 +7,21 @@
 
 #pragma once
 
-#include <vector>
-#include <unordered_map>
-#include <iostream>
-#include <fstream>
-#include <format>
-#include <climits> // INT_MAX
-#include <cmath>   // log10
-#include <filesystem>
 #include <algorithm> // std::ranges::sort
+#include <climits>   // INT_MAX
+#include <cmath>     // log10
+#include <filesystem>
+#include <format>
+#include <fstream>
 #include <future>
+#include <iostream>
 #include <ranges>
+#include <unordered_map>
+#include <vector>
+
 #include "types.h"
-#include "visualiser/SettingParameter.h"
 #include "visualiser/Line.h"
+#include "visualiser/SettingParameter.h"
 
 /** @class ModelReader
  * @brief Template class for reading and processing model data from files.
@@ -129,7 +130,8 @@ private:
      *
      * @return std::ifstream Stream ready for reading cell data of this node at given step.
      * @throws std::runtime_error If the file cannot be opened, seek fails, or header is invalid. */
-    [[nodiscard]] std::ifstream readColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName, NodeIndex node, ColumnAndRow& columnAndRow);
+    [[nodiscard]] std::ifstream readColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName,
+                                                                               NodeIndex node, ColumnAndRow& columnAndRow);
 
     [[nodiscard]] ColumnAndRow readColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node);
 
@@ -158,11 +160,12 @@ template<class Cell>
 ColumnAndRow ModelReader<Cell>::readColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node)
 {
     ColumnAndRow columnAndRow;
-    std::ifstream file = readColumnAndRowForStepFromFileReturningStream(step, fileName, node, columnAndRow);
+    std::ifstream file[[maybe_unused]] = readColumnAndRowForStepFromFileReturningStream(step, fileName, node, columnAndRow);
     return columnAndRow;
 }
-template <class Cell>
-std::ifstream ModelReader<Cell>::readColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName, NodeIndex node, ColumnAndRow &columnAndRow)
+template<class Cell>
+std::ifstream ModelReader<Cell>::readColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName,
+                                                                                NodeIndex node, ColumnAndRow& columnAndRow)
 {
     const auto fileNameTmp = ReaderHelpers::giveMeFileName(fileName, node);
 

@@ -43,7 +43,7 @@ template<typename Cell>
 class SceneWidgetVisualizerAdapter : public ISceneWidgetVisualizer
 {
 public:
-    SceneWidgetVisualizerAdapter(const std::string& modelName)
+    explicit SceneWidgetVisualizerAdapter(const std::string& modelName)
         : m_modelName(modelName)
     {
     }

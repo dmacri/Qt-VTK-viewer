@@ -22,7 +22,7 @@ public:
     {
     }
 
-    OPENCALF CustomCell(int val)
+    OPENCALF explicit CustomCell(int val)
         : value(val)
     {
     }
