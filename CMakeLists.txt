@@ -336,28 +336,6 @@ endif()
 # ============================================
 
 # --------------------------------------------
-# make cpplint
-# Runs Google's cpplint to check for coding style issues
-# (here focused on whitespace and tabs only)
-# --------------------------------------------
-find_program(CPPLINT_TOOL NAMES cpplint)
-if (CPPLINT_TOOL)
-    message(STATUS "Adding command: cpplint (checks trailing whitespaces and tabs)")
-
-    add_custom_target(cpplint
-        COMMAND ${CPPLINT_TOOL}
-            --filter=+whitespace/end_of_line,+whitespace/tab,-build,-readability,-runtime,-legal
-            ${SOURCES} ${HEADERS}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "Running cpplint to check for tabs and trailing whitespace"
-        USES_TERMINAL
-    )
-else()
-    message(STATUS "cpplint not found: skipping cpplint target")
-endif()
-
-
-# --------------------------------------------
 # make clang_tidy
 # Runs clang-tidy for static code analysis
 # --------------------------------------------
@@ -369,7 +347,7 @@ if (CLANG_TIDY)
         DEPENDS ${PROJECT_NAME}
         COMMAND ${CLANG_TIDY}
             -p="${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json"
-            ${SOURCES} ${HEADERS}
+            ${Sources} ${Headers}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Running clang-tidy to perform static analysis on source files"
         USES_TERMINAL
