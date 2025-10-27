@@ -32,7 +32,7 @@ constexpr int FIRST_STEP_NUMBER = 0;
 }
 
 
-MainWindow::MainWindow(QWidget* parent) 
+MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(nullptr)
     , ui(new Ui::MainWindow)
     , currentStep{FIRST_STEP_NUMBER}
@@ -143,7 +143,8 @@ void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> avail
     {
         QMessageBox::warning(this, tr("Number of steps mismatch"),
                              tr("Total number of steps from config file is %1, but last step number from index file is %2")
-                                 .arg(totalSteps()).arg(availableSteps.back()));
+                                 .arg(totalSteps())
+                                 .arg(availableSteps.back()));
     }
 }
 
@@ -524,7 +525,7 @@ void MainWindow::onReloadDataRequested()
     try
     {
         ui->sceneWidget->reloadData();
-        
+
         if (! silentMode)
         {
             QMessageBox::information(this, tr("Data Reloaded"),
@@ -553,7 +554,7 @@ void MainWindow::onOpenConfigurationRequested()
     {
         return; // User cancelled
     }
-    
+
     openConfigurationFile(configFileName);
 }
 
@@ -613,7 +614,7 @@ void MainWindow::enterNoConfigurationFileMode()
     // Set UI to show no configuration loaded
     ui->inputFilePathLabel->setFileName("");
     ui->inputFilePathLabel->setText(tr("No configuration loaded - use File → Open Configuration"));
-    
+
     totalStepsNumberChanged(0);
     currentStep = 0;
     ui->positionSpinBox->setValue(0);
@@ -909,7 +910,7 @@ QString MainWindow::getSmartDisplayName(const QString& filePath, const QStringLi
     }
     
     // Otherwise, check if parent/filename is already unique
-    for (int depth = 1; depth <= 4; ++depth)  // Try up to 4 parent directories
+    for (int depth = 1; depth <= 4; ++depth) // Try up to 4 parent directories
     {
         // Build display name with current depth
         QDir currentDir = fileInfo.dir();
@@ -929,8 +930,8 @@ QString MainWindow::getSmartDisplayName(const QString& filePath, const QStringLi
                 
             QFileInfo otherInfo(otherPath);
             if (otherInfo.fileName() != fileName)
-                continue;  // Not a conflicting file
-            
+                continue; // Not a conflicting file
+
             // Build same-depth display name for other file
             QDir otherDir = otherInfo.dir();
             QString otherDisplayName = otherInfo.fileName();
@@ -946,13 +947,13 @@ QString MainWindow::getSmartDisplayName(const QString& filePath, const QStringLi
                 break;
             }
         }
-        
+
         if (isUnique)
         {
             return currentDisplayName;
         }
     }
-    
+
     // If still not unique, return full path
     return filePath;
 }
@@ -981,10 +982,11 @@ QString MainWindow::generateTooltipForFile(const QString& filePath) const
     try
     {
         Config config(filePath.toStdString());
-        
+
         tooltip += QString("<b>%1</b><br/>").arg(tr("Configuration parameters:"));
-        
-        auto addParam = [&](const QString& category, const QString& paramName) {
+
+        auto addParam = [&](const QString& category, const QString& paramName)
+        {
             ConfigCategory* cat = config.getConfigCategory(category.toStdString(), /*ignoreCase=*/true);
             if (cat)
             {
@@ -997,7 +999,7 @@ QString MainWindow::generateTooltipForFile(const QString& filePath) const
                 }
             }
         };
-        
+
         addParam("GENERAL", "number_steps");
         addParam("GENERAL", "number_of_rows");
         addParam("GENERAL", "number_of_columns");
@@ -1010,19 +1012,19 @@ QString MainWindow::generateTooltipForFile(const QString& filePath) const
             .arg(tr("Could not read configuration"))
             .arg(e.what());
     }
-    
+
     return tooltip;
 }
 
 void MainWindow::onRecentFileTriggered()
 {
     QAction* action = qobject_cast<QAction*>(sender());
-    if (!action)
+    if (! action)
         return;
 
     QString filePath = action->data().toString();
-    
-    if (!QFileInfo::exists(filePath))
+
+    if (! QFileInfo::exists(filePath))
     {
         QMessageBox::warning(this, tr("File Not Found"),
             tr("The file no longer exists:\n%1").arg(filePath));
