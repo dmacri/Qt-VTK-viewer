@@ -66,6 +66,34 @@ endfunction()
 
 
 # ============================================
+# Sanitizers (Address + Undefined) - optional
+# Enable with:  -DENABLE_SANITIZERS=ON
+# Default = ON (good for development & testing)
+# Automatically disabled on Windows
+# ============================================
+option(ENABLE_SANITIZERS "Enable runtime sanitizers (ASan + UBSan)" ON)
+
+function(enable_project_sanitizers target)
+    # Enable sanitizers on non-Windows with GCC/Clang
+    if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows" AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        include(CheckLibraryExists)
+
+        check_library_exists(asan __asan_init "" HAVE_LIBASAN)
+        check_library_exists(ubsan __ubsan_handle_add_overflow "" HAVE_LIBUBSAN)
+
+        if (HAVE_LIBASAN AND HAVE_LIBUBSAN)
+            message(STATUS "Sanitizers available: enabling AddressSanitizer and UndefinedBehaviorSanitizer")
+            set(SANITIZER_FLAGS "-fsanitize=address,undefined -fno-omit-frame-pointer")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS}")
+            set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZER_FLAGS}")
+        else()
+            message(WARNING "Sanitizers requested but libasan/libubsan not available on this system")
+        endif()
+    endif()
+endfunction()
+
+
+# ============================================
 # Sources and resources
 # ============================================
 file(GLOB_RECURSE Headers
@@ -160,6 +188,9 @@ if (ENABLE_WARNINGS)
     enable_project_warnings(${PROJECT_NAME})
 endif()
 
+if (ENABLE_SANITIZERS)
+    enable_project_sanitizers(${PROJECT_NAME})
+endif()
 
 # ============================================
 # OOpenCAL include directory (optional)
@@ -302,28 +333,11 @@ else()
 endif()
 
 # ============================================
-# Development tools: Sanitizers, IWYU, compile_commands
+# Development tools:
 # ============================================
 
 # Export compile_commands.json for tooling (clang-tidy, cppcheck, IWYU, etc.)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# Enable sanitizers on non-Windows with GCC/Clang
-if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows" AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    include(CheckLibraryExists)
-
-    check_library_exists(asan __asan_init "" HAVE_LIBASAN)
-    check_library_exists(ubsan __ubsan_handle_add_overflow "" HAVE_LIBUBSAN)
-
-    if (HAVE_LIBASAN AND HAVE_LIBUBSAN)
-        message(STATUS "Sanitizers available: enabling AddressSanitizer and UndefinedBehaviorSanitizer")
-        set(SANITIZER_FLAGS "-fsanitize=address,undefined -fno-omit-frame-pointer")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS}")
-        set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZER_FLAGS}")
-    else()
-        message(WARNING "Sanitizers requested but libasan/libubsan not available on this system")
-    endif()
-endif()
 
 # include-what-you-use (IWYU)
 find_program(IWYU_PATH NAMES include-what-you-use iwyu)
