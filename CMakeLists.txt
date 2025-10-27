@@ -212,28 +212,28 @@ if(DOXYGEN_FOUND)
     set(DOXYFILE_OUT "${CMAKE_BINARY_DIR}/Doxyfile")
 
 if(EXISTS "${DOXYFILE_IN}")
-        if(DOT_PROGRAM)
-            set(HAVE_DOT "YES")
-        else()
-            set(HAVE_DOT "NO")
-        endif()
+    if(DOT_PROGRAM)
+        set(HAVE_DOT "YES")
+    else()
+        set(HAVE_DOT "NO")
+    endif()
 
-        configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
+    configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
 
-        add_custom_target(docs
-            COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            COMMENT "Generating Doxygen documentation (HTML only)..."
-            VERBATIM
-        )
+    add_custom_target(docs
+        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Generating Doxygen documentation (HTML only)..."
+        VERBATIM
+    )
 
-        message(STATUS "Doxygen found: ${DOXYGEN_EXECUTABLE}")
-        message(STATUS "Docs will be generated at: ${DOXYGEN_OUTPUT_DIR} (HTML)")
-        if(DOT_PROGRAM)
-            message(STATUS "Graphviz (dot) found: ${DOT_PROGRAM} (class diagrams enabled)")
-        else()
-            message(STATUS "Graphviz (dot) not found: class diagrams disabled")
-        endif()
+    message(STATUS "Doxygen found: ${DOXYGEN_EXECUTABLE}")
+    message(STATUS "Docs will be generated at: ${DOXYGEN_OUTPUT_DIR} (HTML)")
+    if(DOT_PROGRAM)
+        message(STATUS "Graphviz (dot) found: ${DOT_PROGRAM} (class diagrams enabled)")
+    else()
+        message(STATUS "Graphviz (dot) not found: class diagrams disabled")
+    endif()
     else()
         message(WARNING "Doxyfile.in not found in ${DOXYFILE_DIR}. Skipping docs target.")
     endif()
@@ -336,6 +336,31 @@ endif()
 # ============================================
 
 # --------------------------------------------
+# Clang-tidy and Flawfinder file filtering
+# --------------------------------------------
+set(FILTERED_FILES "")
+foreach(f ${Sources} ${Headers})
+    # Skip third-party/vendor code
+    if (f MATCHES ".*/argparse/.*")     # skip argparse
+        continue()
+    elseif (f MATCHES ".*/inih/.*")     # skip inih
+        continue()
+    # Skip Qt-generated files (moc, ui, qrc, qmlcache, etc.)
+    elseif (f MATCHES ".*/moc_.*\\.cpp$")
+        continue()
+    elseif (f MATCHES ".*/ui_.*\\.h$")
+        continue()
+    elseif (f MATCHES ".*/qrc_.*\\.cpp$")
+        continue()
+    elseif (f MATCHES ".*/CMakeFiles/.*")  # skip build system artifacts
+        continue()
+    endif()
+
+    list(APPEND FILTERED_FILES "${f}")
+endforeach()
+
+
+# --------------------------------------------
 # make clang_tidy
 # Runs clang-tidy for static code analysis
 # --------------------------------------------
@@ -346,10 +371,10 @@ if (CLANG_TIDY)
     add_custom_target(clang_tidy
         DEPENDS ${PROJECT_NAME}
         COMMAND ${CLANG_TIDY}
-            -p="${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json"
-            ${Sources} ${Headers}
+            -p="${CMAKE_BINARY_DIR}/compile_commands.json"
+            ${FILTERED_FILES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "Running clang-tidy to perform static analysis on source files"
+        COMMENT "Running clang-tidy on project source files (excluding vendor & Qt generated)"
         USES_TERMINAL
     )
 else()
@@ -368,9 +393,9 @@ if (FLAWFINDER_TOOL)
     add_custom_target(flawfinder
         COMMAND ${FLAWFINDER_TOOL}
             --quiet --dataonly --nolink --columns --context --singleline --minlevel=0
-            ${HEADERS} ${SOURCES}
+            ${FILTERED_FILES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "Running flawfinder to perform security analysis"
+        COMMENT "Running flawfinder (excluding vendor & Qt generated)"
         USES_TERMINAL
     )
 else()
