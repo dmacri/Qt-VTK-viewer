@@ -8,6 +8,62 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# ============================================
+# Compiler warnings (optional, full strict set)
+# ============================================
+# Enable full warning level by running CMake with:
+#   -DENABLE_WARNINGS=ON
+#
+# Default = OFF for fast builds
+option(ENABLE_WARNINGS "Enable full compiler warnings" OFF)
+
+function(enable_project_warnings target)
+    if (MSVC)
+        # /W4: high warning level
+        # /permissive-: enforce standard C++ conformance
+        # /EHsc: standard C++ exception handling
+        target_compile_options(${target} PRIVATE /W4 /permissive- /EHsc)
+
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_options(${target} PRIVATE
+            -Wall
+            -Wextra
+            -Wpedantic
+            -Wconversion
+            -Wsign-conversion
+            -Wdouble-promotion
+            -Wnull-dereference
+            -Wformat=2
+            -Wduplicated-cond
+            -Wduplicated-branches
+            -Wlogical-op
+            -Wold-style-cast
+            -Wunused
+            -Wuninitialized
+            -Woverloaded-virtual
+        )
+
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        target_compile_options(${target} PRIVATE
+            -Wall
+            -Wextra
+            -Wpedantic
+            -Wconversion
+            -Wsign-conversion
+            -Wdouble-promotion
+            -Wnull-dereference
+            -Wformat=2
+            -Wduplicated-cond
+            -Wduplicated-branches
+            -Wlogical-op
+            -Wold-style-cast
+            -Wunused
+            -Wuninitialized
+            -Woverloaded-virtual
+        )
+    endif()
+endfunction()
+
 
 # ============================================
 # Sources and resources
@@ -99,6 +155,10 @@ find_package(VTK COMPONENTS
 add_executable(${PROJECT_NAME} MACOSX_BUNDLE
     ${Sources} ${Headers} ${Resources} ${UIs} ${Styles} ${Docs} ${OTHER_FILES}
 )
+
+if (ENABLE_WARNINGS)
+    enable_project_warnings(${PROJECT_NAME})
+endif()
 
 
 # ============================================
