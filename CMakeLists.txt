@@ -335,87 +335,157 @@ endif()
 # Development tools: Static analysis & linting
 # ============================================
 
-# --------------------------------------------
-# Clang-tidy and Flawfinder file filtering
-# --------------------------------------------
+# ============================================
+# Development tools: Static analysis & linting (final)
+# - Project-full clang-tidy (system headers off)
+# - Flawfinder on project files
+# - Cppcheck using compile_commands.json with excludes
+# Excludes: _deps, external, third-party, vendor, tests, Qt-generated, build artifacts
+# ============================================
+
+# Build a filtered list of project source/header files to analyze
 set(FILTERED_FILES "")
 foreach(f ${Sources} ${Headers})
-    # Skip third-party/vendor code
-    if (f MATCHES ".*/argparse/.*")     # skip argparse
-        continue()
-    elseif (f MATCHES ".*/inih/.*")     # skip inih
-        continue()
-    # Skip Qt-generated files (moc, ui, qrc, qmlcache, etc.)
-    elseif (f MATCHES ".*/moc_.*\\.cpp$")
-        continue()
-    elseif (f MATCHES ".*/ui_.*\\.h$")
-        continue()
-    elseif (f MATCHES ".*/qrc_.*\\.cpp$")
-        continue()
-    elseif (f MATCHES ".*/CMakeFiles/.*")  # skip build system artifacts
+    # skip non-existing
+    if (NOT EXISTS "${f}")
         continue()
     endif()
 
+    # Normalize path for pattern matching
+    file(TO_CMAKE_PATH "${f}" _fpath)
+
+    # Exclude FetchContent deps and vendor directories (strong ignore)
+    if (_fpath MATCHES ".*/_deps/.*" OR
+        _fpath MATCHES ".*/external/.*" OR
+        _fpath MATCHES ".*/third[-_]party/.*" OR
+        _fpath MATCHES ".*/vendor/.*" OR
+        _fpath MATCHES ".*/3rd[-_]party/.*" OR
+        _fpath MATCHES ".*/contrib/.*")
+        continue()
+    endif()
+
+    # Exclude explicit libraries that sometimes appear outside _deps
+    if (_fpath MATCHES ".*/argparse(/|$).*" OR _fpath MATCHES ".*/inih(/|$).*")
+        continue()
+    endif()
+
+    # Exclude test folders (unit tests / testdata)
+    if (_fpath MATCHES ".*/tests?/.*" OR _fpath MATCHES ".*/testdata?/.*")
+        continue()
+    endif()
+
+    # Exclude build artifacts and intermediate autogen dirs
+    if (_fpath MATCHES ".*/CMakeFiles/.*" OR
+        _fpath MATCHES ".*/\\.autogen/.*" OR
+        _fpath MATCHES ".*/\\.moc/.*" OR
+        _fpath MATCHES ".*/build/.*")
+        continue()
+    endif()
+
+    # Exclude Qt-generated files (moc, ui, qrc, qmlcache, etc.)
+    if (_fpath MATCHES ".*/moc_.*(\\.cpp|\\.cc)?$" OR
+        _fpath MATCHES ".*/ui_.*(\\.h|\\.hpp)?$" OR
+        _fpath MATCHES ".*/qrc_.*(\\.cpp)?$" OR
+        _fpath MATCHES ".*/qmlcache/.*")
+        continue()
+    endif()
+
+    # Exclude IDE/editor temp files (safety)
+    if (_fpath MATCHES ".*~$" OR _fpath MATCHES ".*\\.swp$")
+        continue()
+    endif()
+
+    # If we reached this point, include the file for analysis
     list(APPEND FILTERED_FILES "${f}")
 endforeach()
 
+# Print summary
+list(LENGTH FILTERED_FILES _num_filtered)
+message(STATUS "Static analysis: ${_num_filtered} source/header files selected for analysis")
 
 # --------------------------------------------
-# make clang_tidy
-# Runs clang-tidy for static code analysis
+# clang-tidy (Project-full)
+# - system headers disabled
+# - header-filter set to project source dir so headers in the project are checked
 # --------------------------------------------
 find_program(CLANG_TIDY NAMES clang-tidy)
 if (CLANG_TIDY)
-    message(STATUS "Adding command: clang-tidy (static analysis)")
+    message(STATUS "Adding command: clang_tidy (Project-full, system headers disabled)")
 
-    add_custom_target(clang_tidy
-        DEPENDS ${PROJECT_NAME}
-        COMMAND ${CLANG_TIDY}
-            -p="${CMAKE_BINARY_DIR}/compile_commands.json"
-            ${FILTERED_FILES}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "Running clang-tidy on project source files (excluding vendor & Qt generated)"
-        USES_TERMINAL
-    )
+    if (FILTERED_FILES)
+        # Quote file paths to avoid issues with spaces or special characters
+        set(FILTERED_FILES_QUOTED "")
+        foreach(f ${FILTERED_FILES})
+            list(APPEND FILTERED_FILES_QUOTED "\"${f}\"")
+        endforeach()
+
+        add_custom_target(clang_tidy
+            DEPENDS ${PROJECT_NAME}
+            COMMAND ${CLANG_TIDY}
+                "-p=${CMAKE_BINARY_DIR}"
+                "--system-headers=false"
+                "--header-filter=^${CMAKE_SOURCE_DIR}"
+                ${FILTERED_FILES_QUOTED}
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Running clang-tidy (Project-full) on project sources (system headers disabled)"
+            USES_TERMINAL
+        )
+    else()
+        message(WARNING "clang_tidy: no project files to analyze (FILTERED_FILES is empty)")
+    endif()
 else()
     message(STATUS "clang-tidy not found: skipping clang_tidy target")
 endif()
 
-
 # --------------------------------------------
-# make flawfinder
-# Security vulnerability scanner for C/C++ code
+# flawfinder
+# - run only on project files selected above
 # --------------------------------------------
 find_program(FLAWFINDER_TOOL NAMES flawfinder)
 if (FLAWFINDER_TOOL)
-    message(STATUS "Adding command: flawfinder (security analysis)")
+    message(STATUS "Adding command: flawfinder (project-only)")
 
-    add_custom_target(flawfinder
-        COMMAND ${FLAWFINDER_TOOL}
-            --quiet --dataonly --nolink --columns --context --singleline --minlevel=0
-            ${FILTERED_FILES}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "Running flawfinder (excluding vendor & Qt generated)"
-        USES_TERMINAL
-    )
+    if (FILTERED_FILES)
+        add_custom_target(flawfinder
+            COMMAND ${FLAWFINDER_TOOL}
+                --quiet --dataonly --nolink --columns --context --singleline --minlevel=0
+                ${FILTERED_FILES}
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Running flawfinder on project sources (excluding vendor/_deps/Qt-generated)"
+            USES_TERMINAL
+        )
+    else()
+        message(WARNING "flawfinder: no project files to analyze (FILTERED_FILES is empty)")
+    endif()
 else()
     message(STATUS "flawfinder not found: skipping flawfinder target")
 endif()
 
-
 # --------------------------------------------
-# make cppcheck_<project>
-# Runs cppcheck using compile_commands.json
+# cppcheck
+# - use compile_commands.json
+# - exclude common vendor and build dirs
 # --------------------------------------------
 find_program(CPPCHECK NAMES cppcheck)
 if (CPPCHECK)
-    message(STATUS "Adding command: cppcheck")
+    message(STATUS "Adding command: cppcheck_${PROJECT_NAME}")
 
-    # Cppcheck expects include/exclude directories, not lists of files.
-    # Exclude build directory and optionally the main source dir.
+    # Exclude patterns for cppcheck (directories to ignore)
     set(CPPCHECK_EXCLUDES
         "-i${CMAKE_BINARY_DIR}"
+        "-i${CMAKE_SOURCE_DIR}/_deps"
         "-i${CMAKE_SOURCE_DIR}/external"
+        "-i${CMAKE_SOURCE_DIR}/third-party"
+        "-i${CMAKE_SOURCE_DIR}/third_party"
+        "-i${CMAKE_SOURCE_DIR}/vendor"
+        "-i${CMAKE_SOURCE_DIR}/3rd-party"
+        "-i${CMAKE_SOURCE_DIR}/contrib"
+        "-i${CMAKE_SOURCE_DIR}/tests"
+        "-i${CMAKE_SOURCE_DIR}/test"
+        # skip Qt generated (some may live in source tree)
+        "-i${CMAKE_SOURCE_DIR}/moc_*"
+        "-i${CMAKE_SOURCE_DIR}/ui_*"
+        "-i${CMAKE_SOURCE_DIR}/qrc_*"
     )
 
     add_custom_target(cppcheck
@@ -425,18 +495,16 @@ if (CPPCHECK)
             --enable=warning,performance,unusedFunction,style,information
             --template=gcc
             --inline-suppr
-            --library=gnu.cfg --library=std.cfg --library=cppcheck-lib.cfg
-            --library=motif.cfg --library=qt.cfg --library=windows.cfg
-            --library=posix.cfg --library=avr.cfg
             --suppress=missingIncludeSystem
             ${CPPCHECK_EXCLUDES}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Running cppcheck static analysis"
+        COMMENT "Running cppcheck (project) with excludes for vendor/_deps/Qt-generated"
         USES_TERMINAL
     )
 else()
     message(STATUS "cppcheck not found: skipping cppcheck target")
 endif()
+
 
 # ============================================
 # Subproject:
