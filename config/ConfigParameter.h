@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <string>
 #include <stdexcept> // std::runtime_error
+#include <string>
 
 /** @class ConfigParameter
  * @brief Represents a single configuration parameter with a name, value, and type.
@@ -29,9 +29,9 @@ public:
     /// @brief Enumerates the supported parameter types.
     enum ParamType
     {
-        int_par    = 0,  ///< Integer parameter type
-        double_par = 1,  ///< Double-precision floating point parameter type
-        string_par = 2   ///< String parameter type
+        int_par = 0,    ///< Integer parameter type
+        double_par = 1, ///< Double-precision floating point parameter type
+        string_par = 2  ///< String parameter type
     };
 
     /** @brief Constructs a new ConfigParameter with the given properties.
@@ -42,8 +42,11 @@ public:
      * 
      * @note The defaultValue string will be converted to the specified type when retrieved. */
     ConfigParameter(const std::string& name, const std::string& defaultValue, int type)
-        : name{name}, defaultValue{defaultValue}, type{type}
-    {}
+        : name{name}
+        , defaultValue{defaultValue}
+        , type{type}
+    {
+    }
 
     /** @brief Gets the parameter value converted to the specified type.
      * 

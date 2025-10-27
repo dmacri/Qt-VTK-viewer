@@ -21,8 +21,8 @@
 #include <vtkTextMapper.h>
 #include <vtkTextProperty.h>
 
-#include "OOpenCAL/base/Element.h" // rgb
-#include "utilities/types.h" // StepIndex
+#include "OOpenCAL/base/Cell.h" // Color
+#include "utilities/types.h"    // StepIndex
 
 class Line;
 
@@ -139,12 +139,12 @@ void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, Matrix& p)
     {
         for (int c = 0; c < nCols; ++c)
         {
-            rgb *color = p[r][c].outputValue(nullptr);
+            const auto color = p[r][c].outputValue(nullptr);
             lut->SetTableValue(
                 (nRows - 1 - r) * nCols + c,
-                toUnitColor(color->getRed()),
-                toUnitColor(color->getGreen()),
-                toUnitColor(color->getBlue()),
+                toUnitColor(color.getRed()),
+                toUnitColor(color.getGreen()),
+                toUnitColor(color.getBlue()),
                 1.0 // alpha channel – keep as 1.0 for full opacity (optional scaling)
             );
         }

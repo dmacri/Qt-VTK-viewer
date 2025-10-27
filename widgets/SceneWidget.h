@@ -4,21 +4,23 @@
 
 #pragma once
 
-#include <QVTKOpenGLNativeWidget.h>
-#include <QTimer>
 #include <QMouseEvent>
+#include <QTimer>
 #include <QToolTip>
-#include <vtkDataSet.h>
-#include <vtkRenderer.h>
-#include <vtkSmartPointer.h>
-#include <vtkNamedColors.h>
-#include <vtkTextMapper.h>
-#include <vtkOrientationMarkerWidget.h>
+
+#include <QVTKOpenGLNativeWidget.h>
 #include <vtkAxesActor.h>
 #include <vtkAxisActor2D.h>
+#include <vtkDataSet.h>
+#include <vtkNamedColors.h>
+#include <vtkOrientationMarkerWidget.h>
+#include <vtkRenderer.h>
+#include <vtkSmartPointer.h>
+#include <vtkTextMapper.h>
+
+#include "utilities/types.h"
 #include "visualiserProxy/ISceneWidgetVisualizer.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
-#include "utilities/types.h"
 
 /** @enum ViewMode
  * @brief Defines the camera view mode for the scene.
@@ -26,8 +28,8 @@
  * This enum is used to switch between 2D (top-down orthographic) and 3D (perspective with rotation) views. */
 enum class ViewMode
 {
-    Mode2D,  ///< 2D top-down view with rotation disabled
-    Mode3D   ///< 3D perspective view with full camera control
+    Mode2D, ///< 2D top-down view with rotation disabled
+    Mode3D  ///< 3D perspective view with full camera control
 };
 
 class SettingParameter;
@@ -43,14 +45,14 @@ class SceneWidget : public QVTKOpenGLNativeWidget
 public:
     /// @brief Constructs a SceneWidget with parent (which will takes care about deallecation of the widget, Qt is using that pattern)
     explicit SceneWidget(QWidget* parent);
-    
+
     /// @brief Destroys the SceneWidget. It is on purpose defined in cpp file to clean up properly incomplete types.
     ~SceneWidget();
 
     /** @brief Adds a visualizer for the specified config file. It moves position to provided step number.
      *  @param filename The config file to visualize
      *  @param stepNumber The simulation step to display **/
-    void addVisualizer(const std::string &filename, int stepNumber);
+    void addVisualizer(const std::string& filename, int stepNumber);
 
     /// @brief Updates the visualization widget to show the specified step number
     void selectedStepParameter(StepIndex stepNumber);
@@ -205,7 +207,7 @@ public slots:
      * current color settings from the ColorSettings singleton. */
     void onColorsReloadRequested();
 
-protected:   
+protected:
     /// @brief Renders the VTK scene. It needs to be called when reading from config file
     void renderVtkScene();
 
@@ -214,21 +216,21 @@ protected:
 
     /// @brief Enables tooltip display when mouse is above the widget
     void enableToolTipWhenMouseAboveWidget();
-    
+
     /** @brief Updates the tooltip with current mouse position
      *  @param lastMousePos Current mouse position in widget coordinates */
     void updateToolTip(const QPoint& lastMousePos);
-    
+
     /** @brief Converts screen coordinates to VTK world coordinates
      *  @param pos The screen position in widget coordinates
      *  @return The corresponding world coordinates in VTK space */
     std::array<double, 3> screenToWorldCoordinates(const QPoint& pos) const;
-    
+
     /** @brief Determines which node the mouse is currently over using VTK coordinates
      *  @param worldPos The current position in VTK world coordinates
      *  @return A string indicating which node the mouse is over, or empty string if not over any node */
     QString getNodeAtWorldPosition(const std::array<double, 3>& worldPos) const;
-    
+
     /** @brief Finds the nearest line to the given world position
      *  @param worldPos The position to check
      *  @param[out] lineIndex Index of the found line in the lines vector
@@ -238,26 +240,26 @@ protected:
 
     /// @brief Reads settings from a configuration file
     /// @param filename Path to the configuration file
-    void readSettingsFromConfigFile(const std::string &filename);
+    void readSettingsFromConfigFile(const std::string& filename);
 
     /// @brief Sets up the VTK scene, it is called when reading config file
     void setupVtkScene();
-    
+
     /// @brief Sets up the orientation axes widget
     void setupAxesWidget();
-    
+
     /// @brief Sets up the 2D ruler axes
     void setup2DRulerAxes();
-    
+
     /// @brief Connects the VTK camera modified callback to track camera changes
     void connectCameraCallback();
-    
+
     /// @brief Updates the 2D ruler axes bounds based on current data
     void update2DRulerAxesBounds();
-    
+
     /** @param configFilename Path to the configuration file and move view to provided step
      *  @param stepNumber Initial step number to display */
-    void setupSettingParameters(const std::string & configFilename, int stepNumber);
+    void setupSettingParameters(const std::string& configFilename, int stepNumber);
 
     /** @brief Updates the background color from application settings.
      *
@@ -309,55 +311,55 @@ protected:
      * This helper marks the renderer as modified and requests a render pass.
      * Used throughout the class to update the display after modifications. */
     void triggerRenderUpdate();
-    
+
     /** @brief Reset camera to default position and apply stored azimuth and elevation angles.
      * 
      * This method resets the camera to the default top-down view, then applies
      * the currently stored azimuth and elevation transformations. This ensures
      * consistent camera positioning when angles are modified. */
     void applyCameraAngles();
-    
+
     /** @brief Load and update visualization data for the current step.
      * 
      * This helper reads stage state from files for the current step and refreshes
      * all VTK visualization elements (grid, lines, text). It's used when the step
      * number changes or when data needs to be refreshed. */
     void loadAndUpdateVisualizationForCurrentStep();
-    
+
     /** @brief Prepare the stage for visualization with current node configuration.
      * 
      * This helper initializes the visualizer stage using the current nNodeX and nNodeY
      * settings from settingParameter. It's called during initialization and when
      * reloading data. */
     void prepareStageWithCurrentNodeConfiguration();
-    
+
 private:
     /** @brief Proxy for the scene widget visualizer
      *  This proxy provides access to the visualizer implementation
      *  and is responsible for updating the visualization when settings change. */
     std::unique_ptr<ISceneWidgetVisualizer> sceneWidgetVisualizerProxy;
-    
+
     /// @brief Current setting parameter for the visualization.
     std::unique_ptr<SettingParameter> settingParameter;
-    
+
     /// @brief Currently active model name
     std::string currentModelName;
-    
+
     /// @brief Current view mode (2D or 3D)
     ViewMode currentViewMode = ViewMode::Mode2D;
-    
+
     /// @brief Current camera azimuth angle (cached to avoid recalculation)
     double cameraAzimuth{};
-    
+
     /// @brief Current camera elevation angle (cached to avoid recalculation)
     double cameraElevation{};
-    
+
     /** @brief Last recorded position in VTK world coordinates. */
     std::array<double, 3> m_lastWorldPos;
-    
+
     /// @brief VTK renderer for the scene: This renderer is responsible for rendering the 3D scene.
     vtkNew<vtkRenderer> renderer;
-    
+
     /** @brief Actor for the grid in the scene: This actor is responsible for rendering the grid in the scene.
      *  The grid provides information about what part was calculated by which node
      *  @note: The type is vtkSmartPointer instead of auto-maintained vtkNew because we need to be able to reset the object */
@@ -372,10 +374,10 @@ private:
 
     /// @brief Axes actor for showing coordinate system orientation
     vtkNew<vtkAxesActor> axesActor;
-    
+
     /// @brief Orientation marker widget for displaying axes in corner
     vtkNew<vtkOrientationMarkerWidget> axesWidget;
-    
+
     /// @brief 2D ruler axes for showing scale in 2D mode (X and Y axes)
     vtkNew<vtkAxisActor2D> rulerAxisX;
     vtkNew<vtkAxisActor2D> rulerAxisY;

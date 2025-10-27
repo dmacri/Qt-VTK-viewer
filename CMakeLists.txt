@@ -8,6 +8,90 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# ============================================
+# Compiler warnings (optional, full strict set)
+# ============================================
+# Enable full warning level by running CMake with:
+#   -DENABLE_WARNINGS=ON
+#
+# Default = OFF for fast builds
+option(ENABLE_WARNINGS "Enable full compiler warnings" OFF)
+
+function(enable_project_warnings target)
+    if (MSVC)
+        # /W4: high warning level
+        # /permissive-: enforce standard C++ conformance
+        # /EHsc: standard C++ exception handling
+        target_compile_options(${target} PRIVATE /W4 /permissive- /EHsc)
+
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_options(${target} PRIVATE
+            -Wall
+            -Wextra
+            -Wpedantic
+            -Wconversion
+            -Wsign-conversion
+            -Wdouble-promotion
+            -Wnull-dereference
+            -Wformat=2
+            -Wduplicated-cond
+            -Wduplicated-branches
+            -Wlogical-op
+            -Wold-style-cast
+            -Wunused
+            -Wuninitialized
+            -Woverloaded-virtual
+        )
+
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        target_compile_options(${target} PRIVATE
+            -Wall
+            -Wextra
+            -Wpedantic
+            -Wconversion
+            -Wsign-conversion
+            -Wdouble-promotion
+            -Wnull-dereference
+            -Wformat=2
+            -Wduplicated-cond
+            -Wduplicated-branches
+            -Wlogical-op
+            -Wold-style-cast
+            -Wunused
+            -Wuninitialized
+            -Woverloaded-virtual
+        )
+    endif()
+endfunction()
+
+
+# ============================================
+# Sanitizers (Address + Undefined) - optional
+# Enable with:  -DENABLE_SANITIZERS=ON
+# Default = ON (good for development & testing)
+# Automatically disabled on Windows
+# ============================================
+option(ENABLE_SANITIZERS "Enable runtime sanitizers (ASan + UBSan)" ON)
+
+function(enable_project_sanitizers target)
+    # Enable sanitizers on non-Windows with GCC/Clang
+    if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows" AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        include(CheckLibraryExists)
+
+        check_library_exists(asan __asan_init "" HAVE_LIBASAN)
+        check_library_exists(ubsan __ubsan_handle_add_overflow "" HAVE_LIBUBSAN)
+
+        if (HAVE_LIBASAN AND HAVE_LIBUBSAN)
+            message(STATUS "Sanitizers available: enabling AddressSanitizer and UndefinedBehaviorSanitizer")
+            set(SANITIZER_FLAGS "-fsanitize=address,undefined -fno-omit-frame-pointer")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS}")
+            set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZER_FLAGS}")
+        else()
+            message(WARNING "Sanitizers requested but libasan/libubsan not available on this system")
+        endif()
+    endif()
+endfunction()
+
 
 # ============================================
 # Sources and resources
@@ -37,6 +121,7 @@ list(APPEND Sources
     widgets/ColorSettings.cpp
     utilities/PluginLoader.cpp
     utilities/ModelReader.cpp
+    utilities/CommandLineParser.cpp
 )
 file(GLOB Resources
     LIST_DIRECTORIES false
@@ -99,6 +184,13 @@ add_executable(${PROJECT_NAME} MACOSX_BUNDLE
     ${Sources} ${Headers} ${Resources} ${UIs} ${Styles} ${Docs} ${OTHER_FILES}
 )
 
+if (ENABLE_WARNINGS)
+    enable_project_warnings(${PROJECT_NAME})
+endif()
+
+if (ENABLE_SANITIZERS)
+    enable_project_sanitizers(${PROJECT_NAME})
+endif()
 
 # ============================================
 # OOpenCAL include directory (optional)
@@ -117,25 +209,28 @@ endif()
 
 
 # ============================================
-# inih library (FetchContent, offline-friendly)
+# FetchContent setup (offline-friendly)
 # ============================================
-# The dependency is fetched once and then reused without attempting updates
+# The dependencies are fetched once and then reused without attempting updates
 # (useful when working without network access).
-set(INIH_SKIP_UPDATES ON CACHE BOOL "Skip updating the inih FetchContent dependency after initial download")
-
 include(FetchContent)
 
-if(INIH_SKIP_UPDATES)
-    set(_INI_UPDATE_ARGS UPDATE_DISCONNECTED ON)
+set(SKIP_UPDATES ON CACHE BOOL "Skip updating FetchContent dependencies after initial download")
+
+if(SKIP_UPDATES)
+    set(_UPDATE_ARGS UPDATE_DISCONNECTED ON)
 else()
-    set(_INI_UPDATE_ARGS)
+    set(_UPDATE_ARGS)
 endif()
 
+# ============================================
+# inih library (FetchContent)
+# ============================================
 FetchContent_Declare(
     inih
     GIT_REPOSITORY https://github.com/benhoyt/inih.git
     GIT_TAG        master
-    ${_INI_UPDATE_ARGS}
+    ${_UPDATE_ARGS}
 )
 
 FetchContent_MakeAvailable(inih)
@@ -152,6 +247,27 @@ if(inih_SOURCE_DIR)
     )
 else()
     message(FATAL_ERROR "inih source directory not found. Ensure initial FetchContent download succeeded.")
+endif()
+
+# ============================================
+# argparse library (FetchContent)
+# ============================================
+FetchContent_Declare(
+    argparse
+    GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+    GIT_TAG        v3.0
+    ${_UPDATE_ARGS}
+)
+
+FetchContent_MakeAvailable(argparse)
+
+FetchContent_GetProperties(argparse)
+if(argparse_SOURCE_DIR)
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        ${argparse_SOURCE_DIR}/include
+    )
+else()
+    message(FATAL_ERROR "argparse source directory not found. Ensure initial FetchContent download succeeded.")
 endif()
 
 
@@ -187,28 +303,28 @@ if(DOXYGEN_FOUND)
     set(DOXYFILE_OUT "${CMAKE_BINARY_DIR}/Doxyfile")
 
 if(EXISTS "${DOXYFILE_IN}")
-        if(DOT_PROGRAM)
-            set(HAVE_DOT "YES")
-        else()
-            set(HAVE_DOT "NO")
-        endif()
+    if(DOT_PROGRAM)
+        set(HAVE_DOT "YES")
+    else()
+        set(HAVE_DOT "NO")
+    endif()
 
-        configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
+    configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
 
-        add_custom_target(docs
-            COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            COMMENT "Generating Doxygen documentation (HTML only)..."
-            VERBATIM
-        )
+    add_custom_target(docs
+        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Generating Doxygen documentation (HTML only)..."
+        VERBATIM
+    )
 
-        message(STATUS "Doxygen found: ${DOXYGEN_EXECUTABLE}")
-        message(STATUS "Docs will be generated at: ${DOXYGEN_OUTPUT_DIR} (HTML)")
-        if(DOT_PROGRAM)
-            message(STATUS "Graphviz (dot) found: ${DOT_PROGRAM} (class diagrams enabled)")
-        else()
-            message(STATUS "Graphviz (dot) not found: class diagrams disabled")
-        endif()
+    message(STATUS "Doxygen found: ${DOXYGEN_EXECUTABLE}")
+    message(STATUS "Docs will be generated at: ${DOXYGEN_OUTPUT_DIR} (HTML)")
+    if(DOT_PROGRAM)
+        message(STATUS "Graphviz (dot) found: ${DOT_PROGRAM} (class diagrams enabled)")
+    else()
+        message(STATUS "Graphviz (dot) not found: class diagrams disabled")
+    endif()
     else()
         message(WARNING "Doxyfile.in not found in ${DOXYFILE_DIR}. Skipping docs target.")
     endif()
@@ -217,28 +333,11 @@ else()
 endif()
 
 # ============================================
-# Development tools: Sanitizers, IWYU, compile_commands
+# Development tools:
 # ============================================
 
 # Export compile_commands.json for tooling (clang-tidy, cppcheck, IWYU, etc.)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# Enable sanitizers on non-Windows with GCC/Clang
-if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows" AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    include(CheckLibraryExists)
-
-    check_library_exists(asan __asan_init "" HAVE_LIBASAN)
-    check_library_exists(ubsan __ubsan_handle_add_overflow "" HAVE_LIBUBSAN)
-
-    if (HAVE_LIBASAN AND HAVE_LIBUBSAN)
-        message(STATUS "Sanitizers available: enabling AddressSanitizer and UndefinedBehaviorSanitizer")
-        set(SANITIZER_FLAGS "-fsanitize=address,undefined -fno-omit-frame-pointer")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SANITIZER_FLAGS}")
-        set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} ${SANITIZER_FLAGS}")
-    else()
-        message(WARNING "Sanitizers requested but libasan/libubsan not available on this system")
-    endif()
-endif()
 
 # include-what-you-use (IWYU)
 find_program(IWYU_PATH NAMES include-what-you-use iwyu)
@@ -306,4 +405,182 @@ else()
     message(STATUS "clang-format not found, skipping format targets")
 endif()
 
+# ============================================
+# Development tools: Static analysis & linting
+# ============================================
+
+# ============================================
+# Development tools: Static analysis & linting (final)
+# - Project-full clang-tidy (system headers off)
+# - Flawfinder on project files
+# - Cppcheck using compile_commands.json with excludes
+# Excludes: _deps, external, third-party, vendor, tests, Qt-generated, build artifacts
+# ============================================
+
+# Build a filtered list of project source/header files to analyze
+set(FILTERED_FILES "")
+foreach(f ${Sources} ${Headers})
+    # skip non-existing
+    if (NOT EXISTS "${f}")
+        continue()
+    endif()
+
+    # Normalize path for pattern matching
+    file(TO_CMAKE_PATH "${f}" _fpath)
+
+    # Exclude FetchContent deps and vendor directories (strong ignore)
+    if (_fpath MATCHES ".*/_deps/.*" OR
+        _fpath MATCHES ".*/external/.*" OR
+        _fpath MATCHES ".*/third[-_]party/.*" OR
+        _fpath MATCHES ".*/vendor/.*" OR
+        _fpath MATCHES ".*/3rd[-_]party/.*" OR
+        _fpath MATCHES ".*/contrib/.*")
+        continue()
+    endif()
+
+    # Exclude explicit libraries that sometimes appear outside _deps
+    if (_fpath MATCHES ".*/argparse(/|$).*" OR _fpath MATCHES ".*/inih(/|$).*")
+        continue()
+    endif()
+
+    # Exclude test folders (unit tests / testdata)
+    if (_fpath MATCHES ".*/tests?/.*" OR _fpath MATCHES ".*/testdata?/.*")
+        continue()
+    endif()
+
+    # Exclude build artifacts and intermediate autogen dirs
+    if (_fpath MATCHES ".*/CMakeFiles/.*" OR
+        _fpath MATCHES ".*/\\.autogen/.*" OR
+        _fpath MATCHES ".*/\\.moc/.*" OR
+        _fpath MATCHES ".*/build/.*")
+        continue()
+    endif()
+
+    # Exclude Qt-generated files (moc, ui, qrc, qmlcache, etc.)
+    if (_fpath MATCHES ".*/moc_.*(\\.cpp|\\.cc)?$" OR
+        _fpath MATCHES ".*/ui_.*(\\.h|\\.hpp)?$" OR
+        _fpath MATCHES ".*/qrc_.*(\\.cpp)?$" OR
+        _fpath MATCHES ".*/qmlcache/.*")
+        continue()
+    endif()
+
+    # Exclude IDE/editor temp files (safety)
+    if (_fpath MATCHES ".*~$" OR _fpath MATCHES ".*\\.swp$")
+        continue()
+    endif()
+
+    # If we reached this point, include the file for analysis
+    list(APPEND FILTERED_FILES "${f}")
+endforeach()
+
+# Print summary
+list(LENGTH FILTERED_FILES _num_filtered)
+message(STATUS "Static analysis: ${_num_filtered} source/header files selected for analysis")
+
+# --------------------------------------------
+# clang-tidy (Project-full)
+# - system headers disabled
+# - header-filter set to project source dir so headers in the project are checked
+# --------------------------------------------
+find_program(CLANG_TIDY NAMES clang-tidy)
+if (CLANG_TIDY)
+    message(STATUS "Adding command: clang_tidy (Project-full, system headers disabled)")
+
+    if (FILTERED_FILES)
+        # Quote file paths to avoid issues with spaces or special characters
+        set(FILTERED_FILES_QUOTED "")
+        foreach(f ${FILTERED_FILES})
+            list(APPEND FILTERED_FILES_QUOTED "\"${f}\"")
+        endforeach()
+
+        add_custom_target(clang_tidy
+            DEPENDS ${PROJECT_NAME}
+            COMMAND ${CLANG_TIDY}
+                "-p=${CMAKE_BINARY_DIR}"
+                "--system-headers=false"
+                "--header-filter=^${CMAKE_SOURCE_DIR}"
+                ${FILTERED_FILES_QUOTED}
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Running clang-tidy (Project-full) on project sources (system headers disabled)"
+            USES_TERMINAL
+        )
+    else()
+        message(WARNING "clang_tidy: no project files to analyze (FILTERED_FILES is empty)")
+    endif()
+else()
+    message(STATUS "clang-tidy not found: skipping clang_tidy target")
+endif()
+
+# --------------------------------------------
+# flawfinder
+# - run only on project files selected above
+# --------------------------------------------
+find_program(FLAWFINDER_TOOL NAMES flawfinder)
+if (FLAWFINDER_TOOL)
+    message(STATUS "Adding command: flawfinder (project-only)")
+
+    if (FILTERED_FILES)
+        add_custom_target(flawfinder
+            COMMAND ${FLAWFINDER_TOOL}
+                --quiet --dataonly --nolink --columns --context --singleline --minlevel=0
+                ${FILTERED_FILES}
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Running flawfinder on project sources (excluding vendor/_deps/Qt-generated)"
+            USES_TERMINAL
+        )
+    else()
+        message(WARNING "flawfinder: no project files to analyze (FILTERED_FILES is empty)")
+    endif()
+else()
+    message(STATUS "flawfinder not found: skipping flawfinder target")
+endif()
+
+# --------------------------------------------
+# cppcheck
+# - use compile_commands.json
+# - exclude common vendor and build dirs
+# --------------------------------------------
+find_program(CPPCHECK NAMES cppcheck)
+if (CPPCHECK)
+    message(STATUS "Adding command: cppcheck_${PROJECT_NAME}")
+
+    # Exclude patterns for cppcheck (directories to ignore)
+    set(CPPCHECK_EXCLUDES
+        "-i${CMAKE_BINARY_DIR}"
+        "-i${CMAKE_SOURCE_DIR}/_deps"
+        "-i${CMAKE_SOURCE_DIR}/external"
+        "-i${CMAKE_SOURCE_DIR}/third-party"
+        "-i${CMAKE_SOURCE_DIR}/third_party"
+        "-i${CMAKE_SOURCE_DIR}/vendor"
+        "-i${CMAKE_SOURCE_DIR}/3rd-party"
+        "-i${CMAKE_SOURCE_DIR}/contrib"
+        "-i${CMAKE_SOURCE_DIR}/tests"
+        "-i${CMAKE_SOURCE_DIR}/test"
+        # skip Qt generated (some may live in source tree)
+        "-i${CMAKE_SOURCE_DIR}/moc_*"
+        "-i${CMAKE_SOURCE_DIR}/ui_*"
+        "-i${CMAKE_SOURCE_DIR}/qrc_*"
+    )
+
+    add_custom_target(cppcheck
+        COMMAND ${CPPCHECK}
+            --project=${CMAKE_BINARY_DIR}/compile_commands.json
+            --force
+            --enable=warning,performance,unusedFunction,style,information
+            --template=gcc
+            --inline-suppr
+            --suppress=missingIncludeSystem
+            ${CPPCHECK_EXCLUDES}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Running cppcheck (project) with excludes for vendor/_deps/Qt-generated"
+        USES_TERMINAL
+    )
+else()
+    message(STATUS "cppcheck not found: skipping cppcheck target")
+endif()
+
+
+# ============================================
+# Subproject:
+# ============================================
 add_subdirectory(examples/custom_model_plugin)

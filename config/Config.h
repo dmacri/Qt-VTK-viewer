@@ -52,7 +52,7 @@ public:
      * @param name The name of the category to retrieve
      * @param ignoreCase If true, performs case-insensitive comparison
      * @return ConfigCategory* Pointer to the category, or nullptr if not found */
-    ConfigCategory* getConfigCategory(const std::string &name, bool ignoreCase = false);
+    ConfigCategory* getConfigCategory(const std::string& name, bool ignoreCase = false);
 
     /** @brief Gets a list of all configuration category names.
      * 

@@ -20,18 +20,20 @@
  *
  * @include README.md */
 
-#include <filesystem>
 #include <QApplication>
 #include <QFile>
 #include <QStyleFactory>
 #include <QSurfaceFormat>
-#include <vtkGenericOpenGLRenderWindow.h>
+#include <filesystem>
+
 #include <QVTKOpenGLNativeWidget.h>
+#include <vtkGenericOpenGLRenderWindow.h>
+
 #include "mainwindow.h"
+#include "utilities/CommandLineParser.h"
 #include "utilities/PluginLoader.h"
 
-
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     // vtkObject::GlobalWarningDisplayOff();
 
@@ -45,32 +47,58 @@ int main(int argc, char *argv[])
     // This happens before MainWindow creation so models are available immediately
     PluginLoader& pluginLoader = PluginLoader::instance();
     pluginLoader.loadFromStandardDirectories({
-        "./plugins",                    // Current directory
-        "../plugins",                   // Parent directory
-        "./build/plugins"               // Build directory
+        "./plugins",      // Current directory
+        "../plugins",     // Parent directory
+        "./build/plugins" // Build directory
     });
 
-    MainWindow mainWindow;
-
-    if (argc > 1)
+    // Parse command-line arguments
+    CommandLineParser cmdParser;
+    if (! cmdParser.parse(argc, argv))
     {
-        const auto configurationFile = argv[1];
-        if (std::filesystem::exists(configurationFile))
+        return 1; // Parsing failed
+    }
+
+    // Load custom model plugins if specified
+    for (const auto& modelPath : cmdParser.getLoadModelPaths())
+    {
+        if (! pluginLoader.loadPlugin(modelPath))
         {
-            mainWindow.loadInitialConfiguration(configurationFile);
-        }
-        else
-        {
-            std::cerr << "Provided argument is not valid file path: '" << configurationFile << "'!" << std::endl;
+            std::cerr << "Warning: Failed to load plugin: " << modelPath << std::endl;
         }
     }
 
+    MainWindow mainWindow;
+    mainWindow.setSilentMode(cmdParser.isSilentMode());
+
+    // Load configuration file if provided
+    if (cmdParser.getConfigFile())
+    {
+        const auto& configFile = cmdParser.getConfigFile().value();
+        if (std::filesystem::exists(configFile))
+        {
+            mainWindow.loadInitialConfiguration(QString::fromStdString(configFile));
+        }
+        else
+        {
+            std::cerr << "Configuration file not found: '" << configFile << "'" << std::endl;
+        }
+    }
+
+    // Apply stylesheet
     if (QFile styleFile("style.qss"); styleFile.open(QFile::ReadOnly))
     {
         QString styleSheet = QLatin1String(styleFile.readAll());
         mainWindow.setStyleSheet(styleSheet);
     }
 
-    mainWindow.show();
+    mainWindow.applyCommandLineOptions(cmdParser);
+
+    // Show window (unless in headless mode)
+    if (! cmdParser.getGenerateMoviePath() && ! cmdParser.getGenerateImagePath())
+    {
+        mainWindow.show();
+    }
+
     return a.exec();
 }

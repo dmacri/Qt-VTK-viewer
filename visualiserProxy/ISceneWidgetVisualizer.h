@@ -18,6 +18,7 @@
 #pragma once
 
 #include <vtkRenderer.h>
+
 #include "utilities/types.h"
 
 // Forward declarations

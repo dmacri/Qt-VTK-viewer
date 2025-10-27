@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include <string>
 #include <QDialog>
+#include <string>
 
 class QTableWidget;
 class QVBoxLayout;
@@ -23,22 +23,22 @@ public:
      *  @param configFilePath Path to the configuration file to display
      * @param parent The parent widget */
     explicit ConfigDetailsDialog(const std::string& configFilePath, QWidget* parent = nullptr);
-    
+
     /// @brief Destroys the ConfigDetailsDialog.
     ~ConfigDetailsDialog();
 
 private:
     /// @brief Sets up the user interface components.
     void setupUI();
-    
+
     /// @brief Loads configuration data from the specified file.
     /// @param configFilePath Path to the configuration file
     void loadConfigData(const std::string& configFilePath);
-    
+
     /// @brief Adjusts the dialog size to fit its content (to make sure that all rows are visible)
     void adjustSizeToContent();
-    
-    QTableWidget* tableWidget;  ///< Table widget for displaying configuration parameters
-    QVBoxLayout* mainLayout;    ///< Main layout of the dialog
-    QLabel* filePathLabel;      ///< Label displaying the configuration file path
+
+    QTableWidget* tableWidget; ///< Table widget for displaying configuration parameters
+    QVBoxLayout* mainLayout;   ///< Main layout of the dialog
+    QLabel* filePathLabel;     ///< Label displaying the configuration file path
 };

@@ -24,7 +24,10 @@ public:
     void setFileName(QString fileName);
 
     /// @brief Returns the file name associated with this label.
-    const QString &getFileName() const { return fileName; }
+    const QString& getFileName() const
+    {
+        return fileName;
+    }
 
 signals:
     /// @brief Emitted when the label is double-clicked.

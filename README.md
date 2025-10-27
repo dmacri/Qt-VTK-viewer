@@ -80,6 +80,28 @@ Key components of the project include:
    ```bash
    ./QtVtkViewer
    ```
+   
+## Command-Line Arguments
+
+The application supports various command-line arguments for automated testing, batch processing, and customized startup behavior.
+
+### Quick Examples
+
+```bash
+# Load configuration with specific model
+./QtVtkViewer config.txt --startingModel=Ball
+
+# Generate video automatically
+./QtVtkViewer config.txt --generateMoviePath=/tmp/movie.ogv --exitAfterLastStep
+
+# Generate image at specific step
+./QtVtkViewer config.txt --step=100 --generateImagePath=/tmp/step100.png
+
+# Batch processing with silent mode
+./QtVtkViewer config.txt --generateMoviePath=/tmp/movie.ogv --exitAfterLastStep --silent
+```
+
+For complete documentation of all available arguments, see **[doc/COMMAND_LINE_ARGUMENTS.md](doc/COMMAND_LINE_ARGUMENTS.md)**.
 
 ## License
 

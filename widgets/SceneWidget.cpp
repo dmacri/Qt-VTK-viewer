@@ -734,6 +734,19 @@ void SceneWidget::switchModel(const std::string& modelName)
         return; // Already using this model
     }
 
+    // Clean up old visualizer before creating new one
+    if (sceneWidgetVisualizerProxy)
+    {
+        try
+        {
+            sceneWidgetVisualizerProxy->clearStage();
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Warning: Error clearing old visualizer stage: " << e.what() << std::endl;
+        }
+    }
+
     // Create new visualizer with the selected model
     sceneWidgetVisualizerProxy = SceneWidgetVisualizerFactory::create(modelName);
     currentModelName = modelName;
