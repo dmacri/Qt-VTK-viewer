@@ -1,7 +1,11 @@
 #pragma once
 
 #include <algorithm> // std::max, std::min
-#include <cstdlib>
+#include <cstring>
+#include <charconv>  // std::from_chars
+#include <format>
+#include <limits>
+#include <stdexcept> // std::invalid_argument
 
 #include "OOpenCAL/base/Cell.h"
 
@@ -40,7 +44,31 @@ public:
     /// Parse a string representation and set the cell value
     void composeElement(char* str) override
     {
-        this->value = atoi(str);
+        if (!str || str[0] == '\0')
+        {
+            this->value = 0;
+            throw std::invalid_argument("Provided empty input!");
+        }
+
+        int result = 0;
+        auto [ptr, ec] = std::from_chars(str, str + std::strlen(str), result);
+
+        if (ec == std::errc::invalid_argument)
+        {
+            throw std::invalid_argument("Provided not number '" + std::string(str) + "'");
+            this->value = 0;
+        }
+        else if (ec == std::errc::result_out_of_range)
+        {
+            throw std::invalid_argument(std::format("Provided number '{}' is out of int range [{}, {}]",
+                                                    str, std::numeric_limits<int>::min(), std::numeric_limits<int>::max()));
+            this->value = (result > 0) ? std::numeric_limits<int>::max()
+                                       : std::numeric_limits<int>::min();
+        }
+        else // success
+        {
+            this->value = result;
+        }
     }
 
     /// Convert cell state to string representation
@@ -51,7 +79,7 @@ public:
 
     /** Determine the output color based on the cell value
      * Blue (0) -> Cyan -> Green -> Yellow -> Red (255) */
-    Color outputValue(const char* str) const override
+    Color outputValue(const char* /*str*/) const override
     {
         Color outputColor{128, 128, 128};
 

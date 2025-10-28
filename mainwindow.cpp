@@ -286,7 +286,7 @@ void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
     };
 
     // Define callback to report progress
-    auto progressCallback = [&progress, this](int step, int total)
+    auto progressCallback = [&progress](int step, int total)
     {
         progress.setValue(step);
         progress.setLabelText(tr("Exporting video... Step %1 of %2").arg(step).arg(total));
@@ -565,7 +565,7 @@ void MainWindow::openConfigurationFile(const QString& configFileName)
         // Stop any ongoing playback
         playbackTimer->stop();
 
-        if (bool isFirstConfiguration = ui->inputFilePathLabel->getFileName().isEmpty())
+        if (bool isFirstConfiguration[[maybe_unused]] = ui->inputFilePathLabel->getFileName().isEmpty())
         {
             initializeSceneWidget(configFileName);
         }
