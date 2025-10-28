@@ -22,21 +22,21 @@ ColumnAndRow ReaderHelpers::getColumnAndRowFromLine(const std::string& line)
         };
 }
 
-ColumnAndRow ReaderHelpers::calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std::vector<ColumnAndRow>& columnsAndRows)
+ColumnAndRow ReaderHelpers::calculateXYOffset(NodeIndex node, NodeIndex nNodeX, NodeIndex nNodeY, const std::vector<ColumnAndRow>& columnsAndRows)
 {
     int offsetX = 0; //= //(node % nNodeX)*nLocalCols;//-this->borderSizeX;
     int offsetY = 0; //= //(node / nNodeX)*nLocalRows;//-this->borderSizeY;
 
     if (nNodeY == 1)
     {
-        for (int k = 0; k < node % nNodeX; k++)
+        for (NodeIndex k = 0; k < node % nNodeX; k++)
         {
             offsetX += columnsAndRows[k].column;
         }
     }
     else
     {
-        for (int k = (node / nNodeX) * nNodeX; k < node; k++)
+        for (NodeIndex k = (node / nNodeX) * nNodeX; k < node; k++)
         {
             offsetX += columnsAndRows[k].column;
         }

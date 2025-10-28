@@ -63,7 +63,7 @@ void Visualizer::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, vtkSmart
     const auto numberOfPoints = nRows * nCols;
     vtkNew<vtkDoubleArray> pointValues;
     pointValues->SetNumberOfTuples(numberOfPoints);
-    for (size_t i = 0; i < numberOfPoints; ++i)
+    for (int i = 0; i < numberOfPoints; ++i)
     {
         pointValues->SetValue(i, i);
     }

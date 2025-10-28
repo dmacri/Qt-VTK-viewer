@@ -33,11 +33,11 @@ constexpr int FIRST_STEP_NUMBER = 0;
 
 
 MainWindow::MainWindow(QWidget* parent)
-    : QMainWindow(nullptr)
+    : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , currentStep{FIRST_STEP_NUMBER}
     , modelActionGroup(nullptr)
     , playbackTimer(new QTimer(this))
+    , currentStep{FIRST_STEP_NUMBER}
 {
     ui->setupUi(this);
     setWindowTitle(QApplication::applicationName());

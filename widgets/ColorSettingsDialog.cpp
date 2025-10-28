@@ -77,7 +77,6 @@ void ColorSettingsDialog::onResetColors()
     
     if (reply == QMessageBox::Yes)
     {
-        ColorSettings& settings = ColorSettings::instance();
         m_backgroundColor = ColorSettings::DEFAULT_BACKGROUND;
         m_textColor = ColorSettings::DEFAULT_TEXT;
         m_gridColor = ColorSettings::DEFAULT_GRID;

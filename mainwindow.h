@@ -119,12 +119,12 @@ private:
     QString generateTooltipForFile(const QString &filePath) const;
     void openConfigurationFile(const QString &configFileName);
 
+    static constexpr int MAX_RECENT_FILES = 10;
+
     Ui::MainWindow *ui;
 
     QActionGroup *modelActionGroup;
     QTimer *playbackTimer;
-
-    static constexpr int MAX_RECENT_FILES = 10;
 
     int currentStep;
 

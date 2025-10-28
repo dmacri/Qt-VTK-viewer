@@ -542,7 +542,7 @@ endif()
 # --------------------------------------------
 find_program(CPPCHECK NAMES cppcheck)
 if (CPPCHECK)
-    message(STATUS "Adding command: cppcheck_${PROJECT_NAME}")
+    message(STATUS "Adding command: cppcheck")
 
     # Exclude patterns for cppcheck (directories to ignore)
     set(CPPCHECK_EXCLUDES
