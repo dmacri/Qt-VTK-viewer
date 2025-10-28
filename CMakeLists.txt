@@ -580,6 +580,45 @@ else()
 endif()
 
 
+# --------------------------------------------
+# valgrind: Memory leak & runtime error analysis
+# --------------------------------------------
+find_program(VALGRIND_TOOL NAMES valgrind)
+if (VALGRIND_TOOL)
+    message(STATUS "Adding command: valgrind (runtime memory analysis)")
+
+    # Define path to the built binary automatically
+    if (WIN32)
+        message(WARNING "Valgrind is not supported on Windows: skipping valgrind target")
+    else()
+        # Binary output path depends on configuration type (Debug/Release)
+        # Use generator expression to select correct one at runtime
+        set(PROJECT_EXECUTABLE "$<TARGET_FILE:${PROJECT_NAME}>")
+
+        # Allow passing custom arguments to valgrind run
+        set(VALGRIND_ARGS "" CACHE STRING "Arguments passed to ${PROJECT_NAME} during valgrind run")
+
+        # Add the target
+        add_custom_target(valgrind
+            DEPENDS ${PROJECT_NAME}
+            COMMAND ${VALGRIND_TOOL}
+                --leak-check=full
+                --show-leak-kinds=all
+                --track-origins=yes
+                --num-callers=20
+                --error-exitcode=1
+                --suppressions=${CMAKE_SOURCE_DIR}/valgrind.supp
+                ${PROJECT_EXECUTABLE} ${VALGRIND_ARGS}
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Running valgrind to check for memory leaks and invalid accesses"
+            USES_TERMINAL
+        )
+    endif()
+else()
+    message(STATUS "valgrind not found: skipping valgrind target")
+endif()
+
+
 # ============================================
 # Subproject:
 # ============================================
