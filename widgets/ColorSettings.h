@@ -65,10 +65,10 @@ public:
     void loadSettings();
 
     // Default colors
-    static inline const QColor DEFAULT_BACKGROUND{Qt::gray};
-    static inline const QColor DEFAULT_TEXT{Qt::black};
-    static inline const QColor DEFAULT_GRID{Qt::red};
-    static inline const QColor DEFAULT_HIGHLIGHT{Qt::yellow};
+    static inline const QColor DEFAULT_BACKGROUND{ Qt::gray };
+    static inline const QColor DEFAULT_TEXT{ Qt::black };
+    static inline const QColor DEFAULT_GRID{ Qt::red };
+    static inline const QColor DEFAULT_HIGHLIGHT{ Qt::yellow };
 
 signals:
     void colorsChanged();

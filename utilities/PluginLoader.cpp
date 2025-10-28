@@ -2,9 +2,11 @@
  * @brief Implementation of the plugin loading system. */
 
 #include "PluginLoader.h"
-#include <dlfcn.h>
-#include <iostream>
+
 #include <filesystem>
+#include <iostream>
+
+#include <dlfcn.h>
 
 namespace fs = std::filesystem;
 
@@ -23,49 +25,49 @@ bool PluginLoader::loadPlugin(const std::string& pluginPath)
         std::cerr << "Warning: " << lastError << std::endl;
         return false;
     }
-    
+
     // Check if file exists
-    if (!fs::exists(pluginPath))
+    if (! fs::exists(pluginPath))
     {
         lastError = "Plugin file does not exist: " + pluginPath;
         std::cerr << "Error: " << lastError << std::endl;
         return false;
     }
-    
+
     // Load the shared library
     // RTLD_GLOBAL allows plugin to use symbols from main app
     void* handle = dlopen(pluginPath.c_str(), RTLD_LAZY | RTLD_GLOBAL);
-    if (!handle)
+    if (! handle)
     {
         lastError = std::string("Failed to load plugin: ") + dlerror();
         std::cerr << "Error: " << lastError << std::endl;
         return false;
     }
-    
+
     dlerror(); // Clear any existing errors
-    
+
     // Find the registerPlugin function
     typedef void (*RegisterFunc)();
-    RegisterFunc registerPlugin = (RegisterFunc)dlsym(handle, "registerPlugin");
-    
+    RegisterFunc registerPlugin = (RegisterFunc) dlsym(handle, "registerPlugin");
+
     const char* dlsym_error = dlerror();
-    if (dlsym_error || !registerPlugin)
+    if (dlsym_error || ! registerPlugin)
     {
         lastError = "Plugin does not export registerPlugin() function";
         if (dlsym_error)
             lastError += std::string(": ") + dlsym_error;
-        
+
         std::cerr << "Error: " << lastError << std::endl;
         dlclose(handle);
         return false;
     }
-    
+
     // Create plugin info
     PluginInfo info;
     info.path = pluginPath;
     info.handle = handle;
     info.isLoaded = false;
-    
+
     // Call the registration function
     try
     {
@@ -80,13 +82,13 @@ bool PluginLoader::loadPlugin(const std::string& pluginPath)
         dlclose(handle);
         return false;
     }
-    
+
     // Extract metadata (optional functions)
     extractPluginMetadata(info);
-    
+
     // Store plugin info
     loadedPlugins.push_back(info);
-    
+
     clearError();
     return true;
 }
@@ -95,23 +97,23 @@ void PluginLoader::extractPluginMetadata(PluginInfo& info)
 {
     // Get plugin info string
     typedef const char* (*InfoFunc)();
-    InfoFunc getPluginInfo = (InfoFunc)dlsym(info.handle, "getPluginInfo");
+    InfoFunc getPluginInfo = (InfoFunc) dlsym(info.handle, "getPluginInfo");
     if (getPluginInfo)
     {
         info.info = getPluginInfo();
         std::cout << "  Info: " << info.info << std::endl;
     }
-    
+
     // Get plugin version
     typedef int (*VersionFunc)();
-    VersionFunc getPluginVersion = (VersionFunc)dlsym(info.handle, "getPluginVersion");
+    VersionFunc getPluginVersion = (VersionFunc) dlsym(info.handle, "getPluginVersion");
     if (getPluginVersion)
     {
         info.version = getPluginVersion();
     }
-    
+
     // Get model name
-    InfoFunc getModelName = (InfoFunc)dlsym(info.handle, "getModelName");
+    InfoFunc getModelName = (InfoFunc) dlsym(info.handle, "getModelName");
     if (getModelName)
     {
         info.name = getModelName();
@@ -120,33 +122,33 @@ void PluginLoader::extractPluginMetadata(PluginInfo& info)
 
 int PluginLoader::loadPluginsFromDirectory(const std::string& directory)
 {
-    if (!fs::exists(directory) || !fs::is_directory(directory))
+    if (! fs::exists(directory) || ! fs::is_directory(directory))
     {
         return 0;
     }
-    
+
     int loadedCount = 0;
     std::cout << "Scanning for plugins in: " << directory << std::endl;
-    
+
     try
     {
         for (const auto& entry : fs::directory_iterator(directory))
         {
-            if (!entry.is_regular_file())
+            if (! entry.is_regular_file())
                 continue;
-            
+
             const auto& path = entry.path();
-            
+
             // Check if it's a shared library
             if (path.extension() != ".so")
                 continue;
-            
+
             if (loadPlugin(path.string()))
             {
                 loadedCount++;
             }
         }
-        
+
         if (loadedCount > 0)
         {
             std::cout << "Loaded " << loadedCount << " plugin(s) from " << directory << std::endl;
@@ -156,19 +158,19 @@ int PluginLoader::loadPluginsFromDirectory(const std::string& directory)
     {
         std::cerr << "Error scanning directory " << directory << ": " << e.what() << std::endl;
     }
-    
+
     return loadedCount;
 }
 
 int PluginLoader::loadFromStandardDirectories(const std::vector<std::string>& directories)
 {
     int totalLoaded = 0;
-    
+
     for (const auto& dir : directories)
     {
         totalLoaded += loadPluginsFromDirectory(dir);
     }
-    
+
     return totalLoaded;
 }
 

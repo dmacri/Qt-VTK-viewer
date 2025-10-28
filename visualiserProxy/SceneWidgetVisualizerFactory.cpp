@@ -1,8 +1,11 @@
+#include "SceneWidgetVisualizerFactory.h"
+
 #include <stdexcept> // std::invalid_argument
+
 #include <OOpenCAL/models/Ball/BallCell.h>
 #include <OOpenCAL/models/SciddicaT/SciddicaTCell.h>
+
 #include "ISceneWidgetVisualizer.h"
-#include "SceneWidgetVisualizerFactory.h"
 #include "SceneWidgetVisualizerAdapter.h"
 
 
@@ -20,13 +23,17 @@ void SceneWidgetVisualizerFactory::initializeBuiltInModels()
     }
 
     // Register built-in models
-    registerModel("Ball", []() {
-        return std::make_unique<SceneWidgetVisualizerAdapter<BallCell>>("Ball");
-    });
+    registerModel("Ball",
+                  []()
+                  {
+                      return std::make_unique<SceneWidgetVisualizerAdapter<BallCell>>("Ball");
+                  });
 
-    registerModel("SciddicaT", []() {
-        return std::make_unique<SceneWidgetVisualizerAdapter<SciddicaTCell>>("SciddicaT");
-    });
+    registerModel("SciddicaT",
+                  []()
+                  {
+                      return std::make_unique<SceneWidgetVisualizerAdapter<SciddicaTCell>>("SciddicaT");
+                  });
 
     isInitializedWithBuildInModels = true;
 }
@@ -38,7 +45,7 @@ std::unique_ptr<ISceneWidgetVisualizer> SceneWidgetVisualizerFactory::create(con
 
     auto& registry = getRegistry();
     auto it = registry.find(modelName);
-    
+
     if (it == registry.end())
     {
         throw std::invalid_argument("Unknown model name: " + modelName);
@@ -66,7 +73,7 @@ std::unique_ptr<ISceneWidgetVisualizer> SceneWidgetVisualizerFactory::defaultMod
 bool SceneWidgetVisualizerFactory::registerModel(const std::string& modelName, ModelCreator creator)
 {
     auto& registry = getRegistry();
-    
+
     // Check if model already exists
     if (registry.find(modelName) != registry.end())
     {

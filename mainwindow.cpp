@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget* parent)
     , ui(new Ui::MainWindow)
     , modelActionGroup(nullptr)
     , playbackTimer(new QTimer(this))
-    , currentStep{FIRST_STEP_NUMBER}
+    , currentStep{ FIRST_STEP_NUMBER }
 {
     ui->setupUi(this);
     setWindowTitle(QApplication::applicationName());
@@ -141,7 +141,8 @@ void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> avail
     const auto lastStepAvailableInAvailableSteps = std::ranges::contains(availableSteps, totalSteps());
     if (! lastStepAvailableInAvailableSteps && ! silentMode)
     {
-        QMessageBox::warning(this, tr("Number of steps mismatch"),
+        QMessageBox::warning(this,
+                             tr("Number of steps mismatch"),
                              tr("Total number of steps from config file is %1, but last step number from index file is %2")
                                  .arg(totalSteps())
                                  .arg(availableSteps.back()));
@@ -205,7 +206,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::showAboutThisApplicationDialog()
 {
-    QMessageBox::information(this, "About",
+    QMessageBox::information(this,
+                             "About",
                              "By Davide Macri.\n"
                              "Configurator for visualizer");
 }
@@ -293,21 +295,20 @@ void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
     };
 
     // Define callback to check if cancelled
-    auto cancelledCallback = [&progress]() -> bool {
+    auto cancelledCallback = [&progress]() -> bool
+    {
         return progress.wasCanceled();
     };
-    
+
     // Export video using VideoExporter
-    exporter.exportVideo(
-        ui->sceneWidget->renderWindow(),
-        outputFilePath,
-        fps,
-        totalSteps(),
-        updateStepCallback,
-        progressCallback,
-        cancelledCallback
-    );
-    
+    exporter.exportVideo(ui->sceneWidget->renderWindow(),
+                         outputFilePath,
+                         fps,
+                         totalSteps(),
+                         updateStepCallback,
+                         progressCallback,
+                         cancelledCallback);
+
     // Restore original state
     currentStep = originalStep;
     setPositionOnWidgets(currentStep);
@@ -430,7 +431,8 @@ bool MainWindow::setPositionOnWidgets(StepIndex stepPosition, bool updateSlider)
     {
         if (! silentMode)
         {
-            QMessageBox::warning(this, "Changing position error",
+            QMessageBox::warning(this,
+                                 "Changing position error",
                                  tr("It was impossible to change position to %1, because:\n").arg(stepPosition) + e.what());
         }
         currentStep = stepBeforeTrying2ChangePosition;
@@ -499,12 +501,13 @@ void MainWindow::switchToModel(const QString& modelName)
 
         if (! silentMode)
         {
-            QMessageBox::information(
-                this, tr("Model Changed"),
-                tr("Successfully switched to %1 model, but no data was reloaded from files.\n"
-                   "Use 'Reload Data' (F5), or open another configuration file to load data files.\n"
-                   "Notice: Model has to be compatible with configuration file, if not - the behaviour is undefined")
-                    .arg(modelName));
+            QMessageBox::
+                information(this,
+                            tr("Model Changed"),
+                            tr("Successfully switched to %1 model, but no data was reloaded from files.\n"
+                               "Use 'Reload Data' (F5), or open another configuration file to load data files.\n"
+                               "Notice: Model has to be compatible with configuration file, if not - the behaviour is undefined")
+                                .arg(modelName));
         }
     }
     catch (const std::exception& e)
@@ -565,7 +568,7 @@ void MainWindow::openConfigurationFile(const QString& configFileName)
         // Stop any ongoing playback
         playbackTimer->stop();
 
-        if (bool isFirstConfiguration[[maybe_unused]] = ui->inputFilePathLabel->getFileName().isEmpty())
+        if (bool isFirstConfiguration [[maybe_unused]] = ui->inputFilePathLabel->getFileName().isEmpty())
         {
             initializeSceneWidget(configFileName);
         }
@@ -590,7 +593,8 @@ void MainWindow::openConfigurationFile(const QString& configFileName)
 
         if (! silentMode)
         {
-            QMessageBox::information(this, tr("Configuration Loaded"),
+            QMessageBox::information(this,
+                                     tr("Configuration Loaded"),
                                      tr("Successfully loaded configuration:\n%1").arg(configFileName));
         }
     }
@@ -619,7 +623,7 @@ void MainWindow::enterNoConfigurationFileMode()
     currentStep = 0;
     ui->positionSpinBox->setValue(0);
     ui->updatePositionSlider->setValue(0);
-    
+
     // Disable all playback and navigation widgets
     setWidgetsEnabledState(false);
 }
@@ -627,59 +631,57 @@ void MainWindow::enterNoConfigurationFileMode()
 void MainWindow::recreateModelMenuActions()
 {
     const auto availableModels = SceneWidgetVisualizerFactory::getAvailableModels();
-    
+
     if (availableModels.empty())
     {
         std::cerr << "Warning: No models available from factory!" << std::endl;
         return;
     }
-    
+
     // Create action group for exclusive selection
     modelActionGroup = new QActionGroup(this);
     modelActionGroup->setExclusive(true);
-    
+
     // Clear existing model actions from menu (if any from .ui file)
     ui->menuModel->clear();
-    
+
     // Create action for each model
     for (const auto& modelName : availableModels)
     {
         QAction* action = new QAction(QString::fromStdString(modelName), this);
         action->setCheckable(true);
-        
+
         // First model is checked by default
         if (modelName == availableModels[0])
         {
             action->setChecked(true);
         }
-        
+
         modelActionGroup->addAction(action);
         ui->menuModel->addAction(action);
-        
+
         connect(action, &QAction::triggered, this, &MainWindow::onModelSelected);
         cout << "+ Model: " << modelName << endl;
     }
-    
+
     // Add separator and actions
     ui->menuModel->addSeparator();
     ui->menuModel->addAction(ui->actionLoadPlugin);
     ui->menuModel->addAction(ui->actionReloadData);
-    
+
     std::cout << "Created " << availableModels.size() << " model menu actions" << std::endl;
 }
 
 void MainWindow::onLoadPluginRequested()
 {
-    QString pluginPath = QFileDialog::getOpenFileName(
-        this,
-        tr("Load Plugin"),
-        "./plugins",
-        tr("Shared Libraries (*.so);;All Files (*)")
-    );
+    QString pluginPath = QFileDialog::getOpenFileName(this,
+                                                      tr("Load Plugin"),
+                                                      "./plugins",
+                                                      tr("Shared Libraries (*.so);;All Files (*)"));
 
     if (pluginPath.isEmpty())
     {
-        return;  // User cancelled
+        return; // User cancelled
     }
 
     // Load the plugin
@@ -688,23 +690,19 @@ void MainWindow::onLoadPluginRequested()
     {
         // Refresh the models menu to show new model
         recreateModelMenuActions();
-        
-        QMessageBox::information(
-            this, 
-            tr("Plugin Loaded"),
-            tr("Plugin loaded successfully!\n\nNew models are now available in the Model menu.\n\nPath: %1")
-                .arg(pluginPath)
-        );
+
+        QMessageBox::information(this,
+                                 tr("Plugin Loaded"),
+                                 tr("Plugin loaded successfully!\n\nNew models are now available in the Model menu.\n\nPath: %1")
+                                     .arg(pluginPath));
     }
     else
     {
-        QMessageBox::critical(
-            this,
-            tr("Plugin Load Failed"),
-            tr("Failed to load plugin:\n%1\n\nError: %2")
-                .arg(pluginPath)
-                .arg(QString::fromStdString(loader.getLastError()))
-        );
+        QMessageBox::critical(this,
+                              tr("Plugin Load Failed"),
+                              tr("Failed to load plugin:\n%1\n\nError: %2")
+                                  .arg(pluginPath)
+                                  .arg(QString::fromStdString(loader.getLastError())));
     }
 }
 
@@ -713,36 +711,38 @@ void MainWindow::createViewModeActionGroup()
     // Create action group for exclusive selection between 2D and 3D modes
     QActionGroup* viewModeGroup = new QActionGroup(this);
     viewModeGroup->setExclusive(true);
-    
+
     viewModeGroup->addAction(ui->action2DMode);
     viewModeGroup->addAction(ui->action3DMode);
-    
+
     // 2D mode is checked by default
-    ui->action2DMode->setChecked(true);    
+    ui->action2DMode->setChecked(true);
 }
 
 void MainWindow::on2DModeRequested()
 {
     ui->sceneWidget->setViewMode2D();
     updateCameraControlsVisibility();
-    
-    QMessageBox::information(this, tr("View Mode Changed"),
+
+    QMessageBox::information(this,
+                             tr("View Mode Changed"),
                              tr("Switched to 2D mode.\nCamera is now in top-down view with rotation disabled."));
 }
 
 void MainWindow::on3DModeRequested()
 {
     ui->sceneWidget->setViewMode3D();
-    
+
     // Reset sliders to default position (0, 0) when entering 3D mode
     QSignalBlocker azimuthBlocker(ui->azimuthSlider);
     QSignalBlocker elevationBlocker(ui->elevationSlider);
     ui->azimuthSlider->setValue(0);
     ui->elevationSlider->setValue(0);
-    
+
     updateCameraControlsVisibility();
-    
-    QMessageBox::information(this, tr("View Mode Changed"),
+
+    QMessageBox::information(this,
+                             tr("View Mode Changed"),
                              tr("Switched to 3D mode.\nYou can now rotate the camera using mouse or the sliders below."));
 }
 
@@ -757,10 +757,10 @@ void MainWindow::syncCameraSliders()
     // Sync sliders with current camera position
     const double azimuth = ui->sceneWidget->getCameraAzimuth();
     const double elevation = ui->sceneWidget->getCameraElevation();
-    
+
     QSignalBlocker azimuthBlocker(ui->azimuthSlider);
     QSignalBlocker elevationBlocker(ui->elevationSlider);
-    
+
     ui->azimuthSlider->setValue(static_cast<int>(azimuth));
     ui->elevationSlider->setValue(static_cast<int>(elevation));
 }
@@ -797,78 +797,82 @@ void MainWindow::updateRecentFilesMenu()
 {
     ui->menuRecentFiles->clear();
     ui->menuRecentFiles->setToolTipsVisible(true);
-    
+
     QStringList recentFiles = loadRecentFiles();
-    
+
     // Remove files that don't exist anymore
-    recentFiles.erase(
-        std::remove_if(recentFiles.begin(), recentFiles.end(),
-                      [](const QString& path) { return !QFileInfo::exists(path); }),
-        recentFiles.end()
-    );
-    
+    recentFiles.erase(std::remove_if(recentFiles.begin(),
+                                     recentFiles.end(),
+                                     [](const QString& path)
+                                     {
+                                         return ! QFileInfo::exists(path);
+                                     }),
+                      recentFiles.end());
+
     if (recentFiles.isEmpty())
     {
         QAction* noFilesAction = ui->menuRecentFiles->addAction(tr("No recent files"));
         noFilesAction->setEnabled(false);
         return;
     }
-    
+
     // Save cleaned list
     saveRecentFiles(recentFiles);
-    
+
     for (const QString& filePath : recentFiles)
     {
         QString displayName = getSmartDisplayName(filePath, recentFiles);
-        
+
         // Get last opened time from QSettings
         QSettings settings;
         QString timeKey = QString("recentFiles/time_%1").arg(QString(filePath.toUtf8().toBase64()));
         QDateTime lastOpened = settings.value(timeKey, QDateTime::currentDateTime()).toDateTime();
-        
+
         // Format: "filename [2024-10-20 15:30:25]"
-        QString actionText = QString("%1 [%2]")
-            .arg(displayName)
-            .arg(lastOpened.toString("yyyy-MM-dd HH:mm:ss"));
-        
+        QString actionText = QString("%1 [%2]").arg(displayName).arg(lastOpened.toString("yyyy-MM-dd HH:mm:ss"));
+
         QAction* action = ui->menuRecentFiles->addAction(actionText);
         action->setData(filePath);
         action->setToolTip(generateTooltipForFile(filePath));
-        
+
         connect(action, &QAction::triggered, this, &MainWindow::onRecentFileTriggered);
     }
-    
+
     ui->menuRecentFiles->addSeparator();
     QAction* clearAction = ui->menuRecentFiles->addAction(tr("Clear Recent Files"));
-    connect(clearAction, &QAction::triggered, this, [this]() {
-        saveRecentFiles(QStringList());
-        updateRecentFilesMenu();
-    });
+    connect(clearAction,
+            &QAction::triggered,
+            this,
+            [this]()
+            {
+                saveRecentFiles(QStringList());
+                updateRecentFilesMenu();
+            });
 }
 
 void MainWindow::addToRecentFiles(const QString& filePath)
 {
     QStringList recentFiles = loadRecentFiles();
-    
+
     // Remove if already exists (to move it to the top)
     recentFiles.removeAll(filePath);
-    
+
     // Add to the beginning
     recentFiles.prepend(filePath);
-    
+
     // Limit to MAX_RECENT_FILES
     while (recentFiles.size() > MAX_RECENT_FILES)
     {
         recentFiles.removeLast();
     }
-    
+
     saveRecentFiles(recentFiles);
-    
+
     // Store the timestamp when this file was opened
     QSettings settings;
     QString timeKey = QString("recentFiles/time_%1").arg(QString(filePath.toUtf8().toBase64()));
     settings.setValue(timeKey, QDateTime::currentDateTime());
-    
+
     updateRecentFilesMenu();
 }
 
@@ -889,10 +893,10 @@ QString MainWindow::getSmartDisplayName(const QString& filePath, const QStringLi
     QFileInfo fileInfo(filePath);
     QString fileName = fileInfo.fileName();
     QDir fileDir = fileInfo.dir();
-    
+
     // Start with parent/filename as default (depth = 1)
     QString displayName = fileDir.dirName() + "/" + fileName;
-    
+
     // Count how many files have the same filename
     int sameNameCount = 0;
     for (const QString& otherPath : allPaths)
@@ -902,13 +906,13 @@ QString MainWindow::getSmartDisplayName(const QString& filePath, const QStringLi
             sameNameCount++;
         }
     }
-    
+
     // If unique filename, return parent/filename
     if (sameNameCount == 1)
     {
         return displayName;
     }
-    
+
     // Otherwise, check if parent/filename is already unique
     for (int depth = 1; depth <= 4; ++depth) // Try up to 4 parent directories
     {
@@ -920,14 +924,14 @@ QString MainWindow::getSmartDisplayName(const QString& filePath, const QStringLi
             currentDisplayName = currentDir.dirName() + "/" + currentDisplayName;
             currentDir.cdUp();
         }
-        
+
         // Check if this display name is unique among conflicting files
         bool isUnique = true;
         for (const QString& otherPath : allPaths)
         {
             if (otherPath == filePath)
                 continue;
-                
+
             QFileInfo otherInfo(otherPath);
             if (otherInfo.fileName() != fileName)
                 continue; // Not a conflicting file
@@ -940,7 +944,7 @@ QString MainWindow::getSmartDisplayName(const QString& filePath, const QStringLi
                 otherDisplayName = otherDir.dirName() + "/" + otherDisplayName;
                 otherDir.cdUp();
             }
-            
+
             if (otherDisplayName == currentDisplayName)
             {
                 isUnique = false;
@@ -966,7 +970,7 @@ QString MainWindow::generateTooltipForFile(const QString& filePath) const
     {
         return tr("File does not exist:\n%1").arg(filePath);
     }
-    
+
     QString tooltip = QString("<b>%1</b><br/>").arg(tr("Full path:"));
     tooltip += QString("%1<br/><br/>").arg(filePath);
     
@@ -994,8 +998,8 @@ QString MainWindow::generateTooltipForFile(const QString& filePath) const
                 if (param)
                 {
                     tooltip += QString("&nbsp;&nbsp;• <b>%1:</b> %2<br/>")
-                        .arg(paramName)
-                        .arg(QString::fromStdString(param->getDefaultValue()));
+                                   .arg(paramName)
+                                   .arg(QString::fromStdString(param->getDefaultValue()));
                 }
             }
         };

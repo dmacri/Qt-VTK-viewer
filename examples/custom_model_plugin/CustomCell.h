@@ -1,8 +1,8 @@
 #pragma once
 
 #include <algorithm> // std::max, std::min
-#include <cstring>
 #include <charconv>  // std::from_chars
+#include <cstring>
 #include <format>
 #include <limits>
 #include <stdexcept> // std::invalid_argument
@@ -44,7 +44,7 @@ public:
     /// Parse a string representation and set the cell value
     void composeElement(char* str) override
     {
-        if (!str || str[0] == '\0')
+        if (! str || str[0] == '\0')
         {
             this->value = 0;
             throw std::invalid_argument("Provided empty input!");
@@ -61,9 +61,10 @@ public:
         else if (ec == std::errc::result_out_of_range)
         {
             throw std::invalid_argument(std::format("Provided number '{}' is out of int range [{}, {}]",
-                                                    str, std::numeric_limits<int>::min(), std::numeric_limits<int>::max()));
-            this->value = (result > 0) ? std::numeric_limits<int>::max()
-                                       : std::numeric_limits<int>::min();
+                                                    str,
+                                                    std::numeric_limits<int>::min(),
+                                                    std::numeric_limits<int>::max()));
+            this->value = (result > 0) ? std::numeric_limits<int>::max() : std::numeric_limits<int>::min();
         }
         else // success
         {
@@ -81,7 +82,7 @@ public:
      * Blue (0) -> Cyan -> Green -> Yellow -> Red (255) */
     Color outputValue(const char* /*str*/) const override
     {
-        Color outputColor{128, 128, 128};
+        Color outputColor{ 128, 128, 128 };
 
         // Normalize value to 0-1 range (assuming 0-255 input)
         double normalized = value / 255.0;

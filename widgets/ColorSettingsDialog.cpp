@@ -1,31 +1,32 @@
 #include "ColorSettingsDialog.h"
+
+#include <QColorDialog>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSettings>
+
 #include "ui_ColorSettingsDialog.h"
 #include "widgets/ColorSettings.h"
 
-#include <QColorDialog>
-#include <QPushButton>
-#include <QSettings>
-#include <QMessageBox>
 
-
-ColorSettingsDialog::ColorSettingsDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::ColorSettingsDialog)
+ColorSettingsDialog::ColorSettingsDialog(QWidget* parent)
+    : QDialog(parent)
+    , ui(new Ui::ColorSettingsDialog)
 {
     ui->setupUi(this);
     setWindowTitle(tr("Color Settings"));
-    
+
     // Connect signals and slots
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &ColorSettingsDialog::onAccepted);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &ColorSettingsDialog::onRejected);
     connect(ui->btnResetColors, &QPushButton::clicked, this, &ColorSettingsDialog::onResetColors);
-    
+
     // Connect color buttons
     connect(ui->btnBackgroundColor, &QPushButton::clicked, this, &ColorSettingsDialog::onBackgroundColorClicked);
     connect(ui->btnTextColor, &QPushButton::clicked, this, &ColorSettingsDialog::onTextColorClicked);
     connect(ui->btnGridColor, &QPushButton::clicked, this, &ColorSettingsDialog::onGridColorClicked);
     connect(ui->btnHighlightColor, &QPushButton::clicked, this, &ColorSettingsDialog::onHighlightColorClicked);
-    
+
     // Load current settings
     loadSettings();
     updateColorPreviews();
@@ -94,7 +95,7 @@ void ColorSettingsDialog::onAccepted()
     settings.setGridColor(m_gridColor);
     settings.setHighlightColor(m_highlightColor);
     settings.saveSettings();
-    
+
     accept();
 }
 
@@ -111,7 +112,7 @@ void ColorSettingsDialog::updateColorPreviews()
     updateColorButton(ui->btnTextColor, m_textColor);
     updateColorButton(ui->btnGridColor, m_gridColor);
     updateColorButton(ui->btnHighlightColor, m_highlightColor);
-    
+
     // Update preview text
     QString style = QString("color: %1; background-color: %2;")
                     .arg(m_textColor.name(), m_backgroundColor.name());
@@ -130,7 +131,7 @@ bool ColorSettingsDialog::selectColor(QColor& color, const QString& title)
     QColorDialog dialog(color, this);
     dialog.setWindowTitle(title);
     dialog.setOptions(QColorDialog::ShowAlphaChannel | QColorDialog::DontUseNativeDialog);
-    
+
     if (dialog.exec() == QDialog::Accepted)
     {
         color = dialog.selectedColor();
