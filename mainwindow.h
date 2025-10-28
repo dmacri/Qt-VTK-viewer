@@ -1,3 +1,6 @@
+/** @file mainwindow.h
+ * @brief Declaration of the MainWindow class - the main application window. */
+
 #pragma once
 
 #include <QMainWindow>
@@ -12,6 +15,11 @@ class QPushButton;
 class QActionGroup;
 
 
+/** @class MainWindow
+ * @brief The main application window class that manages the user interface.
+ * 
+ * This class handles the main window's user interface, including menu actions,
+ * toolbars, and interaction with the 3D visualization widget. */
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -28,6 +36,12 @@ private slots:
     void exportVideoDialog();
     void onStepNumberChanged();
     void onOpenConfigurationRequested();
+    void onColorSettingsRequested();
+
+    void on2DModeRequested();
+    void on3DModeRequested();
+    void onAzimuthChanged(int value);
+    void onElevationChanged(int value);
 
     void onModelSelected();
     void onReloadDataRequested();
@@ -79,6 +93,9 @@ private:
     
     void switchToModel(const QString& modelName);
     void createModelMenuActions();
+    void createViewModeActionGroup();
+    void updateCameraControlsVisibility();
+    void syncCameraSliders();
 
     Ui::MainWindow* ui;
     

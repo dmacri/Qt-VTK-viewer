@@ -1,8 +1,9 @@
 #include "visualiser/Visualizer.hpp"
 #include "Line.h"
+#include "widgets/ColorSettings.h"
 
 
-void Visualizer::buildLoadBalanceLine(const std::vector<Line> &lines, int nCols, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine)
+void Visualizer::buildLoadBalanceLine(const std::vector<Line> &lines, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine)
 {
     vtkNew<vtkCellArray> cellLines;
     vtkNew<vtkPoints> pts;
@@ -31,12 +32,20 @@ void Visualizer::buildLoadBalanceLine(const std::vector<Line> &lines, int nCols,
 
     actorBuildLine->SetMapper(mapper);
     actorBuildLine->GetMapper()->Update();
-    actorBuildLine->GetProperty()->SetColor(colors->GetColor3d("Red").GetData());
+
+    const QColor gridColorFromSettings = ColorSettings::instance().gridColor();
+    vtkColor3d vtkColor{
+        gridColorFromSettings.redF(),
+        gridColorFromSettings.greenF(),
+        gridColorFromSettings.blueF()
+    };
+    actorBuildLine->GetProperty()->SetColor(vtkColor.GetData());
+
     // actorBuildLine->GetProperty()->SetLineWidth(1.5);
     renderer->AddActor2D(actorBuildLine);
 }
 
-void Visualizer::refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows, vtkActor2D* lineActor,vtkSmartPointer<vtkNamedColors> colors)
+void Visualizer::refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols,int nRows, vtkActor2D* lineActor)
 {
     vtkPolyDataMapper2D* mapper = (vtkPolyDataMapper2D*) lineActor->GetMapper();
     mapper->Update();
@@ -67,33 +76,44 @@ void Visualizer::refreshBuildLoadBalanceLine(Line *lines, int dimLines,int nCols
     lineActor->GetMapper()->Update();
 }
 
-vtkTextProperty* Visualizer::buildStepLine(StepIndex step, vtkSmartPointer<vtkTextMapper> singleLineTextB, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkNamedColors> colors, std::string color)
+vtkTextProperty* Visualizer::buildStepLine(StepIndex step, vtkSmartPointer<vtkTextMapper> singleLineTextB)
 {
     std::string stepText = "Step " + std::to_string(step);
     singleLineTextB->SetInput(stepText.c_str());
 
-    vtkTextProperty* textProp = singleLineTextB->GetTextProperty();
-    textProp->ShallowCopy(singleLineTextProp);
-    textProp->SetVerticalJustificationToBottom();
-    textProp->SetColor(colors->GetColor3d(color).GetData());
-    return textProp;
+    vtkTextProperty* singleLineTextProp = singleLineTextB->GetTextProperty();
+    singleLineTextProp->SetVerticalJustificationToBottom();
+
+    const QColor textColorFromSettings = ColorSettings::instance().textColor();
+    vtkColor3d vtkColor{
+        textColorFromSettings.redF(),
+        textColorFromSettings.greenF(),
+        textColorFromSettings.blueF()
+    };
+    singleLineTextProp->SetColor(vtkColor.GetData());
+
+    return singleLineTextProp;
 }
 
-vtkNew<vtkActor2D> Visualizer::buildStepText(StepIndex step, int font_size, vtkSmartPointer<vtkNamedColors> colors, vtkSmartPointer<vtkTextProperty> singleLineTextProp, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer)
+vtkNew<vtkActor2D> Visualizer::buildStepText(StepIndex step, int font_size, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer)
 {
-    singleLineTextProp->SetFontSize(font_size);
-    singleLineTextProp->SetFontFamilyToArial();
-    singleLineTextProp->BoldOn();
-    singleLineTextProp->ItalicOff();
-    singleLineTextProp->ShadowOff();
+    stepLineTextMapper->SetInput(("Step " + std::to_string(step)).c_str());
 
-    const std::string stringWithStep = "Step " + std::to_string(step);
-    stepLineTextMapper->SetInput(stringWithStep.c_str());
-    auto tprop = stepLineTextMapper->GetTextProperty();
-    tprop->ShallowCopy(singleLineTextProp);
+    auto textProp = stepLineTextMapper->GetTextProperty();
+    textProp->SetFontSize(font_size);
+    textProp->SetFontFamilyToArial();
+    textProp->BoldOn();
+    textProp->ItalicOff();
+    textProp->ShadowOff();
+    textProp->SetVerticalJustificationToBottom();
 
-    tprop->SetVerticalJustificationToBottom();
-    tprop->SetColor(colors->GetColor3d("Red").GetData());
+    const QColor textColorFromSettings = ColorSettings::instance().textColor();
+    vtkColor3d vtkColor{
+        textColorFromSettings.redF(),
+        textColorFromSettings.greenF(),
+        textColorFromSettings.blueF()
+    };
+    textProp->SetColor(vtkColor.GetData());
 
     vtkNew<vtkActor2D> stepLineTextActor;
     stepLineTextActor->SetMapper(stepLineTextMapper);

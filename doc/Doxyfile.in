@@ -1,0 +1,95 @@
+# Doxyfile.in - Doxyfile template configured by CMake (do not edit in build/)
+PROJECT_NAME           = @PROJECT_NAME@
+PROJECT_BRIEF          = @PROJECT_BRIEF@
+PROJECT_LOGO           = @PROJECT_LOGO_PATH@
+
+# Where to look for source files - CMake substitutes CMAKE_SOURCE_DIR
+INPUT                  = @DOXYGEN_INPUT_DIR@
+RECURSIVE              = YES
+EXCLUDE                = @CMAKE_BINARY_DIR@/        # exclude build directory
+
+# Which files to parse
+FILE_PATTERNS          = *.cpp *.cxx *.cc *.c *.h *.hpp *.hh *.ui *.qrc
+EXTENSION_MAPPING      = ui=C++ qrc=C++
+
+# Parser / preprocessor
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = NO
+
+# Qt macros and other useful definitions
+PREDEFINED             = Q_OBJECT \
+                         signals=public \
+                         slots=public \
+                         Q_SLOTS=public \
+                         Q_SIGNALS=public \
+                         emit= \
+                         override= \
+                         Q_DECLARE_PRIVATE(x)= \
+                         QT_VERSION
+
+# HTML/LaTeX input/output
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+
+GENERATE_LATEX         = YES
+LATEX_OUTPUT           = latex
+USE_PDFLATEX           = YES
+LATEX_BATCHMODE        = YES
+
+# Single-file HTML: Doxygen doesn't have a native "single file" option - we're keeping multi-file HTML.
+# (Note: Sphinx supports single-file output; Doxygen doesn't - you'd need an external tool to package it.)
+
+# Index/help
+GENERATE_TREEVIEW      = YES
+FULL_PATH_NAMES        = YES
+STRIP_FROM_PATH        = @DOXYGEN_INPUT_DIR@
+
+# Diagrams - requires Graphviz
+HAVE_DOT               = @HAVE_DOT@
+DOT_NUM_THREADS        = 0
+CLASS_DIAGRAMS         = YES
+DOT_IMAGE_FORMAT       = svg
+DOT_GRAPH_MAX_NODES    = 200
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+
+# Appearance and additional files
+HTML_HEADER            =
+HTML_FOOTER            =
+HTML_EXTRA_FILES       = @PROJECT_LOGO_PATH@
+
+# Other useful settings
+GENERATE_RTF           = NO
+GENERATE_XML           = NO
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = NO
+OPTIMIZE_OUTPUT_FOR_C  = NO
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_FORMAT            = "$file:$line: $text"
+
+USE_MDFILE_AS_MAINPAGE = README.md
+# INPUT += README.md
+# INPUT += ${CMAKE_SOURCE_DIR}/README.md
+MARKDOWN_SUPPORT       = YES
+INPUT += @CMAKE_SOURCE_DIR@/README.md
+
+EXCLUDE_PATTERNS = \
+    *_autogen* \
+    moc_* \
+    ui_* \
+    qt_* \
+    *.qrc \
+    *CMakeFiles* \
+    *_automoc.* \
+    *_autogen/* \
+    */moc_* \
+    */ui_* \
+    */qt_* \
+    */build/*
+
+# INPUT += @CMAKE_SOURCE_DIR@/doc/Mainpage.dox
