@@ -1,15 +1,16 @@
-#include "widgets/AboutDialog.h"
 #include <QPixmap>
 #include <QGuiApplication>
 #include <QScreen>
+#include <QLabel>
+#include <QVBoxLayout>
+#include <QPushButton>
+#include "widgets/AboutDialog.h"
 
 
 AboutDialog::AboutDialog(QWidget *parent)
     : QDialog(parent),
     imageLabel(new QLabel(this)),
-    textLabel(new QLabel(this)),
-    player(new QMediaPlayer(this)),
-    audioOutput(nullptr)
+    textLabel(new QLabel(this))
 {
     setWindowTitle("About Scimmione Configurator");
 
@@ -17,7 +18,7 @@ AboutDialog::AboutDialog(QWidget *parent)
     QVBoxLayout *layout = new QVBoxLayout(this);
 
     // --- Image setup ---
-    QPixmap pix(":/icons/scimmioneAtWork.png");  // <- wstaw swoją ścieżkę do pliku
+    QPixmap pix(":/icons/scimmioneAtWork.png");
     int maxWidth = 400;
     QPixmap scaled = pix.scaledToWidth(maxWidth, Qt::SmoothTransformation);
     imageLabel->setPixmap(scaled);
@@ -36,20 +37,7 @@ AboutDialog::AboutDialog(QWidget *parent)
     layout->addWidget(closeButton);
     setLayout(layout);
 
-    // --- Audio setup ---
-    // player->setAudioOutput(audioOutput);
-    player->setMedia(QUrl("qrc:/icons/refactor.mp4"));
-    player->setVolume(60);
-    // player->setSource(QUrl("qrc:/icons/refactor.mp4"));  // <- Twoja piosenka w zasobach
-    // audioOutput->setVolume(0.6);
-    player->play();
-
     // --- Window size & position ---
     resize(scaled.width() + 40, scaled.height() + 120);
     move(QGuiApplication::primaryScreen()->geometry().center() - rect().center());
-}
-
-AboutDialog::~AboutDialog()
-{
-    player->stop();
 }

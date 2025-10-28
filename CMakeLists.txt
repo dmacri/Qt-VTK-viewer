@@ -154,8 +154,6 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOMOC "YES")
 set(CMAKE_AUTOUIC "YES")
 
-find_package(Qt5 REQUIRED COMPONENTS Widgets Multimedia)
-
 
 # ============================================
 # VTK dependencies
@@ -277,10 +275,7 @@ endif()
 # ============================================
 # Linking
 # ============================================
-target_link_libraries(${PROJECT_NAME} PRIVATE ${VTK_LIBRARIES}
-    Qt5::Widgets
-    Qt5::Multimedia
-)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${VTK_LIBRARIES})
 #target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Widgets Qt5::OpenGL VTK::GUISupportQt VTK::IOLegacy)
 
 # Export symbols for plugins to use

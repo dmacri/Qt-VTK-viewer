@@ -1,12 +1,9 @@
-#ifndef ABOUTDIALOG_H
-#define ABOUTDIALOG_H
+#pragma once
 
 #include <QDialog>
-#include <QLabel>
-#include <QVBoxLayout>
-#include <QMediaPlayer>
-#include <QAudioOutput>
-#include <QPushButton>
+
+class QLabel;
+
 
 class AboutDialog : public QDialog
 {
@@ -14,13 +11,8 @@ class AboutDialog : public QDialog
 
 public:
     explicit AboutDialog(QWidget *parent = nullptr);
-    ~AboutDialog();
 
 private:
     QLabel *imageLabel;
     QLabel *textLabel;
-    QMediaPlayer *player;
-    QAudioOutput *audioOutput;
 };
-
-#endif // ABOUTDIALOG_H
