@@ -21,7 +21,7 @@ void VideoExporter::exportVideo(
     std::function<void(StepIndex, StepIndex)> progressCallback,
     std::function<bool()> cancelledCallback)
 {
-    if (!renderWindow)
+    if (! renderWindow)
     {
         throw std::runtime_error("Render window is null");
     }

@@ -52,7 +52,7 @@ private:
       * @param lines Vector of Line objects (each defines a line segment)
       * @param nRows Number of grid rows (used to invert Y coordinates)
       * @return vtkSmartPointer<vtkPolyData> with points and lines set */
-    vtkSmartPointer<vtkPolyData> createLinePolyData(const std::vector<Line> &lines, int nRows);
+    vtkSmartPointer<vtkPolyData> createLinePolyData(const std::vector<Line>& lines, int nRows);
 };
 
 ////////////////////////////////////////////////////////////////////
@@ -97,7 +97,7 @@ void Visualizer::drawWithVTK(/*const*/ Matrix& p, int nRows, int nCols, vtkSmart
     renderer->AddActor(gridActor);
 }
 
-template <class Matrix>
+template<class Matrix>
 void Visualizer::refreshWindowsVTK(/*const*/ Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor)
 {
     if (vtkLookupTable* lut = dynamic_cast<vtkLookupTable*>(gridActor->GetMapper()->GetLookupTable()))
@@ -132,7 +132,7 @@ inline double toUnitColor(double channel)
     return channel;
 }
 
-template <class Matrix>
+template<class Matrix>
 void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, Matrix& p)
 {
     for (int r = 0; r < nRows; ++r)

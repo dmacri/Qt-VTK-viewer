@@ -199,7 +199,7 @@ void Config::readConfigFile()
 void Config::readConfigFileInOOpenCalFormat()
 {
     std::ifstream file(configuration_path);
-    if (!file.is_open())
+    if (! file.is_open())
     {
         throw std::runtime_error(std::format("Cannot open file '{}' for reading!", configuration_path));
     }
@@ -218,7 +218,7 @@ void Config::readConfigFileInOOpenCalFormat()
         line.pop_back(); // removing ':' from the end
         remove_spaces(line);
 
-        ConfigCategory *configCategory = getConfigCategory(line);
+        ConfigCategory* configCategory = getConfigCategory(line);
         if (! configCategory)
         {
             throw std::runtime_error(std::format("Unknown config category '{}'", line));

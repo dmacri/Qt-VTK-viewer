@@ -1,5 +1,5 @@
-#include "visualiser/Visualizer.hpp"
 #include "Line.h"
+#include "visualiser/Visualizer.hpp"
 #include "widgets/ColorSettings.h"
 
 
@@ -7,16 +7,15 @@ namespace
 {
 vtkColor3d toVtkColor(QColor color)
 {
-    return vtkColor3d{
-        color.redF(),
-        color.greenF(),
-        color.blueF()
-    };
+    return vtkColor3d{ color.redF(), color.greenF(), color.blueF() };
 }
 } // namespace
 
 
-void Visualizer::buildLoadBalanceLine(const std::vector<Line>& lines, int nRows, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine)
+void Visualizer::buildLoadBalanceLine(const std::vector<Line>& lines,
+                                      int nRows,
+                                      vtkSmartPointer<vtkRenderer> renderer,
+                                      vtkSmartPointer<vtkActor2D> actorBuildLine)
 {
     // 1. Build line geometry data
     auto grid = createLinePolyData(lines, nRows);
@@ -73,7 +72,7 @@ void Visualizer::refreshBuildLoadBalanceLine(const std::vector<Line>& lines, int
 
     // 2. Get existing mapper (assumes it’s a vtkPolyDataMapper2D)
     auto* mapper = vtkPolyDataMapper2D::SafeDownCast(lineActor->GetMapper());
-    if (!mapper)
+    if (! mapper)
         return;
 
     vtkNew<vtkCoordinate> normCoords;
@@ -102,7 +101,10 @@ vtkTextProperty* Visualizer::buildStepLine(StepIndex step, vtkSmartPointer<vtkTe
     return singleLineTextProp;
 }
 
-vtkNew<vtkActor2D> Visualizer::buildStepText(StepIndex step, int font_size, vtkSmartPointer<vtkTextMapper> stepLineTextMapper, vtkSmartPointer<vtkRenderer> renderer)
+vtkNew<vtkActor2D> Visualizer::buildStepText(StepIndex step,
+                                             int font_size,
+                                             vtkSmartPointer<vtkTextMapper> stepLineTextMapper,
+                                             vtkSmartPointer<vtkRenderer> renderer)
 {
     stepLineTextMapper->SetInput(("Step " + std::to_string(step)).c_str());
 

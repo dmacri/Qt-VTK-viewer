@@ -62,8 +62,8 @@ AlignOperands:   Align
 AlignTrailingComments:
   Kind:            Always
   OverEmptyLines:  0
-AllowAllArgumentsOnNextLine: true
-AllowAllParametersOfDeclarationOnNextLine: true
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
 AllowBreakBeforeNoexceptSpecifier: Never
 AllowShortBlocksOnASingleLine: Never
 AllowShortCaseExpressionOnASingleLine: true
@@ -72,14 +72,15 @@ AllowShortCompoundRequirementOnASingleLine: true
 AllowShortEnumsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
-AllowShortLambdasOnASingleLine: All
+AllowShortLambdasOnASingleLine: None
+KeepEmptyLinesAtTheStartOfBlocks: false
 AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 AttributeMacros:
   - __capability
-BinPackArguments: true
-BinPackParameters: true
+BinPackArguments: false
+BinPackParameters: false
 BitFieldColonSpacing: Both
 BreakBeforeBraces: Allman
 BraceWrapping:
@@ -120,7 +121,7 @@ CommentPragmas:  '^ IWYU pragma:'
 CompactNamespaces: false
 ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 4
-Cpp11BracedListStyle: true
+Cpp11BracedListStyle: false
 DerivePointerAlignment: true
 DisableFormat:   false
 EmptyLineAfterAccessModifier: Never
@@ -186,21 +187,22 @@ ObjCBreakBeforeNestedBlockParam: true
 ObjCSpaceAfterProperty: false
 ObjCSpaceBeforeProtocolList: true
 PackConstructorInitializers: BinPack
-PenaltyBreakAssignment: 150
-PenaltyBreakBeforeFirstCallParameter: 300
+PenaltyBreakAssignment: 100000
+PenaltyBreakBeforeFirstCallParameter: 100000
 PenaltyBreakComment: 500
-PenaltyBreakFirstLessLess: 400
+PenaltyBreakFirstLessLess: 100000
 PenaltyBreakOpenParenthesis: 0
 PenaltyBreakScopeResolution: 500
-PenaltyBreakString: 600
+PenaltyBreakString: 100000
 PenaltyBreakTemplateDeclaration: 10
-PenaltyExcessCharacter: 50
+PenaltyExcessCharacter: 100
 PenaltyIndentedWhitespace: 0
-PenaltyReturnTypeOnItsOwnLine: 300
+PenaltyReturnTypeOnItsOwnLine: 100000
 PointerAlignment: Right
 PPIndentWidth:   -1
 QualifierAlignment: Leave
 ReferenceAlignment: Pointer
+AllowAllConstructorInitializersOnNextLine: false
 ReflowComments:  false
 RemoveBracesLLVM: false
 RemoveParentheses: Leave

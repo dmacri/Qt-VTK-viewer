@@ -46,7 +46,7 @@ std::string prepareOutputFileName(const std::string& configFile, const std::stri
     // Step 1: prepare output directory
     fs::path configPath(configFile);
     fs::path outputDir = configPath.parent_path() / "Output";
-    fs::create_directories(outputDir);  // ensure that directory exists
+    fs::create_directories(outputDir); // ensure that directory exists
 
     // Step 2: build full output file path
     return (outputDir / outputFileNameFromCfg).string();
@@ -65,11 +65,11 @@ vtkColor3d toVtkColor(QColor color)
 
 SceneWidget::SceneWidget(QWidget* parent)
     : QVTKOpenGLNativeWidget(parent)
-    , sceneWidgetVisualizerProxy{SceneWidgetVisualizerFactory::defaultModel()}
-    , settingParameter{std::make_unique<SettingParameter>()}
-    , currentModelName{sceneWidgetVisualizerProxy->getModelName()}
-    , gridActor{vtkSmartPointer<vtkActor>::New()}
-    , actorBuildLine{vtkSmartPointer<vtkActor2D>::New()}
+    , sceneWidgetVisualizerProxy{ SceneWidgetVisualizerFactory::defaultModel() }
+    , settingParameter{ std::make_unique<SettingParameter>() }
+    , currentModelName{ sceneWidgetVisualizerProxy->getModelName() }
+    , gridActor{ vtkSmartPointer<vtkActor>::New() }
+    , actorBuildLine{ vtkSmartPointer<vtkActor2D>::New() }
 {
     enableToolTipWhenMouseAboveWidget();
 
@@ -98,15 +98,15 @@ void SceneWidget::applyCameraAngles()
     auto camera = renderer->GetActiveCamera();
     if (! camera)
         return;
-        
+
     camera->SetPosition(0, 0, 1);
     camera->SetFocalPoint(0, 0, 0);
     camera->SetViewUp(0, 1, 0);
-    
+
     // Apply stored transformations in order: azimuth first, then elevation
     camera->Azimuth(cameraAzimuth);
     camera->Elevation(cameraElevation);
-    
+
     // Reset camera bounds and render
     renderer->ResetCamera();
     triggerRenderUpdate();
@@ -126,7 +126,9 @@ void SceneWidget::loadAndUpdateVisualizationForCurrentStep()
     // Update load balancing lines if we have any
     if (settingParameter->numberOfLines > 0)
     {
-        sceneWidgetVisualizerProxy->getVisualizer().refreshBuildLoadBalanceLine(lines, settingParameter->numberOfRowsY + 1, actorBuildLine);
+        sceneWidgetVisualizerProxy->getVisualizer().refreshBuildLoadBalanceLine(lines,
+                                                                                settingParameter->numberOfRowsY + 1,
+                                                                                actorBuildLine);
     }
 
     // Update step number display
@@ -139,7 +141,7 @@ void SceneWidget::prepareStageWithCurrentNodeConfiguration()
     sceneWidgetVisualizerProxy->prepareStage(settingParameter->nNodeX, settingParameter->nNodeY);
 }
 
-void SceneWidget::addVisualizer(const std::string &filename, StepIndex stepNumber)
+void SceneWidget::addVisualizer(const std::string& filename, StepIndex stepNumber)
 {
     if (! std::filesystem::exists(filename))
     {
@@ -151,7 +153,7 @@ void SceneWidget::addVisualizer(const std::string &filename, StepIndex stepNumbe
     renderVtkScene();
 }
 
-void SceneWidget::setupSettingParameters(const std::string & configFilename, StepIndex stepNumber)
+void SceneWidget::setupSettingParameters(const std::string& configFilename, StepIndex stepNumber)
 {
     readSettingsFromConfigFile(configFilename);
 
@@ -176,7 +178,7 @@ void SceneWidget::refreshGridColorFromSettings()
     triggerRenderUpdate();
 }
 
-void SceneWidget::readSettingsFromConfigFile(const std::string &filename)
+void SceneWidget::readSettingsFromConfigFile(const std::string& filename)
 {
     Config config(filename);
 
@@ -216,7 +218,7 @@ void SceneWidget::setupVtkScene()
 
     // Setup orientation axes widget
     setupAxesWidget();
-    
+
     // Setup 2D ruler axes (bounds will be updated when data is loaded)
     setup2DRulerAxes();
 
@@ -236,12 +238,12 @@ void SceneWidget::setupAxesWidget()
     axesActor->SetCylinderRadius(0.02);
     axesActor->SetConeRadius(0.05);
     axesActor->SetSphereRadius(0.03);
-    
+
     // Make labels more readable
     axesActor->GetXAxisCaptionActor2D()->GetCaptionTextProperty()->SetFontSize(20);
     axesActor->GetYAxisCaptionActor2D()->GetCaptionTextProperty()->SetFontSize(20);
     axesActor->GetZAxisCaptionActor2D()->GetCaptionTextProperty()->SetFontSize(20);
-    
+
     // Configure orientation marker widget
     axesWidget->SetOrientationMarker(axesActor);
     axesWidget->SetViewport(0.0, 0.0, 0.2, 0.2); // Bottom-left corner, 20% size
@@ -263,7 +265,7 @@ void SceneWidget::setup2DRulerAxes()
     rulerAxisX->GetTitleTextProperty()->SetColor(1.0, 1.0, 1.0);
     rulerAxisX->GetLabelTextProperty()->SetColor(1.0, 1.0, 1.0);
     rulerAxisX->GetProperty()->SetColor(0.8, 0.8, 0.8);
-    
+
     // Configure Y axis (vertical, right side)
     // Use World coordinates so the axis matches the actual data coordinates
     rulerAxisY->GetPositionCoordinate()->SetCoordinateSystemToWorld();
@@ -274,10 +276,10 @@ void SceneWidget::setup2DRulerAxes()
     rulerAxisY->GetTitleTextProperty()->SetColor(1.0, 1.0, 1.0);
     rulerAxisY->GetLabelTextProperty()->SetColor(1.0, 1.0, 1.0);
     rulerAxisY->GetProperty()->SetColor(0.8, 0.8, 0.8);
-    
+
     // Adjust title position to move "Y" label to the right of the axis
     rulerAxisY->SetTitlePosition(1.2); // Move title further from axis (default is ~0.5)
-    
+
     // Add to renderer but keep hidden initially
     renderer->AddActor2D(rulerAxisX);
     renderer->AddActor2D(rulerAxisY);
@@ -287,34 +289,34 @@ void SceneWidget::setup2DRulerAxes()
 
 void SceneWidget::update2DRulerAxesBounds()
 {
-    if (!renderer || !renderWindow())
+    if (! renderer || ! renderWindow())
         return;
-    
+
     // Get grid actor bounds (actual data coordinates)
     double bounds[6];
     gridActor->GetBounds(bounds);
-    
+
     // Check if bounds are valid
-    if (bounds[0] >= bounds[1] || bounds[2] >= bounds[3] || 
+    if (bounds[0] >= bounds[1] || bounds[2] >= bounds[3] ||
         !std::isfinite(bounds[0]) || !std::isfinite(bounds[1]) ||
         !std::isfinite(bounds[2]) || !std::isfinite(bounds[3]))
     {
         return; // Invalid bounds
     }
-    
+
     // Set range for axes (this determines the numeric labels)
     rulerAxisX->SetRange(bounds[0], bounds[1]);
     rulerAxisY->SetRange(bounds[2], bounds[3]);
-    
+
     // Position X axis at the bottom of the data (horizontal line)
     rulerAxisX->GetPositionCoordinate()->SetValue(bounds[0], bounds[2], 0.0);
     rulerAxisX->GetPosition2Coordinate()->SetValue(bounds[1], bounds[2], 0.0);
-    
+
     // Position Y axis at the RIGHT of the data (vertical line) - labels won't overlap scene
     rulerAxisY->GetPositionCoordinate()->SetValue(bounds[1], bounds[2], 0.0);
     rulerAxisY->GetPosition2Coordinate()->SetValue(bounds[1], bounds[3], 0.0);
-    
-    std::cout << "Ruler axes updated: X=[" << bounds[0] << ", " << bounds[1] 
+
+    std::cout << "Ruler axes updated: X=[" << bounds[0] << ", " << bounds[1]
               << "], Y=[" << bounds[2] << ", " << bounds[3] << "]" << std::endl;
 }
 
@@ -328,9 +330,9 @@ void SceneWidget::connectKeyboardCallback()
 
 void SceneWidget::connectCameraCallback()
 {
-    if (!interactor())
+    if (! interactor())
         return;
-        
+
     // Use EndInteractionEvent instead of camera ModifiedEvent
     // This is only called when user finishes rotating (releases mouse button)
     vtkNew<vtkCallbackCommand> cameraCallback;
@@ -358,8 +360,8 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
     }
     else if (keyPressed == "Down")
     {
-        if (sp->step  > 1)
-            sp->step  -= 1;
+        if (sp->step > 1)
+            sp->step -= 1;
         sp->changed = true;
 
         if (sw)
@@ -376,11 +378,11 @@ void SceneWidget::keypressCallbackFunction(vtkObject* caller, long unsigned int 
             // Trigger render update
             sw->triggerRenderUpdate();
         }
-        catch(const std::runtime_error& re)
+        catch (const std::runtime_error& re)
         {
             std::cerr << "Runtime error di getElementMatrix: " << re.what() << std::endl;
         }
-        catch(const std::exception& ex)
+        catch (const std::exception& ex)
         {
             std::cerr << "Error occurred: " << ex.what() << std::endl;
         }
@@ -402,11 +404,11 @@ void SceneWidget::cameraCallbackFunction(vtkObject* caller, long unsigned int ev
     Q_UNUSED(caller);
     Q_UNUSED(eventId);
     Q_UNUSED(callData);
-    
+
     auto* self = static_cast<SceneWidget*>(clientData);
-    if (!self)
+    if (! self)
         return;
-    
+
     // Only emit signal in 3D mode (user finished rotating the camera)
     if (self->currentViewMode == ViewMode::Mode3D && self->renderer)
     {
@@ -416,19 +418,19 @@ void SceneWidget::cameraCallbackFunction(vtkObject* caller, long unsigned int ev
             // Get actual camera orientation from VTK
             double* position = camera->GetPosition();
             double* focalPoint = camera->GetFocalPoint();
-            
+
             // Calculate azimuth and elevation from camera position
             double dx = position[0] - focalPoint[0];
             double dy = position[1] - focalPoint[1];
             double dz = position[2] - focalPoint[2];
-            
+
             double azimuth = std::atan2(dy, dx) * 180.0 / vtkMath::Pi();
-            double elevation = std::atan2(dz, std::sqrt(dx*dx + dy*dy)) * 180.0 / vtkMath::Pi();
-            
+            double elevation = std::atan2(dz, std::sqrt(dx * dx + dy * dy)) * 180.0 / vtkMath::Pi();
+
             // Update internal state
             self->cameraAzimuth = azimuth;
             self->cameraElevation = elevation;
-            
+
             // Emit signal with actual values
             emit self->cameraOrientationChanged(azimuth, elevation);
         }
@@ -451,8 +453,10 @@ void SceneWidget::mouseCallbackFunction(vtkObject* caller, long unsigned int eve
         size[0] = self->renderWindow()->GetSize()[0];
         size[1] = self->renderWindow()->GetSize()[1];
     }
-    else {
-        size[0] = 0; size[1] = 0;
+    else
+    {
+        size[0] = 0;
+        size[1] = 0;
     }
     int qtY = size[1] - vtkY;
 
@@ -474,7 +478,7 @@ void SceneWidget::mouseCallbackFunction(vtkObject* caller, long unsigned int eve
     }
 
     // 4) If the picker didn't hit anything, try DisplayToWorld as a fallback
-    if (!picked && self->renderer)
+    if (! picked && self->renderer)
     {
         double displayPt[3] = { static_cast<double>(vtkX), static_cast<double>(vtkY), 0.0 };
         self->renderer->SetDisplayPoint(displayPt);
@@ -498,7 +502,9 @@ void SceneWidget::mouseCallbackFunction(vtkObject* caller, long unsigned int eve
 
 void SceneWidget::renderVtkScene()
 {
-    sceneWidgetVisualizerProxy->readStepsOffsetsForAllNodesFromFiles(settingParameter->nNodeX, settingParameter->nNodeY, settingParameter->outputFileName);
+    sceneWidgetVisualizerProxy->readStepsOffsetsForAllNodesFromFiles(settingParameter->nNodeX,
+                                                                     settingParameter->nNodeY,
+                                                                     settingParameter->outputFileName);
 
     emit availableStepsReadFromConfigFile(sceneWidgetVisualizerProxy->availableSteps());
 
@@ -507,9 +513,15 @@ void SceneWidget::renderVtkScene()
 
     sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, renderer, gridActor);
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines, settingParameter->numberOfRowsY+1, renderer, actorBuildLine);
+    sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines,
+                                                                     settingParameter->numberOfRowsY + 1,
+                                                                     renderer,
+                                                                     actorBuildLine);
 
-    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step, settingParameter->font_size, singleLineTextStep, renderer);
+    sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step,
+                                                              settingParameter->font_size,
+                                                              singleLineTextStep,
+                                                              renderer);
 
     // Update 2D ruler axes bounds now that data is loaded
     if (currentViewMode == ViewMode::Mode2D)
@@ -527,13 +539,13 @@ void SceneWidget::renderVtkScene()
 
 std::array<double, 3> SceneWidget::screenToWorldCoordinates(const QPoint& pos) const
 {
-    std::array<double, 3> worldPos = {0.0, 0.0, 0.0};
-    
-    if (!renderer || ! renderWindow())
+    std::array<double, 3> worldPos = { 0.0, 0.0, 0.0 };
+
+    if (! renderer || ! renderWindow())
     {
         return worldPos;
     }
-    
+
     // Convert screen coordinates to VTK display coordinates
     int* size = renderWindow()->GetSize();
     double displayPos[3] = {
@@ -541,25 +553,25 @@ std::array<double, 3> SceneWidget::screenToWorldCoordinates(const QPoint& pos) c
         static_cast<double>(size[1] - pos.y()), // Flip Y coordinate
         0.0
     };
-    
+
     // Convert display coordinates to world coordinates
     renderer->SetDisplayPoint(displayPos);
     renderer->DisplayToWorld();
     renderer->GetWorldPoint(worldPos.data());
-    
+
     return worldPos;
 }
 
 QString SceneWidget::getNodeAtWorldPosition(const std::array<double, 3>& worldPos) const
 {
-    if (!settingParameter || !sceneWidgetVisualizerProxy || !renderer)
+    if (! settingParameter || ! sceneWidgetVisualizerProxy || ! renderer)
     {
         return {};
     }
 
     // Get the bounds of the entire scene
     double* bounds = renderer->ComputeVisiblePropBounds();
-    if (!bounds)
+    if (! bounds)
     {
         return {};
     }
@@ -574,7 +586,7 @@ QString SceneWidget::getNodeAtWorldPosition(const std::array<double, 3>& worldPo
     // Calculate the width and height of each node's area in world coordinates
     const double sceneWidth = bounds[1] - bounds[0];
     const double sceneHeight = bounds[3] - bounds[2];
-    
+
     const double nodeWidth = sceneWidth / settingParameter->nNodeX;
     const double nodeHeight = sceneHeight / settingParameter->nNodeY;
 
@@ -594,7 +606,7 @@ QString SceneWidget::getNodeAtWorldPosition(const std::array<double, 3>& worldPo
 
 const Line* SceneWidget::findNearestLine(const std::array<double, 3>& worldPos, size_t& lineIndex, double& distanceSquared) const
 {
-    if (!settingParameter || !sceneWidgetVisualizerProxy)
+    if (! settingParameter || ! sceneWidgetVisualizerProxy)
     {
         return nullptr;
     }
@@ -607,7 +619,7 @@ const Line* SceneWidget::findNearestLine(const std::array<double, 3>& worldPos, 
 
     constexpr double threshold = 2; // Threshold for line selection (in world coordinates)
     constexpr double thresholdSq = threshold * threshold;
-    
+
     const Line* nearestLine = nullptr;
     double minDistanceSq = std::numeric_limits<double>::max();
     size_t foundIndex = 0;
@@ -615,25 +627,25 @@ const Line* SceneWidget::findNearestLine(const std::array<double, 3>& worldPos, 
     for (size_t i = 0; i < lines.size(); ++i)
     {
         const auto& line = lines[i];
-        
+
         // Calculate squared distance from point to line segment
-        const double lineLengthSq = (line.x2 - line.x1) * (line.x2 - line.x1) + 
+        const double lineLengthSq = (line.x2 - line.x1) * (line.x2 - line.x1) +
                                    (line.y2 - line.y1) * (line.y2 - line.y1);
-        
+
         if (lineLengthSq < 1e-10) // Skip zero-length lines
             continue;
-            
-        const double t = std::max(0.0, std::min(1.0, 
-            ((worldPos[0] - line.x1) * (line.x2 - line.x1) + 
+
+        const double t = std::max(0.0, std::min(1.0,
+            ((worldPos[0] - line.x1) * (line.x2 - line.x1) +
              (worldPos[1] - line.y1) * (line.y2 - line.y1)) / lineLengthSq));
-             
+
         const double projX = line.x1 + t * (line.x2 - line.x1);
         const double projY = line.y1 + t * (line.y2 - line.y1);
-        
+
         const double dx = worldPos[0] - projX;
         const double dy = worldPos[1] - projY;
         const double distSq = dx * dx + dy * dy;
-        
+
         if (distSq < minDistanceSq && distSq <= thresholdSq)
         {
             minDistanceSq = distSq;
@@ -647,13 +659,13 @@ const Line* SceneWidget::findNearestLine(const std::array<double, 3>& worldPos, 
         lineIndex = foundIndex;
         distanceSquared = minDistanceSq;
     }
-    
+
     return nearestLine;
 }
 
 void SceneWidget::updateToolTip(const QPoint& lastMousePos)
 {
-    if (!renderer || !renderWindow())
+    if (! renderer || ! renderWindow())
         return;
 
     // m_lastMousePos is already in Qt coordinates (origin: top-left)
@@ -691,7 +703,7 @@ void SceneWidget::updateToolTip(const QPoint& lastMousePos)
 
     // Use m_lastMousePos (Qt coordinates) to position the tooltip
     QPoint globalPos = mapToGlobal(lastMousePos);
-    QToolTip::showText(globalPos, tooltipText, this, QRect(lastMousePos, QSize(1,1)), 0);
+    QToolTip::showText(globalPos, tooltipText, this, QRect(lastMousePos, QSize(1, 1)), 0);
 }
 
 void SceneWidget::selectedStepParameter(StepIndex stepNumber)
@@ -703,22 +715,22 @@ void SceneWidget::selectedStepParameter(StepIndex stepNumber)
 
 void SceneWidget::upgradeModelInCentralPanel()
 {
-    if (!settingParameter->changed)
+    if (! settingParameter->changed)
         return;
 
     try
     {
         loadAndUpdateVisualizationForCurrentStep();
-        
+
         triggerRenderUpdate();
         QApplication::processEvents();
     }
-    catch(const std::runtime_error& re)
+    catch (const std::runtime_error& re)
     {
         std::cerr << "Runtime error getElementMatrix: " << re.what() << std::endl;
         throw;
     }
-    catch(const std::exception& ex)
+    catch (const std::exception& ex)
     {
         std::cerr << "Error occurred: " << ex.what() << std::endl;
         throw;
@@ -763,14 +775,14 @@ void SceneWidget::reloadData()
     {
         // Clear existing stage data to avoid duplicates
         sceneWidgetVisualizerProxy->clearStage();
-        
+
         // Reinitialize stage with current node configuration using helper
         prepareStageWithCurrentNodeConfiguration();
-        
+
         // Load step offsets from files
         sceneWidgetVisualizerProxy->readStepsOffsetsForAllNodesFromFiles(
-            settingParameter->nNodeX, 
-            settingParameter->nNodeY, 
+            settingParameter->nNodeX,
+            settingParameter->nNodeY,
             settingParameter->outputFileName
         );
 
@@ -786,7 +798,7 @@ void SceneWidget::reloadData()
 }
 
 void SceneWidget::clearScene()
-{    
+{
     // Clear the renderer
     renderer->RemoveAllViewProps();
 
@@ -804,15 +816,15 @@ void SceneWidget::loadNewConfiguration(const std::string& configFileName, int st
     {
         // Clear existing scene
         clearScene();
-        
+
         // Setup new parameters from config file
         setupSettingParameters(configFileName, stepNumber);
-        
+
         // Setup VTK scene using helper method
         prepareStageWithCurrentNodeConfiguration();
-        
+
         // Render the scene with new data
-        renderVtkScene();        
+        renderVtkScene();
     }
     catch (const std::exception& e)
     {
@@ -847,7 +859,7 @@ void SceneWidget::refreshStepNumberTextColorFromSettings()
 
 void SceneWidget::setViewMode2D()
 {
-    if (!interactor())
+    if (! interactor())
         return;
 
     currentViewMode = ViewMode::Mode2D;
@@ -868,21 +880,20 @@ void SceneWidget::setViewMode2D()
         camera->SetPosition(0, 0, 1);
         camera->SetFocalPoint(0, 0, 0);
         camera->SetViewUp(0, 1, 0);
-        
+
         renderer->ResetCamera();
         renderWindow()->Render();
     }
 
     std::cout << "Switched to 2D view mode" << std::endl;
-    
+
     // Hide orientation axes in 2D mode
     setAxesWidgetVisible(false);
-    
+
     // Update and show 2D ruler axes only if we have valid data
     double bounds[6];
     renderer->ComputeVisiblePropBounds(bounds);
-    if (bounds[0] < bounds[1] && bounds[2] < bounds[3] && 
-        std::isfinite(bounds[0]) && std::isfinite(bounds[1]))
+    if (bounds[0] < bounds[1] && bounds[2] < bounds[3] && std::isfinite(bounds[0]) && std::isfinite(bounds[1]))
     {
         update2DRulerAxesBounds();
         rulerAxisX->SetVisibility(true);
@@ -898,7 +909,7 @@ void SceneWidget::setViewMode2D()
 
 void SceneWidget::setViewMode3D()
 {
-    if (!interactor())
+    if (! interactor())
         return;
 
     currentViewMode = ViewMode::Mode3D;
@@ -906,10 +917,10 @@ void SceneWidget::setViewMode3D()
     // Use vtkInteractorStyleTrackballCamera which allows full 3D rotation
     vtkNew<vtkInteractorStyleTrackballCamera> style;
     interactor()->SetInteractorStyle(style);
-    
+
     // Show orientation axes in 3D mode
     setAxesWidgetVisible(true);
-    
+
     // Hide 2D ruler axes in 3D mode
     rulerAxisX->SetVisibility(false);
     rulerAxisY->SetVisibility(false);

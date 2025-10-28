@@ -22,11 +22,11 @@
 
 #include <QApplication>
 #include <QFile>
+#include <QFileInfo>
 #include <QStyleFactory>
 #include <QSurfaceFormat>
 #include <filesystem>
 
-#include <QFileInfo>
 #include <QVTKOpenGLNativeWidget.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 
@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
 void applyStyleSheet(MainWindow& mainWindow)
 {
     QFileInfo fi("style.qss");
-    if (fi.isFile() && fi.isReadable() && !fi.isSymLink()) // checking for security CWE-362
+    if (fi.isFile() && fi.isReadable() && ! fi.isSymLink()) // checking for security CWE-362
     {
         if (QFile styleFile("style.qss"); styleFile.open(QIODevice::ReadOnly))
         {

@@ -130,12 +130,17 @@ private:
      *
      * @return std::ifstream Stream ready for reading cell data of this node at given step.
      * @throws std::runtime_error If the file cannot be opened, seek fails, or header is invalid. */
-    [[nodiscard]] std::ifstream readColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName,
-                                                                               NodeIndex node, ColumnAndRow& columnAndRow);
+    [[nodiscard]] std::ifstream readColumnAndRowForStepFromFileReturningStream(StepIndex step,
+                                                                               const std::string& fileName,
+                                                                               NodeIndex node,
+                                                                               ColumnAndRow& columnAndRow);
 
     [[nodiscard]] ColumnAndRow readColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node);
 
-    std::vector<ColumnAndRow> giveMeLocalColsAndRowsForAllSteps(StepIndex step, NodeIndex nNodeX, NodeIndex nNodeY, const std::string& fileName);
+    std::vector<ColumnAndRow> giveMeLocalColsAndRowsForAllSteps(StepIndex step,
+                                                                NodeIndex nNodeX,
+                                                                NodeIndex nNodeY,
+                                                                const std::string& fileName);
 };
 
 /////////////////////////////
@@ -160,12 +165,14 @@ template<class Cell>
 ColumnAndRow ModelReader<Cell>::readColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node)
 {
     ColumnAndRow columnAndRow;
-    std::ifstream file[[maybe_unused]] = readColumnAndRowForStepFromFileReturningStream(step, fileName, node, columnAndRow);
+    std::ifstream file [[maybe_unused]] = readColumnAndRowForStepFromFileReturningStream(step, fileName, node, columnAndRow);
     return columnAndRow;
 }
 template<class Cell>
-std::ifstream ModelReader<Cell>::readColumnAndRowForStepFromFileReturningStream(StepIndex step, const std::string& fileName,
-                                                                                NodeIndex node, ColumnAndRow& columnAndRow)
+std::ifstream ModelReader<Cell>::readColumnAndRowForStepFromFileReturningStream(StepIndex step,
+                                                                                const std::string& fileName,
+                                                                                NodeIndex node,
+                                                                                ColumnAndRow& columnAndRow)
 {
     const auto fileNameTmp = ReaderHelpers::giveMeFileName(fileName, node);
 
@@ -214,25 +221,29 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
         fp.rdbuf()->pubsetbuf(fileBuffer, sizeof(fileBuffer));
 
         // Define boundary lines for the node (bottom and left edges)
-        lines[node * 2]     = Line(offsetXY.x(), offsetXY.y(), offsetXY.x() + columnAndRow.column, offsetXY.y());
+        lines[node * 2] = Line(offsetXY.x(), offsetXY.y(), offsetXY.x() + columnAndRow.column, offsetXY.y());
         lines[node * 2 + 1] = Line(offsetXY.x(), offsetXY.y(), offsetXY.x(), offsetXY.y() + columnAndRow.row);
-        
+
         // Add top edge line for nodes in the last row (highest y)
         const NodeIndex nodeRow = node / sp->nNodeX;
-        if (nodeRow == sp->nNodeY - 1)  // Top row
+        if (nodeRow == sp->nNodeY - 1) // Top row
         {
             const int topLineIndex = 2 * totalNodes + (node % sp->nNodeX);
-            lines[topLineIndex] = Line(offsetXY.x(), offsetXY.y() + columnAndRow.row,
-                                       offsetXY.x() + columnAndRow.column, offsetXY.y() + columnAndRow.row);
+            lines[topLineIndex] = Line(offsetXY.x(),
+                                       offsetXY.y() + columnAndRow.row,
+                                       offsetXY.x() + columnAndRow.column,
+                                       offsetXY.y() + columnAndRow.row);
         }
-        
+
         // Add right edge line for nodes in the last column (highest x)
         const NodeIndex nodeCol = node % sp->nNodeX;
-        if (nodeCol == sp->nNodeX - 1)  // Rightmost column
+        if (nodeCol == sp->nNodeX - 1) // Rightmost column
         {
             const int rightLineIndex = 2 * totalNodes + sp->nNodeX + nodeRow;
-            lines[rightLineIndex] = Line(offsetXY.x() + columnAndRow.column, offsetXY.y(),
-                                        offsetXY.x() + columnAndRow.column, offsetXY.y() + columnAndRow.row);
+            lines[rightLineIndex] = Line(offsetXY.x() + columnAndRow.column,
+                                         offsetXY.y(),
+                                         offsetXY.x() + columnAndRow.column,
+                                         offsetXY.y() + columnAndRow.row);
         }
 
         // Reserve a large line buffer to minimize reallocations
@@ -282,16 +293,25 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
 
     for (NodeIndex node = 0; node < totalNodes; ++node)
     {
-        futures.push_back(std::async(std::launch::async, [&, node]() {
-            processNode(node);
-        }));
+        futures.push_back(std::async(std::launch::async,
+                                     [&, node]()
+                                     {
+                                         processNode(node);
+                                     }));
     }
 
     // Wait for all async tasks to complete
-    std::ranges::for_each(futures, [](std::future<void>& f){ f.get(); });
+    std::ranges::for_each(futures,
+                          [](std::future<void>& f)
+                          {
+                              f.get();
+                          });
 }
 template<class Cell>
-std::vector<ColumnAndRow> ModelReader<Cell>::giveMeLocalColsAndRowsForAllSteps(StepIndex step, NodeIndex nNodeX, NodeIndex nNodeY, const std::string& fileName)
+std::vector<ColumnAndRow> ModelReader<Cell>::giveMeLocalColsAndRowsForAllSteps(StepIndex step,
+                                                                               NodeIndex nNodeX,
+                                                                               NodeIndex nNodeY,
+                                                                               const std::string& fileName)
 {
     const auto nodesCount = nNodeX * nNodeY;
     std::vector<ColumnAndRow> allColumnsAndRows(nodesCount);
@@ -383,7 +403,9 @@ std::vector<StepIndex> ModelReader<Cell>::availableSteps(bool throwOnMismatch) c
         if (nodeMap.size() != fistNodeData.size())
         {
             const std::string msg = std::format("Step count mismatch for node {} (expected {}, found {})",
-                                                node, fistNodeData.size(), nodeMap.size());
+                                                node,
+                                                fistNodeData.size(),
+                                                nodeMap.size());
             if (throwOnMismatch)
                 throw std::runtime_error(msg);
             else

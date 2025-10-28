@@ -1,5 +1,6 @@
-#include <QSettings>
 #include "ColorSettings.h"
+
+#include <QSettings>
 
 
 ColorSettings& ColorSettings::instance()
@@ -69,13 +70,13 @@ void ColorSettings::loadSettings()
 {
     QSettings settings;
     settings.beginGroup("Colors");
-    
+
     backgroundColor_ = settings.value("background", DEFAULT_BACKGROUND).value<QColor>();
     textColor_ = settings.value("text", DEFAULT_TEXT).value<QColor>();
     gridColor_ = settings.value("grid", DEFAULT_GRID).value<QColor>();
     highlightColor_ = settings.value("highlight", DEFAULT_HIGHLIGHT).value<QColor>();
-    
+
     settings.endGroup();
-    
+
     emit colorsChanged();
 }

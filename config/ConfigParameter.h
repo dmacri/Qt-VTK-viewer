@@ -42,9 +42,9 @@ public:
      * 
      * @note The defaultValue string will be converted to the specified type when retrieved. */
     ConfigParameter(const std::string& name, const std::string& defaultValue, int type)
-        : name{name}
-        , defaultValue{defaultValue}
-        , type{type}
+        : name{ name }
+        , defaultValue{ defaultValue }
+        , type{ type }
     {
     }
 
