@@ -21,6 +21,7 @@
 #include "utilities/CommandLineParser.h"
 #include "widgets/ConfigDetailsDialog.h"
 #include "widgets/ColorSettingsDialog.h"
+#include "widgets/AboutDialog.h"
 #include "visualiser/VideoExporter.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
 #include "config/Config.h"
@@ -206,10 +207,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::showAboutThisApplicationDialog()
 {
-    QMessageBox::information(this,
-                             "About",
-                             "By Davide Macri.\n"
-                             "Configurator for visualizer");
+    AboutDialog dialog(this);
+    dialog.exec();
 }
 
 void MainWindow::showConfigDetailsDialog()

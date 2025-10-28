@@ -119,6 +119,7 @@ list(APPEND Sources
     widgets/SceneWidget.cpp
     widgets/ColorSettingsDialog.cpp
     widgets/ColorSettings.cpp
+    widgets/AboutDialog.cpp
     utilities/PluginLoader.cpp
     utilities/ModelReader.cpp
     utilities/CommandLineParser.cpp
