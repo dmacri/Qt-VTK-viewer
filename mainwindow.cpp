@@ -28,7 +28,7 @@
 
 namespace
 {
-constexpr int FIRST_STEP_NUMBER = 0;
+constexpr StepIndex FIRST_STEP_NUMBER = 0;
 }
 
 
@@ -148,16 +148,16 @@ void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> avail
     }
 }
 
-void MainWindow::totalStepsNumberChanged(int totalStepsValue)
+void MainWindow::totalStepsNumberChanged(StepIndex totalStepsValue)
 {
     ui->totalStep->setText(QString("/") + QString::number(totalStepsValue));
     ui->updatePositionSlider->setMaximum(totalStepsValue);
     ui->positionSpinBox->setMaximum(totalStepsValue);
 }
 
-int MainWindow::totalSteps() const
+StepIndex MainWindow::totalSteps() const
 {
-    return ui->updatePositionSlider->maximum();
+    return static_cast<StepIndex>(ui->updatePositionSlider->maximum());
 }
 
 void MainWindow::connectButtons()
@@ -173,7 +173,7 @@ void MainWindow::connectButtons()
 
 void MainWindow::connectSliders()
 {
-    connect(ui->updatePositionSlider, &QSlider::valueChanged, this, &MainWindow::onUpdatePositionOnSlider);
+    connect(ui->updatePositionSlider, &QSlider::valueChanged, this, &MainWindow::onUpdateStepPositionOnSlider);
 
     // Camera control sliders
     connect(ui->azimuthSlider, &QSlider::valueChanged, this, &MainWindow::onAzimuthChanged);
@@ -263,7 +263,7 @@ void MainWindow::exportVideoDialog()
 void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
 {
     // Save current state
-    const int originalStep = currentStep;
+    const auto originalStep = currentStep;
     const bool wasPlaying = playbackTimer->isActive();
     playbackTimer->stop();
 
@@ -277,7 +277,7 @@ void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
     VideoExporter exporter;
 
     // Define callback to update visualization for each step
-    auto updateStepCallback = [this](int step)
+    auto updateStepCallback = [this](StepIndex step)
     {
         currentStep = step;
         QSignalBlocker blockSlider(ui->updatePositionSlider);
@@ -286,7 +286,7 @@ void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
     };
 
     // Define callback to report progress
-    auto progressCallback = [&progress](int step, int total)
+    auto progressCallback = [&progress](StepIndex step, StepIndex total)
     {
         progress.setValue(step);
         progress.setLabelText(tr("Exporting video... Step %1 of %2").arg(step).arg(total));
@@ -338,7 +338,7 @@ void MainWindow::onPlaybackTimerTick()
 {
     // Update current step
     currentStep += std::to_underlying(playbackDirection) * ui->speedSpinBox->value();
-    currentStep = std::clamp(currentStep, FIRST_STEP_NUMBER, totalSteps());
+    currentStep = std::clamp<StepIndex>(currentStep, FIRST_STEP_NUMBER, totalSteps());
 
     // Update UI
     {
@@ -399,19 +399,19 @@ void MainWindow::onBackButtonClicked()
 
 void MainWindow::onLeftButtonClicked()
 {
-    const auto stepsPerClick = ui->speedSpinBox->value();
+    const StepIndex stepsPerClick = ui->speedSpinBox->value();
     currentStep = std::max(currentStep - stepsPerClick, FIRST_STEP_NUMBER);
     setPositionOnWidgets(currentStep);
 }
 
 void MainWindow::onRightButtonClicked()
 {
-    const auto stepsPerClick = ui->speedSpinBox->value();
+    const StepIndex stepsPerClick = ui->speedSpinBox->value();
     currentStep = std::min(currentStep + stepsPerClick, totalSteps());
     setPositionOnWidgets(currentStep);
 }
 
-bool MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
+bool MainWindow::setPositionOnWidgets(StepIndex stepPosition, bool updateSlider)
 {
     bool changingPositionSuccess = true;
 
@@ -453,7 +453,7 @@ void MainWindow::changeWhichButtonsAreEnabled()
 
 void MainWindow::onStepNumberChanged()
 {
-    auto step = ui->positionSpinBox->value();
+    StepIndex step = ui->positionSpinBox->value();
     if (step != currentStep)
     {
         currentStep = step;
@@ -461,7 +461,7 @@ void MainWindow::onStepNumberChanged()
     }
 }
 
-void MainWindow::onUpdatePositionOnSlider(int value)
+void MainWindow::onUpdateStepPositionOnSlider(StepIndex value)
 {
     qDebug() << "Step is " << value;
 
@@ -1120,8 +1120,8 @@ void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
     // Set step if specified
     if (cmdParser.getStep())
     {
-        const int stepValue = cmdParser.getStep().value();
-        if (stepValue >= 0 && stepValue <= totalSteps())
+        const StepIndex stepValue = cmdParser.getStep().value();
+        if (stepValue <= totalSteps())
         {
             currentStep = stepValue;
             setPositionOnWidgets(currentStep);

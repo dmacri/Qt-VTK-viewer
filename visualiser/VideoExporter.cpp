@@ -3,6 +3,7 @@
 #include <vtkWindowToImageFilter.h>
 #include <vtkRenderWindow.h>
 #include <vtkNew.h>
+#include "utilities/types.h"
 #include "visualiser/VideoExporter.h"
 
 
@@ -15,9 +16,9 @@ void VideoExporter::exportVideo(
     vtkRenderWindow* renderWindow,
     const QString& outputFilePath,
     int fps,
-    int totalSteps,
-    std::function<void(int)> updateStepCallback,
-    std::function<void(int, int)> progressCallback,
+    StepIndex totalSteps,
+    std::function<void(StepIndex)> updateStepCallback,
+    std::function<void(StepIndex, StepIndex)> progressCallback,
     std::function<bool()> cancelledCallback)
 {
     if (!renderWindow)
@@ -52,7 +53,7 @@ void VideoExporter::exportVideo(
     try
     {
         // Iterate through all steps and capture frames
-        for (int step = 1; step <= totalSteps; ++step)
+        for (StepIndex step = 1; step <= totalSteps; ++step)
         {
             // Check if user cancelled
             if (cancelledCallback && cancelledCallback())

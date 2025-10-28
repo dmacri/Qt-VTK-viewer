@@ -65,9 +65,9 @@ private slots:
     void onLeftButtonClicked();
     void onRightButtonClicked();
 
-    void onUpdatePositionOnSlider(int value);
+    void onUpdateStepPositionOnSlider(StepIndex value);
 
-    void totalStepsNumberChanged(int totalStepsValue);
+    void totalStepsNumberChanged(StepIndex totalStepsValue);
     void availableStepsLoadedFromConfigFile(std::vector<StepIndex> availableSteps);
 
     void onRecentFileTriggered();
@@ -94,9 +94,9 @@ private:
 
     void loadStrings();
 
-    bool setPositionOnWidgets(int stepPosition, bool updateSlider = true);
+    bool setPositionOnWidgets(StepIndex stepPosition, bool updateSlider = true);
 
-    int totalSteps() const;
+    StepIndex totalSteps() const;
 
     void changeWhichButtonsAreEnabled();
 
@@ -126,7 +126,7 @@ private:
     QActionGroup *modelActionGroup;
     QTimer *playbackTimer;
 
-    int currentStep;
+    StepIndex currentStep;
 
     // Playback state for timer-based playback
     PlayingDirection playbackDirection = PlayingDirection::Forward;

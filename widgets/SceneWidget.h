@@ -52,7 +52,7 @@ public:
     /** @brief Adds a visualizer for the specified config file. It moves position to provided step number.
      *  @param filename The config file to visualize
      *  @param stepNumber The simulation step to display **/
-    void addVisualizer(const std::string& filename, int stepNumber);
+    void addVisualizer(const std::string& filename, StepIndex stepNumber);
 
     /// @brief Updates the visualization widget to show the specified step number
     void selectedStepParameter(StepIndex stepNumber);
@@ -259,7 +259,7 @@ protected:
 
     /** @param configFilename Path to the configuration file and move view to provided step
      *  @param stepNumber Initial step number to display */
-    void setupSettingParameters(const std::string& configFilename, int stepNumber);
+    void setupSettingParameters(const std::string& configFilename, StepIndex stepNumber);
 
     /** @brief Updates the background color from application settings.
      *
