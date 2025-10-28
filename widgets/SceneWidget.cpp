@@ -139,7 +139,7 @@ void SceneWidget::prepareStageWithCurrentNodeConfiguration()
     sceneWidgetVisualizerProxy->prepareStage(settingParameter->nNodeX, settingParameter->nNodeY);
 }
 
-void SceneWidget::addVisualizer(const std::string &filename, int stepNumber)
+void SceneWidget::addVisualizer(const std::string &filename, StepIndex stepNumber)
 {
     if (! std::filesystem::exists(filename))
     {
@@ -151,7 +151,7 @@ void SceneWidget::addVisualizer(const std::string &filename, int stepNumber)
     renderVtkScene();
 }
 
-void SceneWidget::setupSettingParameters(const std::string & configFilename, int stepNumber)
+void SceneWidget::setupSettingParameters(const std::string & configFilename, StepIndex stepNumber)
 {
     readSettingsFromConfigFile(configFilename);
 

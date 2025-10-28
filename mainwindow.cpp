@@ -28,16 +28,16 @@
 
 namespace
 {
-constexpr int FIRST_STEP_NUMBER = 0;
+constexpr StepIndex FIRST_STEP_NUMBER = 0;
 }
 
 
 MainWindow::MainWindow(QWidget* parent)
-    : QMainWindow(nullptr)
+    : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , currentStep{FIRST_STEP_NUMBER}
     , modelActionGroup(nullptr)
     , playbackTimer(new QTimer(this))
+    , currentStep{FIRST_STEP_NUMBER}
 {
     ui->setupUi(this);
     setWindowTitle(QApplication::applicationName());
@@ -148,16 +148,16 @@ void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> avail
     }
 }
 
-void MainWindow::totalStepsNumberChanged(int totalStepsValue)
+void MainWindow::totalStepsNumberChanged(StepIndex totalStepsValue)
 {
     ui->totalStep->setText(QString("/") + QString::number(totalStepsValue));
-    ui->updatePositionSlider->setMaximum(totalStepsValue);
-    ui->positionSpinBox->setMaximum(totalStepsValue);
+    ui->updatePositionSlider->setMaximum(static_cast<int>(totalStepsValue));
+    ui->positionSpinBox->setMaximum(static_cast<int>(totalStepsValue));
 }
 
-int MainWindow::totalSteps() const
+StepIndex MainWindow::totalSteps() const
 {
-    return ui->updatePositionSlider->maximum();
+    return static_cast<StepIndex>(ui->updatePositionSlider->maximum());
 }
 
 void MainWindow::connectButtons()
@@ -173,7 +173,7 @@ void MainWindow::connectButtons()
 
 void MainWindow::connectSliders()
 {
-    connect(ui->updatePositionSlider, &QSlider::valueChanged, this, &MainWindow::onUpdatePositionOnSlider);
+    connect(ui->updatePositionSlider, &QSlider::valueChanged, this, &MainWindow::onUpdateStepPositionOnSlider);
 
     // Camera control sliders
     connect(ui->azimuthSlider, &QSlider::valueChanged, this, &MainWindow::onAzimuthChanged);
@@ -263,12 +263,12 @@ void MainWindow::exportVideoDialog()
 void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
 {
     // Save current state
-    const int originalStep = currentStep;
+    const auto originalStep = currentStep;
     const bool wasPlaying = playbackTimer->isActive();
     playbackTimer->stop();
 
     // Create progress dialog
-    QProgressDialog progress(tr("Exporting video..."), tr("Cancel"), 1, totalSteps(), this);
+    QProgressDialog progress(tr("Exporting video..."), tr("Cancel"), 1, static_cast<int>(totalSteps()), this);
     progress.setWindowModality(Qt::WindowModal);
     progress.setMinimumDuration(0);
     progress.setValue(0);
@@ -277,7 +277,7 @@ void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
     VideoExporter exporter;
 
     // Define callback to update visualization for each step
-    auto updateStepCallback = [this](int step)
+    auto updateStepCallback = [this](StepIndex step)
     {
         currentStep = step;
         QSignalBlocker blockSlider(ui->updatePositionSlider);
@@ -286,9 +286,9 @@ void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
     };
 
     // Define callback to report progress
-    auto progressCallback = [&progress, this](int step, int total)
+    auto progressCallback = [&progress](StepIndex step, StepIndex total)
     {
-        progress.setValue(step);
+        progress.setValue(static_cast<int>(step));
         progress.setLabelText(tr("Exporting video... Step %1 of %2").arg(step).arg(total));
     };
 
@@ -316,7 +316,7 @@ void MainWindow::recordVideoToFile(const QString& outputFilePath, int fps)
         playbackTimer->start(ui->sleepSpinBox->value());
     }
 
-    progress.setValue(totalSteps());
+    progress.setValue(static_cast<int>(totalSteps()));
 }
 void MainWindow::playingRequested(PlayingDirection direction)
 {
@@ -337,8 +337,8 @@ void MainWindow::playingRequested(PlayingDirection direction)
 void MainWindow::onPlaybackTimerTick()
 {
     // Update current step
-    currentStep += std::to_underlying(playbackDirection) * ui->speedSpinBox->value();
-    currentStep = std::clamp(currentStep, FIRST_STEP_NUMBER, totalSteps());
+    currentStep += static_cast<StepIndex>(std::to_underlying(playbackDirection) * ui->speedSpinBox->value());
+    currentStep = std::clamp<StepIndex>(currentStep, FIRST_STEP_NUMBER, totalSteps());
 
     // Update UI
     {
@@ -399,19 +399,19 @@ void MainWindow::onBackButtonClicked()
 
 void MainWindow::onLeftButtonClicked()
 {
-    const auto stepsPerClick = ui->speedSpinBox->value();
+    const auto stepsPerClick = static_cast<StepIndex>(ui->speedSpinBox->value());
     currentStep = std::max(currentStep - stepsPerClick, FIRST_STEP_NUMBER);
     setPositionOnWidgets(currentStep);
 }
 
 void MainWindow::onRightButtonClicked()
 {
-    const auto stepsPerClick = ui->speedSpinBox->value();
+    const auto stepsPerClick = static_cast<StepIndex>(ui->speedSpinBox->value());
     currentStep = std::min(currentStep + stepsPerClick, totalSteps());
     setPositionOnWidgets(currentStep);
 }
 
-bool MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
+bool MainWindow::setPositionOnWidgets(StepIndex stepPosition, bool updateSlider)
 {
     bool changingPositionSuccess = true;
 
@@ -422,9 +422,9 @@ bool MainWindow::setPositionOnWidgets(int stepPosition, bool updateSlider)
         if (updateSlider)
         {
             QSignalBlocker sliderBlocker(ui->updatePositionSlider);
-            ui->updatePositionSlider->setValue(stepPosition);
+            ui->updatePositionSlider->setValue(static_cast<int>(stepPosition));
         }
-        ui->positionSpinBox->setValue(stepPosition);
+        ui->positionSpinBox->setValue(static_cast<int>(stepPosition));
     }
     catch (const std::exception& e)
     {
@@ -453,7 +453,7 @@ void MainWindow::changeWhichButtonsAreEnabled()
 
 void MainWindow::onStepNumberChanged()
 {
-    auto step = ui->positionSpinBox->value();
+    auto step = static_cast<StepIndex>(ui->positionSpinBox->value());
     if (step != currentStep)
     {
         currentStep = step;
@@ -461,13 +461,13 @@ void MainWindow::onStepNumberChanged()
     }
 }
 
-void MainWindow::onUpdatePositionOnSlider(int value)
+void MainWindow::onUpdateStepPositionOnSlider(StepIndex value)
 {
     qDebug() << "Step is " << value;
 
     {
         QSignalBlocker blockSpinBox(ui->positionSpinBox);
-        ui->positionSpinBox->setValue(value);
+        ui->positionSpinBox->setValue(static_cast<int>(value));
     }
 
     currentStep = value;
@@ -565,7 +565,7 @@ void MainWindow::openConfigurationFile(const QString& configFileName)
         // Stop any ongoing playback
         playbackTimer->stop();
 
-        if (bool isFirstConfiguration = ui->inputFilePathLabel->getFileName().isEmpty())
+        if (bool isFirstConfiguration[[maybe_unused]] = ui->inputFilePathLabel->getFileName().isEmpty())
         {
             initializeSceneWidget(configFileName);
         }
@@ -1120,8 +1120,8 @@ void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
     // Set step if specified
     if (cmdParser.getStep())
     {
-        const int stepValue = cmdParser.getStep().value();
-        if (stepValue >= 0 && stepValue <= totalSteps())
+        const auto stepValue = static_cast<StepIndex>(cmdParser.getStep().value());
+        if (stepValue <= totalSteps())
         {
             currentStep = stepValue;
             setPositionOnWidgets(currentStep);

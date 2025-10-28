@@ -135,7 +135,7 @@ private:
 
     [[nodiscard]] ColumnAndRow readColumnAndRowForStepFromFile(StepIndex step, const std::string& fileName, NodeIndex node);
 
-    std::vector<ColumnAndRow> giveMeLocalColsAndRowsForAllSteps(StepIndex step, int nNodeX, int nNodeY, const std::string& fileName);
+    std::vector<ColumnAndRow> giveMeLocalColsAndRowsForAllSteps(StepIndex step, NodeIndex nNodeX, NodeIndex nNodeY, const std::string& fileName);
 };
 
 /////////////////////////////
@@ -152,7 +152,7 @@ namespace ReaderHelpers /// functions which are not templates
 
 ColumnAndRow getColumnAndRowFromLine(const std::string& line);
 
-ColumnAndRow calculateXYOffset(NodeIndex node, int nNodeX, int nNodeY, const std::vector<ColumnAndRow>& columnsAndRows);
+ColumnAndRow calculateXYOffset(NodeIndex node, NodeIndex nNodeX, NodeIndex nNodeY, const std::vector<ColumnAndRow>& columnsAndRows);
 } // namespace ReaderHelpers
 /////////////////////////////
 
@@ -218,7 +218,7 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
         lines[node * 2 + 1] = Line(offsetXY.x(), offsetXY.y(), offsetXY.x(), offsetXY.y() + columnAndRow.row);
         
         // Add top edge line for nodes in the last row (highest y)
-        const int nodeRow = node / sp->nNodeX;
+        const NodeIndex nodeRow = node / sp->nNodeX;
         if (nodeRow == sp->nNodeY - 1)  // Top row
         {
             const int topLineIndex = 2 * totalNodes + (node % sp->nNodeX);
@@ -227,7 +227,7 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
         }
         
         // Add right edge line for nodes in the last column (highest x)
-        const int nodeCol = node % sp->nNodeX;
+        const NodeIndex nodeCol = node % sp->nNodeX;
         if (nodeCol == sp->nNodeX - 1)  // Rightmost column
         {
             const int rightLineIndex = 2 * totalNodes + sp->nNodeX + nodeRow;
@@ -291,7 +291,7 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
     std::ranges::for_each(futures, [](std::future<void>& f){ f.get(); });
 }
 template<class Cell>
-std::vector<ColumnAndRow> ModelReader<Cell>::giveMeLocalColsAndRowsForAllSteps(StepIndex step, int nNodeX, int nNodeY, const std::string& fileName)
+std::vector<ColumnAndRow> ModelReader<Cell>::giveMeLocalColsAndRowsForAllSteps(StepIndex step, NodeIndex nNodeX, NodeIndex nNodeY, const std::string& fileName)
 {
     const auto nodesCount = nNodeX * nNodeY;
     std::vector<ColumnAndRow> allColumnsAndRows(nodesCount);

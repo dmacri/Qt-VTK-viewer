@@ -26,12 +26,17 @@
 #include <QSurfaceFormat>
 #include <filesystem>
 
+#include <QFileInfo>
 #include <QVTKOpenGLNativeWidget.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 
 #include "mainwindow.h"
 #include "utilities/CommandLineParser.h"
 #include "utilities/PluginLoader.h"
+
+
+void applyStyleSheet(MainWindow& mainWindow);
+
 
 int main(int argc, char* argv[])
 {
@@ -85,12 +90,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    // Apply stylesheet
-    if (QFile styleFile("style.qss"); styleFile.open(QFile::ReadOnly))
-    {
-        QString styleSheet = QLatin1String(styleFile.readAll());
-        mainWindow.setStyleSheet(styleSheet);
-    }
+    applyStyleSheet(mainWindow);
 
     mainWindow.applyCommandLineOptions(cmdParser);
 
@@ -101,4 +101,16 @@ int main(int argc, char* argv[])
     }
 
     return a.exec();
+}
+
+void applyStyleSheet(MainWindow& mainWindow)
+{
+    QFileInfo fi("style.qss");
+    if (fi.isFile() && fi.isReadable() && !fi.isSymLink()) // checking for security CWE-362
+    {
+        if (QFile styleFile("style.qss"); styleFile.open(QIODevice::ReadOnly))
+        {
+            mainWindow.setStyleSheet(QString::fromUtf8(styleFile.readAll()));
+        }
+    }
 }

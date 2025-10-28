@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QString>
 #include <functional>
+#include "utilities/types.h"
 
 class vtkRenderWindow;
 
@@ -41,9 +42,9 @@ public:
         vtkRenderWindow* renderWindow,
         const QString& outputFilePath,
         int fps,
-        int totalSteps,
-        std::function<void(int)> updateStepCallback,
-        std::function<void(int, int)> progressCallback,
+        StepIndex totalSteps,
+        std::function<void (StepIndex)> updateStepCallback,
+        std::function<void (StepIndex, StepIndex)> progressCallback,
         std::function<bool()> cancelledCallback
     );
 
@@ -51,7 +52,7 @@ signals:
     /** @brief Emitted when export progress changes.
      *  @param currentStep Current step being processed
      *  @param totalSteps Total number of steps to process */
-    void progressChanged(int currentStep, int totalSteps);
+    void progressChanged(StepIndex currentStep, StepIndex totalSteps);
 
     /// @brief Emitted when export completes successfully
     void exportCompleted();
