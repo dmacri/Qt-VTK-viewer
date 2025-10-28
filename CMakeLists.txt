@@ -119,6 +119,7 @@ list(APPEND Sources
     widgets/SceneWidget.cpp
     widgets/ColorSettingsDialog.cpp
     widgets/ColorSettings.cpp
+    widgets/AboutDialog.cpp
     utilities/PluginLoader.cpp
     utilities/ModelReader.cpp
     utilities/CommandLineParser.cpp
@@ -152,6 +153,8 @@ set(OTHER_FILES LICENSE .github/workflows/release--deb-package--ubuntu24.04.yml 
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOMOC "YES")
 set(CMAKE_AUTOUIC "YES")
+
+find_package(Qt5 REQUIRED COMPONENTS Widgets Multimedia)
 
 
 # ============================================
@@ -274,7 +277,10 @@ endif()
 # ============================================
 # Linking
 # ============================================
-target_link_libraries(${PROJECT_NAME} PRIVATE ${VTK_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${VTK_LIBRARIES}
+    Qt5::Widgets
+    Qt5::Multimedia
+)
 #target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Widgets Qt5::OpenGL VTK::GUISupportQt VTK::IOLegacy)
 
 # Export symbols for plugins to use

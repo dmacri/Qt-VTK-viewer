@@ -5,5 +5,7 @@
         <file>icons/quit.png</file>
         <file>icons/about.png</file>
         <file>icons/application.png</file>
+        <file>icons/scimmioneAtWork.png</file>
+        <file>icons/refactor.mp4</file>
     </qresource>
 </RCC>
