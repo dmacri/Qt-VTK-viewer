@@ -16,6 +16,7 @@
 #include <future>
 #include <iostream>
 #include <ranges>
+#include <regex>
 #include <unordered_map>
 #include <vector>
 
@@ -35,7 +36,15 @@
 template<class Cell>
 class ModelReader
 {
-    std::vector<std::unordered_map<StepIndex, FilePosition>> nodeStepOffsets; ///< Maps node indices to their file positions for each step
+public:
+    struct StepOffsetInfo
+    {
+        FilePosition position;
+        std::optional<ColumnAndRow> sceneSize;
+    };
+
+private:
+    std::vector<std::unordered_map<StepIndex, StepOffsetInfo>> nodeStepOffsets; ///< Maps node indices to their file positions for each step
 
 public:
     /** @brief Prepares the reader for a new stage of data processing.
@@ -70,22 +79,20 @@ public:
 
     /** @brief Loads step offset data from text files into an internal hash map.
      *
-     * This method reads a file containing step number to file position mappings
-     * for each node in the simulation. The file format is expected to have one
-     * line per step per node with the format:
-     *     <stepNumber:int> <positionInFile:long>
+     * Supports two file formats:
+     * 1) Legacy format:
+     *      <stepNumber:int> <positionInFile:long>
+     * 2) Extended format:
+     *      <stepNumber:int> <positionInFile:long> (<sceneMin:int>-<sceneMax:int>)
      *
-     * Example:
-     *     0 37
-     *     1 32504
-     *     2 64971
-     *
-     * Each line must contain exactly two numbers separated by whitespace.
+     * Example (extended):
+     *      0 0 (250-500)
+     *      1 2000000 (250-500)
      *
      * @param nNodeX Number of nodes along the X axis
      * @param nNodeY Number of nodes along the Y axis
      * @param filename Name of the file containing the step offsets
-     * 
+     *
      * @throws std::runtime_error If the file cannot be opened or has an invalid format */
     void readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, NodeIndex nNodeY, const std::string& filename);
 
@@ -328,37 +335,53 @@ template<class Cell>
 void ModelReader<Cell>::readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, NodeIndex nNodeY, const std::string& filename)
 {
     const auto totalNodes = nNodeX * nNodeY;
+    prepareStage(nNodeX, nNodeY);
+
     for (NodeIndex node = 0; node < totalNodes; ++node)
     {
         const auto fileNameIndex = ReaderHelpers::giveMeFileNameIndex(filename, node);
         if (! std::filesystem::exists(fileNameIndex))
-        {
             throw std::runtime_error("File not found: " + fileNameIndex);
-        }
 
         std::ifstream file(fileNameIndex);
         if (! file)
-        {
             throw std::runtime_error("Cannot open file: " + fileNameIndex);
-        }
 
-        while (true)
+        std::string line;
+        while (std::getline(file, line))
         {
-            StepIndex stepNumber;
-            FilePosition positionInFile;
+            if (line.empty()) continue;
 
-            if (! (file >> stepNumber >> positionInFile))
-            { /// enters here if reading error
-                if (file.eof())
-                    break;
+            std::istringstream iss(line);
+            StepIndex stepNumber{};
+            FilePosition position{};
+            if (! (iss >> stepNumber >> position))
+                throw std::runtime_error("Invalid line format in file: " + fileNameIndex);
+
+            StepOffsetInfo info{position, std::nullopt};
+
+            // Check if we have the optional "(rows-column)" part
+            std::string rangePart;
+            if (iss >> rangePart)
+            {
+                std::regex rangeRegex(R"(\((\d+)-(\d+)\))");
+                std::smatch match;
+                if (std::regex_match(rangePart, match, rangeRegex))
+                {
+                    const int rowsCount = std::stoi(match[1].str());
+                    const int columnCount = std::stoi(match[2].str());
+                    info.sceneSize = ColumnAndRow{.column = columnCount, .row = rowsCount};
+                }
                 else
-                    throw std::runtime_error("Invalid line format in file: " + fileNameIndex);
+                {
+                    throw std::runtime_error("Invalid range format in file: " + fileNameIndex + " line: " + line);
+                }
             }
 
-            const auto [it, inserted] = nodeStepOffsets[node].emplace(stepNumber, positionInFile);
+            const auto [it, inserted] = nodeStepOffsets[node].emplace(stepNumber, info);
             if (! inserted)
             {
-                std::cerr << std::format("Duplicate stepNumber {} found in file '{}' (node {})", stepNumber, fileNameIndex, node) << std::endl;
+                std::cerr << std::format("Duplicate stepNumber {} in file '{}' (node {})", stepNumber, fileNameIndex, node) << std::endl;
             }
         }
     }
@@ -441,7 +464,7 @@ FilePosition ModelReader<Cell>::getStepStartingPositionInFile(StepIndex step, No
     const auto& stepMap = nodeStepOffsets[node];
     if (auto it = stepMap.find(step); it != stepMap.end())
     {
-        return it->second;
+        return it->second.position;
     }
 
     throw std::out_of_range(std::format("Step {} not found in node {} (available step indices: {})", step, node, stepMap.size() - 1));
