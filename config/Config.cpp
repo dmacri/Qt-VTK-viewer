@@ -109,14 +109,14 @@ void Config::setUpConfigCategories()
         }
     });
 
-    // configCategories.push_back(ConfigCategory{
-    //     "VISUALIZATION",
-    //     {
-    //       {"substates", "h", ConfigParameter::string_par},
-    //       {"mode", "text", ConfigParameter::string_par},
-    //       {"reduction", "sum,min,max", ConfigParameter::string_par},
-    //     }
-    // });
+    configCategories.push_back(ConfigCategory{
+        "VISUALIZATION",
+        {
+            {"substates", "h", ConfigParameter::string_par},
+            {"mode", "text", ConfigParameter::string_par},
+            {"reduction", "sum,min,max", ConfigParameter::string_par}
+        }
+    });
 }
 
 void Config::writeConfigFile() const
