@@ -4,7 +4,7 @@
 
 A CMake/C++ project for embedding a VTK 3D view in a Qt window. This application provides a powerful interface for visualizing and interacting with 2D and 3D models and scientific data using the Visualization Toolkit (VTK) within a Qt-based graphical user interface.
 
-![Qt VTK Viewer on Windows](doc/screenshot.png)
+
 
 ## Project Overview
 
