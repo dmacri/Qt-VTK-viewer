@@ -1,20 +1,43 @@
 /** CustomModelPlugin_Full.cpp
  * 
  * FULL WORKING VERSION of the plugin with actual includes
- * 
- * This version includes the real headers from Qt-VTK-viewer and will
+ *
+ * This version includes the real headers from OOpenCal-Viewer and will
  * compile into a working plugin that can be loaded at runtime.
  * 
  * Build instructions are in CMakeLists.txt */
 
-#include <iostream>                                        // for basic_ostream
-#include <memory>                                          // for __unique_p...
-#include <string>                                          // for basic_string
-#include "CustomCell.h"                                    // for CustomCell
-#include "visualiserProxy/SceneWidgetVisualizerAdapter.h"  // for SceneWidge...
-#include "visualiserProxy/SceneWidgetVisualizerFactory.h"  // for SceneWidge...
+// --- Plugin configuration macros ---
+//
+// These macros define which model and cell class this plugin will use.
+// They can be overridden externally (e.g. via -DPLUGIN_MODEL_NAME="\"MyModel\"" or -DPLUGIN_CELL_CLASS=MyCell)
+// so that this single plugin source file can be reused for different models.
+//
+// PLUGIN_MODEL_NAME        → Human-readable string used to identify the plugin/model name
+// PLUGIN_CELL_CLASS → Actual C++ class implementing the cell (header will be auto-included below)
+#ifndef PLUGIN_MODEL_NAME
+#define PLUGIN_MODEL_NAME "CustomModel"
+#endif
 
-#define MODEL_NAME "CustomModel"
+#ifndef PLUGIN_CELL_CLASS
+#define PLUGIN_CELL_CLASS CustomCell
+#endif
+
+// --- Preprocessor helpers ---
+// These macros are used to convert a macro value into a string literal.
+// Direct stringification (#x) does not expand macros, so we need two levels:
+// 1) STRINGIFY_LITERAL(x): turns token x into a string as-is
+// 2) EXPAND_AND_STRINGIFY(x): expands x first, then stringifies the result
+#define STRINGIFY_LITERAL(x) #x
+#define EXPAND_AND_STRINGIFY(x) STRINGIFY_LITERAL(x)
+
+#include <iostream>
+#include <memory> // std::unique_ptr
+#include <string>
+#include EXPAND_AND_STRINGIFY(PLUGIN_CELL_CLASS.h)
+#include "visualiserProxy/SceneWidgetVisualizerAdapter.h"
+#include "visualiserProxy/SceneWidgetVisualizerFactory.h"
+
 
 extern "C"
 {
@@ -22,23 +45,23 @@ extern "C"
 __attribute__((visibility("default")))
 void registerPlugin()
 {
-    std::cout << "Registering " MODEL_NAME " plugin..." << std::endl;
+    std::cout << "Registering " PLUGIN_MODEL_NAME " plugin..." << std::endl;
     
     // Register the custom model with the factory
-    bool success = SceneWidgetVisualizerFactory::registerModel(MODEL_NAME, []() {
-        return std::make_unique<SceneWidgetVisualizerAdapter<CustomCell>>(
-            MODEL_NAME  // - this will appear in the menu
+    bool success = SceneWidgetVisualizerFactory::registerModel(PLUGIN_MODEL_NAME, []() {
+        return std::make_unique<SceneWidgetVisualizerAdapter<PLUGIN_CELL_CLASS>>(
+            PLUGIN_MODEL_NAME  // - this will appear in the menu
         );
     });
     
     if (success)
     {
-        std::cout << "✓ " MODEL_NAME " plugin registered successfully!" << std::endl;
+        std::cout << "✓ " PLUGIN_MODEL_NAME " plugin registered successfully!" << std::endl;
         std::cout << "  The model is now available in Model menu" << std::endl;
     }
     else
     {
-        std::cerr << "✗ Failed to register " MODEL_NAME " - name may already exist" << std::endl;
+        std::cerr << "✗ Failed to register " PLUGIN_MODEL_NAME " - name may already exist" << std::endl;
     }
 }
 
@@ -46,10 +69,10 @@ void registerPlugin()
 __attribute__((visibility("default")))
 const char* getPluginInfo()
 {
-    return MODEL_NAME " Plugin v1.0\n"
-           "Author: Developers of Qt-VTK-viewer\n"
+    return PLUGIN_MODEL_NAME " Plugin v1.0\n"
+           "Author: Developers of OOpenCal\n"
            "Description: Example custom cell model with color gradient visualization\n"
-           "Compatible with: Qt-VTK-viewer 2.x";
+           "Compatible with: OOpenCal-Viewer 2.x";
 }
 
 /// Optional: Get plugin version
@@ -63,6 +86,6 @@ int getPluginVersion()
 __attribute__((visibility("default")))
 const char* getModelName()
 {
-    return MODEL_NAME;
+    return PLUGIN_MODEL_NAME;
 }
 } // extern "C"
