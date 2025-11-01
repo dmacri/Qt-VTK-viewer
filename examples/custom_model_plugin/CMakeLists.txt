@@ -72,27 +72,25 @@ include_directories(
 # ============================================================================
 # Build the plugin as a shared library
 # ============================================================================
+set(PLUGIN_LIB_NAME "${PLUGIN_CELL_CLASS}Plugin")
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PLUGIN_LIB_NAME} SHARED
     CustomModelPlugin_Full.cpp
     README.md
 )
 
-# Pass macro definitions to the compiler
-target_compile_definitions(${PROJECT_NAME}
+target_compile_definitions(${PLUGIN_LIB_NAME}
     PRIVATE
-        PLUGIN_MODEL_NAME="${PLUGIN_MODEL_NAME}"
+        PLUGIN_MODEL_NAME="\"${PLUGIN_MODEL_NAME}\""
         PLUGIN_CELL_CLASS=${PLUGIN_CELL_CLASS}
 )
 
-# Link with VTK
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PLUGIN_LIB_NAME}
     PRIVATE
         ${VTK_LIBRARIES}
 )
 
-# Ensure symbols are exported
-set_target_properties(${PROJECT_NAME} PROPERTIES
+set_target_properties(${PLUGIN_LIB_NAME} PROPERTIES
     PREFIX "lib"
 )
 
@@ -100,7 +98,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 # Installation (optional)
 # ============================================================================
 
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PLUGIN_LIB_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins
     RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins
 )
@@ -108,6 +106,17 @@ install(TARGETS ${PROJECT_NAME}
 # ============================================================================
 # Build instructions message
 # ============================================================================
+
+# ------------------------------
+# Safe defaults for plugin build
+# ------------------------------
+if(NOT DEFINED PLUGIN_MODEL_NAME OR PLUGIN_MODEL_NAME STREQUAL "")
+    set(PLUGIN_MODEL_NAME "Custom Model")
+endif()
+
+if(NOT DEFINED PLUGIN_CELL_CLASS OR PLUGIN_CELL_CLASS STREQUAL "")
+    set(PLUGIN_CELL_CLASS CustomCell)
+endif()
 
 message(STATUS "========================================")
 message(STATUS "${PROJECT_NAME} Configuration")
@@ -134,5 +143,5 @@ else()
 endif()
 
 message(STATUS "")
-message(STATUS "Output: libCustomModelPlugin.so")
+message(STATUS "Output: lib${PLUGIN_CELL_CLASS}Plugin.so")
 message(STATUS "========================================")

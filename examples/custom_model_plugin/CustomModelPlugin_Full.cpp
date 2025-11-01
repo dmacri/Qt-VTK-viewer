@@ -30,16 +30,17 @@
 // 2) EXPAND_AND_STRINGIFY(x): expands x first, then stringifies the result
 #define STRINGIFY_LITERAL(x) #x
 #define EXPAND_AND_STRINGIFY(x) STRINGIFY_LITERAL(x)
+// Helper macro: if the model name is quoted ("My Model"), this will print it cleanly.
+#define CLEAN_MODEL_NAME EXPAND_AND_STRINGIFY(PLUGIN_MODEL_NAME)
 
 #pragma message("[Plugin build info]")
-#pragma message("  Model name: " EXPAND_AND_STRINGIFY(PLUGIN_MODEL_NAME))
+#pragma message("  Model name: " CLEAN_MODEL_NAME)
 #pragma message("  Cell class: " EXPAND_AND_STRINGIFY(PLUGIN_CELL_CLASS))
-
 
 #include <iostream>
 #include <memory> // std::unique_ptr
-#include <string>
 #include EXPAND_AND_STRINGIFY(PLUGIN_CELL_CLASS.h)
+#include "ISceneWidgetVisualizer.h"
 #include "visualiserProxy/SceneWidgetVisualizerAdapter.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
 
