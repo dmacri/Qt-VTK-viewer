@@ -169,7 +169,7 @@ namespace ReaderHelpers /// functions which are not templates
 
 ColumnAndRow getColumnAndRowFromLine(const std::string& line);
 
-ColumnAndRow calculateXYOffset(NodeIndex node, NodeIndex nNodeX, NodeIndex nNodeY, const std::vector<ColumnAndRow>& columnsAndRows);
+ColumnAndRow calculateXYOffsetForNode(NodeIndex node, NodeIndex nNodeX, NodeIndex nNodeY, const std::vector<ColumnAndRow>& columnsAndRows);
 } // namespace ReaderHelpers
 /////////////////////////////
 
@@ -245,7 +245,7 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
     /// Lambda responsible for reading and processing a single node's file
     auto processNode = [&, this](NodeIndex node)
     {
-        const auto offsetXY = ReaderHelpers::calculateXYOffset(node, sp->nNodeX, sp->nNodeY, columnsAndRows);
+        const auto offsetXY = ReaderHelpers::calculateXYOffsetForNode(node, sp->nNodeX, sp->nNodeY, columnsAndRows);
 
         ColumnAndRow columnAndRow;
         std::ifstream fp = readColumnAndRowForStepFromFileReturningStream(sp->step, sp->outputFileName, node, columnAndRow, isBinary);
