@@ -298,11 +298,19 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
             // Parse binary data and fill matrix
             for (int row = 0; row < columnAndRow.row; ++row)
             {
+                const int matrixRow = row + offsetXY.y();
+                if (matrixRow >= static_cast<int>(m.size())) // TODO: GB: to fix?
+                    break; // Skip rows that are out of bounds
+                    
                 for (int col = 0; col < columnAndRow.column; ++col)
                 {
+                    const int matrixCol = col + offsetXY.x();
+                    if (matrixCol >= static_cast<int>(m[matrixRow].size())) // TODO: GB: to fix?
+                        break; // Skip columns that are out of bounds
+
                     if (! localStartStepDone) [[unlikely]]
                     {
-                        m[row + offsetXY.y()][col + offsetXY.x()].Cell::startStep(sp->step);
+                        m[matrixRow][matrixCol].Cell::startStep(sp->step);
                         localStartStepDone = true;
                     }
 
@@ -311,8 +319,8 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
 
                     // Create a temporary cell from binary data and copy to matrix
                     Cell tempCell;
-                    std::memcpy(&tempCell, cellData, cellSize); // TODO: GB: It is overriding vtable
-                    m[row + offsetXY.y()][col + offsetXY.x()] = tempCell;
+                    std::memcpy(&tempCell, cellData, cellSize);
+                    m[matrixRow][matrixCol] = tempCell;
                 }
             }
         }
@@ -332,6 +340,10 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
             // Process each line (row) from the node's file
             for (int row = 0; row < columnAndRow.row; ++row)
             {
+                const int matrixRow = row + offsetXY.y();
+                if (matrixRow >= static_cast<int>(m.size())) // TODO: GB: to fix?
+                    break; // Skip rows that are out of bounds
+                    
                 if (! std::getline(fp, line))
                 {
                     const auto fileNameTmp = ReaderHelpers::giveMeFileName(sp->outputFileName, node, isBinary);
@@ -345,9 +357,13 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
                 char* currentTokenPtr = line.data();
                 for (int col = 0; col < columnAndRow.column && *currentTokenPtr; ++col)
                 {
+                    const int matrixCol = col + offsetXY.x();
+                    if (matrixCol >= static_cast<int>(m[matrixRow].size())) // TODO: GB: to fix?
+                        break; // Skip columns that are out of bounds
+
                     if (! localStartStepDone) [[unlikely]]
                     {
-                        m[row + offsetXY.y()][col + offsetXY.x()].Cell::startStep(sp->step);
+                        m[matrixRow][matrixCol].Cell::startStep(sp->step);
                         localStartStepDone = true;
                     }
 
@@ -355,7 +371,7 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
                     char* nextTokenPtr = std::find(currentTokenPtr, line.data() + line.size(), '\0');
                     ++nextTokenPtr; // skip '\0'
 
-                    m[row + offsetXY.y()][col + offsetXY.x()].Cell::composeElement(currentTokenPtr);
+                    m[matrixRow][matrixCol].Cell::composeElement(currentTokenPtr);
 
                     currentTokenPtr = nextTokenPtr;
                 }
