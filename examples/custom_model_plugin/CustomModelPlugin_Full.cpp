@@ -31,6 +31,11 @@
 #define STRINGIFY_LITERAL(x) #x
 #define EXPAND_AND_STRINGIFY(x) STRINGIFY_LITERAL(x)
 
+#pragma message("[Plugin build info]")
+#pragma message("  Model name: " EXPAND_AND_STRINGIFY(PLUGIN_MODEL_NAME))
+#pragma message("  Cell class: " EXPAND_AND_STRINGIFY(PLUGIN_CELL_CLASS))
+
+
 #include <iostream>
 #include <memory> // std::unique_ptr
 #include <string>

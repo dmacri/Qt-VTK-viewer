@@ -81,8 +81,8 @@ add_library(${PROJECT_NAME} SHARED
 # Pass macro definitions to the compiler
 target_compile_definitions(${PROJECT_NAME}
     PRIVATE
-        MODEL_NAME=${PLUGIN_MODEL_NAME}
-        CLASS_NAME=${PLUGIN_CELL_CLASS}
+        PLUGIN_MODEL_NAME="${PLUGIN_MODEL_NAME}"
+        PLUGIN_CELL_CLASS=${PLUGIN_CELL_CLASS}
 )
 
 # Link with VTK
@@ -93,9 +93,6 @@ target_link_libraries(${PROJECT_NAME}
 
 # Ensure symbols are exported
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    CXX_VISIBILITY_PRESET default
-    VERSION ${PROJECT_VERSION}
-    SOVERSION 1
     PREFIX "lib"
 )
 
