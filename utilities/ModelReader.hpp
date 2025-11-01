@@ -158,9 +158,8 @@ namespace ReaderHelpers /// functions which are not templates
 {
 [[nodiscard]] inline std::string giveMeFileName(const std::string& fileName, NodeIndex node, bool isBinary = false)
 {
-    return isBinary ? std::format("{}{}.bin", fileName, node) : std::format("{}{}.txt", fileName, node);
     const auto extention = isBinary ? "bin" : "txt";
-    return std::format("{}{}.{}", fileName, node, isBinary);
+    return std::format("{}{}.{}", fileName, node, extention);
 }
 
 [[nodiscard]] inline std::string giveMeFileNameIndex(const std::string& fileName, NodeIndex node)
@@ -191,7 +190,7 @@ std::ifstream ModelReader<Cell>::readColumnAndRowForStepFromFileReturningStream(
 {
     const auto fileNameTmp = ReaderHelpers::giveMeFileName(fileName, node, isBinary);
 
-    std::ifstream file(fileNameTmp, std::ios::in);
+    std::ifstream file(fileNameTmp, isBinary ? std::ios::binary : std::ios::in);
     if (! file.is_open())
     {
         throw std::runtime_error(std::format("Can't read '{}' in {} function", fileNameTmp, __func__));
@@ -297,9 +296,9 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
             }
 
             // Parse binary data and fill matrix
-            for (int row = 0; row < columnAndRow.row; ++row) // row=0
+            for (int row = 0; row < columnAndRow.row; ++row)
             {
-                for (int col = 0; col < columnAndRow.column; ++col) // col=0
+                for (int col = 0; col < columnAndRow.column; ++col)
                 {
                     if (! localStartStepDone) [[unlikely]]
                     {
@@ -312,7 +311,7 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
 
                     // Create a temporary cell from binary data and copy to matrix
                     Cell tempCell;
-                    std::memcpy(&tempCell, cellData, cellSize); // TODO: It is overriding vtable
+                    std::memcpy(&tempCell, cellData, cellSize); // TODO: GB: It is overriding vtable
                     m[row + offsetXY.y()][col + offsetXY.x()] = tempCell;
                 }
             }
@@ -346,17 +345,6 @@ void ModelReader<Cell>::readStageStateFromFilesForStep(Matrix& m, SettingParamet
                 char* currentTokenPtr = line.data();
                 for (int col = 0; col < columnAndRow.column && *currentTokenPtr; ++col)
                 {
-                    if (0 == row && 0 == col && 1 == node) // offset {column=500, row=0}
-                    {
-                        auto firstSize = m.size();
-                        auto secondSize = m[0].size();
-                        auto ro = row + offsetXY.y();
-                        auto & r = m[ro];
-                        auto co = col + offsetXY.x();
-                        auto& c = r[co];
-                        // m[row + offsetXY.y()][col + offsetXY.x()].Cell::startStep(sp->step);
-                        c.Cell::startStep(sp->step);
-                    }
                     if (! localStartStepDone) [[unlikely]]
                     {
                         m[row + offsetXY.y()][col + offsetXY.x()].Cell::startStep(sp->step);
@@ -443,7 +431,7 @@ void ModelReader<Cell>::readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, N
 
             StepOffsetInfo info{position, std::nullopt};
 
-            // Check if we have the optional "(rows-column)" part
+            // Check if we have the optional "(columns-rows)" part
             std::string rangePart;
             if (iss >> rangePart)
             {
@@ -451,8 +439,8 @@ void ModelReader<Cell>::readStepsOffsetsForAllNodesFromFiles(NodeIndex nNodeX, N
                 std::smatch match;
                 if (std::regex_match(rangePart, match, rangeRegex))
                 {
-                    const int rowsCount = std::stoi(match[1].str());
-                    const int columnCount = std::stoi(match[2].str());
+                    const int columnCount = std::stoi(match[1].str());
+                    const int rowsCount = std::stoi(match[2].str());
                     info.sceneSize = ColumnAndRow{.column = columnCount, .row = rowsCount};
                 }
                 else
