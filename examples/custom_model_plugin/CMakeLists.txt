@@ -70,6 +70,16 @@ include_directories(
 )
 
 # ============================================================================
+# Optional extra include directories (passed from bash)
+# ============================================================================
+set(EXTRA_INCLUDE_DIR "" CACHE PATH "Optional include directory for cell dependencies")
+
+if(EXTRA_INCLUDE_DIR)
+    message(STATUS "Extra include directory: ${EXTRA_INCLUDE_DIR}")
+    include_directories(${EXTRA_INCLUDE_DIR})
+endif()
+
+# ============================================================================
 # Build the plugin as a shared library
 # ============================================================================
 set(PLUGIN_LIB_NAME "${PLUGIN_CELL_CLASS}Plugin")
