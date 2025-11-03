@@ -4,4 +4,8 @@ cmake . -DOOPENCAL_DIR=/home/agh/Pulpit/ItaliaSoftware/ -DQTVTKVIEWER_DIR=/home/
 
 
 # ----------- script
+cd ${Qt-VTK-viewer}examples/custom_model_plugin/
+
 ./build_plugin.sh /home/agh/Pulpit/ItaliaSoftware/OOpenCAL/models/Ball/Output/BallCell.h -DPLUGIN_MODEL_NAME='"Ball2"' -DPLUGIN_CELL_CLASS=BallCell -DOOPENCAL_DIR=/home/agh/Pulpit/ItaliaSoftware/ -DQTVTKVIEWER_DIR=/home/agh/Pulpit/ItaliaSoftware/Qt-VTK-viewer --includes  /home/agh/Pulpit/ItaliaSoftware/OOpenCAL/base
+
+../../scripts/build_plugin.sh /home/agh/Pulpit/ItaliaSoftware/OOpenCAL/models/Ball/Output/BallCell.h -DPLUGIN_MODEL_NAME='"Ball2"' -DPLUGIN_CELL_CLASS=BallCell -DOOPENCAL_DIR=/home/agh/Pulpit/ItaliaSoftware/ -DQTVTKVIEWER_DIR=/home/agh/Pulpit/ItaliaSoftware/Qt-VTK-viewer --includes  /home/agh/Pulpit/ItaliaSoftware/OOpenCAL/base
