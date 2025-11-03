@@ -1,6 +1,6 @@
-![Build Status: Linux](https://github.com/dmacri/Qt-VTK-viewer/actions/workflows/release--deb-package--ubuntu24.04.yml/badge.svg)
+![Build Status: Linux](https://github.com/dmacri/OOpenCal-Viewer/actions/workflows/release--deb-package--ubuntu24.04.yml/badge.svg)
 
-# Qt-VTK-viewer
+# OOpenCal-Viewer
 
 A CMake/C++ project for embedding a VTK 3D view in a Qt window. This application provides a powerful interface for visualizing and interacting with 2D and 3D models and scientific data using the Visualization Toolkit (VTK) within a Qt-based graphical user interface.
 
@@ -8,7 +8,7 @@ A CMake/C++ project for embedding a VTK 3D view in a Qt window. This application
 
 ## Project Overview
 
-The Qt-VTK-viewer is designed to:
+The OOpenCal-Viewer is designed to:
 - Load and visualize 3D models and scientific data
 - Provide interactive 3D navigation and manipulation
 - Support various visualization techniques through VTK

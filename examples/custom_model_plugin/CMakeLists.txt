@@ -19,8 +19,8 @@ set(PLUGIN_CELL_CLASS CustomCell CACHE STRING "C++ class implementing the cell m
 # Configuration - Adjust these paths for your system
 # ============================================================================
 
-set(QTVTKVIEWER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../.." CACHE PATH "Path to Qt-VTK-viewer source")
-set(OOPENCAL_DIR "${QTVTKVIEWER_DIR}/.." CACHE PATH "Path to OOpenCAL directory")
+set(OOPENCALVIEWER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../.." CACHE PATH "Path to OOpenCal-Viewer source")
+set(OOPENCAL_DIR "${OOPENCALVIEWER_DIR}/.." CACHE PATH "Path to OOpenCAL directory")
 
 # ============================================================================
 # Find required packages
@@ -61,10 +61,10 @@ endif()
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${QTVTKVIEWER_DIR}
-    ${QTVTKVIEWER_DIR}/visualiserProxy
-    ${QTVTKVIEWER_DIR}/visualiser
-    ${QTVTKVIEWER_DIR}/widgets
+    ${OOPENCALVIEWER_DIR}
+    ${OOPENCALVIEWER_DIR}/visualiserProxy
+    ${OOPENCALVIEWER_DIR}/visualiser
+    ${OOPENCALVIEWER_DIR}/widgets
     ${OOPENCAL_DIR}
     ${VTK_INCLUDE_DIRS}
 )
@@ -136,7 +136,7 @@ message(STATUS "========================================")
 message(STATUS "${PROJECT_NAME} Configuration")
 message(STATUS "========================================")
 message(STATUS "Build type:          ${CMAKE_BUILD_TYPE}")
-message(STATUS "Qt-VTK-viewer dir:   ${QTVTKVIEWER_DIR}")
+message(STATUS "OOpenCal-Viewer dir: ${OOPENCALVIEWER_DIR}")
 message(STATUS "OOpenCAL directory:  ${OOPENCAL_DIR}")
 message(STATUS "VTK version:         ${VTK_VERSION}")
 message(STATUS "----------------------------------------")

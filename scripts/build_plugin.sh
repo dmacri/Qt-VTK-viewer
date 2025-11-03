@@ -8,7 +8,7 @@
 #   - Automatically prepares build directory near the provided header
 #   - Symlinks CMakeLists.txt and Plugin_FullTemplate.cpp
 #   - Allows specifying an optional template plugin directory
-#   - If not given, it tries to locate it automatically via QTVTKVIEWER_DIR
+#   - If not given, it tries to locate it automatically via OOPENCALVIEWER_DIR
 #   - Passes through all CMake arguments
 #
 # Usage:
@@ -17,11 +17,11 @@
 #
 # Example:
 #   ./build_plugin.sh /home/user/OOpenCAL/models/Ball/Output/BallCell.h \
-#       --template /home/user/Qt-VTK-viewer/examples/custom_model_plugin \
+#       --template /home/user/OOpenCal-Viewer/examples/custom_model_plugin \
 #       -DPLUGIN_MODEL_NAME='"Ball2"' \
 #       -DPLUGIN_CELL_CLASS=BallCell \
+#       -DOOPENCALVIEWER_DIR=/home/user/OOpenCal-Viewer \
 #       -DOOPENCAL_DIR=/home/user/OOpenCAL \
-#       -DQTVTKVIEWER_DIR=/home/user/Qt-VTK-viewer \
 #       --includes /home/user/OOpenCAL/base
 # ==============================================================
 
@@ -83,12 +83,12 @@ resolve_template_dir() {
     local TEMPLATE_FILE="Plugin_FullTemplate.cpp"
 
     if [[ -z "$TEMPLATE_DIR" ]]; then
-        # Try to infer from QTVTKVIEWER_DIR CMake arg if provided
-        local qtviewer_dir=""
+        # Try to infer from OOPENCALVIEWER_DIR CMake arg if provided
+        local oopencalviewer_dir=""
         for arg in "${CMAKE_ARGS[@]}"; do
-            if [[ "$arg" =~ ^-DQTVTKVIEWER_DIR= ]]; then
-                qtviewer_dir="${arg#-DQTVTKVIEWER_DIR=}"
-                qtviewer_dir="${qtviewer_dir%/}"
+            if [[ "$arg" =~ ^-DOOPENCALVIEWER_DIR= ]]; then
+                oopencalviewer_dir="${arg#-DOOPENCALVIEWER_DIR=}"
+                oopencalviewer_dir="${oopencalviewer_dir%/}"
                 break
             fi
         done

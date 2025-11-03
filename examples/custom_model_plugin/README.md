@@ -1,6 +1,6 @@
 # Custom Model Plugin Example
 
-This directory contains a complete plugin example for **Qt-VTK-viewer** that adds a custom model **without recompiling the main application**.
+This directory contains a complete plugin example for **OOpenCal-Viewer** that adds a custom model **without recompiling the main application**.
 
 ---
 
@@ -61,12 +61,12 @@ The plugin **MUST NOT** compile its own copy of `SceneWidgetVisualizerFactory.cp
 
 The plugin supports the following **customizable arguments**:
 
-| Argument | Default Value | Description |
-|-----------|----------------|-------------|
-| `PLUGIN_MODEL_NAME` | `"Custom Model"` | Human-readable name of the model shown in the application's **Model** menu. |
-| `PLUGIN_CELL_CLASS` | `CustomCell` | C++ class implementing the cell logic (must have a corresponding header file `<ClassName>.h`). |
-| `QTVTKVIEWER_DIR` | `../..` | Path to the **Qt-VTK-viewer** source directory. |
-| `OOPENCAL_DIR` | `${QTVTKVIEWER_DIR}/..` | Path to the **OOpenCAL** root directory. |
+| Argument             | Default Value    | Description |
+|----------------------|------------------|-------------|
+| `PLUGIN_MODEL_NAME`  | `"Custom Model"` | Human-readable name of the model shown in the application's **Model** menu. |
+| `PLUGIN_CELL_CLASS`  | `CustomCell`     | C++ class implementing the cell logic (must have a corresponding header file `<ClassName>.h`). |
+| `OOPENCALVIEWER_DIR` | `../..`          | Path to the **OOpenCal-Viewer** source directory. |
+| `OOPENCAL_DIR`       | `${OOPENCALVIEWER_DIR}/..` | Path to the **OOpenCAL** root directory. |
 
 ---
 
@@ -113,7 +113,7 @@ Example:
 
 ```bash
 cmake .. \
-  -DQTVTKVIEWER_DIR=/home/user/Qt-VTK-viewer \
+  -DOOPENCALVIEWER_DIR=/home/user/OOpenCal-Viewer \
   -DOOPENCAL_DIR=/home/user/OOpenCAL \
   -DPLUGIN_MODEL_NAME="\"Ball Simulation\"" \
   -DPLUGIN_CELL_CLASS=BallCell
@@ -151,7 +151,7 @@ During compilation, the console will display information like:
 CustomModelPlugin Configuration
 ========================================
 Build type:          Release
-Qt-VTK-viewer dir:   /path/to/Qt-VTK-viewer
+OOpenCal-Viewer dir: /path/to/OOpenCal-Viewer
 OOpenCAL directory:  /path/to/OOpenCAL
 VTK version:         9.3.0
 ----------------------------------------
@@ -241,7 +241,7 @@ Place the plugin file (`libCustomModelPlugin.so`) into the `plugins/` directory 
 
 ## After Loading
 
-1. Launch **Qt-VTK-viewer**
+1. Launch **OOpenCal-Viewer**
 2. A new entry (e.g., **My Fire Model**) will appear in the **Model** menu
 3. Select it to activate the model
 4. Load a compatible dataset (formatted for your custom cell class)
@@ -342,7 +342,7 @@ The main application can call these to display plugin information.
 
 ## License
 
-This example is part of **Qt-VTK-viewer**.
+This example is part of **OOpenCal-Viewer**.
 
 ---
 

@@ -1,11 +1,11 @@
-cd ${Qt-VTK-viewer} # repository root
+cd ${OOpenCal-Viewer} # repository root
 export VIEWER_ROOT=$(pwd)
-# assume OOpenCAL is in the same level directory as Qt-VTK-viewer
+# assume OOpenCAL is in the same level directory as OOpenCal-Viewer
 
 # ----------- building with script:
-./scripts/build_plugin.sh ${VIEWER_ROOT}/../OOpenCAL/models/Ball/Output/BallCell.h -DPLUGIN_MODEL_NAME='"Ball2"' -DPLUGIN_CELL_CLASS=BallCell -DOOPENCAL_DIR=${VIEWER_ROOT}/../ -DQTVTKVIEWER_DIR=${VIEWER_ROOT}/ --includes  ${VIEWER_ROOT}/../OOpenCAL/base # --template ${VIEWER_ROOT}/examples/custom_model_plugin/
+./scripts/build_plugin.sh ${VIEWER_ROOT}/../OOpenCAL/models/Ball/Output/BallCell.h -DPLUGIN_MODEL_NAME='"Ball2"' -DPLUGIN_CELL_CLASS=BallCell -DOOPENCAL_DIR=${VIEWER_ROOT}/../ -DOOPENCALVIEWER_DIR=${VIEWER_ROOT}/ --includes  ${VIEWER_ROOT}/../OOpenCAL/base # --template ${VIEWER_ROOT}/examples/custom_model_plugin/
 
 # ----------- building with cmake:
-cmake . -DOOPENCAL_DIR=${VIEWER_ROOT}/../ -DQTVTKVIEWER_DIR=${VIEWER_ROOT}
-cmake . -DOOPENCAL_DIR=${VIEWER_ROOT}/../ -DQTVTKVIEWER_DIR=${VIEWER_ROOT} -DPLUGIN_CELL_CLASS="BallCell" -DPLUGIN_MODEL_NAME='"My ball model"'
-cmake . -DOOPENCAL_DIR=${VIEWER_ROOT}/../ -DQTVTKVIEWER_DIR=${VIEWER_ROOT} -DPLUGIN_CELL_CLASS="CustomCell" -DPLUGIN_MODEL_NAME='"My ball model"' && make -j8
+cmake . -DOOPENCAL_DIR=${VIEWER_ROOT}/../ -DOOPENCALVIEWER_DIR=${VIEWER_ROOT}
+cmake . -DOOPENCAL_DIR=${VIEWER_ROOT}/../ -DOOPENCALVIEWER_DIR=${VIEWER_ROOT} -DPLUGIN_CELL_CLASS="BallCell" -DPLUGIN_MODEL_NAME='"My ball model"'
+cmake . -DOOPENCAL_DIR=${VIEWER_ROOT}/../ -DOOPENCALVIEWER_DIR=${VIEWER_ROOT} -DPLUGIN_CELL_CLASS="CustomCell" -DPLUGIN_MODEL_NAME='"My ball model"' && make -j8
