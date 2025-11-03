@@ -1,14 +1,18 @@
 # Custom Model Plugin Example
 
-This directory contains a complete plugin example for Qt-VTK-viewer that adds a custom model **without recompiling the main application**.
+This directory contains a complete plugin example for **OOpenCal-Viewer** that adds a custom model **without recompiling the main application**.
+
+---
 
 ## Contents
 
 * **CustomCell.h** – Definition of a custom cell class inheriting from `Element`
-* **CustomModelPlugin.cpp** – Minimal plugin version (for understanding the structure)
-* **CustomModelPlugin_Full.cpp** – Fully working plugin implementation
+* **Plugin_MinimalExample.cpp** – Minimal plugin version (for understanding the structure)
+* **Plugin_FullTemplate.cpp** – Fully working plugin implementation
 * **CMakeLists.txt** – Build configuration
 * **README.md** – This file
+
+---
 
 ## Model Structure
 
@@ -16,64 +20,161 @@ This directory contains a complete plugin example for Qt-VTK-viewer that adds a 
 
 * Stores a single integer value (0–255)
 * Displays it using a color gradient:
-  * 0–63: Blue → Cyan
-  * 64–127: Cyan → Green
-  * 128–191: Green → Yellow
-  * 192–255: Yellow → Red
+  * 0–63: Blue → Cyan  
+  * 64–127: Cyan → Green  
+  * 128–191: Green → Yellow  
+  * 192–255: Yellow → Red  
+
+---
 
 ## ⚠️ IMPORTANT: Symbols from the Main Application
 
 The plugin **MUST NOT** compile its own copy of `SceneWidgetVisualizerFactory.cpp`!
 
-**Why?**
+### Why?
 
-* The plugin relies on symbols (functions, static variables) defined in the main application
+* The plugin relies on symbols (functions, static variables) defined in the main application  
 * If the plugin compiles its own copy of the Factory, it will create **a separate, isolated registry**
 * Result: models registered inside the plugin **will not be visible** to the main application
 
-**Solution used in this example:**
+### Solution used in this example:
 
 * `CMakeLists.txt` only builds `CustomModelPlugin_Full.cpp`
 * The main application is linked with `-rdynamic` to export symbols
 * The plugin accesses these symbols via `RTLD_GLOBAL`
 
-**Note:** The plugin's `CMakeLists.txt` is designed to work in two modes:
-* **Standalone build** - Find packages independently
-* **Subdirectory build** - Reuse packages from main project (avoids CMake conflicts)
+---
 
 ## Plugin Compilation
 
 ### Requirements
 
 * CMake 3.16+
-* C++17 compiler (g++, clang++)
+* C++20 or newer compiler (g++, clang++)
 * VTK (same version as in the main application)
-* Qt5/Qt6 (optional, only if referenced in headers)
+* Qt5 or Qt6 (optional – only if referenced in headers)
 * The main application **must be linked with `-rdynamic`**
 
-### Build Steps
+---
+
+## 🔧 CMake Configuration Options
+
+The plugin supports the following **customizable arguments**:
+
+| Argument             | Default Value    | Description |
+|----------------------|------------------|-------------|
+| `PLUGIN_MODEL_NAME`  | `"Custom Model"` | Human-readable name of the model shown in the application's **Model** menu. |
+| `PLUGIN_CELL_CLASS`  | `CustomCell`     | C++ class implementing the cell logic (must have a corresponding header file `<ClassName>.h`). |
+| `OOPENCALVIEWER_DIR` | `../..`          | Path to the **OOpenCal-Viewer** source directory. |
+| `OOPENCAL_DIR`       | `${OOPENCALVIEWER_DIR}/..` | Path to the **OOpenCAL** root directory. |
+
+---
+
+### Example: Default Build
 
 ```bash
-# In examples/custom_model_plugin/
-mkdir build
-cd build
-
-# Configure (CMake will auto-detect Qt-VTK-viewer in ../..)
+mkdir build && cd build
 cmake ..
+make -j8
+````
 
-# Alternatively, provide paths manually:
-cmake .. -DQTVTKVIEWER_DIR=/path/to/Qt-VTK-viewer2 \
-         -DOOPENCAL_DIR=/path/to/OOpenCAL
+This will build a plugin named:
 
-# Compile
-make
-
-# Result: libCustomModelPlugin.so
+```
+libCustomModelPlugin.so
 ```
 
-### Verification
+containing a model called **Custom Model** based on class **CustomCell**.
 
-Check if the plugin exports the required functions:
+---
+
+### Example: Custom Model and Cell
+
+You can override model name and cell class directly from the command line:
+
+```bash
+cmake .. \
+  -DPLUGIN_MODEL_NAME="\"My Fire Model\"" \
+  -DPLUGIN_CELL_CLASS=FireCell
+make -j8
+```
+
+💡 **Note:**
+If your model name contains spaces, it **must** be wrapped in escaped quotes (`\"My Model\"`) so the compiler interprets it as a string literal.
+Example:
+
+```bash
+-DPLUGIN_MODEL_NAME="\"My Custom Model\""
+```
+
+---
+
+### Example: Full Configuration with Paths
+
+```bash
+cmake .. \
+  -DOOPENCALVIEWER_DIR=/home/user/OOpenCal-Viewer \
+  -DOOPENCAL_DIR=/home/user/OOpenCAL \
+  -DPLUGIN_MODEL_NAME="\"Ball Simulation\"" \
+  -DPLUGIN_CELL_CLASS=BallCell
+make -j8
+```
+
+After compilation you’ll get:
+
+```
+libCustomModelPlugin.so  →  Model name: "Ball Simulation", Cell class: BallCell
+```
+
+---
+
+### Output Files
+
+The build process produces symbolic links for versioned libraries:
+
+```
+libCustomModelPlugin.so      → main plugin file
+libCustomModelPlugin.so.1
+libCustomModelPlugin.so.1.0
+```
+
+All point to the same compiled binary.
+
+---
+
+## 🧩 Plugin Build Info (CMake Output)
+
+During compilation, the console will display information like:
+
+```
+========================================
+CustomModelPlugin Configuration
+========================================
+Build type:          Release
+OOpenCal-Viewer dir: /path/to/OOpenCal-Viewer
+OOpenCAL directory:  /path/to/OOpenCAL
+VTK version:         9.3.0
+----------------------------------------
+Plugin model name:   "My Fire Model"
+Plugin cell class:   FireCell
+----------------------------------------
+Output: libCustomModelPlugin.so
+========================================
+```
+
+Additionally, compile-time messages (via `#pragma message`) will show:
+
+```
+[Plugin build info]
+  Model name: "My Fire Model"
+  Cell class: FireCell
+```
+
+---
+
+## Verification
+
+After building, you can verify that the plugin exports the required symbols:
 
 ```bash
 nm -D libCustomModelPlugin.so | grep register
@@ -84,6 +185,8 @@ Expected output:
 ```
 00000000000XXXXX T registerPlugin
 ```
+
+---
 
 ## Using the Plugin
 
@@ -112,19 +215,15 @@ void loadPlugin(const char* path)
         std::cout << "Plugin loaded: " << path << std::endl;
     }
 }
-
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
-    
-    // Load plugin
-    loadPlugin("./plugins/libCustomModelPlugin.so");
-    
-    MainWindow w;
-    w.show();
-    return a.exec();
-}
 ```
+
+Then, in `main()`:
+
+```cpp
+loadPlugin("./plugins/libCustomModelPlugin.so");
+```
+
+---
 
 ### Option 2: Command-line argument
 
@@ -132,67 +231,72 @@ int main(int argc, char *argv[])
 ./QtVtkViewer --plugin=./build/libCustomModelPlugin.so
 ```
 
+---
+
 ### Option 3: Plugins directory
 
-Place `libCustomModelPlugin.so` in the `plugins/` directory next to the application — it will be loaded automatically on startup.
+Place the plugin file (`libCustomModelPlugin.so`) into the `plugins/` directory next to the main application — it will be loaded automatically on startup.
+
+---
 
 ## After Loading
 
-1. Launch Qt-VTK-viewer
-2. A new entry **CustomModel** will appear in the **Model** menu
-3. Select **Model → CustomModel** to activate it
-4. Load a compatible data file (formatted for `CustomCell`)
+1. Launch **OOpenCal-Viewer**
+2. A new entry (e.g., **My Fire Model**) will appear in the **Model** menu
+3. Select it to activate the model
+4. Load a compatible dataset (formatted for your custom cell class)
+
+---
 
 ## Creating Your Own Plugin
 
-Use this example as a template:
+Use this directory as a starting point:
 
-1. Copy the full `custom_model_plugin/` directory
-2. Rename it to `my_model_plugin/`
-3. In `CustomCell.h`:
+1. Copy `custom_model_plugin/` to a new folder (e.g. `ball_model_plugin/`)
+2. Rename files:
 
-   * Rename the class to `MyModelCell`
-   * Implement your own logic
-4. In `CustomModelPlugin_Full.cpp`:
+   * `CustomCell.h` → `BallCell.h`
+   * `CustomModelPlugin_Full.cpp` → `BallModelPlugin_Full.cpp`
+3. In `BallCell.h`:
 
-   * Replace `"CustomModel"` with `"MyModel"`
-   * Update `SceneWidgetVisualizerAdapter<MyModelCell>`
-5. In `CMakeLists.txt`:
+   * Rename the class to `BallCell`
+   * Implement your logic
+4. In `CMakeLists.txt`:
 
-   * Change `project(CustomModelPlugin)` to `project(MyModelPlugin)`
-   * Update source file names
-6. Build & use!
+   * Update `project(BallModelPlugin)`
+   * Adjust source file names
+5. Build using:
+
+   ```bash
+   cmake .. -DPLUGIN_MODEL_NAME="\"Ball Simulation\"" -DPLUGIN_CELL_CLASS=BallCell
+   make -j8
+   ```
+
+---
 
 ## Debugging
 
 ### Problem: Plugin not loading
 
 ```bash
-# Check if the file exists and has executable permissions
 ls -la libCustomModelPlugin.so
-
-# Check dependencies
 ldd libCustomModelPlugin.so
-
-# Check exported symbols
 nm -D libCustomModelPlugin.so
 ```
 
 ### Problem: `registerPlugin` function not found
 
-Make sure that:
+* Ensure function is marked as `extern "C"`
+* Has `__attribute__((visibility("default")))`
+* Named exactly `registerPlugin`
 
-* The function is marked as `extern "C"`
-* It has `__attribute__((visibility("default")))`
-* The name is exactly `registerPlugin` (case-sensitive)
+### Problem: Crash while loading
 
-### Problem: Application crashes while loading
+* Plugin and main app must be compiled with **the same compiler**
+* VTK and Qt versions must match
+* ABI (Application Binary Interface) must be compatible
 
-Verify that:
-
-* The plugin was compiled using the **same compiler** as the app
-* VTK versions match exactly
-* ABI (Application Binary Interface) is compatible
+---
 
 ## Plugin Code Flow
 
@@ -203,44 +307,47 @@ registerPlugin()                    // Entry point
                     └─> CustomCell implements Element interface
 ```
 
+---
+
 ## Advanced: Plugin Metadata
 
-The plugin can export additional functions:
+The plugin may also provide extra functions for metadata:
 
 ```cpp
 extern "C" 
 {
-// Plugin info
 __attribute__((visibility("default")))
 const char* getPluginInfo()
 {
     return "My Plugin v1.0 - Model description";
 }
 
-// Plugin version
 __attribute__((visibility("default")))
 int getPluginVersion()
 {
     return 100; // 1.00
 }
 
-// Model name
 __attribute__((visibility("default")))
 const char* getModelName()
 {
     return "MyModel";
 }
-} // extern "C" 
+} // extern "C"
 ```
 
-The application can call these to display plugin information.
+The main application can call these to display plugin information.
+
+---
 
 ## License
 
-This example is part of Qt-VTK-viewer
+This example is part of **OOpenCal-Viewer**.
+
+---
 
 ## See Also
 
-- **[../../doc/PLUGIN_USER_GUIDE.md](../../doc/PLUGIN_USER_GUIDE.md)** – Complete user guide for creating plugins
-- **[../../doc/PLUGIN_ARCHITECTURE.md](../../doc/PLUGIN_ARCHITECTURE.md)** – Technical implementation details
-- **[../crowdsimulation_model_plugin/](../crowdsimulation_model_plugin/)** – Another example plugin
+* **[../../doc/PLUGIN_USER_GUIDE.md](../../doc/PLUGIN_USER_GUIDE.md)** – Complete user guide for creating plugins
+* **[../../doc/PLUGIN_ARCHITECTURE.md](../../doc/PLUGIN_ARCHITECTURE.md)** – Technical implementation details
+* **[../crowdsimulation_model_plugin/](../crowdsimulation_model_plugin/)** – Another example plugin

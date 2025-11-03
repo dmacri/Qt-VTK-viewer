@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Qt-VTK-viewer now supports switching between **2D** and **3D** view modes, allowing you to visualize your OpenCAL simulation data from different perspectives.
+The OOpenCal-Viewer now supports switching between **2D** and **3D** view modes, allowing you to visualize your OpenCAL simulation data from different perspectives.
 
 ## Features
 

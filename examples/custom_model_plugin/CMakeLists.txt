@@ -5,47 +5,52 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ============================================================================
+# Plugin configuration options
+# ============================================================================
+
+# These options allow you to build different plugin variants from the same source.
+# You can override them in CMake GUI, on the command line, or in presets:
+#   cmake -DPLUGIN_MODEL_NAME="\"FireModel\"" -DPLUGIN_CELL_CLASS=FireCell ..
+
+set(PLUGIN_MODEL_NAME "\"Custom Model\"" CACHE STRING "Model name visible in the viewer (string literal)")
+set(PLUGIN_CELL_CLASS CustomCell CACHE STRING "C++ class implementing the cell model")
+
+# ============================================================================
 # Configuration - Adjust these paths for your system
 # ============================================================================
 
-# Path to the Qt-VTK-viewer source directory
-set(QTVTKVIEWER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../.." CACHE PATH "Path to Qt-VTK-viewer source")
-
-# Path to OOpenCAL (if using models from OOpenCAL)
-set(OOPENCAL_DIR "${QTVTKVIEWER_DIR}/.." CACHE PATH "Path to OOpenCAL directory")
+set(OOPENCALVIEWER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../.." CACHE PATH "Path to OOpenCal-Viewer source")
+set(OOPENCAL_DIR "${OOPENCALVIEWER_DIR}/.." CACHE PATH "Path to OOpenCAL directory")
 
 # ============================================================================
 # Find required packages
 # ============================================================================
 
-# Only find packages if not already found by parent project
 if(NOT VTK_FOUND)
-find_package(VTK COMPONENTS
-    CommonColor
-    CommonCore
-    CommonDataModel
-    FiltersSources
-    InteractionStyle
-    InteractionWidgets
-    RenderingAnnotation
-    RenderingContextOpenGL2
-    RenderingCore
-    RenderingFreeType
-    RenderingGL2PSOpenGL2
-    RenderingOpenGL2
-    IOXML
-    IOOggTheora
-    REQUIRED
-        GUISupportQt
-        IOLegacy
-)
+    find_package(VTK COMPONENTS
+        CommonColor
+        CommonCore
+        CommonDataModel
+        FiltersSources
+        InteractionStyle
+        InteractionWidgets
+        RenderingAnnotation
+        RenderingContextOpenGL2
+        RenderingCore
+        RenderingFreeType
+        RenderingGL2PSOpenGL2
+        RenderingOpenGL2
+        IOXML
+        IOOggTheora
+        REQUIRED
+            GUISupportQt
+            IOLegacy
+    )
 endif()
 
-# Qt is optional for plugins (only needed if plugin uses Qt types in headers)
-# If building as subdirectory, Qt should already be found by main project
 if(NOT Qt6_FOUND AND NOT Qt5_FOUND)
-find_package(Qt6 COMPONENTS Core Widgets QUIET)
-if(NOT Qt6_FOUND)
+    find_package(Qt6 COMPONENTS Core Widgets QUIET)
+    if(NOT Qt6_FOUND)
         find_package(Qt5 5.15 COMPONENTS Core Widgets QUIET)
     endif()
 endif()
@@ -56,44 +61,58 @@ endif()
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${QTVTKVIEWER_DIR}
-    ${QTVTKVIEWER_DIR}/visualiserProxy
-    ${QTVTKVIEWER_DIR}/visualiser
-    ${QTVTKVIEWER_DIR}/widgets
+    ${OOPENCALVIEWER_DIR}
+    ${OOPENCALVIEWER_DIR}/visualiserProxy
+    ${OOPENCALVIEWER_DIR}/visualiser
+    ${OOPENCALVIEWER_DIR}/widgets
     ${OOPENCAL_DIR}
     ${VTK_INCLUDE_DIRS}
 )
 
 # ============================================================================
+# Optional extra include directories (passed from bash)
+# ============================================================================
+set(EXTRA_INCLUDE_DIR "" CACHE PATH "Optional include directory for cell dependencies")
+
+if(EXTRA_INCLUDE_DIR)
+    message(STATUS "Extra include directory: ${EXTRA_INCLUDE_DIR}")
+    include_directories(${EXTRA_INCLUDE_DIR})
+endif()
+
+# ============================================================================
 # Build the plugin as a shared library
 # ============================================================================
+set(PLUGIN_LIB_NAME "${PLUGIN_CELL_CLASS}Plugin")
 
-add_library(${PROJECT_NAME} SHARED
-    CustomModelPlugin_Full.cpp
-    # Do NOT compile Factory - use symbols from main app!
-    README.md
-)
+# Define source list safely
+set(PLUGIN_SOURCES Plugin_FullTemplate.cpp)
 
-# Link with VTK (minimal linking - main app has most dependencies)
-target_link_libraries(${PROJECT_NAME}
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+    list(APPEND PLUGIN_SOURCES README.md)
+endif()
+
+add_library(${PLUGIN_LIB_NAME} SHARED ${PLUGIN_SOURCES})
+
+target_compile_definitions(${PLUGIN_LIB_NAME}
     PRIVATE
-    ${VTK_LIBRARIES}
+        PLUGIN_MODEL_NAME="\"${PLUGIN_MODEL_NAME}\""
+        PLUGIN_CELL_CLASS=${PLUGIN_CELL_CLASS}
 )
 
-# Ensure symbols are exported
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    CXX_VISIBILITY_PRESET default
-    VERSION ${PROJECT_VERSION}
-    SOVERSION 1
-    PREFIX "lib"  # Ensure it's named libCustomModelPlugin.so
+target_link_libraries(${PLUGIN_LIB_NAME}
+    PRIVATE
+        ${VTK_LIBRARIES}
+)
+
+set_target_properties(${PLUGIN_LIB_NAME} PROPERTIES
+    PREFIX "lib"
 )
 
 # ============================================================================
 # Installation (optional)
 # ============================================================================
 
-# Install to plugins directory relative to build directory
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PLUGIN_LIB_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins
     RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins
 )
@@ -102,27 +121,41 @@ install(TARGETS ${PROJECT_NAME}
 # Build instructions message
 # ============================================================================
 
+# ------------------------------
+# Safe defaults for plugin build
+# ------------------------------
+if(NOT DEFINED PLUGIN_MODEL_NAME OR PLUGIN_MODEL_NAME STREQUAL "")
+    set(PLUGIN_MODEL_NAME "Custom Model")
+endif()
+
+if(NOT DEFINED PLUGIN_CELL_CLASS OR PLUGIN_CELL_CLASS STREQUAL "")
+    set(PLUGIN_CELL_CLASS CustomCell)
+endif()
+
 message(STATUS "========================================")
 message(STATUS "${PROJECT_NAME} Configuration")
 message(STATUS "========================================")
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "Qt-VTK-viewer source: ${QTVTKVIEWER_DIR}")
-message(STATUS "OOpenCAL directory:   ${OOPENCAL_DIR}")
-message(STATUS "VTK version:          ${VTK_VERSION}")
+message(STATUS "Build type:          ${CMAKE_BUILD_TYPE}")
+message(STATUS "OOpenCal-Viewer dir: ${OOPENCALVIEWER_DIR}")
+message(STATUS "OOpenCAL directory:  ${OOPENCAL_DIR}")
+message(STATUS "VTK version:         ${VTK_VERSION}")
+message(STATUS "----------------------------------------")
+message(STATUS "Plugin model name:   ${PLUGIN_MODEL_NAME}")
+message(STATUS "Plugin cell class:   ${PLUGIN_CELL_CLASS}")
+message(STATUS "----------------------------------------")
 
-# Check if building as subdirectory or standalone
 get_directory_property(HAS_PARENT PARENT_DIRECTORY)
 if(HAS_PARENT)
     message(STATUS "Building as subdirectory of main project")
 else()
     message(STATUS "Building standalone")
-message(STATUS "")
-message(STATUS "To build:")
-message(STATUS "  mkdir build && cd build")
-message(STATUS "  cmake ..")
-message(STATUS "  make")
+    message(STATUS "")
+    message(STATUS "To build:")
+    message(STATUS "  mkdir build && cd build")
+    message(STATUS "  cmake ..")
+    message(STATUS "  make")
 endif()
 
 message(STATUS "")
-message(STATUS "Output: libCustomModelPlugin.so")
+message(STATUS "Output: lib${PLUGIN_CELL_CLASS}Plugin.so")
 message(STATUS "========================================")

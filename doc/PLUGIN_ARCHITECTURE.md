@@ -1,6 +1,6 @@
 # Plugin System Architecture
 
-Technical documentation of the plugin system implementation for Qt-VTK-viewer developers.
+Technical documentation of the plugin system implementation for OOpenCal-Viewer developers.
 
 ## Table of Contents
 
@@ -16,7 +16,7 @@ Technical documentation of the plugin system implementation for Qt-VTK-viewer de
 
 ## Overview
 
-The Qt-VTK-viewer implements a dynamic plugin system that allows loading custom visualization models at runtime without recompiling the main application.
+The OOpenCal-Viewer implements a dynamic plugin system that allows loading custom visualization models at runtime without recompiling the main application.
 
 ### Key Features
 
@@ -57,8 +57,8 @@ PluginLoader::loadPlugin("libMyModel.so");
 
 ```
 ┌─────────────────────────────────────────────────┐
-│         Qt-VTK-viewer Application                │
-│                                                   │
+│         OOpenCal-Viewer Application             │
+│                                                 │
 │  ┌──────────────┐         ┌──────────────┐      │
 │  │  MainWindow  │─────────│ PluginLoader │      │
 │  │              │         │  (Singleton) │      │
@@ -605,9 +605,9 @@ project(CustomModelPlugin)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Auto-detect Qt-VTK-viewer location
-if(NOT DEFINED QTVTKVIEWER_DIR)
-    set(QTVTKVIEWER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+# Auto-detect OOpenCal-Viewer location
+if(NOT DEFINED OOPENCALVIEWER_DIR)
+    set(OOPENCALVIEWER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 endif()
 
 # Conditional package finding (avoids CMake conflicts)
@@ -621,8 +621,8 @@ endif()
 
 # Include directories
 include_directories(
-    ${QTVTKVIEWER_DIR}
-    ${QTVTKVIEWER_DIR}/visualiserProxy
+    ${OOPENCALVIEWER_DIR}
+    ${OOPENCALVIEWER_DIR}/visualiserProxy
     ${VTK_INCLUDE_DIRS}
     ${OOPENCAL_DIR}
 )
@@ -655,7 +655,7 @@ set_target_properties(CustomModelPlugin PROPERTIES
 ## File Structure
 
 ```
-Qt-VTK-viewer2/
+OOpenCal-Viewer/
 ├── PluginLoader.h                          [Plugin management]
 ├── PluginLoader.cpp
 ├── main.cpp                                [Auto-load plugins at startup]
