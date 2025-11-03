@@ -1,4 +1,4 @@
-/** CustomModelPlugin_Full.cpp
+/** Plugin_FullTemplate.cpp
  * 
  * FULL WORKING VERSION of the plugin with actual includes
  *
