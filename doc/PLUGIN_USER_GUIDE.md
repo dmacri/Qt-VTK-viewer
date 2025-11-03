@@ -1,6 +1,6 @@
 # Plugin User Guide - Adding Custom Models
 
-Complete guide for users who want to add custom visualization models to Qt-VTK-viewer.
+Complete guide for users who want to add custom visualization models to OOpenCal-Viewer.
 
 ## Table of Contents
 
@@ -16,7 +16,7 @@ Complete guide for users who want to add custom visualization models to Qt-VTK-v
 
 ### Prerequisites
 
-* Qt-VTK-viewer compiled and working
+* OOpenCal-Viewer compiled and working
 * C++ compiler (g++, clang++)
 * CMake 3.16+
 * VTK (same version as the application)
@@ -24,7 +24,7 @@ Complete guide for users who want to add custom visualization models to Qt-VTK-v
 ### Step 1: Copy the Plugin Template
 
 ```bash
-cd /path/to/Qt-VTK-viewer2
+cd /path/to/OOpenCal-Viewer
 cp -r examples/custom_model_plugin my_plugin
 cd my_plugin
 ```
@@ -233,8 +233,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Paths (adjust to your system)
-set(QTVTKVIEWER_DIR "/path/to/Qt-VTK-viewer2")
 set(OOPENCAL_DIR "/path/to/OOpenCAL")
+set(OOPENCALVIEWER_DIR "/path/to/OOpenCal-Viewer")
 
 # Find VTK
 if(NOT VTK_FOUND)
@@ -243,8 +243,8 @@ endif()
 
 # Include directories
 include_directories(
-    ${QTVTKVIEWER_DIR}
-    ${QTVTKVIEWER_DIR}/visualiserProxy
+    ${OOPENCALVIEWER_DIR}
+    ${OOPENCALVIEWER_DIR}/visualiserProxy
     ${VTK_INCLUDE_DIRS}
     ${OOPENCAL_DIR}
 )
@@ -269,7 +269,7 @@ set_target_properties(MyModelPlugin PROPERTIES
 
 ```bash
 mkdir build && cd build
-cmake .. -DQTVTKVIEWER_DIR=/path/to/Qt-VTK-viewer2 \
+cmake .. -DOOPENCALVIEWER_DIR=/path/to/OOpenCal-Viewer \
          -DOOPENCAL_DIR=/path/to/OOpenCAL
 make
 ```

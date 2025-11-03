@@ -9,7 +9,7 @@
 
 #include "OOpenCAL/base/Cell.h"
 
-/** CustomCell - Example custom model for Qt-VTK-viewer plugin system
+/** CustomCell - Example custom model for OOpenCal-Viewer plugin system
  * 
  * This is a simple example showing how to create a custom cell model
  * that can be loaded as a plugin without recompiling the main application.
