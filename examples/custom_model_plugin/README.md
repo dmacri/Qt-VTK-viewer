@@ -7,8 +7,8 @@ This directory contains a complete plugin example for **Qt-VTK-viewer** that add
 ## Contents
 
 * **CustomCell.h** – Definition of a custom cell class inheriting from `Element`
-* **CustomModelPlugin.cpp** – Minimal plugin version (for understanding the structure)
-* **CustomModelPlugin_Full.cpp** – Fully working plugin implementation
+* **Plugin_MinimalExample.cpp** – Minimal plugin version (for understanding the structure)
+* **Plugin_FullTemplate.cpp** – Fully working plugin implementation
 * **CMakeLists.txt** – Build configuration
 * **README.md** – This file
 

@@ -73,7 +73,7 @@ prepare_build_dir() {
 # Copy or symlink required files
 # --------------------------------------------------------------
 copy_required_files() {
-    local REQUIRED_FILES=("CMakeLists.txt" "CustomModelPlugin_Full.cpp")
+    local REQUIRED_FILES=("CMakeLists.txt" "Plugin_FullTemplate.cpp")
 
     for FILE in "${REQUIRED_FILES[@]}"; do
         if [[ -f "$FILE" ]]; then

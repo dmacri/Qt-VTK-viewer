@@ -85,7 +85,7 @@ endif()
 set(PLUGIN_LIB_NAME "${PLUGIN_CELL_CLASS}Plugin")
 
 # Define source list safely
-set(PLUGIN_SOURCES CustomModelPlugin_Full.cpp)
+set(PLUGIN_SOURCES Plugin_FullTemplate.cpp)
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
     list(APPEND PLUGIN_SOURCES README.md)
