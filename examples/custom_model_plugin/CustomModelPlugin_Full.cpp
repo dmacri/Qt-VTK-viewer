@@ -40,7 +40,6 @@
 #include <iostream>
 #include <memory> // std::unique_ptr
 #include EXPAND_AND_STRINGIFY(PLUGIN_CELL_CLASS.h)
-#include "ISceneWidgetVisualizer.h"
 #include "visualiserProxy/SceneWidgetVisualizerAdapter.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
 

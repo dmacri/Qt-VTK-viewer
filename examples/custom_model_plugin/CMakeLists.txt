@@ -84,10 +84,14 @@ endif()
 # ============================================================================
 set(PLUGIN_LIB_NAME "${PLUGIN_CELL_CLASS}Plugin")
 
-add_library(${PLUGIN_LIB_NAME} SHARED
-    CustomModelPlugin_Full.cpp
-    README.md
-)
+# Define source list safely
+set(PLUGIN_SOURCES CustomModelPlugin_Full.cpp)
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+    list(APPEND PLUGIN_SOURCES README.md)
+endif()
+
+add_library(${PLUGIN_LIB_NAME} SHARED ${PLUGIN_SOURCES})
 
 target_compile_definitions(${PLUGIN_LIB_NAME}
     PRIVATE
