@@ -131,7 +131,7 @@ ModelLoader::LoadResult ModelLoader::loadModelFromDirectory(const std::string& m
                 std::cerr << "[WARNING] C++ source file '" << sourceFile << "' is never than module file '" << outputFile << "'" << std::endl;
             }
         }
-        else // (!moduleExists(outputFile))
+        else // if module does not exist
         {
             const std::string wrapperSource = modelDirectory + "/" + result.modelName + "_wrapper.cpp";
 
