@@ -19,17 +19,21 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+
 #include "utilities/PluginLoader.h"
 #include "utilities/CommandLineParser.h"
 #include "utilities/ModelLoader.h"
 #include "utilities/CppModuleBuilder.h"
+#include "visualiser/SettingParameter.h"
+#include "config/Config.h"
 #include "widgets/ConfigDetailsDialog.h"
 #include "widgets/ColorSettingsDialog.h"
 #include "widgets/AboutDialog.h"
 #include "widgets/CompilationLogWidget.h"
+#include "widgets/ReductionDialog.h"
+#include "widgets/ReductionManager.h"
 #include "visualiser/VideoExporter.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
-#include "config/Config.h"
 
 
 namespace
@@ -91,6 +95,7 @@ void MainWindow::setupConnections()
 
     connect(ui->positionSpinBox, &QSpinBox::editingFinished, this, &MainWindow::onStepNumberChanged);
     connect(ui->inputFilePathLabel, &ClickableLabel::doubleClicked, this, &MainWindow::showConfigDetailsDialog);
+    connect(ui->inputFilePathLabel, &ClickableLabel::doubleClicked, this, &MainWindow::onReductionLabelClicked);
     connect(ui->sceneWidget, &SceneWidget::changedStepNumberWithKeyboardKeys, ui->updatePositionSlider, &QSlider::setValue);
     connect(ui->sceneWidget, &SceneWidget::totalNumberOfStepsReadFromConfigFile, this, &MainWindow::totalStepsNumberChanged);
     connect(ui->sceneWidget, &SceneWidget::availableStepsReadFromConfigFile, this, &MainWindow::availableStepsLoadedFromConfigFile);
@@ -450,6 +455,7 @@ bool MainWindow::setPositionOnWidgets(StepIndex stepPosition, bool updateSlider)
         changingPositionSuccess = false;
     }
     changeWhichButtonsAreEnabled();
+    updateReductionDisplay();
 
     return changingPositionSuccess;
 }
@@ -472,6 +478,7 @@ void MainWindow::onStepNumberChanged()
         currentStep = step;
         setPositionOnWidgets(currentStep);
     }
+    updateReductionDisplay();
 }
 
 void MainWindow::onUpdateStepPositionOnSlider(StepIndex value)
@@ -588,6 +595,9 @@ void MainWindow::openConfigurationFile(const QString& configFileName)
             // Reload with new configuration
             ui->sceneWidget->loadNewConfiguration(configFileName.toStdString(), 0);
         }
+
+        // Initialize reduction manager for this configuration
+        initializeReductionManager(configFileName);
 
         // Update UI with new configuration
         showInputFilePathOnBarLabel(configFileName);
@@ -780,6 +790,10 @@ void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
         {
             // Refresh the models menu
             recreateModelMenuActions();
+
+            // Reset reduction manager when model changes
+            reductionManager.reset();
+            updateReductionDisplay();
 
             progress.close();
 
@@ -1288,5 +1302,115 @@ void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
         {
             QTimer::singleShot(100, this, &MainWindow::close);
         }
+    }
+}
+
+void MainWindow::updateReductionDisplay()
+{
+    if (! reductionManager)
+    {
+        // No reduction manager available - clear the label
+        this->ui->inputFilePathLabel->setToolTip("");
+        return;
+    }
+
+    // Check if reduction is configured
+    const auto* settingParam = this->ui->sceneWidget->getSettingParameter();
+    if (! settingParam || settingParam->reduction.empty())
+    {
+        // Reduction not configured
+        this->ui->inputFilePathLabel->setToolTip(
+            "<span style='color: #FF6B6B;'><b>Reduction not configured</b></span><br/>"
+            "Add 'reduction=...' to VISUALIZATION section in config file");
+        return;
+    }
+
+    // Check if reduction data is available
+    if (! reductionManager->isAvailable())
+    {
+        // Reduction configured but file not found
+        QString errorMsg = reductionManager->getErrorMessage();
+        if (errorMsg.isEmpty())
+        {
+            errorMsg = "Reduction file not found";
+        }
+        this->ui->inputFilePathLabel->setToolTip(
+            QString("<span style='color: #FF6B6B;'><b>Reduction Error:</b></span><br/>%1")
+                .arg(errorMsg));
+        return;
+    }
+
+    // Get formatted reduction string for current step
+    QString reductionStr = reductionManager->getFormattedReductionString(currentStep);
+    if (reductionStr.isEmpty())
+    {
+        this->ui->inputFilePathLabel->setToolTip(
+            "<span style='color: #FFB84D;'><b>No reduction data for this step</b></span>");
+        return;
+    }
+
+    // Set tooltip with reduction data
+    this->ui->inputFilePathLabel->setToolTip(
+        QString("<b>Reduction (Step %1):</b><br/>%2<br/><br/>"
+                "<i>Double-click to see all values</i>")
+            .arg(currentStep)
+            .arg(reductionStr));
+}
+
+void MainWindow::onReductionLabelClicked()
+{
+    if (!reductionManager || !reductionManager->isAvailable())
+    {
+        return; // No reduction data available
+    }
+
+    // Get reduction data for current step
+    ReductionData reductionData = reductionManager->getReductionForStep(currentStep);
+    if (reductionData.values.empty())
+    {
+        QMessageBox::information(this, tr("No Data"),
+            tr("No reduction data available for step %1").arg(currentStep));
+        return;
+    }
+
+    // Show reduction dialog
+    ReductionDialog dialog(reductionData.values, currentStep, this);
+    dialog.exec();
+}
+
+void MainWindow::initializeReductionManager(const QString& configFileName)
+{
+    // Get reduction configuration from SettingParameter
+    const auto* settingParam = this->ui->sceneWidget->getSettingParameter();
+    if (!settingParam || settingParam->reduction.empty())
+    {
+        // No reduction configured
+        reductionManager.reset();
+        return;
+    }
+
+    // Build path to reduction file
+    namespace fs = std::filesystem;
+    fs::path configPath(configFileName.toStdString());
+    fs::path outputDir = configPath.parent_path() / "Output";
+    
+    // Get output filename from config
+    try
+    {
+        Config config(configFileName.toStdString());
+        ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
+        std::string outputFileNameFromCfg = generalContext->getConfigParameter("output_file_name")->getValue<std::string>();
+        fs::path reductionFilePath = outputDir / (outputFileNameFromCfg + "-red.txt");
+        
+        // Create ReductionManager with the reduction file path and configuration
+        reductionManager = std::make_unique<ReductionManager>(
+            QString::fromStdString(reductionFilePath.string()),
+            QString::fromStdString(settingParam->reduction)
+        );
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error initializing ReductionManager: " << e.what() << std::endl;
+        reductionManager.reset();
     }
 }

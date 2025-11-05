@@ -16,6 +16,7 @@ class MainWindow;
 class QPushButton;
 class QActionGroup;
 class QTimer;
+class ReductionManager;
 
 /** @class MainWindow
  * @brief The main application window class that manages the user interface.
@@ -45,6 +46,7 @@ private slots:
     void onStepNumberChanged();
     void onOpenConfigurationRequested();
     void onColorSettingsRequested();
+    void onReductionLabelClicked();
 
     void on2DModeRequested();
     void on3DModeRequested();
@@ -120,12 +122,16 @@ private:
     void updateRecentFilesMenu();
     void openConfigurationFile(const QString& configFileName);
     void loadModelFromDirectory(const QString& modelDirectory);
+    void initializeReductionManager(const QString& configFileName);
+    void updateReductionDisplay();
 
     static constexpr int MAX_RECENT_FILES = 10;
 
+private:
     Ui::MainWindow *ui;
     QTimer *playbackTimer;
     QActionGroup *modelActionGroup = nullptr;
+    std::unique_ptr<ReductionManager> reductionManager;
 
     StepIndex currentStep;
 

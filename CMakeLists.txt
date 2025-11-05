@@ -121,6 +121,8 @@ list(APPEND Sources
     widgets/ColorSettings.cpp
     widgets/AboutDialog.cpp
     widgets/CompilationLogWidget.cpp
+    widgets/ReductionDialog.cpp
+    widgets/ReductionManager.cpp
     utilities/PluginLoader.cpp
     utilities/ModelReader.cpp
     utilities/CommandLineParser.cpp
@@ -157,6 +159,16 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOMOC "YES")
 set(CMAKE_AUTOUIC "YES")
 
+
+# ============================================
+# Qt dependencies
+# ============================================
+find_package(Qt6 COMPONENTS
+    Core
+    Gui
+    Widgets
+    REQUIRED
+)
 
 # ============================================
 # VTK dependencies
@@ -303,6 +315,7 @@ endif()
 # Linking
 # ============================================
 target_link_libraries(${PROJECT_NAME} PRIVATE ${VTK_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
 target_link_libraries(${PROJECT_NAME} PRIVATE tiny-process-library)
 #target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Widgets Qt5::OpenGL VTK::GUISupportQt VTK::IOLegacy)
 
