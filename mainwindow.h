@@ -58,7 +58,7 @@ private slots: // menu actions
     // Help submenu:
     void showAboutThisApplicationDialog();
 
-private slots:
+    // other slots
     void onStepNumberChanged();
     void onColorSettingsRequested();
 
