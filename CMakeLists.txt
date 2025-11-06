@@ -123,6 +123,7 @@ list(APPEND Sources
     widgets/CompilationLogWidget.cpp
     widgets/ReductionDialog.cpp
     widgets/ReductionManager.cpp
+    widgets/ReductionDisplayWidget.cpp
     utilities/PluginLoader.cpp
     utilities/ModelReader.cpp
     utilities/CommandLineParser.cpp

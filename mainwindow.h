@@ -46,7 +46,6 @@ private slots:
     void onStepNumberChanged();
     void onOpenConfigurationRequested();
     void onColorSettingsRequested();
-    void onReductionLabelClicked();
 
     void on2DModeRequested();
     void on3DModeRequested();
@@ -129,7 +128,7 @@ private:
 
 private:
     Ui::MainWindow *ui;
-    QTimer *playbackTimer;
+    std::unique_ptr<QTimer> playbackTimer;
     QActionGroup *modelActionGroup = nullptr;
     std::unique_ptr<ReductionManager> reductionManager;
 

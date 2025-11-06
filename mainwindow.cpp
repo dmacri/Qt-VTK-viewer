@@ -30,7 +30,6 @@
 #include "widgets/ColorSettingsDialog.h"
 #include "widgets/AboutDialog.h"
 #include "widgets/CompilationLogWidget.h"
-#include "widgets/ReductionDialog.h"
 #include "widgets/ReductionManager.h"
 #include "visualiser/VideoExporter.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
@@ -51,8 +50,7 @@ inline std::string sourceFileParentDirectoryAbsolutePath(const std::source_locat
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , modelActionGroup(nullptr)
-    , playbackTimer(new QTimer(this))
+    , playbackTimer{ std::make_unique<QTimer>(this) }
     , currentStep{ FIRST_STEP_NUMBER }
 {
     ui->setupUi(this);
@@ -95,12 +93,11 @@ void MainWindow::setupConnections()
 
     connect(ui->positionSpinBox, &QSpinBox::editingFinished, this, &MainWindow::onStepNumberChanged);
     connect(ui->inputFilePathLabel, &ClickableLabel::doubleClicked, this, &MainWindow::showConfigDetailsDialog);
-    connect(ui->inputFilePathLabel, &ClickableLabel::doubleClicked, this, &MainWindow::onReductionLabelClicked);
     connect(ui->sceneWidget, &SceneWidget::changedStepNumberWithKeyboardKeys, ui->updatePositionSlider, &QSlider::setValue);
     connect(ui->sceneWidget, &SceneWidget::totalNumberOfStepsReadFromConfigFile, this, &MainWindow::totalStepsNumberChanged);
     connect(ui->sceneWidget, &SceneWidget::availableStepsReadFromConfigFile, this, &MainWindow::availableStepsLoadedFromConfigFile);
 
-    connect(playbackTimer, &QTimer::timeout, this, &MainWindow::onPlaybackTimerTick);
+    connect(playbackTimer.get(), &QTimer::timeout, this, &MainWindow::onPlaybackTimerTick);
 }
 
 void MainWindow::connectMenuActions()
@@ -1307,79 +1304,13 @@ void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
 
 void MainWindow::updateReductionDisplay()
 {
-    if (! reductionManager)
-    {
-        // No reduction manager available - clear the label
-        this->ui->inputFilePathLabel->setToolTip("");
-        return;
-    }
-
-    // Check if reduction is configured
-    const auto* settingParam = this->ui->sceneWidget->getSettingParameter();
-    if (! settingParam || settingParam->reduction.empty())
-    {
-        // Reduction not configured
-        this->ui->inputFilePathLabel->setToolTip(
-            "<span style='color: #FF6B6B;'><b>Reduction not configured</b></span><br/>"
-            "Add 'reduction=...' to VISUALIZATION section in config file");
-        return;
-    }
-
-    // Check if reduction data is available
-    if (! reductionManager->isAvailable())
-    {
-        // Reduction configured but file not found
-        QString errorMsg = reductionManager->getErrorMessage();
-        if (errorMsg.isEmpty())
-        {
-            errorMsg = "Reduction file not found";
-        }
-        this->ui->inputFilePathLabel->setToolTip(
-            QString("<span style='color: #FF6B6B;'><b>Reduction Error:</b></span><br/>%1")
-                .arg(errorMsg));
-        return;
-    }
-
-    // Get formatted reduction string for current step
-    QString reductionStr = reductionManager->getFormattedReductionString(currentStep);
-    if (reductionStr.isEmpty())
-    {
-        this->ui->inputFilePathLabel->setToolTip(
-            "<span style='color: #FFB84D;'><b>No reduction data for this step</b></span>");
-        return;
-    }
-
-    // Set tooltip with reduction data
-    this->ui->inputFilePathLabel->setToolTip(
-        QString("<b>Reduction (Step %1):</b><br/>%2<br/><br/>"
-                "<i>Double-click to see all values</i>")
-            .arg(currentStep)
-            .arg(reductionStr));
-}
-
-void MainWindow::onReductionLabelClicked()
-{
-    if (!reductionManager || !reductionManager->isAvailable())
-    {
-        return; // No reduction data available
-    }
-
-    // Get reduction data for current step
-    ReductionData reductionData = reductionManager->getReductionForStep(currentStep);
-    if (reductionData.values.empty())
-    {
-        QMessageBox::information(this, tr("No Data"),
-            tr("No reduction data available for step %1").arg(currentStep));
-        return;
-    }
-
-    // Show reduction dialog
-    ReductionDialog dialog(reductionData.values, currentStep, this);
-    dialog.exec();
+    ui->reductionWidget->updateDisplay(currentStep);
 }
 
 void MainWindow::initializeReductionManager(const QString& configFileName)
 {
+    ui->reductionWidget->setReductionManager(nullptr);
+
     // Get reduction configuration from SettingParameter
     const auto* settingParam = this->ui->sceneWidget->getSettingParameter();
     if (!settingParam || settingParam->reduction.empty())
@@ -1407,6 +1338,7 @@ void MainWindow::initializeReductionManager(const QString& configFileName)
             QString::fromStdString(reductionFilePath.string()),
             QString::fromStdString(settingParam->reduction)
         );
+        ui->reductionWidget->setReductionManager(reductionManager.get());
     }
     catch (const std::exception& e)
     {
