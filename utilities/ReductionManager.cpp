@@ -33,7 +33,7 @@ void ReductionManager::loadReductionData(const QString& filePath)
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        errorMessage = QString("Failed to open reduction file: %1").arg(filePath);
+        errorMessage = QString("Failed to open reduction file: %1").arg(filePath); // TODO: GB: It should throw
         dataLoaded = false;
         return;
     }
@@ -56,7 +56,7 @@ void ReductionManager::loadReductionData(const QString& filePath)
 
         if (! parseLine(line, stepNumber, values))
         {
-            errorMessage = QString("Failed to parse line %1 in reduction file: %2").arg(lineNumber).arg(line);
+            errorMessage = QString("Failed to parse line %1 in reduction file: %2").arg(lineNumber).arg(line); // TODO: It should throw?
             file.close();
             dataLoaded = false;
             return;

@@ -220,6 +220,9 @@ if(OOPENCAL_DIR)
         ${OOPENCAL_DIR}
         ${OOPENCAL_DIR}/OOpenCAL
     )
+
+    # Define OOPENCAL_DIR for use in C++ code
+    target_compile_definitions(${PROJECT_NAME} PRIVATE OOPENCAL_DIR="${OOPENCAL_DIR}")
 else()
     message(WARNING "OOPENCAL_DIR not set! Includes like <OOpenCAL/...> may not work.")
 endif()
@@ -328,6 +331,74 @@ vtk_module_autoinit(
     TARGETS ${PROJECT_NAME}
     MODULES VTK::GUISupportQt VTK::IOLegacy
 )
+
+# ============================================
+# Export VTK compile flags to C++ header (this is temporary as long as plugin needs VTK)
+# ============================================
+
+# Select the main VTK target (always present)
+set(VTK_MAIN_TARGET VTK::CommonCore)
+
+# Safely read target properties (may contain generator expressions)
+get_target_property(_vtk_includes ${VTK_MAIN_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(_vtk_defs     ${VTK_MAIN_TARGET} INTERFACE_COMPILE_DEFINITIONS)
+get_target_property(_vtk_opts     ${VTK_MAIN_TARGET} INTERFACE_COMPILE_OPTIONS)
+
+# Prepare resolved lists
+set(VTK_INCLUDES_EXPANDED "")
+set(VTK_DEFS_EXPANDED "")
+set(VTK_OPTS_EXPANDED "")
+
+# Function to strip generator expressions like $<BUILD_INTERFACE:...> or $<INSTALL_INTERFACE:...>
+function(clean_genex output input_list)
+    set(temp_list "")
+    foreach(item IN LISTS input_list)
+        # Remove $<BUILD_INTERFACE:...> and $<INSTALL_INTERFACE:...>
+        string(REGEX REPLACE "\\$<BUILD_INTERFACE:([^>]+)>" "\\1" item "${item}")
+        string(REGEX REPLACE "\\$<INSTALL_INTERFACE:([^>]+)>" "\\1" item "${item}")
+        string(REGEX REPLACE "\\$<[^>]+>" "" item "${item}") # remove any remaining generator expressions
+        string(STRIP "${item}" item)
+        if (NOT "${item}" STREQUAL "")
+            list(APPEND temp_list "${item}")
+        endif()
+    endforeach()
+    set(${output} "${temp_list}" PARENT_SCOPE)
+endfunction()
+
+# Clean all lists
+clean_genex(VTK_INCLUDES_EXPANDED "${_vtk_includes}")
+clean_genex(VTK_DEFS_EXPANDED "${_vtk_defs}")
+clean_genex(VTK_OPTS_EXPANDED "${_vtk_opts}")
+
+# Build final compile flags string
+set(VTK_COMPILE_FLAGS_STR "")
+foreach(inc IN LISTS VTK_INCLUDES_EXPANDED)
+    if (EXISTS "${inc}")
+        string(APPEND VTK_COMPILE_FLAGS_STR "-I${inc} ")
+    endif()
+endforeach()
+
+# Generate header file
+set(VTK_FLAGS_HEADER "${CMAKE_BINARY_DIR}/generated/vtk_compile_flags.h")
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/generated")
+
+file(WRITE "${VTK_FLAGS_HEADER}" "
+// Auto-generated file: DO NOT EDIT
+#pragma once
+
+namespace BuildInfo
+{
+    static constexpr const char* VTK_COMPILE_FLAGS = R\"(${VTK_COMPILE_FLAGS_STR})\";
+}
+")
+
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_BINARY_DIR}/generated")
+
+# (Optional) Debug print to verify values
+message(STATUS "VTK compile includes: ${VTK_INCLUDES_EXPANDED}")
+message(STATUS "VTK compile defs: ${VTK_DEFS_EXPANDED}")
+message(STATUS "VTK compile opts: ${VTK_OPTS_EXPANDED}")
+
 
 # ============================================
 # Doxygen Documentation (optional)

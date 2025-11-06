@@ -48,12 +48,7 @@ if(NOT VTK_FOUND)
     )
 endif()
 
-if(NOT Qt6_FOUND AND NOT Qt5_FOUND)
-    find_package(Qt6 COMPONENTS Core Widgets QUIET)
-    if(NOT Qt6_FOUND)
-        find_package(Qt5 5.15 COMPONENTS Core Widgets QUIET)
-    endif()
-endif()
+find_package(Qt6 COMPONENTS Core Widgets QUIET REQUIRED)
 
 # ============================================================================
 # Include directories

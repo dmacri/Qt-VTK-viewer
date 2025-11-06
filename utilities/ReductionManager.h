@@ -44,7 +44,10 @@ public:
 
     /** @brief Gets error message if loading failed.
      *  @return Error message or empty string if no error */
-    QString getErrorMessage() const { return errorMessage; }
+    QString getErrorMessage() const
+    {
+        return errorMessage;
+    }
 
     /// @brief Return path to reduction file (the file used to set up the manager)
     const QString& getReductionFilePath() const
