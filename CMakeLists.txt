@@ -164,12 +164,6 @@ set(CMAKE_AUTOUIC "YES")
 # ============================================
 # Qt dependencies
 # ============================================
-# find_package(Qt6 COMPONENTS
-#     Core
-#     Gui
-#     Widgets
-#     REQUIRED
-# )
 # Try to find Qt6 first, fall back to Qt5 (Qt5 is for GithubCI for compatibility with VTK)
 find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL QUIET)
 if (NOT Qt6_FOUND)
