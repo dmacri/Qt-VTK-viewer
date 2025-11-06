@@ -152,30 +152,15 @@ file(GLOB_RECURSE Docs
 )
 set(OTHER_FILES LICENSE .github/workflows/release--deb-package--ubuntu24.04.yml .githooks/pre-commit .clang-format)
 
-
-# ============================================
-# Qt setup
-# ============================================
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOMOC "YES")
-set(CMAKE_AUTOUIC "YES")
-
-
-# ============================================
-# Qt dependencies
-# ============================================
-# Try to find Qt6 first, fall back to Qt5 (Qt5 is for GithubCI for compatibility with VTK)
-find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL QUIET)
-if (NOT Qt6_FOUND)
-    find_package(Qt5 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
-    set(QT_LIBRARIES Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
-else()
-    set(QT_LIBRARIES Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL)
-endif()
-
 # ============================================
 # VTK dependencies
 # ============================================
+# NOTE:
+# VTK must be found *before* Qt to avoid a known issue in Qt6 (6.8–6.9)
+# where re-importing Qt targets (e.g., Qt6::Platform*) causes
+# "Some (but not all) targets in this export set were already defined" errors.
+# The 'GUISupportQt' module internally calls find_package(Qt6),
+# so finding VTK first prevents duplicate Qt target definitions.
 find_package(VTK COMPONENTS
     CommonColor
     CommonCore
@@ -195,6 +180,16 @@ find_package(VTK COMPONENTS
         GUISupportQt
         IOLegacy
 )
+
+# ============================================
+# Qt setup + dependencies
+# ============================================
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOMOC "YES")
+set(CMAKE_AUTOUIC "YES")
+
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Gui Widgets OpenGL)
+message(STATUS "Using Qt${QT_VERSION_MAJOR} (${Qt${QT_VERSION_MAJOR}_VERSION})")
 
 # ============================================
 # Executable target
@@ -320,11 +315,17 @@ endif()
 # ============================================
 # Linking
 # ============================================
-target_link_libraries(${PROJECT_NAME} PRIVATE ${VTK_LIBRARIES})
-# target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
-#target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Widgets Qt5::OpenGL VTK::GUISupportQt VTK::IOLegacy)
-target_link_libraries(${PROJECT_NAME} PRIVATE ${QT_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} PRIVATE tiny-process-library)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    # Qt:
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Gui
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::OpenGL
+    # VTK:
+    ${VTK_LIBRARIES}
+    # other:
+    tiny-process-library
+)
 
 # Export symbols for plugins to use
 # This allows plugins to call functions from the main executable
