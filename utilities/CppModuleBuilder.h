@@ -10,8 +10,6 @@
 #include <memory>
 #include <string>
 
-// Forward declaration
-class ModelLoader;
 
 namespace viz::plugins
 {
