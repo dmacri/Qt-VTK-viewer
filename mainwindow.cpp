@@ -1,3 +1,4 @@
+#include <iostream>
 #include <utility> // std::to_underlying, which requires C++23
 #include <filesystem>
 #include <source_location>
@@ -6,7 +7,6 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QTextStream>
-#include <iostream>
 #include <QColorDialog>
 #include <QStandardPaths>
 #include <QFileDialog>
@@ -19,19 +19,19 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "utilities/PluginLoader.h"
-#include "utilities/CommandLineParser.h"
-#include "utilities/ModelLoader.h"
-#include "utilities/CppModuleBuilder.h"
-#include "visualiser/SettingParameter.h"
 #include "config/Config.h"
-#include "widgets/ConfigDetailsDialog.h"
-#include "widgets/ColorSettingsDialog.h"
-#include "widgets/AboutDialog.h"
-#include "widgets/CompilationLogWidget.h"
-#include "widgets/ReductionManager.h"
+#include "utilities/CommandLineParser.h"
+#include "utilities/CppModuleBuilder.h"
+#include "utilities/ModelLoader.h"
+#include "utilities/PluginLoader.h"
+#include "utilities/ReductionManager.h"
+#include "visualiser/SettingParameter.h"
 #include "visualiser/VideoExporter.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
+#include "widgets/AboutDialog.h"
+#include "widgets/ColorSettingsDialog.h"
+#include "widgets/CompilationLogWidget.h"
+#include "widgets/ConfigDetailsDialog.h"
 
 
 namespace

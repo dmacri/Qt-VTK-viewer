@@ -1,13 +1,13 @@
 /** @file ReductionManager.cpp
- * @brief Implementation of the ReductionManager class.
- */
+ * @brief Implementation of the ReductionManager class. */
 
 #include "ReductionManager.h"
 #include <QFile>
 #include <QTextStream>
 #include <QStringList>
 #include <iostream>
-#include <qregularexpression.h>
+#include <QRegularExpression>
+
 
 ReductionManager::ReductionManager(const QString& reductionFilePath, const QString& reductionConfig)
 {
