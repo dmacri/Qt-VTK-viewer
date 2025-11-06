@@ -65,7 +65,7 @@ void ReductionDisplayWidget::clear()
 /// @brief Updates label text, color, and tooltip based on reduction data or errors.
 void ReductionDisplayWidget::updateLabel()
 {
-    if (!reductionManager)
+    if (! reductionManager)
     {
         label->setText("No reduction configured");
         label->setStyleSheet("color: gray;");
@@ -74,7 +74,7 @@ void ReductionDisplayWidget::updateLabel()
     }
 
     // Check if reduction file/data is available
-    if (!reductionManager->isAvailable())
+    if (! reductionManager->isAvailable())
     {
         QString errorMsg = reductionManager->getErrorMessage();
         if (errorMsg.isEmpty())
@@ -121,7 +121,7 @@ bool ReductionDisplayWidget::eventFilter(QObject* obj, QEvent* event)
 
 void ReductionDisplayWidget::onReductionLabelClicked()
 {
-    if (!reductionManager || !reductionManager->isAvailable())
+    if (! reductionManager || !reductionManager->isAvailable())
     {
         return; // No reduction data available
     }

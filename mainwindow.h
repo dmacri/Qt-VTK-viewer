@@ -39,25 +39,33 @@ public:
         silentMode = newSilentMode;
     }
 
-private slots:
-    void showAboutThisApplicationDialog();
+private slots: // menu actions
+    // File submenu
+    void onOpenConfigurationRequested();
     void showConfigDetailsDialog();
     void exportVideoDialog();
-    void onStepNumberChanged();
-    void onOpenConfigurationRequested();
-    void onColorSettingsRequested();
+    void onLoadPluginRequested();
+    void onLoadModelFromDirectoryRequested();
 
+    // View submenu
     void on2DModeRequested();
     void on3DModeRequested();
+
+    // Model submenu
+    void onModelSelected();
+    void onReloadDataRequested();
+
+    // Help submenu:
+    void showAboutThisApplicationDialog();
+
+private slots:
+    void onStepNumberChanged();
+    void onColorSettingsRequested();
+
     void onAzimuthChanged(int value);
     void onElevationChanged(int value);
     void onCameraOrientationChanged(double azimuth, double elevation);
     void syncCameraSliders();
-
-    void onModelSelected();
-    void onReloadDataRequested();
-    void onLoadPluginRequested();
-    void onLoadModelFromDirectoryRequested();
 
     void onPlayButtonClicked();
     void onStopButtonClicked();
