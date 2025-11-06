@@ -306,8 +306,8 @@ void SceneWidget::setup2DRulerAxes()
     rulerAxisY->SetTitlePosition(1.2); // Move title further from axis (default is ~0.5)
 
     // Add to renderer but keep hidden initially
-    renderer->AddActor2D(rulerAxisX);
-    renderer->AddActor2D(rulerAxisY);
+    renderer->AddViewProp(rulerAxisX);
+    renderer->AddViewProp(rulerAxisY);
     rulerAxisX->SetVisibility(false);
     rulerAxisY->SetVisibility(false);
 }
@@ -722,6 +722,38 @@ void SceneWidget::updateToolTip(const QPoint& lastMousePos)
                           .arg(m_lastWorldPos[2], 0, 'f', 2);
 
         tooltipText += QString("\n%1").arg(nodeInfo);
+
+        // Get cell value at this position
+        if (renderer && sceneWidgetVisualizerProxy && settingParameter)
+        {
+            // Get the bounds of the entire scene
+            double* bounds = renderer->ComputeVisiblePropBounds();
+            if (bounds)
+            {
+                // Calculate grid dimensions
+                const double sceneWidth = bounds[1] - bounds[0];
+                const double sceneHeight = bounds[3] - bounds[2];
+                const double cellWidth = sceneWidth / settingParameter->numberOfColumnX;
+                const double cellHeight = sceneHeight / settingParameter->numberOfRowsY;
+
+                // Convert world position to grid indices
+                // Note: VTK Y increases upward, but grid rows increase downward
+                // So we need to flip the Y coordinate
+                int col = static_cast<int>((m_lastWorldPos[0] - bounds[0]) / cellWidth);
+                int row = static_cast<int>((bounds[3] - m_lastWorldPos[1]) / cellHeight);
+
+                // Clamp to valid range
+                col = std::max(0, std::min(col, settingParameter->numberOfColumnX - 1));
+                row = std::max(0, std::min(row, settingParameter->numberOfRowsY - 1));
+
+                // Get cell value
+                std::string cellValue = sceneWidgetVisualizerProxy->getCellStringEncoding(row, col);
+                if (! cellValue.empty())
+                {
+                    tooltipText += QString("\nCell Value: %1").arg(QString::fromStdString(cellValue));
+                }
+            }
+        }
     }
     else
         tooltipText = "(Outside the grid)";
