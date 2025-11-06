@@ -66,15 +66,6 @@ MainWindow::MainWindow(QWidget* parent)
     enterNoConfigurationFileMode();
 }
 
-void MainWindow::loadInitialConfiguration(const QString& configFileName)
-{
-    if (! configFileName.isEmpty())
-    {
-        configureUIElements(configFileName);
-        addToRecentFiles(configFileName);
-    }
-}
-
 void MainWindow::configureUIElements(const QString& configFileName)
 {
     initializeSceneWidget(configFileName);

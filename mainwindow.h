@@ -31,7 +31,7 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    void loadInitialConfiguration(const QString &configFileName);
+    void openConfigurationFile(const QString& configFileName);
     void applyCommandLineOptions(class CommandLineParser &cmdParser);
 
     void setSilentMode(bool newSilentMode)
@@ -127,7 +127,6 @@ private:
     QString getSmartDisplayName(const QString &filePath, const QStringList &allPaths) const;
     QString generateTooltipForFile(const QString &filePath) const;
     void updateRecentFilesMenu();
-    void openConfigurationFile(const QString& configFileName);
     void loadModelFromDirectory(const QString& modelDirectory);
     void initializeReductionManager(const QString& configFileName);
     void updateReductionDisplay();
