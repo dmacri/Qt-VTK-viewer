@@ -521,6 +521,14 @@ void MainWindow::switchToModel(const QString& modelName)
 
         ui->sceneWidget->switchModel(modelName.toStdString());
 
+        // Update substate dock widget for new model
+        if (substatesDockWidget && ui->sceneWidget->getSettingParameter())
+        {
+            auto settingParam = const_cast<SettingParameter*>(ui->sceneWidget->getSettingParameter());
+            settingParam->initializeSubstateInfo();
+            substatesDockWidget->updateSubstates(settingParam);
+        }
+
         if (! silentMode)
         {
             QMessageBox::
@@ -550,6 +558,14 @@ void MainWindow::onReloadDataRequested()
     try
     {
         ui->sceneWidget->reloadData();
+
+        // Update substate dock widget after reload
+        if (substatesDockWidget && ui->sceneWidget->getSettingParameter())
+        {
+            auto settingParam = const_cast<SettingParameter*>(ui->sceneWidget->getSettingParameter());
+            settingParam->initializeSubstateInfo();
+            substatesDockWidget->updateSubstates(settingParam);
+        }
 
         if (! silentMode)
         {

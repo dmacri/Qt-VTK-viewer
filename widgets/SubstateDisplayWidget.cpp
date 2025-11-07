@@ -4,6 +4,8 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGroupBox>
+#include <limits>
+#include <cmath>
 #include "SubstateDisplayWidget.h"
 
 
@@ -11,10 +13,10 @@ SubstateDisplayWidget::SubstateDisplayWidget(const std::string& fieldName, QWidg
     : QWidget(parent)
     , m_fieldName(fieldName)
     , m_nameLabel(new QLabel(QString::fromStdString(fieldName)))
-    , m_valueLabel(new QLabel("0.00"))
+    , m_valueLabel(new QLabel("-"))
     , m_minSpinBox(new QDoubleSpinBox())
     , m_maxSpinBox(new QDoubleSpinBox())
-    , m_formatLineEdit(new QLineEdit("%f"))
+    , m_formatLineEdit(new QLineEdit())
     , m_use3dButton(new QPushButton("Use as 3rd dimension"))
 {
     setupUI();
@@ -59,7 +61,8 @@ void SubstateDisplayWidget::setupUI()
     minTextLabel->setStyleSheet("QLabel { font-size: 8pt; }");
     m_minSpinBox->setRange(-1e9, 1e9);
     m_minSpinBox->setDecimals(2);
-    m_minSpinBox->setValue(0.0);
+    m_minSpinBox->setSpecialValueText(" ");  // Empty display for minimum value
+    m_minSpinBox->setValue(m_minSpinBox->minimum());  // Start with "empty" state
     m_minSpinBox->setMaximumHeight(20);
     m_minSpinBox->setStyleSheet("QDoubleSpinBox { font-size: 8pt; }");
     minLayout->addWidget(minTextLabel);
@@ -74,7 +77,8 @@ void SubstateDisplayWidget::setupUI()
     maxTextLabel->setStyleSheet("QLabel { font-size: 8pt; }");
     m_maxSpinBox->setRange(-1e9, 1e9);
     m_maxSpinBox->setDecimals(2);
-    m_maxSpinBox->setValue(0.0);
+    m_maxSpinBox->setSpecialValueText(" ");  // Empty display for minimum value
+    m_maxSpinBox->setValue(m_maxSpinBox->minimum());  // Start with "empty" state
     m_maxSpinBox->setMaximumHeight(20);
     m_maxSpinBox->setStyleSheet("QDoubleSpinBox { font-size: 8pt; }");
     maxLayout->addWidget(maxTextLabel);
@@ -118,30 +122,58 @@ void SubstateDisplayWidget::setCellValue(const std::string& value)
 
 double SubstateDisplayWidget::getMinValue() const
 {
+    if (m_minSpinBox->value() == m_minSpinBox->minimum())
+        return std::numeric_limits<double>::quiet_NaN();
     return m_minSpinBox->value();
 }
 
 void SubstateDisplayWidget::setMinValue(double value)
 {
-    m_minSpinBox->setValue(value);
+    if (std::isnan(value))
+        m_minSpinBox->setValue(m_minSpinBox->minimum());  // Empty state
+    else
+        m_minSpinBox->setValue(value);
 }
 
 double SubstateDisplayWidget::getMaxValue() const
 {
+    if (m_maxSpinBox->value() == m_maxSpinBox->minimum())
+        return std::numeric_limits<double>::quiet_NaN();
     return m_maxSpinBox->value();
 }
 
 void SubstateDisplayWidget::setMaxValue(double value)
 {
-    m_maxSpinBox->setValue(value);
+    if (std::isnan(value))
+        m_maxSpinBox->setValue(m_maxSpinBox->minimum());  // Empty state
+    else
+        m_maxSpinBox->setValue(value);
 }
 
 std::string SubstateDisplayWidget::getFormat() const
 {
-    return m_formatLineEdit->text().toStdString();
+    auto text = m_formatLineEdit->text().toStdString();
+    // Remove % prefix if present
+    if (!text.empty() && text[0] == '%')
+        return text.substr(1);
+    return text;
 }
 
 void SubstateDisplayWidget::setFormat(const std::string& format)
 {
-    m_formatLineEdit->setText(QString::fromStdString(format));
+    // Remove % prefix if present in input
+    std::string cleanFormat = format;
+    if (!cleanFormat.empty() && cleanFormat[0] == '%')
+        cleanFormat = cleanFormat.substr(1);
+    m_formatLineEdit->setText(QString::fromStdString(cleanFormat));
+}
+
+bool SubstateDisplayWidget::hasMinValue() const
+{
+    return m_minSpinBox->value() != m_minSpinBox->minimum();
+}
+
+bool SubstateDisplayWidget::hasMaxValue() const
+{
+    return m_maxSpinBox->value() != m_maxSpinBox->minimum();
 }

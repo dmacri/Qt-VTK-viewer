@@ -735,55 +735,37 @@ void SceneWidget::updateToolTip(const QPoint& lastMousePos)
     QToolTip::showText(globalPos, tooltipText, this, QRect(lastMousePos, QSize(1, 1)), 0);
 }
 QString SceneWidget::cellValueAtThisPositionAsText() const
-{// TODO: Use convertWorldToGridCoordinates
-    if (renderer && sceneWidgetVisualizerProxy && settingParameter)
+{
+    if (!sceneWidgetVisualizerProxy || !settingParameter)
+        return {};
+
+    int row = 0, col = 0;
+    if (! convertWorldToGridCoordinates(m_lastWorldPos.data(), row, col))
+        return {};
+
+    QString tooltipText;
+    // Get default cell value
+    std::string cellValue = sceneWidgetVisualizerProxy->getCellStringEncoding(row, col);
+    if (! cellValue.empty())
     {
-        // Get the bounds of the entire scene
-        double* bounds = renderer->ComputeVisiblePropBounds();
-        if (bounds)
+        tooltipText += QString("\nCell Value: %1").arg(QString::fromStdString(cellValue));
+    }
+
+    // Get individual substate values if available
+    auto substateFields = settingParameter->getSubstateFields();
+    if (! substateFields.empty())
+    {
+        tooltipText += "\nSubstates:";
+        for (const auto& field : substateFields)
         {
-            // Calculate grid dimensions
-            const double sceneWidth = bounds[1] - bounds[0];
-            const double sceneHeight = bounds[3] - bounds[2];
-            const double cellWidth = sceneWidth / settingParameter->numberOfColumnX;
-            const double cellHeight = sceneHeight / settingParameter->numberOfRowsY;
-
-            // Convert world position to grid indices
-            // Note: VTK Y increases upward, but grid rows increase downward
-            // So we need to flip the Y coordinate
-            int col = static_cast<int>((m_lastWorldPos[0] - bounds[0]) / cellWidth);
-            int row = static_cast<int>((bounds[3] - m_lastWorldPos[1]) / cellHeight);
-
-            // Clamp to valid range
-            col = std::max(0, std::min(col, settingParameter->numberOfColumnX - 1));
-            row = std::max(0, std::min(row, settingParameter->numberOfRowsY - 1));
-
-            QString tooltipText;
-            // Get default cell value
-            std::string cellValue = sceneWidgetVisualizerProxy->getCellStringEncoding(row, col);
-            if (! cellValue.empty())
+            std::string fieldValue = sceneWidgetVisualizerProxy->getCellStringEncoding(row, col, field.c_str());
+            if (!fieldValue.empty())
             {
-                tooltipText += QString("\nCell Value: %1").arg(QString::fromStdString(cellValue));
+                tooltipText += QString("\n\t%1: %2").arg(QString::fromStdString(field)).arg(QString::fromStdString(fieldValue));
             }
-
-            // Get individual substate values if available
-            auto substateFields = settingParameter->getSubstateFields();
-            if (! substateFields.empty())
-            {
-                tooltipText += "\nSubstates:";
-                for (const auto& field : substateFields)
-                {
-                    std::string fieldValue = sceneWidgetVisualizerProxy->getCellStringEncoding(row, col, field.c_str());
-                    if (! fieldValue.empty())
-                    {
-                        tooltipText += QString("\n\t%1: %2").arg(QString::fromStdString(field)).arg(QString::fromStdString(fieldValue));
-                    }
-                }
-            }
-            return tooltipText;
         }
     }
-    return {};
+    return tooltipText;
 }
 
 void SceneWidget::selectedStepParameter(StepIndex stepNumber)

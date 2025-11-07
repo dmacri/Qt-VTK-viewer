@@ -42,33 +42,43 @@ public:
 
     /** @brief Get the current minimum value.
      * 
-     * @return Minimum value as double */
+     * @return Minimum value as double, or NaN if empty */
     double getMinValue() const;
 
     /** @brief Set the minimum value.
      * 
-     * @param value The minimum value */
+     * @param value The minimum value (use NaN for empty) */
     void setMinValue(double value);
 
     /** @brief Get the current maximum value.
      * 
-     * @return Maximum value as double */
+     * @return Maximum value as double, or NaN if empty */
     double getMaxValue() const;
 
     /** @brief Set the maximum value.
      * 
-     * @param value The maximum value */
+     * @param value The maximum value (use NaN for empty) */
     void setMaxValue(double value);
 
     /** @brief Get the format string.
      * 
-     * @return Format string (e.g., "%f", "%0.6f") */
+     * @return Format string (e.g., "f", "0.6f", "d") without % prefix */
     std::string getFormat() const;
 
     /** @brief Set the format string.
      * 
-     * @param format The format string */
+     * @param format The format string (without % prefix) */
     void setFormat(const std::string& format);
+
+    /** @brief Check if min value is set.
+     * 
+     * @return True if min value is set (not empty) */
+    bool hasMinValue() const;
+
+    /** @brief Check if max value is set.
+     * 
+     * @return True if max value is set (not empty) */
+    bool hasMaxValue() const;
 
     /** @brief Get the field name.
      * 

@@ -130,9 +130,11 @@ void SubstatesDockWidget::saveParametersToSettings(SettingParameter* settingPara
 
 void SubstatesDockWidget::clearWidgets()
 {
-    // Remove all widgets from layout
-    while (QLayoutItem* item = m_containerLayout->takeAt(0))
+    // Remove all widgets from layout except header (first 2 items: label + separator)
+    // Start from index 2 to preserve header
+    while (m_containerLayout->count() > 2)
     {
+        QLayoutItem* item = m_containerLayout->takeAt(2);
         if (QWidget* widget = item->widget())
         {
             widget->deleteLater();
