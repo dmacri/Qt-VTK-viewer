@@ -22,6 +22,9 @@
 #include "visualiserProxy/ISceneWidgetVisualizer.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
 
+// Forward declarations
+class SubstatesDockWidget;
+
 /** @enum ViewMode
  * @brief Defines the camera view mode for the scene.
  * 
@@ -139,6 +142,13 @@ public:
     {
         return cameraElevation;
     }
+
+    /** @brief Set the substate dock widget.
+     * 
+     * This allows SceneWidget to update the dock widget when cells are clicked.
+     * 
+     * @param dockWidget Pointer to the SubstatesDockWidget */
+    void setSubstatesDockWidget(SubstatesDockWidget* dockWidget);
 
     /** @brief Callback function for VTK keypress events.
      *  It handles arrow_up and arrow_down keys pressed and changes view of the widget.
@@ -336,7 +346,14 @@ protected:
     /// @brief Returns part of ToolTip for specific position (it contains cell value with substates)
     QString cellValueAtThisPositionAsText() const;
 
-private:
+protected:
+    /** @brief Handle mouse click events to update substate display.
+     * 
+     * When user clicks on a cell, this method updates the SubstatesDockWidget
+     * with values for that cell.
+     * 
+     * @param event The mouse event */
+    void mousePressEvent(QMouseEvent* event) override;
     /** @brief Proxy for the scene widget visualizer
      *  This proxy provides access to the visualizer implementation
      *  and is responsible for updating the visualization when settings change. */
@@ -347,6 +364,9 @@ private:
 
     /// @brief Currently active model name
     std::string currentModelName;
+
+    /// @brief Pointer to the substate dock widget (not owned by this widget)
+    SubstatesDockWidget* m_substatesDockWidget = nullptr;
 
     /// @brief Current view mode (2D or 3D)
     ViewMode currentViewMode = ViewMode::Mode2D;

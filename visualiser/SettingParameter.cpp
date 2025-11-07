@@ -75,6 +75,21 @@ std::vector<std::string> SettingParameter::getSubstateFields() const
     return fields;
 }
 
+void SettingParameter::initializeSubstateInfo()
+{
+    // Clear existing info
+    substateInfo.clear();
+    
+    // Create SubstateInfo for each field
+    auto fields = getSubstateFields();
+    for (const auto& field : fields)
+    {
+        SubstateInfo info;
+        info.name = field;
+        substateInfo[field] = info;
+    }
+}
+
 std::ostream& operator<<(std::ostream& os, const SettingParameter& sp)
 {
     os << "SettingParameter{"

@@ -28,6 +28,7 @@
 #include "visualiser/SettingParameter.h"
 #include "visualiser/VideoExporter.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
+#include "widgets/SubstatesDockWidget.h"
 #include "widgets/AboutDialog.h"
 #include "widgets/ColorSettingsDialog.h"
 #include "widgets/CompilationLogWidget.h"
@@ -54,6 +55,11 @@ MainWindow::MainWindow(QWidget* parent)
 {
     ui->setupUi(this);
     setWindowTitle(QApplication::applicationName());
+
+    // Create and add substate dock widget
+    substatesDockWidget = new SubstatesDockWidget(this);
+    addDockWidget(Qt::RightDockWidgetArea, substatesDockWidget);
+    substatesDockWidget->hide();  // Hidden by default until configuration is loaded
 
     setupConnections();
     configureButtons();
@@ -139,6 +145,16 @@ void MainWindow::initializeSceneWidget(const QString& configFileName)
     ui->sceneWidget->addVisualizer(configFileName.toStdString(), currentStep);
     ui->openConfigurationFileLabel->hide();
     ui->sceneWidget->setHidden(false);
+
+    // Initialize substate dock widget
+    if (substatesDockWidget && ui->sceneWidget->getSettingParameter())
+    {
+        auto settingParam = const_cast<SettingParameter*>(ui->sceneWidget->getSettingParameter());
+        settingParam->initializeSubstateInfo();
+        substatesDockWidget->updateSubstates(settingParam);
+        ui->sceneWidget->setSubstatesDockWidget(substatesDockWidget);
+        substatesDockWidget->show();
+    }
 }
 
 void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> availableSteps)

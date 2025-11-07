@@ -31,6 +31,7 @@
 #include "visualiser/Visualizer.hpp"
 #include "visualiser/SettingParameter.h"
 #include "widgets/ColorSettings.h"
+#include "widgets/SubstatesDockWidget.h"
 
 
 namespace
@@ -1032,4 +1033,42 @@ void SceneWidget::setCameraElevation(double angle)
 
     // Apply camera angles using helper method
     applyCameraAngles();
+}
+
+void SceneWidget::setSubstatesDockWidget(SubstatesDockWidget* dockWidget)
+{
+    m_substatesDockWidget = dockWidget;
+}
+
+void SceneWidget::mousePressEvent(QMouseEvent* event)
+{
+    // Call parent implementation first
+    QVTKOpenGLNativeWidget::mousePressEvent(event);
+
+    // Update substate dock widget if available
+    if (m_substatesDockWidget && renderer && renderWindow() && settingParameter && sceneWidgetVisualizerProxy) // TODO: GB: The code is duplicated
+    {
+        // Get the bounds of the entire scene
+        double* bounds = renderer->ComputeVisiblePropBounds();
+        if (bounds)
+        {
+            // Calculate grid dimensions
+            const double sceneWidth = bounds[1] - bounds[0];
+            const double sceneHeight = bounds[3] - bounds[2];
+            const double cellWidth = sceneWidth / settingParameter->numberOfColumnX;
+            const double cellHeight = sceneHeight / settingParameter->numberOfRowsY;
+
+            // Convert world position to grid indices
+            // Note: VTK Y increases upward, but grid rows increase downward
+            int col = static_cast<int>((m_lastWorldPos[0] - bounds[0]) / cellWidth);
+            int row = static_cast<int>((bounds[3] - m_lastWorldPos[1]) / cellHeight);
+
+            // Clamp to valid range
+            col = std::max(0, std::min(col, settingParameter->numberOfColumnX - 1));
+            row = std::max(0, std::min(row, settingParameter->numberOfRowsY - 1));
+
+            // Update substate dock widget with cell values
+            m_substatesDockWidget->updateCellValues(settingParameter.get(), row, col, sceneWidgetVisualizerProxy.get());
+        }
+    }
 }

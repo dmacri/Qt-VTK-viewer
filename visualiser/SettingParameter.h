@@ -6,8 +6,19 @@
 #include <iosfwd>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "utilities/types.h"
+
+/** @struct SubstateInfo
+ * @brief Information about a single substate field including display parameters. */
+struct SubstateInfo
+{
+    std::string name;           ///< Field name (e.g., "h", "z")
+    double minValue = 0.0;      ///< Minimum value for display (user-editable)
+    double maxValue = 0.0;      ///< Maximum value for display (user-editable)
+    std::string format = "%f";  ///< Printf format string (user-editable)
+};
 
 /** @struct SettingParameter
  * @brief Contains parameters for visualization settings and simulation configuration.
@@ -27,6 +38,9 @@ struct SettingParameter
     std::string readMode;       ///< File read mode: "text" or "binary"
     std::string substates;      ///< Substates to read (e.g., "h,z")
     std::string reduction;      ///< Reduction operations (e.g., "sum,min,max")
+    
+    /// @brief Map of substate information (name -> SubstateInfo) for display parameters
+    std::map<std::string, SubstateInfo> substateInfo;
 
     static constexpr int font_size = 18; ///< Font size for text rendering
 
@@ -39,6 +53,11 @@ struct SettingParameter
      * 
      * @return Vector of field names (e.g., {"h", "z"}) or empty vector if substates is empty */
     std::vector<std::string> getSubstateFields() const;
+    
+    /** @brief Initialize substate information from parsed substates.
+     *
+     * Creates SubstateInfo entries for each field in substates. Should be called after substates string is set. */
+    void initializeSubstateInfo();
 
     /// @brief Printing SettingParameter to output stream
     friend std::ostream& operator<<(std::ostream& os, const SettingParameter& sp);
