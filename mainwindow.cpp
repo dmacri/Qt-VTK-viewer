@@ -44,6 +44,76 @@ inline std::string sourceFileParentDirectoryAbsolutePath(const std::source_locat
     const auto path2CurrentFile = std::filesystem::absolute(location.file_name());
     return path2CurrentFile.parent_path().string();
 }
+
+/** @brief Returns the starting directory path for OOpenCal models.
+ *
+ * This function determines the appropriate base directory for opening or locating
+ * OOpenCal-related files, following these rules:
+ *
+ * 1. Checks if the environment variable `OOPENCAL_DIR` is set.
+ *    - If yes, uses its value as the base directory.
+ * 2. If not set, falls back to the CMake-defined macro `OOPENCAL_DIR`
+ *    (if available at compile time).
+ * 3. Validates that the directory actually exists.
+ * 4. If the base directory exists, the function attempts to locate the subdirectory
+ *    named `models/` inside it.
+ *    - If the subdirectory exists, it is returned.
+ *    - Otherwise, the base directory itself is returned.
+ * 5. If neither environment variable nor CMake path exists or is invalid,
+ *    an empty QString is returned, meaning the current working directory should be used.
+ *
+ * @note The returned path is absolute and normalized.
+ *
+ * @return QString
+ *         - Absolute path to the `models/` directory if it exists.
+ *         - Absolute path to the base OOpenCal directory if `models/` does not exist.
+ *         - Empty QString if no valid directory could be determined.
+ *
+ * @example
+ * @code
+ * QString startPath = getOOpenCalStartPath();
+ * if (startPath.isEmpty())
+ * {
+ *     startPath = QDir::currentPath(); // fallback to current working directory
+ * }
+ * qDebug() << "Start path:" << startPath;
+ * @endcode */
+QString getOOpenCalStartPath()
+{
+    QString baseDir;
+
+    // Step 1: Try to get OOPENCAL_DIR from environment variable
+    if (qEnvironmentVariableIsSet("OOPENCAL_DIR"))
+    {
+        baseDir = qEnvironmentVariable("OOPENCAL_DIR");
+    }
+
+#ifdef OOPENCAL_DIR
+    // Step 2: If environment not set, use CMake-defined path
+    if (baseDir.isEmpty())
+    {
+        baseDir = QString::fromLocal8Bit(OOPENCAL_DIR);
+    }
+#endif
+
+    // Step 3: Verify that base directory exists
+    QDir dir(baseDir);
+    if (baseDir.isEmpty() || !dir.exists())
+    {
+        // Invalid or missing directory → return empty (current path)
+        return QString();
+    }
+
+    // Step 4: Check if "OOpenCAL/models/" subdirectory exists
+    QDir modelsDir(dir.filePath("OOpenCAL/models"));
+    if (modelsDir.exists())
+    {
+        return modelsDir.absolutePath();
+    }
+
+    // Step 5: Return base directory if "models" does not exist
+    return dir.absolutePath();
+}
 } // namespace
 
 
@@ -587,7 +657,7 @@ void MainWindow::onOpenConfigurationRequested()
     QString configFileName = QFileDialog::getOpenFileName(
         this,
         tr("Open Configuration File"),
-        QString(), // Start in current directory
+        getOOpenCalStartPath(),
         tr("Configuration Files (*.txt *.ini);;All Files (*)")
     );
     
@@ -749,10 +819,11 @@ void MainWindow::onLoadPluginRequested()
 
 void MainWindow::onLoadModelFromDirectoryRequested()
 {
-    QString modelDirectory = QFileDialog::getExistingDirectory(this,
-                                                               tr("Load Model from Directory"),
-                                                               ".",
-                                                               QFileDialog::ShowDirsOnly);
+    QString modelDirectory = QFileDialog::getExistingDirectory(
+        this,
+        tr("Load Model from Directory"),
+        getOOpenCalStartPath(),
+        QFileDialog::ShowDirsOnly);
 
     if (modelDirectory.isEmpty())
     {
