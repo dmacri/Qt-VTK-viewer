@@ -219,9 +219,8 @@ void MainWindow::initializeSceneWidget(const QString& configFileName)
     // Initialize substate dock widget
     if (substatesDockWidget && ui->sceneWidget->getSettingParameter())
     {
-        auto settingParam = const_cast<SettingParameter*>(ui->sceneWidget->getSettingParameter());
-        settingParam->initializeSubstateInfo();
-        substatesDockWidget->updateSubstates(settingParam);
+        updateSubstateDockeWidget();
+
         ui->sceneWidget->setSubstatesDockWidget(substatesDockWidget);
         // Keep dock widget hidden until user clicks on a cell
         substatesDockWidget->hide();
@@ -592,12 +591,7 @@ void MainWindow::switchToModel(const QString& modelName)
         ui->sceneWidget->switchModel(modelName.toStdString());
 
         // Update substate dock widget for new model
-        if (substatesDockWidget && ui->sceneWidget->getSettingParameter())
-        {
-            auto settingParam = const_cast<SettingParameter*>(ui->sceneWidget->getSettingParameter());
-            settingParam->initializeSubstateInfo();
-            substatesDockWidget->updateSubstates(settingParam);
-        }
+        updateSubstateDockeWidget();
 
         if (! silentMode)
         {
@@ -622,6 +616,15 @@ void MainWindow::switchToModel(const QString& modelName)
         }
     }
 }
+void MainWindow::updateSubstateDockeWidget()
+{
+    if (substatesDockWidget && ui->sceneWidget->getSettingParameter())
+    {
+        auto settingParam = const_cast<SettingParameter*>(ui->sceneWidget->getSettingParameter());
+        settingParam->initializeSubstateInfo();
+        substatesDockWidget->updateSubstates(settingParam);
+    }
+}
 
 void MainWindow::onReloadDataRequested()
 {
@@ -630,12 +633,7 @@ void MainWindow::onReloadDataRequested()
         ui->sceneWidget->reloadData();
 
         // Update substate dock widget after reload
-        if (substatesDockWidget && ui->sceneWidget->getSettingParameter())
-        {
-            auto settingParam = const_cast<SettingParameter*>(ui->sceneWidget->getSettingParameter());
-            settingParam->initializeSubstateInfo();
-            substatesDockWidget->updateSubstates(settingParam);
-        }
+        updateSubstateDockeWidget();
 
         if (! silentMode)
         {
@@ -684,6 +682,9 @@ void MainWindow::openConfigurationFile(const QString& configFileName)
         {
             // Reload with new configuration
             ui->sceneWidget->loadNewConfiguration(configFileName.toStdString(), 0);
+
+            // Update substate dock widget for new configuration
+            updateSubstateDockeWidget();
         }
 
         // Initialize reduction manager for this configuration

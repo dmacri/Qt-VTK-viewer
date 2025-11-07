@@ -116,6 +116,7 @@ private:
     void setWidgetsEnabledState(bool enabled);
     void enterNoConfigurationFileMode();
 
+    void updateSubstateDockeWidget();
     void switchToModel(const QString &modelName);
     void recreateModelMenuActions();
     void createViewModeActionGroup();

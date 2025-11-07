@@ -25,7 +25,7 @@ SubstatesDockWidget::SubstatesDockWidget(QWidget* parent)
     m_containerLayout->setSpacing(8);
 
     // Add header with row/col information
-    auto headerLabel = new QLabel("Cell: (-, -)");
+    auto headerLabel = new QLabel("Cell: (x=-, y=-)");
     headerLabel->setObjectName("cellHeaderLabel");
     headerLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
     m_containerLayout->addWidget(headerLabel); // TODO: Not visible
@@ -85,11 +85,11 @@ void SubstatesDockWidget::updateCellValues(SettingParameter* settingParameter, i
     if (!settingParameter || !visualizer)
         return;
 
-    // Update header with row/col information
+    // Update header with row/col information (x=col, y=row for clarity)
     auto headerLabel = findChild<QLabel*>("cellHeaderLabel");
     if (headerLabel)
     {
-        headerLabel->setText(QString("Cell: (%1, %2)").arg(row).arg(col));
+        headerLabel->setText(QString("Cell: (x=%1, y=%2)").arg(col).arg(row));
     }
 
     // Update each substate widget with the cell value

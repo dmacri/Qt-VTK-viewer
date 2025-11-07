@@ -1030,13 +1030,22 @@ void SceneWidget::mousePressEvent(QMouseEvent* event)
     // Update substate dock widget if available
     if (m_substatesDockWidget && sceneWidgetVisualizerProxy)
     {
-        int row = 0, col = 0;
-        if (convertWorldToGridCoordinates(m_lastWorldPos.data(), row, col))
+        // Check if click was inside the grid
+        if (isWorldPositionInGrid(m_lastWorldPos.data()))
         {
-            // Update substate dock widget with cell values
-            m_substatesDockWidget->updateCellValues(settingParameter.get(), row, col, sceneWidgetVisualizerProxy.get());
-            // Show the dock widget when user clicks on a cell
-            m_substatesDockWidget->show();
+            int row = 0, col = 0;
+            if (convertWorldToGridCoordinates(m_lastWorldPos.data(), row, col))
+            {
+                // Update substate dock widget with cell values
+                m_substatesDockWidget->updateCellValues(settingParameter.get(), row, col, sceneWidgetVisualizerProxy.get());
+                // Show the dock widget when user clicks on a cell
+                m_substatesDockWidget->show();
+            }
+        }
+        else
+        {
+            // Click was outside grid (on background) - hide the dock widget
+            m_substatesDockWidget->hide();
         }
     }
 }
@@ -1073,4 +1082,24 @@ bool SceneWidget::convertWorldToGridCoordinates(const double worldPos[3], int& o
     outRow = row;
     outCol = col;
     return true;
+}
+
+bool SceneWidget::isWorldPositionInGrid(const double worldPos[3]) const
+{
+    if (!renderer || !settingParameter)
+        return false;
+
+    // Get the bounds of the entire scene
+    double* bounds = renderer->ComputeVisiblePropBounds();
+    if (! bounds)
+        return false;
+
+    // Check if position is within grid bounds
+    if (worldPos[0] < bounds[0] || worldPos[0] > bounds[1] ||
+        worldPos[1] < bounds[2] || worldPos[1] > bounds[3])
+    {
+        return false;  // Outside grid bounds
+    }
+
+    return true;  // Inside grid bounds
 }

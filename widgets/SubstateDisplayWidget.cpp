@@ -25,15 +25,20 @@ SubstateDisplayWidget::SubstateDisplayWidget(const std::string& fieldName, QWidg
 
 void SubstateDisplayWidget::setupUI()
 {
-    // Create main layout
+    // Create main layout with border
     auto mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(3, 3, 3, 3);
-    mainLayout->setSpacing(3);
+    mainLayout->setContentsMargins(5, 5, 5, 5);
+    mainLayout->setSpacing(4);
 
-    // Title with field name (full width)
+    // Set widget border
+    setStyleSheet("SubstateDisplayWidget { border: 1px solid #cccccc; border-radius: 3px; background-color: #f9f9f9; }");
+
+    // Title with field name (full width) - bold and larger
     auto titleLayout = new QHBoxLayout();
     auto titleLabel = new QLabel("Param:");
-    titleLabel->setMaximumWidth(35);
+    titleLabel->setStyleSheet("QLabel { font-size: 8pt; }");
+    titleLabel->setMaximumWidth(40);
+    m_nameLabel->setStyleSheet("QLabel { font-size: 10pt; font-weight: bold; }");
     titleLayout->addWidget(titleLabel);
     titleLayout->addWidget(m_nameLabel);
     titleLayout->setContentsMargins(0, 0, 0, 0);

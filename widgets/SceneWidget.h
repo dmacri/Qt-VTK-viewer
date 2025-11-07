@@ -358,6 +358,14 @@ protected:
      * @return True if coordinates are within valid grid bounds, false otherwise */
     bool convertWorldToGridCoordinates(const double worldPos[3], int& outRow, int& outCol) const;
 
+    /** @brief Check if world coordinates are within the grid bounds.
+     * 
+     * Determines whether the given world coordinates fall within the visible grid area.
+     * 
+     * @param worldPos VTK world coordinates
+     * @return True if coordinates are within grid bounds, false if outside (background) */
+    bool isWorldPositionInGrid(const double worldPos[3]) const;
+
 protected:
     /** @brief Handle mouse click events to update substate display.
      * 
