@@ -24,10 +24,11 @@
 
 // Forward declarations
 class SubstatesDockWidget;
+class SettingParameter;
 
 /** @enum ViewMode
  * @brief Defines the camera view mode for the scene.
- * 
+ *
  * This enum is used to switch between 2D (top-down orthographic) and 3D (perspective with rotation) views. */
 enum class ViewMode
 {
@@ -35,7 +36,6 @@ enum class ViewMode
     Mode3D  ///< 3D perspective view with full camera control
 };
 
-class SettingParameter;
 
 /** @class SceneWidget
  * @brief A widget for 3D visualization using VTK in Qt app.

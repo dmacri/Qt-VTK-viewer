@@ -549,6 +549,9 @@ void SceneWidget::renderVtkScene()
                                                               singleLineTextStep,
                                                               renderer);
 
+    // Reset camera to fit the new scene properly
+    applyCameraAngles();
+
     // Update 2D ruler axes bounds now that data is loaded
     if (currentViewMode == ViewMode::Mode2D)
     {
