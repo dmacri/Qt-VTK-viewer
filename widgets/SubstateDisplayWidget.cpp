@@ -25,53 +25,80 @@ void SubstateDisplayWidget::setupUI()
 {
     // Create main layout
     auto mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(5, 5, 5, 5);
-    mainLayout->setSpacing(5);
+    mainLayout->setContentsMargins(3, 3, 3, 3);
+    mainLayout->setSpacing(3);
 
-    // Title with field name
+    // Title with field name (full width)
     auto titleLayout = new QHBoxLayout();
     auto titleLabel = new QLabel("Param:");
+    titleLabel->setMaximumWidth(35);
     titleLayout->addWidget(titleLabel);
     titleLayout->addWidget(m_nameLabel);
-    titleLayout->addStretch();
+    titleLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->addLayout(titleLayout);
 
-    // Value display (read-only)
+    // Value display (read-only) - full width
     auto valueLayout = new QHBoxLayout();
-    auto valueTextLabel = new QLabel("Value:");
-    m_valueLabel->setStyleSheet("QLabel { background-color: #f0f0f0; padding: 2px; }");
+    auto valueTextLabel = new QLabel("Val:");
+    valueTextLabel->setMaximumWidth(35);
+    m_valueLabel->setStyleSheet("QLabel { background-color: #f0f0f0; padding: 1px; font-size: 9pt; }");
+    m_valueLabel->setMaximumHeight(20);
     valueLayout->addWidget(valueTextLabel);
     valueLayout->addWidget(m_valueLabel);
+    valueLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->addLayout(valueLayout);
 
-    // Minimum value
-    auto minLayout = new QHBoxLayout();
+    // Two-column layout for Min and Max
+    auto minMaxLayout = new QHBoxLayout();
+    minMaxLayout->setSpacing(2);
+    minMaxLayout->setContentsMargins(0, 0, 0, 0);
+
+    // Minimum value (left column)
+    auto minLayout = new QVBoxLayout();
     auto minTextLabel = new QLabel("Min:");
+    minTextLabel->setStyleSheet("QLabel { font-size: 8pt; }");
     m_minSpinBox->setRange(-1e9, 1e9);
     m_minSpinBox->setDecimals(2);
     m_minSpinBox->setValue(0.0);
+    m_minSpinBox->setMaximumHeight(20);
+    m_minSpinBox->setStyleSheet("QDoubleSpinBox { font-size: 8pt; }");
     minLayout->addWidget(minTextLabel);
     minLayout->addWidget(m_minSpinBox);
-    mainLayout->addLayout(minLayout);
+    minLayout->setContentsMargins(0, 0, 0, 0);
+    minLayout->setSpacing(0);
+    minMaxLayout->addLayout(minLayout);
 
-    // Maximum value
-    auto maxLayout = new QHBoxLayout();
+    // Maximum value (right column)
+    auto maxLayout = new QVBoxLayout();
     auto maxTextLabel = new QLabel("Max:");
+    maxTextLabel->setStyleSheet("QLabel { font-size: 8pt; }");
     m_maxSpinBox->setRange(-1e9, 1e9);
     m_maxSpinBox->setDecimals(2);
     m_maxSpinBox->setValue(0.0);
+    m_maxSpinBox->setMaximumHeight(20);
+    m_maxSpinBox->setStyleSheet("QDoubleSpinBox { font-size: 8pt; }");
     maxLayout->addWidget(maxTextLabel);
     maxLayout->addWidget(m_maxSpinBox);
-    mainLayout->addLayout(maxLayout);
+    maxLayout->setContentsMargins(0, 0, 0, 0);
+    maxLayout->setSpacing(0);
+    minMaxLayout->addLayout(maxLayout);
 
-    // Format string
+    mainLayout->addLayout(minMaxLayout);
+
+    // Format string (full width)
     auto formatLayout = new QHBoxLayout();
-    auto formatTextLabel = new QLabel("Format:");
+    auto formatTextLabel = new QLabel("Fmt:");
+    formatTextLabel->setMaximumWidth(35);
+    m_formatLineEdit->setMaximumHeight(20);
+    m_formatLineEdit->setStyleSheet("QLineEdit { font-size: 8pt; }");
     formatLayout->addWidget(formatTextLabel);
     formatLayout->addWidget(m_formatLineEdit);
+    formatLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->addLayout(formatLayout);
 
     // Use as 3rd dimension button
+    m_use3dButton->setMaximumHeight(22);
+    m_use3dButton->setStyleSheet("QPushButton { font-size: 8pt; padding: 2px; }");
     mainLayout->addWidget(m_use3dButton);
 
     setLayout(mainLayout);

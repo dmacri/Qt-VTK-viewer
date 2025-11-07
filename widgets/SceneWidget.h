@@ -346,6 +346,18 @@ protected:
     /// @brief Returns part of ToolTip for specific position (it contains cell value with substates)
     QString cellValueAtThisPositionAsText() const;
 
+    /** @brief Convert world coordinates to grid indices.
+     * 
+     * Converts VTK world coordinates to grid row and column indices.
+     * Takes into account the difference in coordinate systems (VTK Y increases upward,
+     * grid rows increase downward).
+     * 
+     * @param worldPos VTK world coordinates
+     * @param outRow Output parameter for row index
+     * @param outCol Output parameter for column index
+     * @return True if coordinates are within valid grid bounds, false otherwise */
+    bool convertWorldToGridCoordinates(const double worldPos[3], int& outRow, int& outCol) const;
+
 protected:
     /** @brief Handle mouse click events to update substate display.
      * 

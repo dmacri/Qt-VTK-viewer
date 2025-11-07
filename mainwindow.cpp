@@ -153,7 +153,8 @@ void MainWindow::initializeSceneWidget(const QString& configFileName)
         settingParam->initializeSubstateInfo();
         substatesDockWidget->updateSubstates(settingParam);
         ui->sceneWidget->setSubstatesDockWidget(substatesDockWidget);
-        substatesDockWidget->show();
+        // Keep dock widget hidden until user clicks on a cell
+        substatesDockWidget->hide();
     }
 }
 

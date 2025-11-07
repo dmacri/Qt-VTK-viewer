@@ -735,7 +735,7 @@ void SceneWidget::updateToolTip(const QPoint& lastMousePos)
     QToolTip::showText(globalPos, tooltipText, this, QRect(lastMousePos, QSize(1, 1)), 0);
 }
 QString SceneWidget::cellValueAtThisPositionAsText() const
-{
+{// TODO: Use convertWorldToGridCoordinates
     if (renderer && sceneWidgetVisualizerProxy && settingParameter)
     {
         // Get the bounds of the entire scene
@@ -1046,29 +1046,49 @@ void SceneWidget::mousePressEvent(QMouseEvent* event)
     QVTKOpenGLNativeWidget::mousePressEvent(event);
 
     // Update substate dock widget if available
-    if (m_substatesDockWidget && renderer && renderWindow() && settingParameter && sceneWidgetVisualizerProxy) // TODO: GB: The code is duplicated
+    if (m_substatesDockWidget && sceneWidgetVisualizerProxy)
     {
-        // Get the bounds of the entire scene
-        double* bounds = renderer->ComputeVisiblePropBounds();
-        if (bounds)
+        int row = 0, col = 0;
+        if (convertWorldToGridCoordinates(m_lastWorldPos.data(), row, col))
         {
-            // Calculate grid dimensions
-            const double sceneWidth = bounds[1] - bounds[0];
-            const double sceneHeight = bounds[3] - bounds[2];
-            const double cellWidth = sceneWidth / settingParameter->numberOfColumnX;
-            const double cellHeight = sceneHeight / settingParameter->numberOfRowsY;
-
-            // Convert world position to grid indices
-            // Note: VTK Y increases upward, but grid rows increase downward
-            int col = static_cast<int>((m_lastWorldPos[0] - bounds[0]) / cellWidth);
-            int row = static_cast<int>((bounds[3] - m_lastWorldPos[1]) / cellHeight);
-
-            // Clamp to valid range
-            col = std::max(0, std::min(col, settingParameter->numberOfColumnX - 1));
-            row = std::max(0, std::min(row, settingParameter->numberOfRowsY - 1));
-
             // Update substate dock widget with cell values
             m_substatesDockWidget->updateCellValues(settingParameter.get(), row, col, sceneWidgetVisualizerProxy.get());
+            // Show the dock widget when user clicks on a cell
+            m_substatesDockWidget->show();
         }
     }
+}
+
+bool SceneWidget::convertWorldToGridCoordinates(const double worldPos[3], int& outRow, int& outCol) const
+{
+    if (!renderer || !settingParameter)
+        return false;
+
+    // Get the bounds of the entire scene
+    double* bounds = renderer->ComputeVisiblePropBounds();
+    if (!bounds)
+        return false;
+
+    // Calculate grid dimensions
+    const double sceneWidth = bounds[1] - bounds[0];
+    const double sceneHeight = bounds[3] - bounds[2];
+
+    if (sceneWidth <= 0 || sceneHeight <= 0)
+        return false;
+
+    const double cellWidth = sceneWidth / settingParameter->numberOfColumnX;
+    const double cellHeight = sceneHeight / settingParameter->numberOfRowsY;
+
+    // Convert world position to grid indices
+    // Note: VTK Y increases upward, but grid rows increase downward
+    int col = static_cast<int>((worldPos[0] - bounds[0]) / cellWidth);
+    int row = static_cast<int>((bounds[3] - worldPos[1]) / cellHeight);
+
+    // Clamp to valid range
+    col = std::max(0, std::min(col, settingParameter->numberOfColumnX - 1));
+    row = std::max(0, std::min(row, settingParameter->numberOfRowsY - 1));
+
+    outRow = row;
+    outCol = col;
+    return true;
 }

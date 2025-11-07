@@ -39,7 +39,7 @@ public:
 
     /** @brief Update cell values for the current position.
      * 
-     * Updates the displayed values in all substate widgets.
+     * Updates the displayed values in all substate widgets and displays row/col indices.
      * 
      * @param settingParameter The setting parameter
      * @param row Grid row index

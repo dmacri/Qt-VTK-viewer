@@ -2,6 +2,8 @@
  * @brief Implementation of SubstatesDockWidget. */
 
 #include <QVBoxLayout>
+#include <QLabel>
+#include <QFrame>
 #include "SubstatesDockWidget.h"
 #include "SubstateDisplayWidget.h"
 #include "visualiser/SettingParameter.h"
@@ -19,15 +21,26 @@ SubstatesDockWidget::SubstatesDockWidget(QWidget* parent)
     m_scrollArea->setWidgetResizable(true);
 
     // Setup container layout
-    m_containerLayout->setContentsMargins(0, 0, 0, 0);
-    m_containerLayout->setSpacing(10);
+    m_containerLayout->setContentsMargins(5, 5, 5, 5);
+    m_containerLayout->setSpacing(8);
+
+    // Add header with row/col information
+    auto headerLabel = new QLabel("Cell: (-, -)");
+    headerLabel->setObjectName("cellHeaderLabel");
+    headerLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
+    m_containerLayout->addWidget(headerLabel); // TODO: Not visible
+
+    // Add separator
+    auto separator = new QFrame();
+    separator->setFrameShape(QFrame::HLine);
+    separator->setFrameShadow(QFrame::Sunken);
+    m_containerLayout->addWidget(separator);
 
     // Set the scroll area as the main widget
     setWidget(m_scrollArea);
 
-    // Set initial size
-    setMinimumWidth(300);
-    setMaximumWidth(400);
+    // Set initial size - narrower for two-column layout
+    setMinimumWidth(240);
 }
 
 void SubstatesDockWidget::updateSubstates(SettingParameter* settingParameter)
@@ -71,6 +84,13 @@ void SubstatesDockWidget::updateCellValues(SettingParameter* settingParameter, i
 {
     if (!settingParameter || !visualizer)
         return;
+
+    // Update header with row/col information
+    auto headerLabel = findChild<QLabel*>("cellHeaderLabel");
+    if (headerLabel)
+    {
+        headerLabel->setText(QString("Cell: (%1, %2)").arg(row).arg(col));
+    }
 
     // Update each substate widget with the cell value
     for (auto& pair : m_substateWidgets)
