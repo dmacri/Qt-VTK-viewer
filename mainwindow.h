@@ -17,7 +17,6 @@ class MainWindow;
 class QPushButton;
 class QActionGroup;
 class ReductionManager;
-class SubstatesDockWidget;
 
 /** @class MainWindow
  * @brief The main application window class that manages the user interface.
@@ -140,7 +139,6 @@ private:
     QTimer playbackTimer;
     QActionGroup *modelActionGroup = nullptr;
     std::unique_ptr<ReductionManager> reductionManager;
-    SubstatesDockWidget *substatesDockWidget = nullptr;
 
     StepIndex currentStep;
 

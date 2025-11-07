@@ -126,10 +126,9 @@ MainWindow::MainWindow(QWidget* parent)
     ui->setupUi(this);
     setWindowTitle(QApplication::applicationName());
 
-    // Create and add substate dock widget
-    substatesDockWidget = new SubstatesDockWidget(this);
-    addDockWidget(Qt::RightDockWidgetArea, substatesDockWidget);
-    substatesDockWidget->hide();  // Hidden by default until configuration is loaded
+    // Initialize substate dock widget from UI
+    ui->substatesDockWidget->initializeFromUI();
+    ui->substatesDockWidget->hide();  // Hidden by default until configuration is loaded
 
     setupConnections();
     configureButtons();
@@ -217,13 +216,13 @@ void MainWindow::initializeSceneWidget(const QString& configFileName)
     ui->sceneWidget->setHidden(false);
 
     // Initialize substate dock widget
-    if (substatesDockWidget && ui->sceneWidget->getSettingParameter())
+    if (ui->substatesDockWidget && ui->sceneWidget->getSettingParameter())
     {
         updateSubstateDockeWidget();
 
-        ui->sceneWidget->setSubstatesDockWidget(substatesDockWidget);
+        ui->sceneWidget->setSubstatesDockWidget(ui->substatesDockWidget);
         // Keep dock widget hidden until user clicks on a cell
-        substatesDockWidget->hide();
+        ui->substatesDockWidget->hide();
     }
 }
 
@@ -618,11 +617,11 @@ void MainWindow::switchToModel(const QString& modelName)
 }
 void MainWindow::updateSubstateDockeWidget()
 {
-    if (substatesDockWidget && ui->sceneWidget->getSettingParameter())
+    if (ui->substatesDockWidget && ui->sceneWidget->getSettingParameter())
     {
         auto settingParam = const_cast<SettingParameter*>(ui->sceneWidget->getSettingParameter());
         settingParam->initializeSubstateInfo();
-        substatesDockWidget->updateSubstates(settingParam);
+        ui->substatesDockWidget->updateSubstates(settingParam);
     }
 }
 

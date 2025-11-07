@@ -30,6 +30,11 @@ public:
      * @param parent Parent widget */
     explicit SubstatesDockWidget(QWidget* parent = nullptr);
 
+    /** @brief Initialize widget from UI (must be called after ui->setupUi).
+     * 
+     * Finds and initializes scroll area and container layout from UI. */
+    void initializeFromUI();
+
     /** @brief Update the substate widgets based on SettingParameter.
      * 
      * Creates or updates SubstateDisplayWidget instances for each field in substates.

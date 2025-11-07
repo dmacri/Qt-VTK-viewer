@@ -12,35 +12,27 @@
 
 SubstatesDockWidget::SubstatesDockWidget(QWidget* parent)
     : QDockWidget("Substate Parameters", parent)
-    , m_scrollArea(new QScrollArea())
-    , m_containerWidget(new QWidget())
-    , m_containerLayout(new QVBoxLayout(m_containerWidget))
+    , m_scrollArea(nullptr)
+    , m_containerWidget(nullptr)
+    , m_containerLayout(nullptr)
 {
-    // Setup scroll area
-    m_scrollArea->setWidget(m_containerWidget);
-    m_scrollArea->setWidgetResizable(true);
-
-    // Setup container layout
-    m_containerLayout->setContentsMargins(5, 5, 5, 5);
-    m_containerLayout->setSpacing(8);
-
-    // Add header with row/col information
-    auto headerLabel = new QLabel("Cell: (x=-, y=-)");
-    headerLabel->setObjectName("cellHeaderLabel");
-    headerLabel->setStyleSheet("QLabel { font-weight: bold; padding: 2px; }");
-    m_containerLayout->addWidget(headerLabel); // TODO: Not visible
-
-    // Add separator
-    auto separator = new QFrame();
-    separator->setFrameShape(QFrame::HLine);
-    separator->setFrameShadow(QFrame::Sunken);
-    m_containerLayout->addWidget(separator);
-
-    // Set the scroll area as the main widget
-    setWidget(m_scrollArea);
-
+    // Initialize will be called after UI setup in MainWindow
     // Set initial size - narrower for two-column layout
     setMinimumWidth(240);
+}
+
+void SubstatesDockWidget::initializeFromUI()
+{
+    // Find scroll area and container layout from UI
+    m_scrollArea = findChild<QScrollArea*>("scrollArea");
+    if (m_scrollArea)
+    {
+        m_containerWidget = m_scrollArea->widget();
+        if (m_containerWidget)
+        {
+            m_containerLayout = qobject_cast<QVBoxLayout*>(m_containerWidget->layout());
+        }
+    }
 }
 
 void SubstatesDockWidget::updateSubstates(SettingParameter* settingParameter)
