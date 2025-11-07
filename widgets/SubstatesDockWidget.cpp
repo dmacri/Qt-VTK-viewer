@@ -9,6 +9,17 @@
 #include "visualiser/SettingParameter.h"
 #include "visualiserProxy/ISceneWidgetVisualizer.h"
 
+// Helper function to create a separator line
+static QFrame* createSeparator()
+{
+    auto separator = new QFrame();
+    separator->setFrameShape(QFrame::HLine);
+    separator->setFrameShadow(QFrame::Sunken);
+    separator->setMaximumHeight(1);
+    separator->setStyleSheet("QFrame { background-color: #e0e0e0; }");
+    return separator;
+}
+
 
 SubstatesDockWidget::SubstatesDockWidget(QWidget* parent)
     : QDockWidget("Substate Parameters", parent)
@@ -47,8 +58,10 @@ void SubstatesDockWidget::updateSubstates(SettingParameter* settingParameter)
     auto fields = settingParameter->getSubstateFields();
 
     // Create new widgets for each field
-    for (const auto& field : fields)
+    for (size_t i = 0; i < fields.size(); ++i)
     {
+        const auto& field = fields[i];
+        
         auto widget = new SubstateDisplayWidget(field, m_containerWidget);
 
         // Restore saved parameters if they exist
@@ -66,6 +79,12 @@ void SubstatesDockWidget::updateSubstates(SettingParameter* settingParameter)
 
         m_containerLayout->addWidget(widget);
         m_substateWidgets[field] = widget;
+        
+        // Add separator between widgets (but not after the last one)
+        if (i < fields.size() - 1)
+        {
+            m_containerLayout->addWidget(createSeparator());
+        }
     }
 
     // Add stretch at the end to push widgets to the top
