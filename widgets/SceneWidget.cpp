@@ -595,18 +595,17 @@ QString SceneWidget::getNodeAtWorldPosition(const std::array<double, 3>& worldPo
         return {};
     }
 
+    // Use unified bounds checking
+    if (! isWorldPositionInGrid(worldPos.data()))
+    {
+        return {}; // Outside scene bounds
+    }
+
     // Get the bounds of the entire scene
     double* bounds = renderer->ComputeVisiblePropBounds();
     if (! bounds)
     {
         return {};
-    }
-
-    // Check if the position is within the scene bounds
-    if (worldPos[0] < bounds[0] || worldPos[0] > bounds[1] ||
-        worldPos[1] < bounds[2] || worldPos[1] > bounds[3])
-    {
-        return {}; // Outside scene bounds
     }
 
     // Calculate the width and height of each node's area in world coordinates
@@ -617,8 +616,8 @@ QString SceneWidget::getNodeAtWorldPosition(const std::array<double, 3>& worldPo
     const double nodeHeight = sceneHeight / settingParameter->nNodeY;
 
     // Calculate which node the position is in (0-based indices)
-    const int nodeX = (worldPos[0] - bounds[0]) / nodeWidth;
-    const int nodeY = (worldPos[1] - bounds[2]) / nodeHeight;
+    const int nodeX = static_cast<int>((worldPos[0] - bounds[0]) / nodeWidth);
+    const int nodeY = static_cast<int>((worldPos[1] - bounds[2]) / nodeHeight);
 
     // Check if the calculated node is within bounds
     if (nodeX >= 0 && nodeX < settingParameter->nNodeX &&
@@ -1071,9 +1070,10 @@ bool SceneWidget::convertWorldToGridCoordinates(const double worldPos[3], int& o
     const double cellHeight = sceneHeight / settingParameter->numberOfRowsY;
 
     // Convert world position to grid indices
-    // Note: VTK Y increases upward, but grid rows increase downward
+    // Matrix p[row][col] is indexed from top-left (row=0 at top, col=0 at left)
+    // VTK Y increases upward, but we need to map to matrix row which increases downward
     int col = static_cast<int>((worldPos[0] - bounds[0]) / cellWidth);
-    int row = static_cast<int>((bounds[3] - worldPos[1]) / cellHeight);
+    int row = static_cast<int>((worldPos[1] - bounds[2]) / cellHeight);
 
     // Clamp to valid range
     col = std::max(0, std::min(col, settingParameter->numberOfColumnX - 1));
