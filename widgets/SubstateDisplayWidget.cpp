@@ -6,6 +6,7 @@
 #include <QGroupBox>
 #include <limits>
 #include <cmath>
+#include <cctype>
 #include "SubstateDisplayWidget.h"
 
 
@@ -122,7 +123,57 @@ void SubstateDisplayWidget::connectSignals()
 
 void SubstateDisplayWidget::setCellValue(const std::string& value)
 {
-    m_valueLabel->setText(QString::fromStdString(value));
+    // If format is set, try to parse and reformat the value
+    std::string format = getFormat();
+    if (!format.empty())
+    {
+        try
+        {
+            // Try to parse value as double
+            double numValue = std::stod(value);
+            
+            // Determine format type
+            bool isDecimal = format.find('f') != std::string::npos || 
+                           format.find('e') != std::string::npos ||
+                           format.find('g') != std::string::npos;
+            bool isInteger = format.find('d') != std::string::npos ||
+                           format.find('i') != std::string::npos;
+            
+            if (isDecimal)
+            {
+                // Format as decimal - extract precision if specified
+                int precision = 2;  // Default precision
+                size_t dotPos = format.find('.');
+                if (dotPos != std::string::npos && dotPos + 1 < format.length())
+                {
+                    char precChar = format[dotPos + 1];
+                    if (std::isdigit(precChar))
+                        precision = precChar - '0';
+                }
+                m_valueLabel->setText(QString::number(numValue, 'f', precision));
+            }
+            else if (isInteger)
+            {
+                // Format as integer
+                m_valueLabel->setText(QString::number(static_cast<long long>(numValue)));
+            }
+            else
+            {
+                // Default: show as-is
+                m_valueLabel->setText(QString::fromStdString(value));
+            }
+        }
+        catch (const std::exception&)
+        {
+            // If parsing fails, show value as-is
+            m_valueLabel->setText(QString::fromStdString(value));
+        }
+    }
+    else
+    {
+        // No format specified, show value as-is
+        m_valueLabel->setText(QString::fromStdString(value));
+    }
 }
 
 double SubstateDisplayWidget::getMinValue() const

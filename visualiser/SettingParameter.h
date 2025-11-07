@@ -3,10 +3,10 @@
 
 #pragma once
 
-#include <iosfwd>
 #include <string>
 #include <vector>
 #include <map>
+#include <limits>
 
 #include "utilities/types.h"
 
@@ -14,10 +14,10 @@
  * @brief Information about a single substate field including display parameters. */
 struct SubstateInfo
 {
-    std::string name;           ///< Field name (e.g., "h", "z")
-    double minValue = 0.0;      ///< Minimum value for display (user-editable)
-    double maxValue = 0.0;      ///< Maximum value for display (user-editable)
-    std::string format = "%f";  ///< Printf format string (user-editable)
+    std::string name;                                           ///< Field name (e.g., "h", "z")
+    double minValue = std::numeric_limits<double>::quiet_NaN(); ///< Minimum value for display (user-editable, NaN if not set)
+    double maxValue = std::numeric_limits<double>::quiet_NaN(); ///< Maximum value for display (user-editable, NaN if not set)
+    std::string format = "";                                    ///< Printf format string (user-editable, empty if not set)
 };
 
 /** @struct SettingParameter
