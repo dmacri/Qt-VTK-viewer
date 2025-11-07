@@ -46,6 +46,7 @@ private slots: // menu actions
     void exportVideoDialog();
     void onLoadPluginRequested();
     void onLoadModelFromDirectoryRequested();
+    void onShowReductionRequested();
 
     // View submenu
     void on2DModeRequested();

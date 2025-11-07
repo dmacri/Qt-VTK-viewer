@@ -33,6 +33,7 @@
 #include "widgets/ColorSettingsDialog.h"
 #include "widgets/CompilationLogWidget.h"
 #include "widgets/ConfigDetailsDialog.h"
+#include "widgets/ReductionDialog.h"
 
 
 namespace
@@ -176,6 +177,7 @@ void MainWindow::connectMenuActions()
     connect(ui->actionLoadPlugin, &QAction::triggered, this, &MainWindow::onLoadPluginRequested);
     connect(ui->actionLoadModelFromDirectory, &QAction::triggered, this, &MainWindow::onLoadModelFromDirectoryRequested);
     connect(ui->actionColor_settings, &QAction::triggered, this, &MainWindow::onColorSettingsRequested);
+    connect(ui->actionShow_reduction, &QAction::triggered, this, &MainWindow::onShowReductionRequested);
 
     // View mode actions
     connect(ui->action2DMode, &QAction::triggered, this, &MainWindow::on2DModeRequested);
@@ -1411,6 +1413,7 @@ void MainWindow::initializeReductionManager(const QString& configFileName)
     {
         // No reduction configured
         reductionManager.reset();
+        ui->actionShow_reduction->setEnabled(false);
         return;
     }
 
@@ -1433,10 +1436,38 @@ void MainWindow::initializeReductionManager(const QString& configFileName)
             QString::fromStdString(settingParam->reduction)
         );
         ui->reductionWidget->setReductionManager(reductionManager.get());
+        
+        // Enable "Show Reduction" action if reduction data is available
+        ui->actionShow_reduction->setEnabled(reductionManager && reductionManager->isAvailable());
     }
     catch (const std::exception& e)
     {
         std::cerr << "Error initializing ReductionManager: " << e.what() << std::endl;
         reductionManager.reset();
+        ui->actionShow_reduction->setEnabled(false);
     }
+}
+
+void MainWindow::onShowReductionRequested()
+{
+    // Check if reduction manager is available
+    if (!reductionManager || !reductionManager->isAvailable())
+    {
+        QMessageBox::warning(this, tr("No Reduction Data"),
+            tr("Reduction data is not available for the current configuration."));
+        return;
+    }
+
+    // Get reduction data for current step
+    ReductionData reductionData = reductionManager->getReductionForStep(currentStep);
+    if (reductionData.values.empty())
+    {
+        QMessageBox::information(this, tr("No Data"),
+            tr("No reduction data available for step %1").arg(currentStep));
+        return;
+    }
+
+    // Show reduction dialog
+    ReductionDialog dialog(reductionData.values, currentStep, this);
+    dialog.exec();
 }
