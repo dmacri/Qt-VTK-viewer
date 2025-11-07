@@ -84,7 +84,8 @@ public:
      * 
      * @param row The row index of the cell (0-based, from top)
      * @param col The column index of the cell (0-based, from left)
-     * @param details is to retrive specific value from model, but with nullptr is entire cell encoding
+     * @param details Optional field name to retrieve specific cell property (e.g., "h", "z").
+     *                If nullptr or empty, returns the default encoding.
      * @return String representation of the cell via stringEncoding(), or empty string if out of bounds */
-    virtual std::string getCellStringEncoding(int row, int col, const char* details=nullptr) const = 0;
+    virtual std::string getCellStringEncoding(int row, int col, const char* details = nullptr) const = 0;
 };

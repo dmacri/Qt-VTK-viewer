@@ -98,7 +98,7 @@ public:
         return m_impl.modelReader.availableSteps();
     }
 
-    std::string getCellStringEncoding(int row, int col, const char* details=nullptr) const override
+    std::string getCellStringEncoding(int row, int col, const char* details = nullptr) const override
     {
         // Check bounds
         if (row < 0 || col < 0 || row >= static_cast<int>(m_impl.p.size()))
@@ -106,8 +106,8 @@ public:
         if (col >= static_cast<int>(m_impl.p[row].size()))
             return {};
         
-        // Get the cell and call its stringEncoding method with nullptr (default parameter)
-        return m_impl.p[row][col].stringEncoding(nullptr);
+        // Get the cell and call its stringEncoding method
+        return m_impl.p[row][col].stringEncoding(details);
     }
 
 private:
