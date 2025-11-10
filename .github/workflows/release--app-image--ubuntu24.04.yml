@@ -214,7 +214,8 @@ jobs:
       - name: Create AppImage
         run: |
           # Use --appimage-extract-and-run to work without FUSE in CI environment
-          ./appimagetool-x86_64.AppImage --appimage-extract-and-run AppDir ${PROJECT_NAME}-x86_64.AppImage
+          # Set ARCH explicitly to avoid architecture detection issues
+          ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run AppDir ${PROJECT_NAME}-x86_64.AppImage
           chmod +x ${PROJECT_NAME}-x86_64.AppImage
 
       ################### artifacts ###################
