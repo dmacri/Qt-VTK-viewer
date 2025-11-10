@@ -213,7 +213,8 @@ jobs:
 
       - name: Create AppImage
         run: |
-          ./appimagetool-x86_64.AppImage AppDir ${PROJECT_NAME}-x86_64.AppImage
+          # Use --appimage-extract-and-run to work without FUSE in CI environment
+          ./appimagetool-x86_64.AppImage --appimage-extract-and-run AppDir ${PROJECT_NAME}-x86_64.AppImage
           chmod +x ${PROJECT_NAME}-x86_64.AppImage
 
       ################### artifacts ###################
