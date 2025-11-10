@@ -58,6 +58,7 @@ jobs:
           cd build
           cmake .. \
             -DCMAKE_BUILD_TYPE=Release \
+            -DOOPENCAL_DIR=${{ github.workspace }}/deps \
             -DCMAKE_INSTALL_PREFIX=/usr
 
       - name: Build application
