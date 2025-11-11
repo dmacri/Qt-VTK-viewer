@@ -175,23 +175,23 @@ jobs:
 
       - name: Create AppRun script
         run: |
-          cat > AppDir/AppRun << 'EOF'
+          cat > AppDir/AppRun << EOF
           #!/bin/bash
-          SELF=$(readlink -f "$0")
-          HERE=${SELF%/*}
+          SELF=\$(readlink -f "\$0")
+          HERE=\${SELF%/*}
 
           # Set up library path
-          export LD_LIBRARY_PATH="${HERE}/usr/lib:${LD_LIBRARY_PATH}"
+          export LD_LIBRARY_PATH="\${HERE}/usr/lib:\${LD_LIBRARY_PATH}"
 
           # Set up Qt plugin path
-          export QT_PLUGIN_PATH="${HERE}/usr/plugins"
-          export QT_QPA_PLATFORM_PLUGIN_PATH="${HERE}/usr/plugins/platforms"
+          export QT_PLUGIN_PATH="\${HERE}/usr/plugins"
+          export QT_QPA_PLATFORM_PLUGIN_PATH="\${HERE}/usr/plugins/platforms"
 
           # Disable Qt's automatic high DPI scaling (user can set QT_AUTO_SCREEN_SCALE_FACTOR=1 if needed)
           export QT_AUTO_SCREEN_SCALE_FACTOR=0
 
           # Execute the application
-          exec "${HERE}/usr/bin/$(basename "$0" .AppImage)" "$@"
+          exec "\${HERE}/usr/bin/${PROJECT_NAME}" "\$@"
           EOF
 
           chmod +x AppDir/AppRun
