@@ -4,6 +4,7 @@
 #include <iostream> // std::cout
 #include <cmath> // std::isfinite
 #include <filesystem>
+#include <string>
 #include <QApplication>
 #include <vtkCallbackCommand.h>
 #include <vtkInteractorStyleImage.h>
@@ -36,6 +37,34 @@
 
 namespace
 {
+/** @brief Checks if the given directory already contains data files matching the output name pattern
+ *  @param configDir Directory to check
+ *  @param outputFileNameFromCfg Base output filename to look for
+ *  @return True if the directory contains data files, false otherwise */
+bool isDataDirectory(const std::filesystem::path& configDir, const std::string& outputFileNameFromCfg)
+{
+    namespace fs = std::filesystem;
+
+    for (const auto& entry : fs::directory_iterator(configDir))
+    {
+        if (! entry.is_regular_file())
+            continue;
+
+        std::string filename = entry.path().filename().string();
+
+        // Check if file name starts with the output file name pattern
+        if (filename.find(outputFileNameFromCfg) != 0)
+            continue;
+
+        // Check if it has a known data file extension
+        std::string ext = entry.path().extension().string();
+        if (ext == ".bin" || ext == ".txt")
+            return true;
+    }
+
+    return false;
+}
+
 /** @brief Prepares the output file path for saving visualization data
  *  @param configFile Path to the configuration file
  *  @param outputFileNameFromCfg Output filename from configuration
@@ -47,34 +76,15 @@ std::string prepareOutputFileName(const std::string& configFile, const std::stri
     // Step 1: determine output directory
     fs::path configPath(configFile);
     fs::path configDir = configPath.parent_path();
-    
-    // Check if we're already in a directory with data files (flat structure)
-    // Look for data files like "outputFileName0.bin" or "outputFileName0.txt"
-    bool isInDataDirectory = false;
-    for (const auto& entry : fs::directory_iterator(configDir))
-    {
-        if (entry.is_regular_file())
-        {
-            std::string filename = entry.path().filename().string();
-            // Check if file matches pattern: outputFileName + number + extension
-            if (filename.find(outputFileNameFromCfg) == 0)
-            {
-                // Check if it's a data file (ends with .bin, .txt, _index.txt, -red.txt, etc.)
-                std::string ext = entry.path().extension().string();
-                if (ext == ".bin" || ext == ".txt")
-                {
-                    isInDataDirectory = true;
-                    break;
-                }
-            }
-        }
-    }
-    
-    // Step 2: build full output file path
+
+    // Step 2: check if we are already in a data directory
+    const bool isInDataDirectory = isDataDirectory(configDir, outputFileNameFromCfg);
+
+    // Step 3: build full output file path
     fs::path outputDir = isInDataDirectory ? configDir : (configDir / "Output");
     fs::create_directories(outputDir); // ensure that directory exists
 
-    // Step 3: build full output file path
+    // Step 4: build and return the final output file path
     return (outputDir / outputFileNameFromCfg).string();
 }
 

@@ -128,7 +128,7 @@ ModelLoader::LoadResult ModelLoader::loadModelFromDirectory(const std::string& m
 
         // Determine output file path
         const std::string outputFile = generateModuleNameForSourceFile(sourceFile);
-        std::cout << "Trying to open: " << outputFile << "'\t" << isFileNewer(sourceFile, outputFile) << std::endl;
+        std::cout << "Trying to open: " << outputFile << "'\t, source never than compiled?: " << std::boolalpha << isFileNewer(sourceFile, outputFile) << std::endl;
 
         // Check if compilation is needed
         if (moduleExists(outputFile))
