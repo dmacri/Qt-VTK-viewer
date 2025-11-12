@@ -157,7 +157,6 @@ ModelLoader::LoadResult ModelLoader::loadModelFromDirectory(const std::string& m
             // Compile the wrapper to .so (which includes the model header)
             // Empty string for cppStandard triggers auto-detection in CppModuleBuilder
             auto compilationResult = builder->compileModule(wrapperSource, outputFile, "");
-
             if (! compilationResult.success)
             {
                 std::cerr << "Compilation failed with exit code: " << compilationResult.exitCode << std::endl;
@@ -200,31 +199,21 @@ ModelLoader::LoadResult ModelLoader::loadModelFromDirectory(const std::string& m
 
 bool ModelLoader::validateDirectory(const std::string& modelDirectory)
 {
-    if (!fs::exists(modelDirectory) || !fs::is_directory(modelDirectory))
+    if (! fs::exists(modelDirectory) || ! fs::is_directory(modelDirectory))
     {
         std::cerr << "Error: Directory does not exist: " << modelDirectory << std::endl;
         return false;
     }
 
-    std::string headerPath = modelDirectory + "/Header.txt";
-    if (!fs::exists(headerPath))
+    const fs::path headerPath = fs::path(modelDirectory) / "Header.txt";
+    if (! fs::exists(headerPath))
     {
         std::cerr << "Error: Header.txt not found in " << modelDirectory << std::endl;
         return false;
     }
 
-    // Check if at least one .h file exists
-    bool hasHeaderFile = false;
-    for (const auto& entry : fs::directory_iterator(modelDirectory))
-    {
-        if (entry.is_regular_file() && entry.path().extension() == ".h")
-        {
-            hasHeaderFile = true;
-            break;
-        }
-    }
-
-    if (! hasHeaderFile)
+    const std::string headerFile = findHeaderFile(modelDirectory);
+    if (headerFile.empty())
     {
         std::cerr << "Error: No C++ header file (.h) found in " << modelDirectory << std::endl;
         return false;
@@ -235,14 +224,16 @@ bool ModelLoader::validateDirectory(const std::string& modelDirectory)
 
 std::string ModelLoader::findHeaderFile(const std::string& modelDirectory)
 {
-    for (const auto& entry : fs::directory_iterator(modelDirectory))
-    {
-        if (entry.is_regular_file() && entry.path().extension() == ".h")
+    auto it = std::ranges::find_if(fs::directory_iterator(modelDirectory), fs::directory_iterator{}, [](const fs::directory_entry& entry)
         {
-            return entry.path().string();
-        }
+            return entry.is_regular_file() && entry.path().extension() == ".h";
+        });
+
+    if (it != fs::directory_iterator{})
+    {
+        return it->path().string();
     }
-    return "";
+    return {};
 }
 
 bool ModelLoader::moduleExists(const std::string& outputPath)
