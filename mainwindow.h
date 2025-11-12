@@ -36,6 +36,7 @@ public:
     /// @param config is optional, if not provided: data will be read from file
     void openConfigurationFile(const QString& configFileName, std::shared_ptr<Config> optionalConfig={});
     void applyCommandLineOptions(const CommandLineParser& cmdParser);
+    void loadModelFromDirectory(const QString& modelDirectory);
 
     void setSilentMode(bool newSilentMode)
     {
@@ -132,7 +133,7 @@ private:
     QString getSmartDisplayName(const QString &filePath, const QStringList &allPaths) const;
     QString generateTooltipForFile(const QString &filePath) const;
     void updateRecentFilesMenu();
-    void loadModelFromDirectory(const QString& modelDirectory);
+    
     /// @brief Initialize reduction manager for the current configuration.
     /// @param configFileName Path to the configuration file
     /// @param optionalConfig Optional pre-loaded Config object. If provided, avoids re-reading the file.
