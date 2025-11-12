@@ -6,7 +6,7 @@
 #include <filesystem>
 #include <string>
 #include <QApplication>
-#include "utilities/DirectoryConstants.h"
+#include "utilities/directoryConstants.h"
 #include <vtkCallbackCommand.h>
 #include <vtkInteractorStyleImage.h>
 #include <vtkInteractorStyleTrackballCamera.h>

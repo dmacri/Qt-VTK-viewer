@@ -11,7 +11,7 @@
 #include "ModelLoader.h"
 #include "config/Config.h"
 #include "CppModuleBuilder.h"
-#include "DirectoryConstants.h"
+#include "directoryConstants.h"
 #include "vtk_compile_flags.h"
 
 namespace
