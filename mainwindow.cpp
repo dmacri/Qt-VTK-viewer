@@ -589,7 +589,7 @@ void MainWindow::onUpdateStepPositionOnSlider(StepIndex value)
 
 void MainWindow::onModelSelected()
 {
-    QAction* action = qobject_cast<QAction*>(sender());
+    const QAction* action = qobject_cast<QAction*>(sender());
     if (! action)
         return;
 
@@ -1182,14 +1182,10 @@ QString MainWindow::getSmartDisplayName(const QString& filePath, const QStringLi
     QString displayName = fileDir.dirName() + "/" + fileName;
 
     // Count how many files have the same filename
-    int sameNameCount = 0;
-    for (const QString& otherPath : allPaths)
-    {
-        if (QFileInfo(otherPath).fileName() == fileName)
+    const int sameNameCount = std::count_if(allPaths.begin(), allPaths.end(), [&](const QString& otherPath)
         {
-            sameNameCount++;
-        }
-    }
+            return QFileInfo(otherPath).fileName() == fileName;
+        });
 
     // If unique filename, return parent/filename
     if (sameNameCount == 1)
@@ -1278,7 +1274,7 @@ QString MainWindow::generateTooltipForFile(const QString& filePath) const
             ConfigCategory* cat = config.getConfigCategory(category.toStdString(), /*ignoreCase=*/true);
             if (cat)
             {
-                ConfigParameter* param = cat->getConfigParameter(paramName.toStdString());
+                const ConfigParameter* param = cat->getConfigParameter(paramName.toStdString());
                 if (param)
                 {
                     tooltip += QString("&nbsp;&nbsp;• <b>%1:</b> %2<br/>")
@@ -1361,7 +1357,7 @@ void MainWindow::setWidgetsEnabledState(bool enabled)
 }
 
 
-void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
+void MainWindow::applyCommandLineOptions(const CommandLineParser& cmdParser)
 {
     // Store silent mode flag
     silentMode = cmdParser.isSilentMode();

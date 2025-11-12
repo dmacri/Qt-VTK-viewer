@@ -18,6 +18,7 @@ class QPushButton;
 class QActionGroup;
 class ReductionManager;
 class Config;
+class CommandLineParser;
 
 /** @class MainWindow
  * @brief The main application window class that manages the user interface.
@@ -33,7 +34,7 @@ public:
     ~MainWindow();
 
     void openConfigurationFile(const QString& configFileName);
-    void applyCommandLineOptions(class CommandLineParser &cmdParser);
+    void applyCommandLineOptions(const CommandLineParser& cmdParser);
 
     void setSilentMode(bool newSilentMode)
     {
