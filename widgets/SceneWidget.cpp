@@ -44,12 +44,37 @@ std::string prepareOutputFileName(const std::string& configFile, const std::stri
 {
     namespace fs = std::filesystem;
 
-    // Step 1: prepare output directory
+    // Step 1: determine output directory
     fs::path configPath(configFile);
-    fs::path outputDir = configPath.parent_path() / "Output";
+    fs::path configDir = configPath.parent_path();
+    
+    // Check if we're already in a directory with data files (flat structure)
+    // Look for data files like "outputFileName0.bin" or "outputFileName0.txt"
+    bool isInDataDirectory = false;
+    for (const auto& entry : fs::directory_iterator(configDir))
+    {
+        if (entry.is_regular_file())
+        {
+            std::string filename = entry.path().filename().string();
+            // Check if file matches pattern: outputFileName + number + extension
+            if (filename.find(outputFileNameFromCfg) == 0)
+            {
+                // Check if it's a data file (ends with .bin, .txt, _index.txt, -red.txt, etc.)
+                std::string ext = entry.path().extension().string();
+                if (ext == ".bin" || ext == ".txt")
+                {
+                    isInDataDirectory = true;
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Step 2: build full output file path
+    fs::path outputDir = isInDataDirectory ? configDir : (configDir / "Output");
     fs::create_directories(outputDir); // ensure that directory exists
 
-    // Step 2: build full output file path
+    // Step 3: build full output file path
     return (outputDir / outputFileNameFromCfg).string();
 }
 

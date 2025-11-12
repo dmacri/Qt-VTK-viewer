@@ -6,7 +6,7 @@
 #include <QMainWindow>
 #include <QStyle>
 #include <QTimer>
-
+#include <memory>
 #include "utilities/types.h"
 
 namespace Ui
@@ -17,6 +17,7 @@ class MainWindow;
 class QPushButton;
 class QActionGroup;
 class ReductionManager;
+class Config;
 
 /** @class MainWindow
  * @brief The main application window class that manages the user interface.
@@ -131,7 +132,9 @@ private:
     void updateRecentFilesMenu();
     void loadModelFromDirectory(const QString& modelDirectory);
     void initializeReductionManager(const QString& configFileName);
+    void initializeReductionManagerWithConfig(const QString& configFileName, std::shared_ptr<Config> config);
     void updateReductionDisplay();
+    void openConfigurationFileWithConfig(const QString& configFileName, std::shared_ptr<Config> config = nullptr);
 
     static constexpr int MAX_RECENT_FILES = 10;
 

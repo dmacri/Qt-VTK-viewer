@@ -113,7 +113,7 @@ ModelLoader::LoadResult ModelLoader::loadModelFromDirectory(const std::string& m
             return result;
         }
 
-        result.modelName = outputParam->getValue<std::string>();
+        result.outputFileName = outputParam->getValue<std::string>();
 
         // Find C++ header file
         std::string sourceFile = findHeaderFile(modelDirectory);
@@ -141,13 +141,13 @@ ModelLoader::LoadResult ModelLoader::loadModelFromDirectory(const std::string& m
         }
         else // if module does not exist
         {
-            const std::string wrapperSource = modelDirectory + "/" + result.modelName + "_wrapper.cpp";
+            const std::string wrapperSource = modelDirectory + "/" + result.outputFileName + "_wrapper.cpp";
 
             std::cout << "Compiling module: " << sourceFile << std::endl;
 
             // Generate wrapper code
             const auto className = generateClassNameFromCppHeaderFileName(sourceFile);
-            if (! generateWrapper(wrapperSource, result.modelName, className))
+            if (! generateWrapper(wrapperSource, result.outputFileName, className))
             {
                 std::cerr << "Error: Failed to generate wrapper code" << std::endl;
                 result.success = false;
@@ -166,8 +166,23 @@ ModelLoader::LoadResult ModelLoader::loadModelFromDirectory(const std::string& m
                     std::cerr << "Error output:\n" << compilationResult.stderr << std::endl;
                 }
                 result.success = false;
-                result.compilationResult = new viz::plugins::CompilationResult(compilationResult);
+                result.compilationResult = compilationResult;
                 return result;
+            }
+            
+            // Remove wrapper file after successful compilation
+            try
+            {
+                if (fs::exists(wrapperSource))
+                {
+                    fs::remove(wrapperSource);
+                    std::cout << "Removed wrapper file: " << wrapperSource << std::endl;
+                }
+            }
+            catch (const std::exception& e)
+            {
+                std::cerr << "Warning: Failed to remove wrapper file: " << e.what() << std::endl;
+                // Don't fail the build if wrapper removal fails
             }
         }
 
@@ -209,7 +224,7 @@ bool ModelLoader::validateDirectory(const std::string& modelDirectory)
         }
     }
 
-    if (!hasHeaderFile)
+    if (! hasHeaderFile)
     {
         std::cerr << "Error: No C++ header file (.h) found in " << modelDirectory << std::endl;
         return false;
