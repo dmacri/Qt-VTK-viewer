@@ -11,6 +11,7 @@
 #include "ModelLoader.h"
 #include "config/Config.h"
 #include "CppModuleBuilder.h"
+#include "DirectoryConstants.h"
 #include "vtk_compile_flags.h"
 
 namespace
@@ -141,7 +142,7 @@ ModelLoader::LoadResult ModelLoader::loadModelFromDirectory(const std::string& m
         }
         else // if module does not exist
         {
-            const std::string wrapperSource = modelDirectory + "/" + result.outputFileName + "_wrapper.cpp";
+            const std::string wrapperSource = modelDirectory + "/" + result.outputFileName + std::string(DirectoryConstants::WRAPPER_FILE_SUFFIX);
 
             std::cout << "Compiling module: " << sourceFile << std::endl;
 

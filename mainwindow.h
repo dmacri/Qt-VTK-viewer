@@ -134,7 +134,11 @@ private:
     void updateRecentFilesMenu();
     void loadModelFromDirectory(const QString& modelDirectory);
     void initializeReductionManager(const QString& configFileName);
-    void initializeReductionManagerWithConfig(const QString& configFileName, std::shared_ptr<Config> config);
+    /// @brief Initialize reduction manager for the current configuration.
+    /// @param configFileName Path to the configuration file
+    /// @param optionalConfig Optional pre-loaded Config object. If provided, avoids re-reading the file.
+    ///                       If nullptr, the config will be read from configFileName.
+    void initializeReductionManager(const QString& configFileName, std::shared_ptr<Config> optionalConfig = nullptr);
     void updateReductionDisplay();
 
 private:

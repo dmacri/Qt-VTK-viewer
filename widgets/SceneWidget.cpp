@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <string>
 #include <QApplication>
+#include "utilities/DirectoryConstants.h"
 #include <vtkCallbackCommand.h>
 #include <vtkInteractorStyleImage.h>
 #include <vtkInteractorStyleTrackballCamera.h>
@@ -81,7 +82,7 @@ std::string prepareOutputFileName(const std::string& configFile, const std::stri
     const bool isInDataDirectory = isDataDirectory(configDir, outputFileNameFromCfg);
 
     // Step 3: build full output file path
-    fs::path outputDir = isInDataDirectory ? configDir : (configDir / "Output");
+    fs::path outputDir = isInDataDirectory ? configDir : (configDir / std::string(DirectoryConstants::OUTPUT_DIRECTORY));
     fs::create_directories(outputDir); // ensure that directory exists
 
     // Step 4: build and return the final output file path
