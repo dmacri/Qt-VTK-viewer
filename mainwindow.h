@@ -33,7 +33,8 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    void openConfigurationFile(const QString& configFileName);
+    /// @param config is optional, if not provided: data will be read from file
+    void openConfigurationFile(const QString& configFileName, std::shared_ptr<Config> optionalConfig={});
     void applyCommandLineOptions(const CommandLineParser& cmdParser);
 
     void setSilentMode(bool newSilentMode)
@@ -135,11 +136,10 @@ private:
     void initializeReductionManager(const QString& configFileName);
     void initializeReductionManagerWithConfig(const QString& configFileName, std::shared_ptr<Config> config);
     void updateReductionDisplay();
-    void openConfigurationFileWithConfig(const QString& configFileName, std::shared_ptr<Config> config = nullptr);
-
-    static constexpr int MAX_RECENT_FILES = 10;
 
 private:
+
+    static constexpr int MAX_RECENT_FILES = 10;
     Ui::MainWindow *ui;
     QTimer playbackTimer;
     QActionGroup *modelActionGroup = nullptr;

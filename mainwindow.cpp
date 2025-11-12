@@ -685,12 +685,7 @@ void MainWindow::onOpenConfigurationRequested()
     openConfigurationFile(configFileName);
 }
 
-void MainWindow::openConfigurationFile(const QString& configFileName)
-{
-    openConfigurationFileWithConfig(configFileName, nullptr);
-}
-
-void MainWindow::openConfigurationFileWithConfig(const QString& configFileName, std::shared_ptr<Config> config)
+void MainWindow::openConfigurationFile(const QString& configFileName, std::shared_ptr<Config> optionalConfig)
 {
     try
     {
@@ -712,9 +707,9 @@ void MainWindow::openConfigurationFileWithConfig(const QString& configFileName, 
 
         // Initialize reduction manager for this configuration
         // If config is provided, use it; otherwise read from file
-        if (config)
+        if (optionalConfig)
         {
-            initializeReductionManagerWithConfig(configFileName, config);
+            initializeReductionManagerWithConfig(configFileName, optionalConfig);
         }
         else
         {
@@ -965,7 +960,7 @@ void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
 
         // Open configuration using the config object from ModelLoader
         // This avoids reading the file twice
-        openConfigurationFileWithConfig(QString::fromStdString(headerPath.string()), result.config);
+        openConfigurationFile(QString::fromStdString(headerPath.string()), result.config);
 
         progress.close();
         silentMode = previousSilentMode;
