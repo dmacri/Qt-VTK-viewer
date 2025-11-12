@@ -169,19 +169,22 @@ ModelLoader::LoadResult ModelLoader::loadModelFromDirectory(const std::string& m
                 return result;
             }
             
-            // Remove wrapper file after successful compilation
-            try
+            constexpr bool removeWrapperAfterSuccessfullCompilation = false;
+            if constexpr(removeWrapperAfterSuccessfullCompilation)
             {
-                if (fs::exists(wrapperSource))
+                try
                 {
-                    fs::remove(wrapperSource);
-                    std::cout << "Removed wrapper file: " << wrapperSource << std::endl;
+                    if (fs::exists(wrapperSource))
+                    {
+                        fs::remove(wrapperSource);
+                        std::cout << "Removed wrapper file: " << wrapperSource << std::endl;
+                    }
                 }
-            }
-            catch (const std::exception& e)
-            {
-                std::cerr << "Warning: Failed to remove wrapper file: " << e.what() << std::endl;
-                // Don't fail the build if wrapper removal fails
+                catch (const std::exception& e)
+                {
+                    std::cerr << "Warning: Failed to remove wrapper file: " << e.what() << std::endl;
+                    // Don't fail the build if wrapper removal fails
+                }
             }
         }
 

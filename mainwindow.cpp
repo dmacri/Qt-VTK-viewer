@@ -115,6 +115,24 @@ QString getOOpenCalStartPath()
     // Step 5: Return base directory if "models" does not exist
     return dir.absolutePath();
 }
+
+void updateMenu2ShowTheSelectedModeAsActive(const QString& modelName, QActionGroup *modelActionGroup)
+{
+    if (modelActionGroup)
+    {
+        bool modelFound = false;
+        for (QAction* action : modelActionGroup->actions())
+        {
+            const bool isCurrent = action->text() == modelName;
+            action->setChecked(isCurrent);
+            modelFound |= isCurrent;
+        }
+        if (! modelFound)
+        {
+            std::cerr << "Model: '" << modelName.toStdString() << "' not found!" << std::endl;
+        }
+    }
+}
 } // namespace
 
 
@@ -594,6 +612,8 @@ void MainWindow::switchToModel(const QString& modelName)
         // Update substate dock widget for new model
         updateSubstateDockeWidget();
 
+        updateMenu2ShowTheSelectedModeAsActive(modelName, modelActionGroup);
+
         if (! silentMode)
         {
             QMessageBox::
@@ -611,10 +631,7 @@ void MainWindow::switchToModel(const QString& modelName)
 
         // Revert checkbox state to current model
         const auto currentModel = QString::fromStdString(ui->sceneWidget->getCurrentModelName());
-        for (QAction* action : modelActionGroup->actions())
-        {
-            action->setChecked(action->text() == currentModel);
-        }
+        updateMenu2ShowTheSelectedModeAsActive(currentModel, modelActionGroup);
     }
 }
 void MainWindow::updateSubstateDockeWidget()
@@ -1358,27 +1375,19 @@ void MainWindow::applyCommandLineOptions(CommandLineParser& cmdParser)
         // Check if model is registered
         if (SceneWidgetVisualizerFactory::isModelRegistered(modelName))
         {
-            // Find and check the corresponding action in the menu
-            for (QAction* action : modelActionGroup->actions())
-            {
-                if (action->text() == modelQStr)
-                {
-                    action->setChecked(true);
-                    switchToModel(modelQStr);
+            // Switch to the model (switchToModel now handles menu update)
+            switchToModel(modelQStr);
 
-                    // Reload data with the new model only if configuration was loaded
-                    if (cmdParser.getConfigFile())
-                    {
-                        try
-                        {
-                            ui->sceneWidget->reloadData();
-                        }
-                        catch (const std::exception& e)
-                        {
-                            std::cerr << "Error reloading data with new model: " << e.what() << std::endl;
-                        }
-                    }
-                    break;
+            // Reload data with the new model only if configuration was loaded
+            if (cmdParser.getConfigFile())
+            {
+                try
+                {
+                    ui->sceneWidget->reloadData();
+                }
+                catch (const std::exception& e)
+                {
+                    std::cerr << "Error reloading data with new model: " << e.what() << std::endl;
                 }
             }
         }
