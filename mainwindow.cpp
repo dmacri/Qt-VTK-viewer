@@ -34,7 +34,7 @@
 #include "widgets/CompilationLogWidget.h"
 #include "widgets/ConfigDetailsDialog.h"
 #include "widgets/ReductionDialog.h"
-#include "utilities/DirectoryConstants.h"
+#include "utilities/directoryConstants.h"
 
 
 namespace
@@ -1478,8 +1478,11 @@ void MainWindow::initializeReductionManager(const QString& configFileName, std::
     // Get output filename from config
     try
     {
-        Config config(configFileName.toStdString());
-        ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
+        if (! optionalConfig)
+        {
+            optionalConfig = std::make_shared<Config>(configFileName.toStdString());
+        }
+        ConfigCategory* generalContext = optionalConfig->getConfigCategory("GENERAL");
         std::string outputFileNameFromCfg = generalContext->getConfigParameter("output_file_name")->getValue<std::string>();
         
         // Determine reduction file directory: check flat structure first, then nested
@@ -1491,77 +1494,6 @@ void MainWindow::initializeReductionManager(const QString& configFileName, std::
         {
             reductionDir = configDir / "Output";
             reductionFilePath = reductionDir / (outputFileNameFromCfg + "-red.txt");
-        }
-        
-        // Create ReductionManager with the reduction file path and configuration
-        reductionManager = std::make_unique<ReductionManager>(
-            QString::fromStdString(reductionFilePath.string()),
-            QString::fromStdString(settingParam->reduction)
-        );
-        ui->reductionWidget->setReductionManager(reductionManager.get());
-        
-        // Enable "Show Reduction" action if reduction data is available
-        ui->actionShow_reduction->setEnabled(reductionManager && reductionManager->isAvailable());
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Error initializing ReductionManager: " << e.what() << std::endl;
-        reductionManager.reset();
-        ui->actionShow_reduction->setEnabled(false);
-    }
-}
-
-void MainWindow::initializeReductionManagerWithConfig(const QString& configFileName, std::shared_ptr<Config> config)
-{
-    ui->reductionWidget->setReductionManager(nullptr);
-
-    // Get reduction configuration from SettingParameter
-    const auto* settingParam = this->ui->sceneWidget->getSettingParameter();
-    if (!settingParam || settingParam->reduction.empty())
-    {
-        // No reduction configured
-        reductionManager.reset();
-        ui->actionShow_reduction->setEnabled(false);
-        return;
-    }
-
-    // Build path to reduction file
-    namespace fs = std::filesystem;
-    fs::path configPath(configFileName.toStdString());
-    fs::path configDir = configPath.parent_path();
-    
-    // Get output filename from config
-    try
-    {
-        ConfigCategory* generalContext = config->getConfigCategory("GENERAL");
-        if (!generalContext)
-        {
-            std::cerr << "Error: GENERAL section not found in config" << std::endl;
-            reductionManager.reset();
-            ui->actionShow_reduction->setEnabled(false);
-            return;
-        }
-
-        ConfigParameter* outputParam = generalContext->getConfigParameter("output_file_name");
-        if (!outputParam)
-        {
-            std::cerr << "Error: output_file_name not found in GENERAL section" << std::endl;
-            reductionManager.reset();
-            ui->actionShow_reduction->setEnabled(false);
-            return;
-        }
-
-        std::string outputFileNameFromCfg = outputParam->getValue<std::string>();
-        
-        // Determine reduction file directory: check flat structure first, then nested
-        fs::path reductionDir = configDir;
-        fs::path reductionFilePath = reductionDir / (outputFileNameFromCfg + std::string(DirectoryConstants::REDUCTION_FILE_SUFFIX));
-        
-        // If not found in current directory, try Output/ subdirectory
-        if (!fs::exists(reductionFilePath))
-        {
-            reductionDir = configDir / std::string(DirectoryConstants::OUTPUT_DIRECTORY);
-            reductionFilePath = reductionDir / (outputFileNameFromCfg + std::string(DirectoryConstants::REDUCTION_FILE_SUFFIX));
         }
         
         // Create ReductionManager with the reduction file path and configuration
