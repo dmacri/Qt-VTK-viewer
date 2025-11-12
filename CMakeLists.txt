@@ -747,8 +747,14 @@ else()
     message(STATUS "valgrind not found: skipping valgrind target")
 endif()
 
+# ============================================
+# Optional example plugins / demos
+# ============================================
+option(BUILD_EXAMPLES "Build example plugin demo" ON)
 
-# ============================================
-# Subproject:
-# ============================================
-add_subdirectory(examples/custom_model_plugin)
+if (BUILD_EXAMPLES)
+    message(STATUS "Building example plugins (BUILD_EXAMPLES=ON)")
+    add_subdirectory(examples/custom_model_plugin)
+else()
+    message(STATUS "Skipping example plugins (BUILD_EXAMPLES=OFF)")
+endif()
