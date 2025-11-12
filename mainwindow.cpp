@@ -1484,7 +1484,7 @@ void MainWindow::initializeReductionManager(const QString& configFileName)
     // Build path to reduction file
     namespace fs = std::filesystem;
     fs::path configPath(configFileName.toStdString());
-    fs::path outputDir = configPath.parent_path() / "Output";
+    fs::path configDir = configPath.parent_path();
     
     // Get output filename from config
     try
@@ -1492,7 +1492,17 @@ void MainWindow::initializeReductionManager(const QString& configFileName)
         Config config(configFileName.toStdString());
         ConfigCategory* generalContext = config.getConfigCategory("GENERAL");
         std::string outputFileNameFromCfg = generalContext->getConfigParameter("output_file_name")->getValue<std::string>();
-        fs::path reductionFilePath = outputDir / (outputFileNameFromCfg + "-red.txt");
+        
+        // Determine reduction file directory: check flat structure first, then nested
+        fs::path reductionDir = configDir;
+        fs::path reductionFilePath = reductionDir / (outputFileNameFromCfg + "-red.txt");
+        
+        // If not found in current directory, try Output/ subdirectory
+        if (!fs::exists(reductionFilePath))
+        {
+            reductionDir = configDir / "Output";
+            reductionFilePath = reductionDir / (outputFileNameFromCfg + "-red.txt");
+        }
         
         // Create ReductionManager with the reduction file path and configuration
         reductionManager = std::make_unique<ReductionManager>(
@@ -1529,7 +1539,7 @@ void MainWindow::initializeReductionManagerWithConfig(const QString& configFileN
     // Build path to reduction file
     namespace fs = std::filesystem;
     fs::path configPath(configFileName.toStdString());
-    fs::path outputDir = configPath.parent_path() / "Output";
+    fs::path configDir = configPath.parent_path();
     
     // Get output filename from config
     try
@@ -1553,7 +1563,17 @@ void MainWindow::initializeReductionManagerWithConfig(const QString& configFileN
         }
 
         std::string outputFileNameFromCfg = outputParam->getValue<std::string>();
-        fs::path reductionFilePath = outputDir / (outputFileNameFromCfg + "-red.txt");
+        
+        // Determine reduction file directory: check flat structure first, then nested
+        fs::path reductionDir = configDir;
+        fs::path reductionFilePath = reductionDir / (outputFileNameFromCfg + "-red.txt");
+        
+        // If not found in current directory, try Output/ subdirectory
+        if (!fs::exists(reductionFilePath))
+        {
+            reductionDir = configDir / "Output";
+            reductionFilePath = reductionDir / (outputFileNameFromCfg + "-red.txt");
+        }
         
         // Create ReductionManager with the reduction file path and configuration
         reductionManager = std::make_unique<ReductionManager>(
