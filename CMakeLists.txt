@@ -758,3 +758,15 @@ if (BUILD_EXAMPLES)
 else()
     message(STATUS "Skipping example plugins (BUILD_EXAMPLES=OFF)")
 endif()
+
+# ============================================
+# Tests
+# ============================================
+option(BUILD_TESTS "Build unit tests" ON)
+
+if (BUILD_TESTS)
+    message(STATUS "Building tests (BUILD_TESTS=ON)")
+    add_subdirectory(tests)
+else()
+    message(STATUS "Skipping tests (BUILD_TESTS=OFF)")
+endif()
