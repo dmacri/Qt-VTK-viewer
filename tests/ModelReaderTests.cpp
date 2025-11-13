@@ -1,34 +1,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 #include "utilities/types.h"
-
-// Implementation of calculateXYOffsetForNode for testing
-namespace ReaderHelpers
-{
-    ColumnAndRow calculateXYOffsetForNode(NodeIndex node,
-                                         NodeIndex nNodeX,
-                                         NodeIndex nNodeY,
-                                         const std::vector<ColumnAndRow>& columnsAndRows)
-    {
-        int offsetX = 0;
-        int offsetY = 0;
-
-        for (NodeIndex k = (node / nNodeX) * nNodeX; k < node; k++)
-        {
-            offsetX += columnsAndRows[k].column;
-        }
-
-        if (node >= nNodeX)
-        {
-            for (int k = node - nNodeX; k >= 0;)
-            {
-                offsetY += columnsAndRows[k].row;
-                k -= nNodeX;
-            }
-        }
-        return ColumnAndRow::xy(offsetX, offsetY);
-    }
-}
+#include "utilities/ModelReader.hpp"
 
 /**
  * Test Suite: calculateXYOffsetForNode
@@ -438,7 +411,76 @@ TEST(CalculateXYOffsetForNode, IncorrectColumnsAndRows_4x1)
 }
 
 // ============================================================================
-// Test 10: 3x2 Configuration (3 nodes horizontally, 2 nodes vertically)
+// Test 10: Debug test - trace through 4x1 calculation step by step
+// ============================================================================
+TEST(CalculateXYOffsetForNode, Debug_4x1_StepByStep)
+{
+    /*
+     * This test traces through the calculation for 4x1 configuration
+     * to understand exactly what's happening
+     */
+    
+    std::vector<ColumnAndRow> columnsAndRows = {
+        ColumnAndRow{.column = 125, .row = 500},  // Node 0
+        ColumnAndRow{.column = 125, .row = 500},  // Node 1
+        ColumnAndRow{.column = 125, .row = 500},  // Node 2
+        ColumnAndRow{.column = 125, .row = 500}   // Node 3
+    };
+    
+    NodeIndex nNodeX = 4;
+    NodeIndex nNodeY = 1;
+    
+    // For node=2:
+    // offsetX loop: k = (2 / 4) * 4 = 0; k < 2
+    //   k=0: offsetX += 125
+    //   k=1: offsetX += 125
+    //   Result: offsetX = 250
+    // offsetY: node (2) >= nNodeX (4)? NO
+    //   offsetY = 0
+    
+    auto offset2 = ReaderHelpers::calculateXYOffsetForNode(2, nNodeX, nNodeY, columnsAndRows);
+    EXPECT_EQ(offset2.x(), 250) << "Node 2 X offset should be 250";
+    EXPECT_EQ(offset2.y(), 0) << "Node 2 Y offset should be 0";
+}
+
+// ============================================================================
+// Test 11: Debug test - trace through 1x4 calculation step by step
+// ============================================================================
+TEST(CalculateXYOffsetForNode, Debug_1x4_StepByStep)
+{
+    /*
+     * This test traces through the calculation for 1x4 configuration
+     * to understand exactly what's happening
+     */
+    
+    std::vector<ColumnAndRow> columnsAndRows = {
+        ColumnAndRow{.column = 500, .row = 125},  // Node 0
+        ColumnAndRow{.column = 500, .row = 125},  // Node 1
+        ColumnAndRow{.column = 500, .row = 125},  // Node 2
+        ColumnAndRow{.column = 500, .row = 125}   // Node 3
+    };
+    
+    NodeIndex nNodeX = 1;
+    NodeIndex nNodeY = 4;
+    
+    // For node=2:
+    // offsetX loop: k = (2 / 1) * 1 = 2; k < 2? NO
+    //   offsetX = 0
+    // offsetY: node (2) >= nNodeX (1)? YES
+    //   k = 2 - 1 = 1; k >= 0? YES
+    //     offsetY += 125
+    //     k = 1 - 1 = 0; k >= 0? YES
+    //       offsetY += 125
+    //       k = 0 - 1 = -1; k >= 0? NO
+    //   Result: offsetY = 250
+    
+    auto offset2 = ReaderHelpers::calculateXYOffsetForNode(2, nNodeX, nNodeY, columnsAndRows);
+    EXPECT_EQ(offset2.x(), 0) << "Node 2 X offset should be 0";
+    EXPECT_EQ(offset2.y(), 250) << "Node 2 Y offset should be 250";
+}
+
+// ============================================================================
+// Test 12: 3x2 Configuration (3 nodes horizontally, 2 nodes vertically)
 // ============================================================================
 TEST(CalculateXYOffsetForNode, ThreeByTwo_600x400)
 {
