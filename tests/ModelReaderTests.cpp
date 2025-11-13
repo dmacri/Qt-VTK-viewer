@@ -21,8 +21,7 @@
 // ============================================================================
 TEST(CalculateXYOffsetForNode, TwoByOne_500x500)
 {
-    /*
-     * Scene: 500x500
+    /* Scene: 500x500
      * Nodes: 2x1 (2 nodes in X direction, 1 node in Y direction)
      * 
      * Layout:
@@ -30,22 +29,22 @@ TEST(CalculateXYOffsetForNode, TwoByOne_500x500)
      * │   Node 0        │   Node 1        │
      * │  (250x500)      │  (250x500)      │
      * │  offset(0,0)    │  offset(250,0)  │
-     * └─────────────────┴─────────────────┘
-     */
+     * └─────────────────┴─────────────────┘ */
     
-    std::vector<ColumnAndRow> columnsAndRows = {
+    const std::vector<ColumnAndRow> columnsAndRows =
+    {
         ColumnAndRow{.column = 250, .row = 500},  // Node 0
         ColumnAndRow{.column = 250, .row = 500}   // Node 1
     };
     
     // Node 0: should be at (0, 0)
-    auto offset0 = ReaderHelpers::calculateXYOffsetForNode(0, 2, 1, columnsAndRows);
+    const auto offset0 = ReaderHelpers::calculateXYOffsetForNode(/*node=*/0, /*nNodeX=*/2, /*nNodeY=*/1, columnsAndRows);
     EXPECT_EQ(offset0.x(), 0);
     EXPECT_EQ(offset0.y(), 0);
     
     // Node 1: should be at (250, 0)
-    auto offset1 = ReaderHelpers::calculateXYOffsetForNode(1, 2, 1, columnsAndRows);
-    EXPECT_EQ(offset1.x(), 250);
+    const auto offset1 = ReaderHelpers::calculateXYOffsetForNode(1, 2, 1, columnsAndRows);
+    EXPECT_EQ(offset1.x(), columnsAndRows.front().column);
     EXPECT_EQ(offset1.y(), 0);
 }
 
@@ -54,8 +53,7 @@ TEST(CalculateXYOffsetForNode, TwoByOne_500x500)
 // ============================================================================
 TEST(CalculateXYOffsetForNode, OneByTwo_500x500)
 {
-    /*
-     * Scene: 500x500
+    /* Scene: 500x500
      * Nodes: 1x2 (1 node in X direction, 2 nodes in Y direction)
      * 
      * Layout:
