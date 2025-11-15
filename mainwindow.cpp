@@ -20,6 +20,7 @@
 #include "ui_mainwindow.h"
 
 #include "config/Config.h"
+#include "config/ConfigConstants.h"
 #include "utilities/CommandLineParser.h"
 #include "utilities/CppModuleBuilder.h"
 #include "utilities/ModelLoader.h"
@@ -34,7 +35,6 @@
 #include "widgets/CompilationLogWidget.h"
 #include "widgets/ConfigDetailsDialog.h"
 #include "widgets/ReductionDialog.h"
-#include "utilities/directoryConstants.h"
 
 
 namespace
@@ -265,6 +265,7 @@ void MainWindow::totalStepsNumberChanged(StepIndex totalStepsValue)
     ui->totalStep->setText(QString("/") + QString::number(totalStepsValue));
     ui->updatePositionSlider->setMaximum(static_cast<int>(totalStepsValue));
     ui->positionSpinBox->setMaximum(static_cast<int>(totalStepsValue));
+    ui->speedSpinBox->setMaximum(static_cast<int>(totalStepsValue));
 }
 
 StepIndex MainWindow::totalSteps() const
@@ -1273,11 +1274,11 @@ QString MainWindow::generateTooltipForFile(const QString& filePath) const
             }
         };
 
-        addParam("GENERAL", "number_steps");
-        addParam("GENERAL", "number_of_rows");
-        addParam("GENERAL", "number_of_columns");
-        addParam("DISTRIBUTED", "number_node_x");
-        addParam("DISTRIBUTED", "number_node_y");
+        addParam(ConfigConstants::CATEGORY_GENERAL, ConfigConstants::PARAM_NUMBER_STEPS);
+        addParam(ConfigConstants::CATEGORY_GENERAL, ConfigConstants::PARAM_NUMBER_OF_ROWS);
+        addParam(ConfigConstants::CATEGORY_GENERAL, ConfigConstants::PARAM_NUMBER_OF_COLUMNS);
+        addParam(ConfigConstants::CATEGORY_DISTRIBUTED, ConfigConstants::PARAM_NUMBER_NODE_X);
+        addParam(ConfigConstants::CATEGORY_DISTRIBUTED, ConfigConstants::PARAM_NUMBER_NODE_Y);
     }
     catch (const std::exception& e)
     {
@@ -1482,8 +1483,8 @@ void MainWindow::initializeReductionManager(const QString& configFileName, std::
         {
             optionalConfig = std::make_shared<Config>(configFileName.toStdString());
         }
-        ConfigCategory* generalContext = optionalConfig->getConfigCategory("GENERAL");
-        std::string outputFileNameFromCfg = generalContext->getConfigParameter("output_file_name")->getValue<std::string>();
+        ConfigCategory* generalContext = optionalConfig->getConfigCategory(ConfigConstants::CATEGORY_GENERAL);
+        std::string outputFileNameFromCfg = generalContext->getConfigParameter(ConfigConstants::PARAM_OUTPUT_FILE_NAME)->getValue<std::string>();
         
         // Determine reduction file directory: check flat structure first, then nested
         fs::path reductionDir = configDir;
@@ -1508,9 +1509,12 @@ void MainWindow::initializeReductionManager(const QString& configFileName, std::
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Error initializing ReductionManager: " << e.what() << std::endl;
         reductionManager.reset();
         ui->actionShow_reduction->setEnabled(false);
+        if (silentMode)
+            std::cerr << "Error initializing ReductionManager: " << e.what() << std::endl;
+        else
+            QMessageBox::warning(this, tr("Reduction initialization error"), tr("Details: ") + e.what());
     }
 }
 
