@@ -1509,9 +1509,12 @@ void MainWindow::initializeReductionManager(const QString& configFileName, std::
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Error initializing ReductionManager: " << e.what() << std::endl;
         reductionManager.reset();
         ui->actionShow_reduction->setEnabled(false);
+        if (silentMode)
+            std::cerr << "Error initializing ReductionManager: " << e.what() << std::endl;
+        else
+            QMessageBox::warning(this, tr("Reduction initialization error"), tr("Details: ") + e.what());
     }
 }
 
