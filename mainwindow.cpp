@@ -265,6 +265,7 @@ void MainWindow::totalStepsNumberChanged(StepIndex totalStepsValue)
     ui->totalStep->setText(QString("/") + QString::number(totalStepsValue));
     ui->updatePositionSlider->setMaximum(static_cast<int>(totalStepsValue));
     ui->positionSpinBox->setMaximum(static_cast<int>(totalStepsValue));
+    ui->speedSpinBox->setMaximum(static_cast<int>(totalStepsValue));
 }
 
 StepIndex MainWindow::totalSteps() const
