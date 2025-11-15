@@ -362,7 +362,7 @@ vtk_module_autoinit(
 )
 
 # ============================================
-# Export VTK compile flags to C++ header (this is temporary as long as plugin needs VTK)
+# Export VTK compile flags as compile definition (this is temporary as long as plugin needs VTK)
 # ============================================
 
 # Select the main VTK target (always present)
@@ -407,21 +407,15 @@ foreach(inc IN LISTS VTK_INCLUDES_EXPANDED)
     endif()
 endforeach()
 
-# Generate header file
-set(VTK_FLAGS_HEADER "${CMAKE_BINARY_DIR}/generated/vtk_compile_flags.h")
-file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/generated")
+# Escape special characters for use in compile definition
+# Replace backslashes and quotes to ensure proper string literal
+string(REPLACE "\\" "\\\\" VTK_COMPILE_FLAGS_ESCAPED "${VTK_COMPILE_FLAGS_STR}")
+string(REPLACE "\"" "\\\"" VTK_COMPILE_FLAGS_ESCAPED "${VTK_COMPILE_FLAGS_ESCAPED}")
 
-file(WRITE "${VTK_FLAGS_HEADER}" "
-// Auto-generated file: DO NOT EDIT
-#pragma once
-
-namespace BuildInfo
-{
-    static constexpr const char* VTK_COMPILE_FLAGS = R\"(${VTK_COMPILE_FLAGS_STR})\";
-}
-")
-
-target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_BINARY_DIR}/generated")
+# Add as compile definition (accessible as VTK_COMPILE_FLAGS macro in C++)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    VTK_COMPILE_FLAGS="${VTK_COMPILE_FLAGS_ESCAPED}"
+)
 
 # (Optional) Debug print to verify values
 message(STATUS "VTK compile includes: ${VTK_INCLUDES_EXPANDED}")
