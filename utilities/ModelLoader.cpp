@@ -10,9 +10,10 @@
 
 #include "ModelLoader.h"
 #include "config/Config.h"
+#include "config/ConfigConstants.h"
 #include "CppModuleBuilder.h"
 #include "directoryConstants.h"
-#include "vtk_compile_flags.h"
+
 
 namespace
 {
@@ -98,7 +99,7 @@ ModelLoader::LoadResult ModelLoader::loadModelFromDirectory(const std::string& m
         result.config->readConfigFile();
 
         // Get model name from output_file_name parameter
-        ConfigCategory* generalCat = result.config->getConfigCategory("GENERAL", true);
+        ConfigCategory* generalCat = result.config->getConfigCategory(ConfigConstants::CATEGORY_GENERAL, true);
         if (!generalCat)
         {
             std::cerr << "Error: GENERAL section not found in Header.txt" << std::endl;
@@ -106,7 +107,7 @@ ModelLoader::LoadResult ModelLoader::loadModelFromDirectory(const std::string& m
             return result;
         }
 
-        ConfigParameter* outputParam = generalCat->getConfigParameter("output_file_name");
+        ConfigParameter* outputParam = generalCat->getConfigParameter(ConfigConstants::PARAM_OUTPUT_FILE_NAME);
         if (!outputParam)
         {
             std::cerr << "Error: output_file_name not found in GENERAL section" << std::endl;
