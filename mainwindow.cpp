@@ -156,6 +156,7 @@ MainWindow::MainWindow(QWidget* parent)
     recreateModelMenuActions();
     createViewModeActionGroup();
     updateRecentFilesMenu();
+    updateRecentDirectoriesMenu();
 
     enterNoConfigurationFileMode();
 }
@@ -957,6 +958,9 @@ void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
         // This avoids reading the file twice
         openConfigurationFile(QString::fromStdString(headerPath.string()), result.config);
 
+        // Add directory to recent directories list
+        addToRecentDirectories(QString::fromStdString(actualModelDir.string()));
+
         progress.close();
         silentMode = previousSilentMode;
 
@@ -1543,4 +1547,211 @@ void MainWindow::onShowReductionRequested()
     // Show reduction dialog
     ReductionDialog dialog(reductionData.values, currentStep, this);
     dialog.exec();
+}
+
+void MainWindow::addToRecentDirectories(const QString& directoryPath)
+{
+    // Load existing recent directories list
+    QStringList recentDirectories = loadRecentDirectories();
+
+    // Remove if already exists (to move it to the top)
+    recentDirectories.removeAll(directoryPath);
+
+    // Add to the beginning
+    recentDirectories.prepend(directoryPath);
+
+    // Limit to MAX_RECENT_FILES
+    while (recentDirectories.size() > MAX_RECENT_FILES)
+    {
+        recentDirectories.removeLast();
+    }
+
+    // Save the updated list
+    saveRecentDirectories(recentDirectories);
+
+    // Store the timestamp when this directory was opened
+    QSettings settings;
+    QString timeKey = QString("recentDirectories/time_%1").arg(QString(directoryPath.toUtf8().toBase64()));
+    settings.setValue(timeKey, QDateTime::currentDateTime());
+
+    // Update the menu to reflect the new list
+    updateRecentDirectoriesMenu();
+}
+
+QStringList MainWindow::loadRecentDirectories() const
+{
+    QSettings settings;
+    return settings.value("recentDirectories/list").toStringList();
+}
+
+void MainWindow::saveRecentDirectories(const QStringList& directories) const
+{
+    QSettings settings;
+    settings.setValue("recentDirectories/list", directories);
+}
+
+QString MainWindow::generateTooltipForDirectory(const QString& directoryPath) const
+{
+    QFileInfo dirInfo(directoryPath);
+
+    // Check if directory exists
+    if (!dirInfo.exists() || !dirInfo.isDir())
+    {
+        return tr("Directory does not exist:\n%1").arg(directoryPath);
+    }
+
+    // Check if Header.txt exists in the directory
+    QString headerPath = QDir(directoryPath).filePath("Header.txt");
+    if (!QFileInfo::exists(headerPath))
+    {
+        return tr("Directory is empty or does not contain Header.txt:\n%1").arg(directoryPath);
+    }
+
+    QString tooltip = QString("<b>%1</b><br/>").arg(tr("Full path:"));
+    tooltip += QString("%1<br/><br/>").arg(directoryPath);
+
+    tooltip += QString("<b>%1</b> %2<br/>")
+        .arg(tr("Created:"))
+        .arg(dirInfo.birthTime().toString("yyyy-MM-dd HH:mm:ss"));
+
+    tooltip += QString("<b>%1</b> %2<br/><br/>")
+        .arg(tr("Modified:"))
+        .arg(dirInfo.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
+
+    // Try to read configuration parameters from Header.txt
+    try
+    {
+        Config config(headerPath.toStdString(), /*printWarnings=*/false);
+
+        tooltip += QString("<b>%1</b><br/>").arg(tr("Configuration parameters:"));
+
+        auto addParam = [&](const QString& category, const QString& paramName)
+        {
+            ConfigCategory* cat = config.getConfigCategory(category.toStdString(), /*ignoreCase=*/true);
+            if (cat)
+            {
+                const ConfigParameter* param = cat->getConfigParameter(paramName.toStdString());
+                if (param)
+                {
+                    tooltip += QString("&nbsp;&nbsp;• <b>%1:</b> %2<br/>")
+                                   .arg(paramName)
+                                   .arg(QString::fromStdString(param->getDefaultValue()));
+                }
+            }
+        };
+
+        addParam(ConfigConstants::CATEGORY_GENERAL, ConfigConstants::PARAM_NUMBER_STEPS);
+        addParam(ConfigConstants::CATEGORY_GENERAL, ConfigConstants::PARAM_NUMBER_OF_ROWS);
+        addParam(ConfigConstants::CATEGORY_GENERAL, ConfigConstants::PARAM_NUMBER_OF_COLUMNS);
+        addParam(ConfigConstants::CATEGORY_DISTRIBUTED, ConfigConstants::PARAM_NUMBER_NODE_X);
+        addParam(ConfigConstants::CATEGORY_DISTRIBUTED, ConfigConstants::PARAM_NUMBER_NODE_Y);
+        addParam(ConfigConstants::CATEGORY_VISUALIZATION, ConfigConstants::PARAM_MODE);
+        addParam(ConfigConstants::CATEGORY_VISUALIZATION, ConfigConstants::PARAM_SUBSTATES);
+        addParam(ConfigConstants::CATEGORY_VISUALIZATION, ConfigConstants::PARAM_REDUCTION);
+    }
+    catch (const std::exception& e)
+    {
+        tooltip += QString("<br/><i>%1: %2</i>")
+            .arg(tr("Could not read configuration"))
+            .arg(e.what());
+    }
+
+    return tooltip;
+}
+
+void MainWindow::updateRecentDirectoriesMenu()
+{
+    // Clear existing menu items (except separator and clear action)
+    ui->menuRecentDirectories->clear();
+
+    // Load recent directories list
+    QStringList recentDirectories = loadRecentDirectories();
+
+    // Filter out non-existent directories and those without Header.txt
+    QStringList validDirectories;
+    for (const QString& dirPath : recentDirectories)
+    {
+        QFileInfo dirInfo(dirPath);
+        if (dirInfo.exists() && dirInfo.isDir())
+        {
+            // Check if Header.txt exists in the directory
+            QString headerPath = QDir(dirPath).filePath("Header.txt");
+            if (QFileInfo::exists(headerPath))
+            {
+                validDirectories.append(dirPath);
+            }
+        }
+    }
+
+    // If there are invalid directories, update the saved list
+    if (validDirectories.size() != recentDirectories.size())
+    {
+        saveRecentDirectories(validDirectories);
+        recentDirectories = validDirectories;
+    }
+
+    // Add menu items for each valid recent directory
+    for (const QString& dirPath : recentDirectories)
+    {
+        // Get last opened time from QSettings
+        QSettings settings;
+        QString timeKey = QString("recentDirectories/time_%1").arg(QString(dirPath.toUtf8().toBase64()));
+        QDateTime lastOpened = settings.value(timeKey, QDateTime::currentDateTime()).toDateTime();
+
+        // Use directory name as display name
+        QFileInfo dirInfo(dirPath);
+        QString displayName = dirInfo.fileName();
+
+        // Format: "directory_name [2024-10-20 15:30:25]"
+        QString actionText = QString("%1 [%2]").arg(displayName).arg(lastOpened.toString("yyyy-MM-dd HH:mm:ss"));
+
+        QAction* action = ui->menuRecentDirectories->addAction(actionText);
+        action->setData(dirPath);
+        action->setToolTip(generateTooltipForDirectory(dirPath));
+
+        connect(action, &QAction::triggered, this, &MainWindow::onRecentDirectoryTriggered);
+    }
+
+    // Add separator and clear action
+    ui->menuRecentDirectories->addSeparator();
+    QAction* clearAction = ui->menuRecentDirectories->addAction(tr("Clear Recent Directories"));
+    connect(clearAction,
+            &QAction::triggered,
+            this,
+            [this]()
+            {
+                saveRecentDirectories(QStringList());
+                updateRecentDirectoriesMenu();
+            });
+}
+
+void MainWindow::onRecentDirectoryTriggered()
+{
+    QAction* action = qobject_cast<QAction*>(sender());
+    if (!action)
+        return;
+
+    QString directoryPath = action->data().toString();
+
+    // Check if directory still exists
+    if (!QFileInfo(directoryPath).exists())
+    {
+        QMessageBox::warning(this, tr("Directory Not Found"),
+            tr("The directory no longer exists:\n%1").arg(directoryPath));
+        updateRecentDirectoriesMenu();
+        return;
+    }
+
+    // Check if Header.txt exists
+    QString headerPath = QDir(directoryPath).filePath("Header.txt");
+    if (!QFileInfo::exists(headerPath))
+    {
+        QMessageBox::warning(this, tr("Invalid Directory"),
+            tr("The directory does not contain Header.txt:\n%1").arg(directoryPath));
+        updateRecentDirectoriesMenu();
+        return;
+    }
+
+    // Load the model from the directory
+    loadModelFromDirectory(directoryPath);
 }

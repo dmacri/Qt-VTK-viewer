@@ -134,6 +134,14 @@ private:
     QString generateTooltipForFile(const QString &filePath) const;
     void updateRecentFilesMenu();
     
+    // Recent directories management
+    void addToRecentDirectories(const QString &directoryPath);
+    QStringList loadRecentDirectories() const;
+    void saveRecentDirectories(const QStringList &directories) const;
+    QString generateTooltipForDirectory(const QString &directoryPath) const;
+    void updateRecentDirectoriesMenu();
+    void onRecentDirectoryTriggered();
+    
     /// @brief Initialize reduction manager for the current configuration.
     /// @param configFileName Path to the configuration file
     /// @param optionalConfig Optional pre-loaded Config object. If provided, avoids re-reading the file.
@@ -142,7 +150,6 @@ private:
     void updateReductionDisplay();
 
 private:
-
     static constexpr int MAX_RECENT_FILES = 10;
     Ui::MainWindow *ui;
     QTimer playbackTimer;
