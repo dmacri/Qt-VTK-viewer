@@ -234,17 +234,39 @@ endif()
 # ============================================
 # OOpenCAL include directory (optional)
 # ============================================
-set(OOPENCAL_DIR "/home/dmacri80/Progetto-Visualizer/" CACHE PATH "Path to the base directory of OOpenCAL sources")
+# Default path assumes OOpenCAL is located in a sibling directory
+# Directory structure:
+#   parent/
+#   ├── OOpenCAL/
+#   └── OOpenCAL-Visualiser/
+# OOPENCAL_DIR should point to the parent directory containing OOpenCAL/
+set(OOPENCAL_DIR "${CMAKE_SOURCE_DIR}/.." CACHE PATH "Path to the parent directory containing OOpenCAL sources")
 
 if(OOPENCAL_DIR)
-    message(STATUS "Using OOpenCAL directory: ${OOPENCAL_DIR}")
-    target_include_directories(${PROJECT_NAME} PRIVATE
-        ${OOPENCAL_DIR}
-        ${OOPENCAL_DIR}/OOpenCAL
-    )
+    # Resolve relative path to absolute
+    get_filename_component(OOPENCAL_DIR_ABS "${OOPENCAL_DIR}" ABSOLUTE)
 
-    # Define OOPENCAL_DIR for use in C++ code
-    target_compile_definitions(${PROJECT_NAME} PRIVATE OOPENCAL_DIR="${OOPENCAL_DIR}")
+    # Check if OOpenCAL subdirectory exists
+    if(EXISTS "${OOPENCAL_DIR_ABS}/OOpenCAL")
+        message(STATUS "Using OOpenCAL base directory: ${OOPENCAL_DIR_ABS}")
+        message(STATUS "OOpenCAL found at: ${OOPENCAL_DIR_ABS}/OOpenCAL")
+
+        target_include_directories(${PROJECT_NAME} PRIVATE
+            ${OOPENCAL_DIR_ABS}
+            ${OOPENCAL_DIR_ABS}/OOpenCAL
+        )
+
+        # Define OOPENCAL_DIR for use in C++ code (use absolute path)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE OOPENCAL_DIR="${OOPENCAL_DIR_ABS}")
+    else()
+        message(WARNING "OOpenCAL not found in: ${OOPENCAL_DIR_ABS}/OOpenCAL")
+        message(WARNING "OOPENCAL_DIR should point to the parent directory containing OOpenCAL/")
+        message(WARNING "Current structure should be:")
+        message(WARNING "  ${OOPENCAL_DIR_ABS}/")
+        message(WARNING "  ├── OOpenCAL/")
+        message(WARNING "  └── OOpenCAL-Visualiser/")
+        message(WARNING "Set correct path with: cmake -DOOPENCAL_DIR=/path/to/parent ..")
+    endif()
 else()
     message(WARNING "OOPENCAL_DIR not set! Includes like <OOpenCAL/...> may not work.")
 endif()
