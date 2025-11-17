@@ -26,6 +26,7 @@
 #include "utilities/ModelLoader.h"
 #include "utilities/PluginLoader.h"
 #include "utilities/ReductionManager.h"
+#include "utilities/directoryConstants.h"
 #include "visualiser/SettingParameter.h"
 #include "visualiser/VideoExporter.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
@@ -942,7 +943,7 @@ void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
         QApplication::processEvents();
 
         // Build path to Header.txt in the model directory
-        fs::path headerPath = actualModelDir / "Header.txt";
+        fs::path headerPath = actualModelDir / DirectoryConstants::HEADER_FILE_NAME;
         
         if (!fs::exists(headerPath))
         {
@@ -1590,6 +1591,66 @@ void MainWindow::saveRecentDirectories(const QStringList& directories) const
     settings.setValue("recentDirectories/list", directories);
 }
 
+QString MainWindow::getSmartDisplayNameForDirectory(const QString& directoryPath, const QStringList& allPaths) const
+{
+    QFileInfo dirInfo(directoryPath);
+    
+    // Start with depth = 1 (parent/dirname)
+    int depth = 1;
+    
+    while (depth <= 4)
+    {
+        // Build display name for this directory at current depth
+        QString displayName = dirInfo.fileName();
+        QDir currentDir = dirInfo.dir();
+        
+        for (int d = 0; d < depth; ++d)
+        {
+            displayName = currentDir.dirName() + "/" + displayName;
+            currentDir.cdUp();
+        }
+        
+        // Check if this display name is unique among all paths at this depth
+        bool isUnique = true;
+        
+        for (const QString& otherPath : allPaths)
+        {
+            if (otherPath == directoryPath)
+                continue;
+            
+            // Build the same display name for the other path at current depth
+            QFileInfo otherInfo(otherPath);
+            QString otherDisplayName = otherInfo.fileName();
+            QDir otherDir = otherInfo.dir();
+            
+            for (int d = 0; d < depth; ++d)
+            {
+                otherDisplayName = otherDir.dirName() + "/" + otherDisplayName;
+                otherDir.cdUp();
+            }
+            
+            // If display names match, this depth is not sufficient
+            if (otherDisplayName == displayName)
+            {
+                isUnique = false;
+                break;
+            }
+        }
+        
+        // If unique at this depth, return it
+        if (isUnique)
+        {
+            return displayName;
+        }
+        
+        // Otherwise, try next depth
+        depth++;
+    }
+    
+    // Fallback to full path if still not unique
+    return directoryPath;
+}
+
 QString MainWindow::generateTooltipForDirectory(const QString& directoryPath) const
 {
     QFileInfo dirInfo(directoryPath);
@@ -1601,10 +1662,10 @@ QString MainWindow::generateTooltipForDirectory(const QString& directoryPath) co
     }
 
     // Check if Header.txt exists in the directory
-    QString headerPath = QDir(directoryPath).filePath("Header.txt");
+    QString headerPath = QDir(directoryPath).filePath(DirectoryConstants::HEADER_FILE_NAME);
     if (!QFileInfo::exists(headerPath))
     {
-        return tr("Directory is empty or does not contain Header.txt:\n%1").arg(directoryPath);
+        return tr("Directory is empty or does not contain %2:\n%1").arg(directoryPath, DirectoryConstants::HEADER_FILE_NAME);
     }
 
     QString tooltip = QString("<b>%1</b><br/>").arg(tr("Full path:"));
@@ -1661,7 +1722,7 @@ QString MainWindow::generateTooltipForDirectory(const QString& directoryPath) co
 
 void MainWindow::updateRecentDirectoriesMenu()
 {
-    // Clear existing menu items (except separator and clear action)
+    // Clear existing menu items
     ui->menuRecentDirectories->clear();
 
     // Load recent directories list
@@ -1675,7 +1736,7 @@ void MainWindow::updateRecentDirectoriesMenu()
         if (dirInfo.exists() && dirInfo.isDir())
         {
             // Check if Header.txt exists in the directory
-            QString headerPath = QDir(dirPath).filePath("Header.txt");
+            QString headerPath = QDir(dirPath).filePath(DirectoryConstants::HEADER_FILE_NAME);
             if (QFileInfo::exists(headerPath))
             {
                 validDirectories.append(dirPath);
@@ -1698,9 +1759,8 @@ void MainWindow::updateRecentDirectoriesMenu()
         QString timeKey = QString("recentDirectories/time_%1").arg(QString(dirPath.toUtf8().toBase64()));
         QDateTime lastOpened = settings.value(timeKey, QDateTime::currentDateTime()).toDateTime();
 
-        // Use directory name as display name
-        QFileInfo dirInfo(dirPath);
-        QString displayName = dirInfo.fileName();
+        // Use smart display name (handles duplicate directory names)
+        QString displayName = getSmartDisplayNameForDirectory(dirPath, validDirectories);
 
         // Format: "directory_name [2024-10-20 15:30:25]"
         QString actionText = QString("%1 [%2]").arg(displayName).arg(lastOpened.toString("yyyy-MM-dd HH:mm:ss"));
@@ -1728,13 +1788,13 @@ void MainWindow::updateRecentDirectoriesMenu()
 void MainWindow::onRecentDirectoryTriggered()
 {
     QAction* action = qobject_cast<QAction*>(sender());
-    if (!action)
+    if (! action)
         return;
 
     QString directoryPath = action->data().toString();
 
     // Check if directory still exists
-    if (!QFileInfo(directoryPath).exists())
+    if (! QFileInfo(directoryPath).exists())
     {
         QMessageBox::warning(this, tr("Directory Not Found"),
             tr("The directory no longer exists:\n%1").arg(directoryPath));
@@ -1743,8 +1803,8 @@ void MainWindow::onRecentDirectoryTriggered()
     }
 
     // Check if Header.txt exists
-    QString headerPath = QDir(directoryPath).filePath("Header.txt");
-    if (!QFileInfo::exists(headerPath))
+    QString headerPath = QDir(directoryPath).filePath(DirectoryConstants::HEADER_FILE_NAME);
+    if (! QFileInfo::exists(headerPath))
     {
         QMessageBox::warning(this, tr("Invalid Directory"),
             tr("The directory does not contain Header.txt:\n%1").arg(directoryPath));

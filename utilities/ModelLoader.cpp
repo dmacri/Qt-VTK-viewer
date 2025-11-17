@@ -210,7 +210,7 @@ bool ModelLoader::validateDirectory(const std::string& modelDirectory)
         return false;
     }
 
-    const fs::path headerPath = fs::path(modelDirectory) / "Header.txt";
+    const fs::path headerPath = fs::path(modelDirectory) / DirectoryConstants::HEADER_FILE_NAME;
     if (! fs::exists(headerPath))
     {
         std::cerr << "Error: Header.txt not found in " << modelDirectory << std::endl;

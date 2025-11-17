@@ -138,6 +138,7 @@ private:
     void addToRecentDirectories(const QString &directoryPath);
     QStringList loadRecentDirectories() const;
     void saveRecentDirectories(const QStringList &directories) const;
+    QString getSmartDisplayNameForDirectory(const QString &directoryPath, const QStringList &allPaths) const;
     QString generateTooltipForDirectory(const QString &directoryPath) const;
     void updateRecentDirectoriesMenu();
     void onRecentDirectoryTriggered();
