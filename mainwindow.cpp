@@ -1118,6 +1118,10 @@ void MainWindow::on3DModeRequested()
     ui->azimuthSlider->setValue(0);
     ui->elevationSlider->setValue(0);
 
+    // Reset camera angles to default
+    ui->sceneWidget->setCameraAzimuth(0);
+    ui->sceneWidget->setCameraElevation(0);
+
     updateCameraControlsVisibility();
 
     // Synchronize menu checkbox

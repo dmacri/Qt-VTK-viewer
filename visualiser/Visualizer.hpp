@@ -51,6 +51,26 @@ private:
     template<class Matrix>
     void buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matrix& p);
 
+    /** @brief Build 3D points and values for 3D substate visualization.
+     * 
+     * This helper method extracts substate values from cells and builds points with
+     * height-mapped Z coordinates. Used by both drawWithVTK3DSubstate and refreshWindowsVTK3DSubstate
+     * to avoid code duplication.
+     * 
+     * @param p Matrix of cells containing substate data
+     * @param nRows Number of grid rows
+     * @param nCols Number of grid columns
+     * @param substateFieldName Name of the substate field to extract
+     * @param minValue Minimum value for normalization
+     * @param maxValue Maximum value for normalization
+     * @param heightScale Scale factor for Z height
+     * @param points Output vtkPoints to populate
+     * @param pointValues Output vtkDoubleArray with normalized values for color mapping */
+    template<class Matrix>
+    void build3DSubstatePoints(const Matrix& p, int nRows, int nCols, const std::string& substateFieldName,
+                               double minValue, double maxValue, double heightScale,
+                               vtkPoints* points, vtkDoubleArray* pointValues);
+
     /** @brief Creates a vtkPolyData representing a set of 2D lines.
       * @param lines Vector of Line objects (each defines a line segment)
       * @param nRows Number of grid rows (used to invert Y coordinates)
@@ -177,46 +197,12 @@ void Visualizer::drawWithVTK3DSubstate(const Matrix &p, int nRows, int nCols, vt
         return;
     }
 
-    double valueRange = maxValue - minValue;
-    if (valueRange < 1e-10)
-        valueRange = 1.0; // Prevent division by zero
-
     // Calculate height scale factor based on grid size
     // Scale to approximately 1/3 of the grid size for good visibility
     double heightScale = std::max(nRows, nCols) / 3.0;
 
-    // Build 3D points with height based on substate value
-    for (int row = 0; row < nRows; row++)
-    {
-        for (int col = 0; col < nCols; col++)
-        {
-            // Get the substate value for this cell
-            std::string cellValueStr = p[row][col].stringEncoding(substateFieldName.c_str());
-            double cellValue = 0.0;
-            
-            try
-            {
-                cellValue = std::stod(cellValueStr);
-            }
-            catch (const std::exception& e)
-            {
-                cellValue = minValue; // Default to min if parsing fails
-                cout << "\t! Conversion error:" << cellValue << ", " << e.what() << '\n';
-            }
-
-            cellValue = std::clamp(cellValue, minValue, maxValue);
-
-            // Calculate normalized height (0.0 to 1.0) then scale to grid size
-            double normalizedHeight = (cellValue - minValue) / valueRange;
-            double scaledHeight = normalizedHeight * heightScale;
-
-            // Insert point with Z coordinate as height
-            points->InsertNextPoint(col, row, scaledHeight);
-
-            // Store the normalized value for color mapping
-            pointValues->SetValue((nRows - 1 - row) * nCols + col, normalizedHeight);
-        }
-    }
+    // Build 3D points with height based on substate value using helper method
+    build3DSubstatePoints(p, nRows, nCols, substateFieldName, minValue, maxValue, heightScale, points, pointValues);
 
     vtkNew<vtkStructuredGrid> structuredGrid;
     structuredGrid->SetDimensions(nCols, nRows, 1);
@@ -269,31 +255,8 @@ void Visualizer::refreshWindowsVTK3DSubstate(const Matrix &p, int nRows, int nCo
 
         vtkNew<vtkPoints> points;
 
-        // Rebuild points with new substate values
-        for (int row = 0; row < nRows; row++)
-        {
-            for (int col = 0; col < nCols; col++)
-            {
-                std::string cellValueStr = p[row][col].stringEncoding(substateFieldName.c_str());
-                double cellValue = 0.0;
-                try
-                {
-                    cellValue = std::stod(cellValueStr);
-                }
-                catch (const std::exception& e)
-                {
-                    cellValue = minValue;
-                    cout << "\t! Conversion error:" << cellValue << ", " << e.what() << '\n';
-                }
-
-                cellValue = std::max(minValue, std::min(maxValue, cellValue));
-                double normalizedHeight = (cellValue - minValue) / valueRange;
-                double scaledHeight = normalizedHeight * heightScale;
-
-                points->InsertNextPoint(col, row, scaledHeight);
-                pointValues->SetValue((nRows - 1 - row) * nCols + col, normalizedHeight);
-            }
-        }
+        // Rebuild points with new substate values using helper method
+        build3DSubstatePoints(p, nRows, nCols, substateFieldName, minValue, maxValue, heightScale, points, pointValues);
 
         // Update the structured grid
         vtkStructuredGrid* grid = dynamic_cast<vtkStructuredGrid*>(gridActor->GetMapper()->GetInput());
@@ -318,5 +281,48 @@ void Visualizer::refreshWindowsVTK3DSubstate(const Matrix &p, int nRows, int nCo
 
         gridActor->GetMapper()->SetLookupTable(lut);
         gridActor->GetMapper()->Update();
+    }
+}
+
+template<class Matrix>
+void Visualizer::build3DSubstatePoints(const Matrix& p, int nRows, int nCols, const std::string& substateFieldName,
+                                       double minValue, double maxValue, double heightScale,
+                                       vtkPoints* points, vtkDoubleArray* pointValues)
+{
+    double valueRange = maxValue - minValue;
+    if (valueRange < 1e-10)
+        valueRange = 1.0;
+
+    // Build 3D points with height based on substate value
+    for (int row = 0; row < nRows; row++)
+    {
+        for (int col = 0; col < nCols; col++)
+        {
+            // Get the substate value for this cell
+            std::string cellValueStr = p[row][col].stringEncoding(substateFieldName.c_str());
+            double cellValue = 0.0;
+            
+            try
+            {
+                cellValue = std::stod(cellValueStr);
+            }
+            catch (const std::exception& e)
+            {
+                cellValue = minValue; // Default to min if parsing fails
+                cout << "\t! Conversion error:" << cellValue << ", " << e.what() << '\n';
+            }
+
+            cellValue = std::clamp(cellValue, minValue, maxValue);
+
+            // Calculate normalized height (0.0 to 1.0) then scale to grid size
+            double normalizedHeight = (cellValue - minValue) / valueRange;
+            double scaledHeight = normalizedHeight * heightScale;
+
+            // Insert point with Z coordinate as height
+            points->InsertNextPoint(col, row, scaledHeight);
+
+            // Store the normalized value for color mapping
+            pointValues->SetValue((nRows - 1 - row) * nCols + col, normalizedHeight);
+        }
     }
 }
