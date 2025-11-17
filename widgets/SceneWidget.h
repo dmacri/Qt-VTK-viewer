@@ -384,6 +384,14 @@ protected:
      * 
      * @param event The mouse event */
     void mousePressEvent(QMouseEvent* event) override;
+
+    /** @brief Handle mouse wheel events for zoom towards cursor.
+     * 
+     * When user scrolls the mouse wheel, this method zooms the camera
+     * towards the cursor position instead of the screen center.
+     * 
+     * @param event The wheel event */
+    void wheelEvent(QWheelEvent* event) override;
     /** @brief Proxy for the scene widget visualizer
      *  This proxy provides access to the visualizer implementation
      *  and is responsible for updating the visualization when settings change. */

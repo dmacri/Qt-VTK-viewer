@@ -35,6 +35,7 @@
 #include "visualiser/SettingParameter.h"
 #include "widgets/ColorSettings.h"
 #include "widgets/SubstatesDockWidget.h"
+#include <QWheelEvent>
 
 
 namespace
@@ -1146,7 +1147,7 @@ bool SceneWidget::isWorldPositionInGrid(const double worldPos[3]) const
         return false;
 
     // Get the bounds of the entire scene
-    double* bounds = renderer->ComputeVisiblePropBounds();
+    const double* bounds = renderer->ComputeVisiblePropBounds();
     if (! bounds)
         return false;
 
@@ -1158,4 +1159,57 @@ bool SceneWidget::isWorldPositionInGrid(const double worldPos[3]) const
     }
 
     return true;  // Inside grid bounds
+}
+
+void SceneWidget::wheelEvent(QWheelEvent* event)
+{
+    if (!renderer || !renderer->GetActiveCamera() || !interactor())
+        return;
+
+    // Get mouse position in widget coordinates
+    QPoint pos = event->position().toPoint();
+    
+    // Get camera
+    vtkCamera* camera = renderer->GetActiveCamera();
+    
+    // Convert screen coordinates to world coordinates using existing method
+    std::array<double, 3> worldPos = screenToWorldCoordinates(pos);
+    
+    // Copy camera parameters to local arrays (safe copies)
+    double focalPoint[3];
+    double position[3];
+    camera->GetFocalPoint(focalPoint);
+    camera->GetPosition(position);
+    
+    // Determine zoom factor based on scroll direction
+    // Positive delta = scroll up = zoom in
+    int delta = event->angleDelta().y();
+    double zoomFactor = (delta > 0) ? 0.9 : 1.1;  // 10% zoom in/out
+    
+    // Calculate the offset from focal point to the point under cursor
+    double offsetX = worldPos[0] - focalPoint[0];
+    double offsetY = worldPos[1] - focalPoint[1];
+    double offsetZ = worldPos[2] - focalPoint[2];
+    
+    // Move focal point towards the point under cursor
+    // This keeps the point under cursor stationary during zoom
+    double newFocalPoint[3];
+    newFocalPoint[0] = focalPoint[0] + offsetX * (1.0 - zoomFactor);
+    newFocalPoint[1] = focalPoint[1] + offsetY * (1.0 - zoomFactor);
+    newFocalPoint[2] = focalPoint[2] + offsetZ * (1.0 - zoomFactor);
+    
+    // Move camera position by the same offset to maintain viewing direction
+    double newPosition[3];
+    newPosition[0] = position[0] + offsetX * (1.0 - zoomFactor);
+    newPosition[1] = position[1] + offsetY * (1.0 - zoomFactor);
+    newPosition[2] = position[2] + offsetZ * (1.0 - zoomFactor);
+    
+    // Apply new camera position and focal point
+    camera->SetFocalPoint(newFocalPoint);
+    camera->SetPosition(newPosition);
+    
+    // Trigger render
+    renderWindow()->Render();
+    
+    event->accept();
 }
