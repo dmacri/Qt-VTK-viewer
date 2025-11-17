@@ -92,11 +92,14 @@ signals:
     void use3rdDimensionRequested(const std::string& fieldName);
 
 private:
-    /** @brief Setup the UI layout. */
+    /// @brief Setup the UI layout.
     void setupUI();
 
-    /** @brief Connect signals and slots. */
+    /// @brief Connect signals and slots.
     void connectSignals();
+
+    /// @brief Update button enabled state based on min/max values.
+    void updateButtonState();
 
     std::string m_fieldName;
 

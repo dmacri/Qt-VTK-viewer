@@ -43,6 +43,13 @@ public:
         silentMode = newSilentMode;
     }
 
+    /// @brief Get the name of the substate field currently used for 3D visualization
+    /// @return Field name (e.g., "h", "z") or empty string if no 3D substate is active
+    std::string getActiveSubstateFor3D() const
+    {
+        return activeSubstateFor3D;
+    }
+
 private slots: // menu actions
     // File submenu
     void onOpenConfigurationRequested();
@@ -73,6 +80,8 @@ private slots: // menu actions
     void onElevationChanged(int value);
     void onCameraOrientationChanged(double azimuth, double elevation);
     void syncCameraSliders();
+
+    void onUse3rdDimensionRequested(const std::string& fieldName);
 
     void onPlayButtonClicked();
     void onStopButtonClicked();
@@ -166,6 +175,9 @@ private:
 
     StepIndex currentStep;
     std::vector<StepIndex> availableSteps;
+
+    /// @brief Name of the substate field currently used for 3D visualization (empty if none)
+    std::string activeSubstateFor3D;
 
     // Playback state for timer-based playback
     PlayingDirection playbackDirection = PlayingDirection::Forward;

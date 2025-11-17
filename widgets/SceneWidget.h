@@ -153,10 +153,18 @@ public:
         return cameraElevation;
     }
 
-    /** @brief Set the substate dock widget for displaying cell information.
-     * 
-     * @param dockWidget Pointer to the SubstatesDockWidget */
+    /// @brief Set the substate dock widget for displaying cell information.
+    /// 
+    /// @param dockWidget Pointer to the SubstatesDockWidget
     void setSubstatesDockWidget(SubstatesDockWidget* dockWidget);
+
+    /// @brief Set the active substate field for 3D visualization.
+    /// 
+    /// When a substate is set as active for 3D, the visualization will use that field's values
+    /// to determine the height of each cell in 3D mode.
+    /// 
+    /// @param fieldName The name of the substate field (e.g., "h", "z"), or empty string to disable
+    void setActiveSubstateFor3D(const std::string& fieldName);
 
     /** @brief Callback function for VTK keypress events.
      *  It handles arrow_up and arrow_down keys pressed and changes view of the widget.
@@ -402,6 +410,9 @@ protected:
 
     /// @brief Current grid lines visibility state
     bool gridLinesVisible = true;
+
+    /// @brief Name of the substate field currently used for 3D visualization (empty if none)
+    std::string activeSubstateFor3D;
 
     /// @brief Current camera azimuth angle (cached to avoid recalculation)
     double cameraAzimuth{};

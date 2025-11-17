@@ -38,6 +38,10 @@ public:
     void drawWithVTK(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor);
     template<class Matrix>
     void refreshWindowsVTK(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor);
+    template<class Matrix>
+    void drawWithVTK3DSubstate(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue);
+    template<class Matrix>
+    void refreshWindowsVTK3DSubstate(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue);
     void buildLoadBalanceLine(const std::vector<Line>& lines, int nRows, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine);
     void refreshBuildLoadBalanceLine(const std::vector<Line> &lines, int nRows, vtkActor2D* lineActor);
     vtkTextProperty* buildStepLine(StepIndex step, vtkSmartPointer<vtkTextMapper> singleLineTextB);
@@ -75,7 +79,7 @@ void Visualizer::drawWithVTK(const Matrix &p, int nRows, int nCols, vtkSmartPoin
     {
         for (int col = 0; col < nCols; col++)
         {
-            points->InsertNextPoint(col, row, 1);
+            points->InsertNextPoint(/*x=*/col, /*y=*/row, /*z=*/1); /// z is not used
         }
     }
 
@@ -147,5 +151,172 @@ void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matr
                 1.0 // alpha channel – keep as 1.0 for full opacity (optional scaling)
             );
         }
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+// 3D Substate Visualization Methods
+
+template <class Matrix>
+void Visualizer::drawWithVTK3DSubstate(const Matrix &p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue)
+{
+    const auto numberOfPoints = nRows * nCols;
+    vtkNew<vtkDoubleArray> pointValues;
+    pointValues->SetNumberOfTuples(numberOfPoints);
+    
+    vtkNew<vtkLookupTable> lut;
+    lut->SetNumberOfTableValues(numberOfPoints);
+
+    vtkNew<vtkPoints> points;
+    
+    // Validate min/max values
+    if (std::isnan(minValue) || std::isnan(maxValue) || minValue >= maxValue)
+    {
+        // Fallback to regular 2D visualization if invalid values
+        drawWithVTK(p, nRows, nCols, renderer, gridActor);
+        return;
+    }
+
+    double valueRange = maxValue - minValue;
+    if (valueRange < 1e-10)
+        valueRange = 1.0; // Prevent division by zero
+
+    // Calculate height scale factor based on grid size
+    // Scale to approximately 1/3 of the grid size for good visibility
+    double heightScale = std::max(nRows, nCols) / 3.0;
+
+    // Build 3D points with height based on substate value
+    for (int row = 0; row < nRows; row++)
+    {
+        for (int col = 0; col < nCols; col++)
+        {
+            // Get the substate value for this cell
+            std::string cellValueStr = p[row][col].stringEncoding(substateFieldName.c_str());
+            double cellValue = 0.0;
+            
+            try
+            {
+                cellValue = std::stod(cellValueStr);
+            }
+            catch (const std::exception& e)
+            {
+                cellValue = minValue; // Default to min if parsing fails
+                cout << "\t! Conversion error:" << cellValue << ", " << e.what() << '\n';
+            }
+
+            cellValue = std::clamp(cellValue, minValue, maxValue);
+
+            // Calculate normalized height (0.0 to 1.0) then scale to grid size
+            double normalizedHeight = (cellValue - minValue) / valueRange;
+            double scaledHeight = normalizedHeight * heightScale;
+
+            // Insert point with Z coordinate as height
+            points->InsertNextPoint(col, row, scaledHeight);
+
+            // Store the normalized value for color mapping
+            pointValues->SetValue((nRows - 1 - row) * nCols + col, normalizedHeight);
+        }
+    }
+
+    vtkNew<vtkStructuredGrid> structuredGrid;
+    structuredGrid->SetDimensions(nCols, nRows, 1);
+    structuredGrid->SetPoints(points);
+    structuredGrid->GetPointData()->SetScalars(pointValues);
+
+    // Build color lookup table based on normalized values
+    // Use a gradient from yellow (low values) to white (high values) for better visibility
+    lut->SetRange(0.0, 1.0);
+    for (int i = 0; i < numberOfPoints; ++i)
+    {
+        double value = pointValues->GetValue(i);
+        // Yellow to white gradient: low values = yellow, high values = white
+        double red = 1.0;                    // Always full red
+        double green = 1.0;                  // Full green (yellow at low values)
+        double blue = value;                 // Blue increases from 0 to 1 (white at high values)
+        lut->SetTableValue(i, red, green, blue, 1.0);
+    }
+
+    vtkNew<vtkDataSetMapper> gridMapper;
+    gridMapper->UpdateDataObject();
+    gridMapper->SetInputData(structuredGrid);
+    gridMapper->SetLookupTable(lut);
+    gridMapper->SetScalarRange(0.0, 1.0);
+
+    gridActor->SetMapper(gridMapper);
+    renderer->AddActor(gridActor);
+}
+
+template<class Matrix>
+void Visualizer::refreshWindowsVTK3DSubstate(const Matrix &p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue)
+{
+    if (vtkLookupTable* lut = dynamic_cast<vtkLookupTable*>(gridActor->GetMapper()->GetLookupTable()))
+    {
+        // Validate min/max values
+        if (std::isnan(minValue) || std::isnan(maxValue) || minValue >= maxValue)
+            return;
+
+        double valueRange = maxValue - minValue;
+        if (valueRange < 1e-10)
+            valueRange = 1.0;
+
+        // Calculate height scale factor based on grid size
+        // Scale to approximately 1/3 of the grid size for good visibility
+        double heightScale = std::max(nRows, nCols) / 3.0;
+
+        const auto numberOfPoints = nRows * nCols;
+        vtkNew<vtkDoubleArray> pointValues;
+        pointValues->SetNumberOfTuples(numberOfPoints);
+
+        vtkNew<vtkPoints> points;
+
+        // Rebuild points with new substate values
+        for (int row = 0; row < nRows; row++)
+        {
+            for (int col = 0; col < nCols; col++)
+            {
+                std::string cellValueStr = p[row][col].stringEncoding(substateFieldName.c_str());
+                double cellValue = 0.0;
+                try
+                {
+                    cellValue = std::stod(cellValueStr);
+                }
+                catch (const std::exception& e)
+                {
+                    cellValue = minValue;
+                    cout << "\t! Conversion error:" << cellValue << ", " << e.what() << '\n';
+                }
+
+                cellValue = std::max(minValue, std::min(maxValue, cellValue));
+                double normalizedHeight = (cellValue - minValue) / valueRange;
+                double scaledHeight = normalizedHeight * heightScale;
+
+                points->InsertNextPoint(col, row, scaledHeight);
+                pointValues->SetValue((nRows - 1 - row) * nCols + col, normalizedHeight);
+            }
+        }
+
+        // Update the structured grid
+        vtkStructuredGrid* grid = dynamic_cast<vtkStructuredGrid*>(gridActor->GetMapper()->GetInput());
+        if (grid)
+        {
+            grid->SetPoints(points);
+            grid->GetPointData()->SetScalars(pointValues);
+        }
+
+        // Update lookup table colors
+        // Use a gradient from yellow (low values) to white (high values) for better visibility
+        lut->SetRange(0.0, 1.0);
+        for (int i = 0; i < numberOfPoints; ++i)
+        {
+            double value = pointValues->GetValue(i);
+            // Yellow to white gradient: low values = yellow, high values = white
+            double red = 1.0;                    // Always full red
+            double green = 1.0;                  // Full green (yellow at low values)
+            double blue = value;                 // Blue increases from 0 to 1 (white at high values)
+            lut->SetTableValue(i, red, green, blue, 1.0);
+        }
+
+        gridActor->GetMapper()->SetLookupTable(lut);
+        gridActor->GetMapper()->Update();
     }
 }

@@ -119,6 +119,15 @@ void SubstateDisplayWidget::connectSignals()
     connect(m_use3dButton, &QPushButton::clicked, this, [this]() {
         emit use3rdDimensionRequested(m_fieldName);
     });
+
+    // Connect spinbox value changes to update button state
+    connect(m_minSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            this, &SubstateDisplayWidget::updateButtonState);
+    connect(m_maxSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            this, &SubstateDisplayWidget::updateButtonState);
+
+    // Initial button state
+    updateButtonState();
 }
 
 void SubstateDisplayWidget::setCellValue(const std::string& value)
@@ -232,4 +241,24 @@ bool SubstateDisplayWidget::hasMinValue() const
 bool SubstateDisplayWidget::hasMaxValue() const
 {
     return m_maxSpinBox->value() != m_maxSpinBox->minimum();
+}
+
+void SubstateDisplayWidget::updateButtonState()
+{
+    // Button is enabled only if both min and max values are set
+    const bool hasMin = hasMinValue();
+    const bool hasMax = hasMaxValue();
+    const bool isEnabled = hasMin && hasMax;
+    
+    m_use3dButton->setEnabled(isEnabled);
+    
+    // Update tooltip to explain why button might be disabled
+    if (isEnabled)
+    {
+        m_use3dButton->setToolTip("Use this field as 3rd dimension in 3D visualization");
+    }
+    else
+    {
+        m_use3dButton->setToolTip("Set both Min and Max values to enable 3D visualization");
+    }
 }

@@ -31,6 +31,7 @@
 #include "visualiser/SettingParameter.h"
 #include "visualiser/VideoExporter.h"
 #include "visualiserProxy/SceneWidgetVisualizerFactory.h"
+#include "widgets/SceneWidget.h"
 #include "widgets/SubstatesDockWidget.h"
 #include "widgets/AboutDialog.h"
 #include "widgets/ColorSettingsDialog.h"
@@ -730,6 +731,10 @@ void MainWindow::updateSubstateDockeWidget()
         auto settingParam = const_cast<SettingParameter*>(ui->sceneWidget->getSettingParameter());
         settingParam->initializeSubstateInfo();
         ui->substatesDockWidget->updateSubstates(settingParam);
+
+        // Connect signal for 3D visualization request
+        connect(ui->substatesDockWidget, &SubstatesDockWidget::use3rdDimensionRequested,
+                this, &MainWindow::onUse3rdDimensionRequested);
     }
 }
 
@@ -1091,9 +1096,16 @@ void MainWindow::on2DModeRequested()
     ui->sceneWidget->setViewMode2D();
     updateCameraControlsVisibility();
 
-    QMessageBox::information(this,
-                             tr("View Mode Changed"),
-                             tr("Switched to 2D mode.\nCamera is now in top-down view with rotation disabled."));
+    // Synchronize menu checkbox
+    QSignalBlocker blocker(ui->action2DMode);
+    ui->action2DMode->setChecked(true);
+
+    if (! silentMode)
+    {
+        QMessageBox::information(this,
+                                 tr("View Mode Changed"),
+                                 tr("Switched to 2D mode.\nCamera is now in top-down view with rotation disabled."));
+    }
 }
 
 void MainWindow::on3DModeRequested()
@@ -1108,9 +1120,16 @@ void MainWindow::on3DModeRequested()
 
     updateCameraControlsVisibility();
 
-    QMessageBox::information(this,
-                             tr("View Mode Changed"),
-                             tr("Switched to 3D mode.\nYou can now rotate the camera using mouse or the sliders below."));
+    // Synchronize menu checkbox
+    QSignalBlocker blocker(ui->action3DMode);
+    ui->action3DMode->setChecked(true);
+
+    if (! silentMode)
+    {
+        QMessageBox::information(this,
+                                 tr("View Mode Changed"),
+                                 tr("Switched to 3D mode.\nYou can now rotate the camera using mouse or the sliders below."));
+    }
 }
 
 void MainWindow::onGridLinesToggled(bool checked)
@@ -1915,4 +1934,19 @@ void MainWindow::onRecentDirectoryTriggered()
 
     // Load the model from the directory
     loadModelFromDirectory(directoryPath);
+}
+
+void MainWindow::onUse3rdDimensionRequested(const std::string& fieldName)
+{
+    // Store the active substate for 3D visualization in MainWindow
+    activeSubstateFor3D = fieldName;
+
+    // Also set it in SceneWidget so it knows which substate to use for 3D
+    ui->sceneWidget->setActiveSubstateFor3D(fieldName);
+
+    // Switch to 3D mode
+    on3DModeRequested();
+
+    // Refresh the visualization with the new substate for the current step
+    ui->sceneWidget->selectedStepParameter(currentStep);
 }

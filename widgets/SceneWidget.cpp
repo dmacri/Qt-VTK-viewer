@@ -160,7 +160,28 @@ void SceneWidget::loadAndUpdateVisualizationForCurrentStep()
     sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
 
     // Refresh VTK visualization elements
-    sceneWidgetVisualizerProxy->refreshWindowsVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, gridActor);
+    // Check if we should use 3D substate visualization
+    if (! activeSubstateFor3D.empty() && settingParameter->substateInfo.count(activeSubstateFor3D) > 0)
+    {
+        const auto& substateInfo = settingParameter->substateInfo[activeSubstateFor3D];
+        if (! std::isnan(substateInfo.minValue) && ! std::isnan(substateInfo.maxValue))
+        {
+            sceneWidgetVisualizerProxy->refreshWindowsVTK3DSubstate(settingParameter->numberOfRowsY, 
+                                                                    settingParameter->numberOfColumnX, 
+                                                                    gridActor,
+                                                                    activeSubstateFor3D,
+                                                                    substateInfo.minValue,
+                                                                    substateInfo.maxValue);
+        }
+        else
+        {
+            sceneWidgetVisualizerProxy->refreshWindowsVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, gridActor);
+        }
+    }
+    else
+    {
+        sceneWidgetVisualizerProxy->refreshWindowsVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, gridActor);
+    }
 
     // Update load balancing lines if we have any
     if (settingParameter->numberOfLines > 0)
@@ -575,7 +596,29 @@ void SceneWidget::renderVtkScene()
     lines.resize(settingParameter->numberOfLines);
     sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
 
-    sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, renderer, gridActor);
+    // Check if we should use 3D substate visualization
+    if (! activeSubstateFor3D.empty() && settingParameter->substateInfo.count(activeSubstateFor3D) > 0)
+    {
+        const auto& substateInfo = settingParameter->substateInfo[activeSubstateFor3D];
+        if (! std::isnan(substateInfo.minValue) && ! std::isnan(substateInfo.maxValue))
+        {
+            sceneWidgetVisualizerProxy->drawWithVTK3DSubstate(settingParameter->numberOfRowsY, 
+                                                              settingParameter->numberOfColumnX, 
+                                                              renderer, 
+                                                              gridActor,
+                                                              activeSubstateFor3D,
+                                                              substateInfo.minValue,
+                                                              substateInfo.maxValue);
+        }
+        else
+        {
+            sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, renderer, gridActor);
+        }
+    }
+    else
+    {
+        sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, renderer, gridActor);
+    }
 
     sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines,
                                                                      settingParameter->numberOfRowsY + 1,
@@ -1053,6 +1096,11 @@ void SceneWidget::setGridLinesVisible(bool visible)
         actorBuildLine->SetVisibility(visible);
         triggerRenderUpdate();
     }
+}
+
+void SceneWidget::setActiveSubstateFor3D(const std::string& fieldName)
+{
+    activeSubstateFor3D = fieldName;
 }
 
 void SceneWidget::setCameraAzimuth(double angle)
