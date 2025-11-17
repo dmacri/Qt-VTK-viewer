@@ -714,6 +714,9 @@ void MainWindow::openConfigurationFile(const QString& configFileName, std::share
         // If config is provided, use it; otherwise read from file
         initializeReductionManager(configFileName, optionalConfig);
 
+        // Synchronize grid lines checkbox with current visibility state
+        syncGridLinesCheckbox();
+
         // Update UI with new configuration
         showInputFilePathOnBarLabel(configFileName);
 
@@ -1029,6 +1032,13 @@ void MainWindow::on3DModeRequested()
 void MainWindow::onGridLinesToggled(bool checked)
 {
     ui->sceneWidget->setGridLinesVisible(checked);
+}
+
+void MainWindow::syncGridLinesCheckbox()
+{
+    // Synchronize the checkbox state with the actual grid lines visibility
+    QSignalBlocker blocker(ui->actionGridLines);
+    ui->actionGridLines->setChecked(ui->sceneWidget->getGridLinesVisible());
 }
 
 void MainWindow::updateCameraControlsVisibility()

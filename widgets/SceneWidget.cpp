@@ -581,6 +581,12 @@ void SceneWidget::renderVtkScene()
                                                                      renderer,
                                                                      actorBuildLine);
 
+    // Apply the remembered grid lines visibility state
+    if (actorBuildLine)
+    {
+        actorBuildLine->SetVisibility(gridLinesVisible);
+    }
+
     sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step,
                                                               settingParameter->font_size,
                                                               singleLineTextStep,
@@ -1040,6 +1046,7 @@ void SceneWidget::setAxesWidgetVisible(bool visible)
 
 void SceneWidget::setGridLinesVisible(bool visible)
 {
+    gridLinesVisible = visible;
     if (actorBuildLine)
     {
         actorBuildLine->SetVisibility(visible);

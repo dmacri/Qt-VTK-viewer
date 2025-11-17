@@ -56,6 +56,7 @@ private slots: // menu actions
     void on2DModeRequested();
     void on3DModeRequested();
     void onGridLinesToggled(bool checked);
+    void syncGridLinesCheckbox();
 
     // Model submenu
     void onModelSelected();

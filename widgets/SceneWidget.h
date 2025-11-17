@@ -123,6 +123,12 @@ public:
         return currentViewMode;
     }
 
+    /// @brief Get the current grid lines visibility state
+    bool getGridLinesVisible() const
+    {
+        return gridLinesVisible;
+    }
+
     /// @brief Set camera azimuth (rotation around Z axis) in degrees
     void setCameraAzimuth(double angle);
 
@@ -394,6 +400,9 @@ protected:
 
     /// @brief Current view mode (2D or 3D)
     ViewMode currentViewMode = ViewMode::Mode2D;
+
+    /// @brief Current grid lines visibility state
+    bool gridLinesVisible = true;
 
     /// @brief Current camera azimuth angle (cached to avoid recalculation)
     double cameraAzimuth{};
