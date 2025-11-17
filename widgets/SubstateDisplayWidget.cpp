@@ -261,4 +261,7 @@ void SubstateDisplayWidget::updateButtonState()
     {
         m_use3dButton->setToolTip("Set both Min and Max values to enable 3D visualization");
     }
+
+    // Emit signal with current min/max values so they can be stored in substateInfo
+    emit minMaxValuesChanged(m_fieldName, getMinValue(), getMaxValue());
 }

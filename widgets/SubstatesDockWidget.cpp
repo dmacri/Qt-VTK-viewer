@@ -51,6 +51,9 @@ void SubstatesDockWidget::updateSubstates(SettingParameter* settingParameter)
     if (!settingParameter)
         return;
 
+    // Store reference to current setting parameter
+    m_currentSettingParameter = settingParameter;
+
     // Clear existing widgets
     clearWidgets();
 
@@ -73,9 +76,11 @@ void SubstatesDockWidget::updateSubstates(SettingParameter* settingParameter)
             widget->setFormat(it->second.format);
         }
 
-        // Connect signal
+        // Connect signals
         connect(widget, &SubstateDisplayWidget::use3rdDimensionRequested,
                 this, &SubstatesDockWidget::use3rdDimensionRequested);
+        connect(widget, QOverload<const std::string&, double, double>::of(&SubstateDisplayWidget::minMaxValuesChanged),
+                this, &SubstatesDockWidget::onMinMaxValuesChanged);
 
         m_containerLayout->addWidget(widget);
         m_substateWidgets[field] = widget;
@@ -153,4 +158,18 @@ void SubstatesDockWidget::clearWidgets()
         delete item;
     }
     m_substateWidgets.clear();
+}
+
+void SubstatesDockWidget::onMinMaxValuesChanged(const std::string& fieldName, double minValue, double maxValue)
+{
+    // Update the substateInfo in SettingParameter with the new values
+    if (m_currentSettingParameter)
+    {
+        auto it = m_currentSettingParameter->substateInfo.find(fieldName);
+        if (it != m_currentSettingParameter->substateInfo.end())
+        {
+            it->second.minValue = minValue;
+            it->second.maxValue = maxValue;
+        }
+    }
 }

@@ -91,6 +91,13 @@ signals:
      * @param fieldName The name of the field */
     void use3rdDimensionRequested(const std::string& fieldName);
 
+    /** @brief Signal emitted when min or max values change.
+     * 
+     * @param fieldName The name of the field
+     * @param minValue The new minimum value (or NaN if not set)
+     * @param maxValue The new maximum value (or NaN if not set) */
+    void minMaxValuesChanged(const std::string& fieldName, double minValue, double maxValue);
+
 private:
     /// @brief Setup the UI layout.
     void setupUI();
