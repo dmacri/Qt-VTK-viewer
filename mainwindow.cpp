@@ -515,18 +515,46 @@ void MainWindow::onBackButtonClicked()
     playingRequested(PlayingDirection::Backward);
 }
 
-void MainWindow::onLeftButtonClicked()
+void MainWindow::navigateToNearestAvailableStep(PlayingDirection direction, StepIndex stepsToMove)
 {
-    const auto stepsPerClick = static_cast<StepIndex>(ui->speedSpinBox->value());
-    const auto targetStep = currentStep - stepsPerClick;
+    if (availableSteps.empty())
+    {
+        return;
+    }
+    
+    const auto directionValue = std::to_underlying(direction);
+    const auto targetStep = currentStep + (stepsToMove * directionValue);
     
     // Try to go to the target step
     if (std::ranges::contains(availableSteps, targetStep))
     {
         currentStep = targetStep;
         setPositionOnWidgets(currentStep);
+        return;
     }
-    else if (targetStep >= FIRST_STEP_NUMBER)
+    
+    StepIndex nextStep;
+    
+    if (direction == PlayingDirection::Forward)
+    {
+        // Find the nearest available step after the target
+        auto it = std::ranges::upper_bound(availableSteps, targetStep);
+        
+        if (it != availableSteps.end())
+        {
+            nextStep = *it;
+            std::cerr << "Warning: Step " << targetStep << " not available. "
+                      << "Nearest next step is " << nextStep << std::endl;
+        }
+        else
+        {
+            // No available step after target, go to last available
+            nextStep = availableSteps.back();
+            std::cerr << "Warning: Step " << targetStep << " not available. "
+                      << "Going to last available step " << nextStep << std::endl;
+        }
+    }
+    else // PlayingDirection::Backward
     {
         // Find the nearest available step before the target
         auto it = std::ranges::lower_bound(availableSteps, targetStep);
@@ -534,84 +562,33 @@ void MainWindow::onLeftButtonClicked()
         if (it != availableSteps.begin())
         {
             --it;
+            nextStep = *it;
             std::cerr << "Warning: Step " << targetStep << " not available. "
-                      << "Nearest previous step is " << *it << std::endl;
-            currentStep = *it;
-            setPositionOnWidgets(currentStep);
+                      << "Nearest previous step is " << nextStep << std::endl;
         }
         else
         {
             // No available step before target, go to first available
+            nextStep = availableSteps.front();
             std::cerr << "Warning: Step " << targetStep << " not available. "
-                      << "Going to first available step " << availableSteps.front() << std::endl;
-            currentStep = availableSteps.front();
-            setPositionOnWidgets(currentStep);
+                      << "Going to first available step " << nextStep << std::endl;
         }
     }
-    else
-    {
-        // Target is before first step, go to first available
-        currentStep = std::max(targetStep, FIRST_STEP_NUMBER);
-        if (!std::ranges::contains(availableSteps, currentStep))
-        {
-            if (!availableSteps.empty())
-            {
-                std::cerr << "Warning: Step " << targetStep << " not available. "
-                          << "Going to first available step " << availableSteps.front() << std::endl;
-                currentStep = availableSteps.front();
-            }
-        }
-        setPositionOnWidgets(currentStep);
-    }
+    
+    currentStep = nextStep;
+    setPositionOnWidgets(currentStep);
+}
+
+void MainWindow::onLeftButtonClicked()
+{
+    const auto stepsPerClick = static_cast<StepIndex>(ui->speedSpinBox->value());
+    navigateToNearestAvailableStep(PlayingDirection::Backward, stepsPerClick);
 }
 
 void MainWindow::onRightButtonClicked()
 {
     const auto stepsPerClick = static_cast<StepIndex>(ui->speedSpinBox->value());
-    const auto targetStep = currentStep + stepsPerClick;
-    
-    // Try to go to the target step
-    if (std::ranges::contains(availableSteps, targetStep))
-    {
-        currentStep = targetStep;
-        setPositionOnWidgets(currentStep);
-    }
-    else if (targetStep <= totalSteps())
-    {
-        // Find the nearest available step after the target
-        auto it = std::ranges::upper_bound(availableSteps, targetStep);
-        
-        if (it != availableSteps.end())
-        {
-            std::cerr << "Warning: Step " << targetStep << " not available. "
-                      << "Nearest next step is " << *it << std::endl;
-            currentStep = *it;
-            setPositionOnWidgets(currentStep);
-        }
-        else
-        {
-            // No available step after target, go to last available
-            std::cerr << "Warning: Step " << targetStep << " not available. "
-                      << "Going to last available step " << availableSteps.back() << std::endl;
-            currentStep = availableSteps.back();
-            setPositionOnWidgets(currentStep);
-        }
-    }
-    else
-    {
-        // Target is after last step, go to last available
-        currentStep = std::min(targetStep, totalSteps());
-        if (!std::ranges::contains(availableSteps, currentStep))
-        {
-            if (!availableSteps.empty())
-            {
-                std::cerr << "Warning: Step " << targetStep << " not available. "
-                          << "Going to last available step " << availableSteps.back() << std::endl;
-                currentStep = availableSteps.back();
-            }
-        }
-        setPositionOnWidgets(currentStep);
-    }
+    navigateToNearestAvailableStep(PlayingDirection::Forward, stepsPerClick);
 }
 
 bool MainWindow::setPositionOnWidgets(StepIndex stepPosition, bool updateSlider)

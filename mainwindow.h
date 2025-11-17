@@ -116,6 +116,11 @@ private:
     StepIndex totalSteps() const;
 
     void changeWhichButtonsAreEnabled();
+    
+    /// @brief Navigate to the nearest available step in the given direction
+    /// @param direction Forward to go to next step, Backward to go to previous step
+    /// @param stepsToMove Number of steps to move
+    void navigateToNearestAvailableStep(PlayingDirection direction, StepIndex stepsToMove);
 
     void recordVideoToFile(const QString &outputFilePath, int fps);
 
