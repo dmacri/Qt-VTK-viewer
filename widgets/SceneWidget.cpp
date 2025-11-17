@@ -159,29 +159,8 @@ void SceneWidget::loadAndUpdateVisualizationForCurrentStep()
     // Read stage state from files for the current step
     sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
 
-    // Refresh VTK visualization elements
-    // Check if we should use 3D substate visualization
-    if (! activeSubstateFor3D.empty() && settingParameter->substateInfo.count(activeSubstateFor3D) > 0)
-    {
-        const auto& substateInfo = settingParameter->substateInfo[activeSubstateFor3D];
-        if (! std::isnan(substateInfo.minValue) && ! std::isnan(substateInfo.maxValue))
-        {
-            sceneWidgetVisualizerProxy->refreshWindowsVTK3DSubstate(settingParameter->numberOfRowsY, 
-                                                                    settingParameter->numberOfColumnX, 
-                                                                    gridActor,
-                                                                    activeSubstateFor3D,
-                                                                    substateInfo.minValue,
-                                                                    substateInfo.maxValue);
-        }
-        else
-        {
-            sceneWidgetVisualizerProxy->refreshWindowsVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, gridActor);
-        }
-    }
-    else
-    {
-        sceneWidgetVisualizerProxy->refreshWindowsVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, gridActor);
-    }
+    // Refresh VTK visualization with optional 3D substate support
+    refreshVisualizationWithOptional3DSubstate();
 
     // Update load balancing lines if we have any
     if (settingParameter->numberOfLines > 0)
@@ -199,6 +178,28 @@ void SceneWidget::prepareStageWithCurrentNodeConfiguration()
 {
     // Initialize the visualizer stage with current node configuration
     sceneWidgetVisualizerProxy->prepareStage(settingParameter->nNodeX, settingParameter->nNodeY);
+}
+
+void SceneWidget::refreshVisualizationWithOptional3DSubstate()
+{
+    // Check if we should use 3D substate visualization
+    if (! activeSubstateFor3D.empty() && settingParameter->substateInfo.count(activeSubstateFor3D) > 0)
+    {
+        const auto& substateInfo = settingParameter->substateInfo[activeSubstateFor3D];
+        if (! std::isnan(substateInfo.minValue) && ! std::isnan(substateInfo.maxValue))
+        {
+            sceneWidgetVisualizerProxy->refreshWindowsVTK3DSubstate(settingParameter->numberOfRowsY, 
+                                                                    settingParameter->numberOfColumnX, 
+                                                                    gridActor,
+                                                                    activeSubstateFor3D,
+                                                                    substateInfo.minValue,
+                                                                    substateInfo.maxValue);
+            return;
+        }
+    }
+    
+    // Fallback to regular 2D visualization
+    sceneWidgetVisualizerProxy->refreshWindowsVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, gridActor);
 }
 
 void SceneWidget::addVisualizer(const std::string& filename, StepIndex stepNumber)
@@ -597,10 +598,10 @@ void SceneWidget::renderVtkScene()
     sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
 
     // Check if we should use 3D substate visualization
-    if (! activeSubstateFor3D.empty() && settingParameter->substateInfo.count(activeSubstateFor3D) > 0)
+    if (!activeSubstateFor3D.empty() && settingParameter->substateInfo.count(activeSubstateFor3D) > 0)
     {
         const auto& substateInfo = settingParameter->substateInfo[activeSubstateFor3D];
-        if (! std::isnan(substateInfo.minValue) && ! std::isnan(substateInfo.maxValue))
+        if (!std::isnan(substateInfo.minValue) && !std::isnan(substateInfo.maxValue))
         {
             sceneWidgetVisualizerProxy->drawWithVTK3DSubstate(settingParameter->numberOfRowsY, 
                                                               settingParameter->numberOfColumnX, 

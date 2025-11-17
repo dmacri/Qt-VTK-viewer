@@ -383,6 +383,13 @@ protected:
     bool isWorldPositionInGrid(const double worldPos[3]) const;
 
 protected:
+    /** @brief Refresh VTK visualization with optional 3D substate support.
+     * 
+     * This helper method handles both 2D and 3D visualization based on activeSubstateFor3D.
+     * It's used by both renderVtkScene() and loadAndUpdateVisualizationForCurrentStep()
+     * to avoid code duplication. */
+    void refreshVisualizationWithOptional3DSubstate();
+
     /** @brief Handle mouse press events to update substate display.
      * 
      * When user clicks on a cell (without Shift), this method updates
