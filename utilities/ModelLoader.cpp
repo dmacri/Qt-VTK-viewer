@@ -171,7 +171,7 @@ ModelLoader::LoadResult ModelLoader::loadModelFromDirectory(const std::string& m
                 return result;
             }
             
-            constexpr bool removeWrapperAfterSuccessfullCompilation = false;
+            constexpr bool removeWrapperAfterSuccessfullCompilation = true;
             if constexpr(removeWrapperAfterSuccessfullCompilation)
             {
                 try
