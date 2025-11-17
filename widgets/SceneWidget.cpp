@@ -35,7 +35,7 @@
 #include "visualiser/SettingParameter.h"
 #include "widgets/ColorSettings.h"
 #include "widgets/SubstatesDockWidget.h"
-#include <QWheelEvent>
+#include "widgets/CustomInteractorStyle.h"
 
 
 namespace
@@ -273,9 +273,9 @@ void SceneWidget::setupVtkScene()
 
     renderWindow()->SetSize(settingParameter->numberOfColumnX, settingParameter->numberOfRowsY + 10);
 
-    /// An interactor with this style blocks rotation but not zoom.
-    /// Use nullptr in SetInteractorStyle to block everything.
-    vtkNew<vtkInteractorStyleImage> style;
+    /// Use custom interactor style that zooms towards cursor position.
+    /// This provides intuitive zoom behavior when using mouse wheel.
+    vtkNew<CustomInteractorStyle> style;
     interactor()->SetInteractorStyle(style);
 
     renderWindow()->SetWindowName(QApplication::applicationName().toLocal8Bit().data());
@@ -972,8 +972,8 @@ void SceneWidget::setViewMode2D()
 
     currentViewMode = ViewMode::Mode2D;
 
-    // Use vtkInteractorStyleImage which blocks rotation
-    vtkNew<vtkInteractorStyleImage> style;
+    // Use custom interactor style that zooms towards cursor position
+    vtkNew<CustomInteractorStyle> style;
     interactor()->SetInteractorStyle(style);
 
     // Reset camera angles
@@ -1080,8 +1080,9 @@ void SceneWidget::setSubstatesDockWidget(SubstatesDockWidget* dockWidget)
 
 void SceneWidget::mousePressEvent(QMouseEvent* event)
 {
-    // Handle middle mouse button for panning
-    if (event->button() == Qt::MiddleButton)
+    // Handle left mouse button drag for panning (with Shift modifier)
+    // This allows drag panning while preserving left-click cell selection
+    if (event->button() == Qt::LeftButton && (event->modifiers() & Qt::ShiftModifier))
     {
         m_isDragging = true;
         m_lastDragPos = event->position().toPoint();
@@ -1092,8 +1093,8 @@ void SceneWidget::mousePressEvent(QMouseEvent* event)
     // Call parent implementation first
     QVTKOpenGLNativeWidget::mousePressEvent(event);
 
-    // Update substate dock widget if available
-    if (m_substatesDockWidget && sceneWidgetVisualizerProxy)
+    // Update substate dock widget if available (only for left clicks without Shift)
+    if (m_substatesDockWidget && sceneWidgetVisualizerProxy && event->button() == Qt::LeftButton && !(event->modifiers() & Qt::ShiftModifier))
     {
         // Check if click was inside the grid
         if (isWorldPositionInGrid(m_lastWorldPos.data()))
@@ -1170,63 +1171,10 @@ bool SceneWidget::isWorldPositionInGrid(const double worldPos[3]) const
     return true;  // Inside grid bounds
 }
 
-void SceneWidget::wheelEvent(QWheelEvent* event)
-{
-    if (!renderer || !renderer->GetActiveCamera() || !interactor())
-        return;
-
-    // Get mouse position in widget coordinates
-    QPoint pos = event->position().toPoint();
-    
-    // Get camera
-    vtkCamera* camera = renderer->GetActiveCamera();
-    
-    // Convert screen coordinates to world coordinates using existing method
-    std::array<double, 3> worldPos = screenToWorldCoordinates(pos);
-    
-    // Copy camera parameters to local arrays (safe copies)
-    double focalPoint[3];
-    double position[3];
-    camera->GetFocalPoint(focalPoint);
-    camera->GetPosition(position);
-    
-    // Determine zoom factor based on scroll direction
-    // Positive delta = scroll up = zoom in
-    int delta = event->angleDelta().y();
-    double zoomFactor = (delta > 0) ? 0.9 : 1.1;  // 10% zoom in/out
-    
-    // Calculate the offset from focal point to the point under cursor
-    double offsetX = worldPos[0] - focalPoint[0];
-    double offsetY = worldPos[1] - focalPoint[1];
-    double offsetZ = worldPos[2] - focalPoint[2];
-    
-    // Move focal point towards the point under cursor
-    // This keeps the point under cursor stationary during zoom
-    double newFocalPoint[3];
-    newFocalPoint[0] = focalPoint[0] + offsetX * (1.0 - zoomFactor);
-    newFocalPoint[1] = focalPoint[1] + offsetY * (1.0 - zoomFactor);
-    newFocalPoint[2] = focalPoint[2] + offsetZ * (1.0 - zoomFactor);
-    
-    // Move camera position by the same offset to maintain viewing direction
-    double newPosition[3];
-    newPosition[0] = position[0] + offsetX * (1.0 - zoomFactor);
-    newPosition[1] = position[1] + offsetY * (1.0 - zoomFactor);
-    newPosition[2] = position[2] + offsetZ * (1.0 - zoomFactor);
-    
-    // Apply new camera position and focal point
-    camera->SetFocalPoint(newFocalPoint);
-    camera->SetPosition(newPosition);
-    
-    // Trigger render
-    renderWindow()->Render();
-    
-    event->accept();
-}
-
 void SceneWidget::mouseMoveEvent(QMouseEvent* event)
 {
-    // Handle panning during middle mouse button drag
-    if (m_isDragging && event->buttons() & Qt::MiddleButton)
+    // Handle panning during left mouse button drag with Shift
+    if (m_isDragging && (event->buttons() & Qt::LeftButton) && (event->modifiers() & Qt::ShiftModifier))
     {
         if (!renderer || !renderer->GetActiveCamera())
             return;
@@ -1278,10 +1226,23 @@ void SceneWidget::mouseMoveEvent(QMouseEvent* event)
         double halfHeight = distance * std::tan(angle * 3.14159265359 / 360.0);
         double halfWidth = halfHeight * (windowWidth / windowHeight);
 
-        // Convert screen delta to world delta
-        double worldDeltaX = -(delta.x() / windowWidth) * 2.0 * halfWidth * rightX;
-        double worldDeltaY = (delta.y() / windowHeight) * 2.0 * halfHeight * viewUp[0];
-        double worldDeltaZ = (delta.y() / windowHeight) * 2.0 * halfHeight * viewUp[2];
+        // Convert screen delta to world delta using right and up vectors
+        // Horizontal movement (delta.x) uses right vector
+        double horizontalScaleFactor = -(delta.x() / windowWidth) * 2.0 * halfWidth;
+        double worldDeltaX_horiz = horizontalScaleFactor * rightX;
+        double worldDeltaY_horiz = horizontalScaleFactor * rightY;
+        double worldDeltaZ_horiz = horizontalScaleFactor * rightZ;
+
+        // Vertical movement (delta.y) uses up vector
+        double verticalScaleFactor = (delta.y() / windowHeight) * 2.0 * halfHeight;
+        double worldDeltaX_vert = verticalScaleFactor * viewUp[0];
+        double worldDeltaY_vert = verticalScaleFactor * viewUp[1];
+        double worldDeltaZ_vert = verticalScaleFactor * viewUp[2];
+
+        // Total movement
+        double worldDeltaX = worldDeltaX_horiz + worldDeltaX_vert;
+        double worldDeltaY = worldDeltaY_horiz + worldDeltaY_vert;
+        double worldDeltaZ = worldDeltaZ_horiz + worldDeltaZ_vert;
 
         // Apply movement to both focal point and camera position
         double newFocalPoint[3];
@@ -1315,8 +1276,8 @@ void SceneWidget::mouseMoveEvent(QMouseEvent* event)
 
 void SceneWidget::mouseReleaseEvent(QMouseEvent* event)
 {
-    // Handle middle mouse button release
-    if (event->button() == Qt::MiddleButton)
+    // Handle left mouse button release
+    if (event->button() == Qt::LeftButton)
     {
         m_isDragging = false;
         event->accept();

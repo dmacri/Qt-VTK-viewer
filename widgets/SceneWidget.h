@@ -385,14 +385,6 @@ protected:
      * @param event The mouse event */
     void mousePressEvent(QMouseEvent* event) override;
 
-    /** @brief Handle mouse wheel events for zoom towards cursor.
-     * 
-     * When user scrolls the mouse wheel, this method zooms the camera
-     * towards the cursor position instead of the screen center.
-     * 
-     * @param event The wheel event */
-    void wheelEvent(QWheelEvent* event) override;
-
     /** @brief Handle mouse move events for panning during drag.
      * 
      * When user drags with middle mouse button, this method pans the view
