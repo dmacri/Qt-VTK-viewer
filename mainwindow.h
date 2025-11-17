@@ -55,6 +55,7 @@ private slots: // menu actions
     // View submenu
     void on2DModeRequested();
     void on3DModeRequested();
+    void onGridLinesToggled(bool checked);
 
     // Model submenu
     void onModelSelected();

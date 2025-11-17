@@ -203,6 +203,7 @@ void MainWindow::connectMenuActions()
     // View mode actions
     connect(ui->action2DMode, &QAction::triggered, this, &MainWindow::on2DModeRequested);
     connect(ui->action3DMode, &QAction::triggered, this, &MainWindow::on3DModeRequested);
+    connect(ui->actionGridLines, &QAction::triggered, this, &MainWindow::onGridLinesToggled);
 
     /// Model selection actions are connected dynamically in createModelMenuActions()
 }
@@ -1023,6 +1024,11 @@ void MainWindow::on3DModeRequested()
     QMessageBox::information(this,
                              tr("View Mode Changed"),
                              tr("Switched to 3D mode.\nYou can now rotate the camera using mouse or the sliders below."));
+}
+
+void MainWindow::onGridLinesToggled(bool checked)
+{
+    ui->sceneWidget->setGridLinesVisible(checked);
 }
 
 void MainWindow::updateCameraControlsVisibility()

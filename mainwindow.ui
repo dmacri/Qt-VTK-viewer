@@ -645,6 +645,8 @@
     </property>
     <addaction name="action2DMode"/>
     <addaction name="action3DMode"/>
+    <addaction name="separator"/>
+    <addaction name="actionGridLines"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuModel"/>
@@ -799,6 +801,20 @@
    </property>
    <property name="text">
     <string>Show reduction</string>
+   </property>
+  </action>
+  <action name="actionGridLines">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Grid Lines</string>
+   </property>
+   <property name="toolTip">
+    <string>Show/hide grid lines between nodes</string>
    </property>
   </action>
  </widget>

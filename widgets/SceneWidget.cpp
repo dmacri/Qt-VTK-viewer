@@ -1038,6 +1038,15 @@ void SceneWidget::setAxesWidgetVisible(bool visible)
     }
 }
 
+void SceneWidget::setGridLinesVisible(bool visible)
+{
+    if (actorBuildLine)
+    {
+        actorBuildLine->SetVisibility(visible);
+        triggerRenderUpdate();
+    }
+}
+
 void SceneWidget::setCameraAzimuth(double angle)
 {
     // Store the new azimuth value

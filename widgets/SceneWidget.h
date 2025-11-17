@@ -113,6 +113,10 @@ public:
     /// @brief Show or hide the orientation axes widget. If true, shows the axes widget; if false, hides it
     void setAxesWidgetVisible(bool visible);
 
+    /// @brief Show or hide grid lines between nodes
+    /// @param visible If true, shows grid lines; if false, hides them
+    void setGridLinesVisible(bool visible);
+
     /// @brief Get the current ViewMode (2D or 3D)
     ViewMode getViewMode() const
     {
