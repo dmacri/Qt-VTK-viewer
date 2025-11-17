@@ -1724,6 +1724,7 @@ void MainWindow::updateRecentDirectoriesMenu()
 {
     // Clear existing menu items
     ui->menuRecentDirectories->clear();
+    ui->menuRecentDirectories->setToolTipsVisible(true);
 
     // Load recent directories list
     QStringList recentDirectories = loadRecentDirectories();
