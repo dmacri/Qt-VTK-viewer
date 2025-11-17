@@ -160,6 +160,7 @@ private:
     std::unique_ptr<ReductionManager> reductionManager;
 
     StepIndex currentStep;
+    std::vector<StepIndex> availableSteps;
 
     // Playback state for timer-based playback
     PlayingDirection playbackDirection = PlayingDirection::Forward;

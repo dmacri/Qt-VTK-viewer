@@ -2,6 +2,7 @@
 #include <utility> // std::to_underlying, which requires C++23
 #include <filesystem>
 #include <source_location>
+#include <algorithm>
 #include <QCommonStyle>
 #include <QSettings>
 #include <QDebug>
@@ -252,6 +253,9 @@ void MainWindow::initializeSceneWidget(const QString& configFileName)
 
 void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> availableSteps)
 {
+    // Store the list of available steps for intelligent step navigation
+    this->availableSteps = availableSteps;
+    
     const auto lastStepAvailableInAvailableSteps = std::ranges::contains(availableSteps, totalSteps());
     if (! lastStepAvailableInAvailableSteps && ! silentMode)
     {
@@ -514,15 +518,100 @@ void MainWindow::onBackButtonClicked()
 void MainWindow::onLeftButtonClicked()
 {
     const auto stepsPerClick = static_cast<StepIndex>(ui->speedSpinBox->value());
-    currentStep = std::max(currentStep - stepsPerClick, FIRST_STEP_NUMBER);
-    setPositionOnWidgets(currentStep);
+    const auto targetStep = currentStep - stepsPerClick;
+    
+    // Try to go to the target step
+    if (std::ranges::contains(availableSteps, targetStep))
+    {
+        currentStep = targetStep;
+        setPositionOnWidgets(currentStep);
+    }
+    else if (targetStep >= FIRST_STEP_NUMBER)
+    {
+        // Find the nearest available step before the target
+        auto it = std::ranges::lower_bound(availableSteps, targetStep);
+        
+        if (it != availableSteps.begin())
+        {
+            --it;
+            std::cerr << "Warning: Step " << targetStep << " not available. "
+                      << "Nearest previous step is " << *it << std::endl;
+            currentStep = *it;
+            setPositionOnWidgets(currentStep);
+        }
+        else
+        {
+            // No available step before target, go to first available
+            std::cerr << "Warning: Step " << targetStep << " not available. "
+                      << "Going to first available step " << availableSteps.front() << std::endl;
+            currentStep = availableSteps.front();
+            setPositionOnWidgets(currentStep);
+        }
+    }
+    else
+    {
+        // Target is before first step, go to first available
+        currentStep = std::max(targetStep, FIRST_STEP_NUMBER);
+        if (!std::ranges::contains(availableSteps, currentStep))
+        {
+            if (!availableSteps.empty())
+            {
+                std::cerr << "Warning: Step " << targetStep << " not available. "
+                          << "Going to first available step " << availableSteps.front() << std::endl;
+                currentStep = availableSteps.front();
+            }
+        }
+        setPositionOnWidgets(currentStep);
+    }
 }
 
 void MainWindow::onRightButtonClicked()
 {
     const auto stepsPerClick = static_cast<StepIndex>(ui->speedSpinBox->value());
-    currentStep = std::min(currentStep + stepsPerClick, totalSteps());
-    setPositionOnWidgets(currentStep);
+    const auto targetStep = currentStep + stepsPerClick;
+    
+    // Try to go to the target step
+    if (std::ranges::contains(availableSteps, targetStep))
+    {
+        currentStep = targetStep;
+        setPositionOnWidgets(currentStep);
+    }
+    else if (targetStep <= totalSteps())
+    {
+        // Find the nearest available step after the target
+        auto it = std::ranges::upper_bound(availableSteps, targetStep);
+        
+        if (it != availableSteps.end())
+        {
+            std::cerr << "Warning: Step " << targetStep << " not available. "
+                      << "Nearest next step is " << *it << std::endl;
+            currentStep = *it;
+            setPositionOnWidgets(currentStep);
+        }
+        else
+        {
+            // No available step after target, go to last available
+            std::cerr << "Warning: Step " << targetStep << " not available. "
+                      << "Going to last available step " << availableSteps.back() << std::endl;
+            currentStep = availableSteps.back();
+            setPositionOnWidgets(currentStep);
+        }
+    }
+    else
+    {
+        // Target is after last step, go to last available
+        currentStep = std::min(targetStep, totalSteps());
+        if (!std::ranges::contains(availableSteps, currentStep))
+        {
+            if (!availableSteps.empty())
+            {
+                std::cerr << "Warning: Step " << targetStep << " not available. "
+                          << "Going to last available step " << availableSteps.back() << std::endl;
+                currentStep = availableSteps.back();
+            }
+        }
+        setPositionOnWidgets(currentStep);
+    }
 }
 
 bool MainWindow::setPositionOnWidgets(StepIndex stepPosition, bool updateSlider)
@@ -559,12 +648,30 @@ bool MainWindow::setPositionOnWidgets(StepIndex stepPosition, bool updateSlider)
 
 void MainWindow::changeWhichButtonsAreEnabled()
 {
-    ui->rightButton->setDisabled(currentStep == totalSteps());
-    ui->playButton->setDisabled(currentStep == totalSteps());
-    ui->leftButton->setDisabled(currentStep <= FIRST_STEP_NUMBER);
-    ui->backButton->setDisabled(currentStep <= FIRST_STEP_NUMBER);
-    ui->skipBackwardButton->setDisabled(currentStep <= FIRST_STEP_NUMBER);
-    ui->skipForwardButton->setDisabled(currentStep == totalSteps());
+    // Check if there are available steps
+    if (availableSteps.empty())
+    {
+        // No available steps, disable all navigation buttons
+        ui->rightButton->setDisabled(true);
+        ui->playButton->setDisabled(true);
+        ui->leftButton->setDisabled(true);
+        ui->backButton->setDisabled(true);
+        ui->skipBackwardButton->setDisabled(true);
+        ui->skipForwardButton->setDisabled(true);
+        return;
+    }
+    
+    // Check if current step is the last available step
+    const bool isAtLastAvailableStep = (currentStep == availableSteps.back());
+    ui->rightButton->setDisabled(isAtLastAvailableStep);
+    ui->playButton->setDisabled(isAtLastAvailableStep);
+    ui->skipForwardButton->setDisabled(isAtLastAvailableStep);
+    
+    // Check if current step is the first available step
+    const bool isAtFirstAvailableStep = (currentStep == availableSteps.front());
+    ui->leftButton->setDisabled(isAtFirstAvailableStep);
+    ui->backButton->setDisabled(isAtFirstAvailableStep);
+    ui->skipBackwardButton->setDisabled(isAtFirstAvailableStep);
 }
 
 void MainWindow::onStepNumberChanged()
