@@ -1083,8 +1083,8 @@ void SceneWidget::mousePressEvent(QMouseEvent* event)
     // Call parent implementation first
     QVTKOpenGLNativeWidget::mousePressEvent(event);
 
-    // Update substate dock widget if available (for left clicks)
-    if (m_substatesDockWidget && sceneWidgetVisualizerProxy && event->button() == Qt::LeftButton)
+    // Update substate dock widget if available (for left clicks without Shift)
+    if (m_substatesDockWidget && sceneWidgetVisualizerProxy && event->button() == Qt::LeftButton && !(event->modifiers() & Qt::ShiftModifier))
     {
         // Check if click was inside the grid
         if (isWorldPositionInGrid(m_lastWorldPos.data()))

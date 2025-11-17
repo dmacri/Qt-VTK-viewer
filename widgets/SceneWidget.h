@@ -153,9 +153,7 @@ public:
         return cameraElevation;
     }
 
-    /** @brief Set the substate dock widget.
-     * 
-     * This allows SceneWidget to update the dock widget when cells are clicked.
+    /** @brief Set the substate dock widget for displaying cell information.
      * 
      * @param dockWidget Pointer to the SubstatesDockWidget */
     void setSubstatesDockWidget(SubstatesDockWidget* dockWidget);
@@ -377,10 +375,10 @@ protected:
     bool isWorldPositionInGrid(const double worldPos[3]) const;
 
 protected:
-    /** @brief Handle mouse click events to update substate display.
+    /** @brief Handle mouse press events to update substate display.
      * 
-     * When user clicks on a cell, this method updates the SubstatesDockWidget
-     * with values for that cell.
+     * When user clicks on a cell (without Shift), this method updates
+     * the SubstatesDockWidget with values for that cell.
      * 
      * @param event The mouse event */
     void mousePressEvent(QMouseEvent* event) override;

@@ -114,15 +114,32 @@ void CustomInteractorStyle::ZoomTowardsCursor(double zoomFactor)
 
 void CustomInteractorStyle::OnLeftButtonDown()
 {
-    m_isPanning = true;
-    int* pos = this->Interactor->GetEventPosition();
-    m_lastMouseX = pos[0];
-    m_lastMouseY = pos[1];
+    // Only start panning if Shift key is pressed
+    if (this->Interactor->GetShiftKey())
+    {
+        m_isPanning = true;
+        const int* pos = this->Interactor->GetEventPosition();
+        m_lastMouseX = pos[0];
+        m_lastMouseY = pos[1];
+    }
+    else
+    {
+        // No Shift - allow normal click processing
+        this->Superclass::OnLeftButtonDown();
+    }
 }
 
 void CustomInteractorStyle::OnLeftButtonUp()
 {
-    m_isPanning = false;
+    if (m_isPanning)
+    {
+        m_isPanning = false;
+    }
+    else
+    {
+        // Normal click processing
+        this->Superclass::OnLeftButtonUp();
+    }
 }
 
 void CustomInteractorStyle::OnMouseMove()
@@ -143,7 +160,7 @@ void CustomInteractorStyle::PanCamera()
         return;
 
     // Get current mouse position
-    int* currentPos = this->Interactor->GetEventPosition();
+    const int* currentPos = this->Interactor->GetEventPosition();
     int currentX = currentPos[0];
     int currentY = currentPos[1];
 
@@ -167,7 +184,7 @@ void CustomInteractorStyle::PanCamera()
     camera->GetPosition(position);
 
     // Get window size
-    int* windowSize = this->Interactor->GetRenderWindow()->GetSize();
+    const int* windowSize = this->Interactor->GetRenderWindow()->GetSize();
     double windowWidth = static_cast<double>(windowSize[0]);
     double windowHeight = static_cast<double>(windowSize[1]);
 
@@ -180,7 +197,7 @@ void CustomInteractorStyle::PanCamera()
     double halfWidth = halfHeight * (windowWidth / windowHeight);
 
     // Get view up vector
-    double* viewUp = camera->GetViewUp();
+    const double* viewUp = camera->GetViewUp();
 
     // Calculate right vector (cross product: viewUp x direction)
     double dirX = focalPoint[0] - position[0];
