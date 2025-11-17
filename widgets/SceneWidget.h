@@ -385,20 +385,6 @@ protected:
      * @param event The mouse event */
     void mousePressEvent(QMouseEvent* event) override;
 
-    /** @brief Handle mouse move events for panning during drag.
-     * 
-     * When user drags with middle mouse button, this method pans the view
-     * by moving the camera and focal point together.
-     * 
-     * @param event The mouse move event */
-    void mouseMoveEvent(QMouseEvent* event) override;
-
-    /** @brief Handle mouse release events to stop panning.
-     * 
-     * When user releases the middle mouse button, this method stops the panning.
-     * 
-     * @param event The mouse release event */
-    void mouseReleaseEvent(QMouseEvent* event) override;
     /** @brief Proxy for the scene widget visualizer
      *  This proxy provides access to the visualizer implementation
      *  and is responsible for updating the visualization when settings change. */
@@ -427,12 +413,6 @@ protected:
 
     /** @brief Last recorded position in VTK world coordinates. */
     std::array<double, 3> m_lastWorldPos;
-
-    /// @brief Flag indicating if middle mouse button drag is active
-    bool m_isDragging = false;
-
-    /// @brief Last mouse position during drag (in screen coordinates)
-    QPoint m_lastDragPos;
 
     /// @brief VTK renderer for the scene: This renderer is responsible for rendering the 3D scene.
     vtkNew<vtkRenderer> renderer;

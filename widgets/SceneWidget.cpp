@@ -1080,21 +1080,11 @@ void SceneWidget::setSubstatesDockWidget(SubstatesDockWidget* dockWidget)
 
 void SceneWidget::mousePressEvent(QMouseEvent* event)
 {
-    // Handle left mouse button drag for panning (with Shift modifier)
-    // This allows drag panning while preserving left-click cell selection
-    if (event->button() == Qt::LeftButton && (event->modifiers() & Qt::ShiftModifier))
-    {
-        m_isDragging = true;
-        m_lastDragPos = event->position().toPoint();
-        event->accept();
-        return;
-    }
-
     // Call parent implementation first
     QVTKOpenGLNativeWidget::mousePressEvent(event);
 
-    // Update substate dock widget if available (only for left clicks without Shift)
-    if (m_substatesDockWidget && sceneWidgetVisualizerProxy && event->button() == Qt::LeftButton && !(event->modifiers() & Qt::ShiftModifier))
+    // Update substate dock widget if available (for left clicks)
+    if (m_substatesDockWidget && sceneWidgetVisualizerProxy && event->button() == Qt::LeftButton)
     {
         // Check if click was inside the grid
         if (isWorldPositionInGrid(m_lastWorldPos.data()))
@@ -1171,119 +1161,3 @@ bool SceneWidget::isWorldPositionInGrid(const double worldPos[3]) const
     return true;  // Inside grid bounds
 }
 
-void SceneWidget::mouseMoveEvent(QMouseEvent* event)
-{
-    // Handle panning during left mouse button drag with Shift
-    if (m_isDragging && (event->buttons() & Qt::LeftButton) && (event->modifiers() & Qt::ShiftModifier))
-    {
-        if (!renderer || !renderer->GetActiveCamera())
-            return;
-
-        QPoint currentPos = event->position().toPoint();
-        QPoint delta = currentPos - m_lastDragPos;
-
-        // Get camera
-        vtkCamera* camera = renderer->GetActiveCamera();
-
-        // Copy camera parameters
-        double focalPoint[3];
-        double position[3];
-        camera->GetFocalPoint(focalPoint);
-        camera->GetPosition(position);
-
-        // Get view up vector
-        double* viewUp = camera->GetViewUp();
-
-        // Calculate camera right vector (cross product of view direction and up)
-        double dirX = focalPoint[0] - position[0];
-        double dirY = focalPoint[1] - position[1];
-        double dirZ = focalPoint[2] - position[2];
-
-        // Right = viewUp x direction
-        double rightX = viewUp[1] * dirZ - viewUp[2] * dirY;
-        double rightY = viewUp[2] * dirX - viewUp[0] * dirZ;
-        double rightZ = viewUp[0] * dirY - viewUp[1] * dirX;
-
-        // Normalize right vector
-        double rightLen = std::sqrt(rightX * rightX + rightY * rightY + rightZ * rightZ);
-        if (rightLen > 1e-10)
-        {
-            rightX /= rightLen;
-            rightY /= rightLen;
-            rightZ /= rightLen;
-        }
-
-        // Get window size for scaling
-        int* windowSize = renderWindow()->GetSize();
-        double windowWidth = static_cast<double>(windowSize[0]);
-        double windowHeight = static_cast<double>(windowSize[1]);
-
-        // Get camera distance and angle
-        double distance = camera->GetDistance();
-        double angle = camera->GetViewAngle();
-
-        // Calculate world space movement
-        double halfHeight = distance * std::tan(angle * 3.14159265359 / 360.0);
-        double halfWidth = halfHeight * (windowWidth / windowHeight);
-
-        // Convert screen delta to world delta using right and up vectors
-        // Horizontal movement (delta.x) uses right vector
-        double horizontalScaleFactor = -(delta.x() / windowWidth) * 2.0 * halfWidth;
-        double worldDeltaX_horiz = horizontalScaleFactor * rightX;
-        double worldDeltaY_horiz = horizontalScaleFactor * rightY;
-        double worldDeltaZ_horiz = horizontalScaleFactor * rightZ;
-
-        // Vertical movement (delta.y) uses up vector
-        double verticalScaleFactor = (delta.y() / windowHeight) * 2.0 * halfHeight;
-        double worldDeltaX_vert = verticalScaleFactor * viewUp[0];
-        double worldDeltaY_vert = verticalScaleFactor * viewUp[1];
-        double worldDeltaZ_vert = verticalScaleFactor * viewUp[2];
-
-        // Total movement
-        double worldDeltaX = worldDeltaX_horiz + worldDeltaX_vert;
-        double worldDeltaY = worldDeltaY_horiz + worldDeltaY_vert;
-        double worldDeltaZ = worldDeltaZ_horiz + worldDeltaZ_vert;
-
-        // Apply movement to both focal point and camera position
-        double newFocalPoint[3];
-        newFocalPoint[0] = focalPoint[0] + worldDeltaX;
-        newFocalPoint[1] = focalPoint[1] + worldDeltaY;
-        newFocalPoint[2] = focalPoint[2] + worldDeltaZ;
-
-        double newPosition[3];
-        newPosition[0] = position[0] + worldDeltaX;
-        newPosition[1] = position[1] + worldDeltaY;
-        newPosition[2] = position[2] + worldDeltaZ;
-
-        // Apply changes
-        camera->SetFocalPoint(newFocalPoint);
-        camera->SetPosition(newPosition);
-
-        // Update last drag position
-        m_lastDragPos = currentPos;
-
-        // Trigger render
-        renderWindow()->Render();
-
-        event->accept();
-    }
-    else
-    {
-        // Call parent implementation for other mouse move handling
-        QVTKOpenGLNativeWidget::mouseMoveEvent(event);
-    }
-}
-
-void SceneWidget::mouseReleaseEvent(QMouseEvent* event)
-{
-    // Handle left mouse button release
-    if (event->button() == Qt::LeftButton)
-    {
-        m_isDragging = false;
-        event->accept();
-        return;
-    }
-
-    // Call parent implementation
-    QVTKOpenGLNativeWidget::mouseReleaseEvent(event);
-}
