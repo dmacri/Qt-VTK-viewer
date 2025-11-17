@@ -33,7 +33,7 @@ void CustomInteractorStyle::ZoomTowardsCursor(double zoomFactor)
         return;
 
     // Get current mouse position in screen coordinates
-    int* eventPos = this->Interactor->GetEventPosition();
+    const int* eventPos = this->Interactor->GetEventPosition();
     int screenX = eventPos[0];
     int screenY = eventPos[1];
 
@@ -46,7 +46,7 @@ void CustomInteractorStyle::ZoomTowardsCursor(double zoomFactor)
     camera->GetPosition(position);
 
     // Convert screen coordinates to world coordinates
-    int* windowSize = this->Interactor->GetRenderWindow()->GetSize();
+    const int* windowSize = this->Interactor->GetRenderWindow()->GetSize();
     double displayPos[3] = {
         static_cast<double>(screenX),
         static_cast<double>(windowSize[1] - screenY),  // Flip Y
@@ -57,8 +57,8 @@ void CustomInteractorStyle::ZoomTowardsCursor(double zoomFactor)
     renderer->DisplayToWorld();
     
     // SAFE: Copy the world point returned by VTK
-    double* worldPosPtr = renderer->GetWorldPoint();
-    double worldPos[3] = { worldPosPtr[0], worldPosPtr[1], worldPosPtr[2] };
+    const double* worldPosPtr = renderer->GetWorldPoint();
+    const double worldPos[3] = { worldPosPtr[0], worldPosPtr[1], worldPosPtr[2] };
 
     // Calculate offset from focal point to cursor position (only X and Y matter for 2D)
     double offsetX = worldPos[0] - focalPoint[0];
