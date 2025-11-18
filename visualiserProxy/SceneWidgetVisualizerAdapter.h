@@ -85,14 +85,12 @@ public:
 
     void drawWithVTK3DSubstate(int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue) override
     {
-        // m_impl.visualiser.drawWithVTK3DSubstate(m_impl.p, nRows, nCols, renderer, gridActor, substateFieldName, minValue, maxValue);
-        m_impl.visualiser.drawWithVTK3DSubstateWithColor(m_impl.p, nRows, nCols, renderer, gridActor, substateFieldName, minValue, maxValue);
+        m_impl.visualiser.drawWithVTK3DSubstate(m_impl.p, nRows, nCols, renderer, gridActor, substateFieldName, minValue, maxValue);
     }
 
     void refreshWindowsVTK3DSubstate(int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue) override
     {
-        // m_impl.visualiser.refreshWindowsVTK3DSubstate(m_impl.p, nRows, nCols, gridActor, substateFieldName, minValue, maxValue);
-        m_impl.visualiser.refreshWindowsVTK3DSubstateWithColor(m_impl.p, nRows, nCols, gridActor, substateFieldName, minValue, maxValue);
+        m_impl.visualiser.refreshWindowsVTK3DSubstate(m_impl.p, nRows, nCols, gridActor, substateFieldName, minValue, maxValue);
     }
 
     Visualizer& getVisualizer() override
