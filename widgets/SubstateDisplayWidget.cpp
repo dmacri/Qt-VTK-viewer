@@ -4,6 +4,8 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGroupBox>
+#include <QMenu>
+#include <QAction>
 #include <limits>
 #include <cmath>
 #include <cctype>
@@ -22,6 +24,7 @@ SubstateDisplayWidget::SubstateDisplayWidget(const std::string& fieldName, QWidg
 {
     setupUI();
     connectSignals();
+    enableContextMenus();
 }
 
 void SubstateDisplayWidget::setupUI()
@@ -264,4 +267,39 @@ void SubstateDisplayWidget::updateButtonState()
 
     // Emit signal with current min/max values so they can be stored in substateInfo
     emit minMaxValuesChanged(m_fieldName, getMinValue(), getMaxValue());
+}
+
+void SubstateDisplayWidget::enableContextMenus()
+{
+    // Enable context menu for min spinbox
+    m_minSpinBox->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_minSpinBox, &QWidget::customContextMenuRequested, this, [this](const QPoint& pos) {
+        QMenu menu;
+        menu.addAction("Calculate minimum", this, &SubstateDisplayWidget::onCalculateMinimum);
+        menu.addAction("Calculate minimum > 0", this, &SubstateDisplayWidget::onCalculateMinimumGreaterThanZero);
+        menu.exec(m_minSpinBox->mapToGlobal(pos));
+    });
+
+    // Enable context menu for max spinbox
+    m_maxSpinBox->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_maxSpinBox, &QWidget::customContextMenuRequested, this, [this](const QPoint& pos) {
+        QMenu menu;
+        menu.addAction("Calculate maximum", this, &SubstateDisplayWidget::onCalculateMaximum);
+        menu.exec(m_maxSpinBox->mapToGlobal(pos));
+    });
+}
+
+void SubstateDisplayWidget::onCalculateMinimum()
+{
+    emit calculateMinimumRequested(m_fieldName);
+}
+
+void SubstateDisplayWidget::onCalculateMinimumGreaterThanZero()
+{
+    emit calculateMinimumGreaterThanZeroRequested(m_fieldName);
+}
+
+void SubstateDisplayWidget::onCalculateMaximum()
+{
+    emit calculateMaximumRequested(m_fieldName);
 }

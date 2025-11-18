@@ -98,6 +98,37 @@ signals:
      * @param maxValue The new maximum value (or NaN if not set) */
     void minMaxValuesChanged(const std::string& fieldName, double minValue, double maxValue);
 
+    /** @brief Signal emitted when user requests to calculate minimum value.
+     * 
+     * @param fieldName The name of the field */
+    void calculateMinimumRequested(const std::string& fieldName);
+
+    /** @brief Signal emitted when user requests to calculate minimum > 0.
+     * 
+     * @param fieldName The name of the field */
+    void calculateMinimumGreaterThanZeroRequested(const std::string& fieldName);
+
+    /** @brief Signal emitted when user requests to calculate maximum value.
+     * 
+     * @param fieldName The name of the field */
+    void calculateMaximumRequested(const std::string& fieldName);
+
+private slots:
+    /** @brief Calculate and set minimum value from all cells in current step.
+     * 
+     * Finds the minimum value across all cells and sets it as the min value. */
+    void onCalculateMinimum();
+
+    /** @brief Calculate and set minimum value > 0 from all cells in current step.
+     * 
+     * Finds the minimum value > 0 across all cells and sets it as the min value. */
+    void onCalculateMinimumGreaterThanZero();
+
+    /** @brief Calculate and set maximum value from all cells in current step.
+     * 
+     * Finds the maximum value across all cells and sets it as the max value. */
+    void onCalculateMaximum();
+
 private:
     /// @brief Setup the UI layout.
     void setupUI();
@@ -107,6 +138,9 @@ private:
 
     /// @brief Update button enabled state based on min/max values.
     void updateButtonState();
+
+    /// @brief Enable context menu for spinboxes.
+    void enableContextMenus();
 
     std::string m_fieldName;
 
