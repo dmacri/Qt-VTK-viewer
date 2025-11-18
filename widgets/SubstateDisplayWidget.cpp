@@ -6,6 +6,10 @@
 #include <QGroupBox>
 #include <QMenu>
 #include <QAction>
+#include <QStyle>
+#include <QApplication>
+#include <QContextMenuEvent>
+#include <QEvent>
 #include <limits>
 #include <cmath>
 #include <cctype>
@@ -24,7 +28,12 @@ SubstateDisplayWidget::SubstateDisplayWidget(const std::string& fieldName, QWidg
 {
     setupUI();
     connectSignals();
-    enableContextMenus();
+    
+    // Enable context menu for the widget
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    
+    // Install event filter on all child widgets to intercept right-click
+    installEventFiltersOnChildren();
 }
 
 void SubstateDisplayWidget::setupUI()
@@ -269,24 +278,54 @@ void SubstateDisplayWidget::updateButtonState()
     emit minMaxValuesChanged(m_fieldName, getMinValue(), getMaxValue());
 }
 
-void SubstateDisplayWidget::enableContextMenus()
+void SubstateDisplayWidget::installEventFiltersOnChildren()
 {
-    // Enable context menu for min spinbox
-    m_minSpinBox->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(m_minSpinBox, &QWidget::customContextMenuRequested, this, [this](const QPoint& pos) {
-        QMenu menu;
-        menu.addAction("Calculate minimum", this, &SubstateDisplayWidget::onCalculateMinimum);
-        menu.addAction("Calculate minimum > 0", this, &SubstateDisplayWidget::onCalculateMinimumGreaterThanZero);
-        menu.exec(m_minSpinBox->mapToGlobal(pos));
-    });
+    // Install event filter on all child widgets to intercept right-click
+    m_minSpinBox->installEventFilter(this);
+    m_maxSpinBox->installEventFilter(this);
+    m_formatLineEdit->installEventFilter(this);
+    m_use3dButton->installEventFilter(this);
+    m_nameLabel->installEventFilter(this);
+    m_valueLabel->installEventFilter(this);
+}
 
-    // Enable context menu for max spinbox
-    m_maxSpinBox->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(m_maxSpinBox, &QWidget::customContextMenuRequested, this, [this](const QPoint& pos) {
-        QMenu menu;
-        menu.addAction("Calculate maximum", this, &SubstateDisplayWidget::onCalculateMaximum);
-        menu.exec(m_maxSpinBox->mapToGlobal(pos));
-    });
+bool SubstateDisplayWidget::eventFilter(QObject* obj, QEvent* event)
+{
+    // Intercept right-click (context menu) on child widgets
+    if (event->type() == QEvent::ContextMenu)
+    {
+        // Forward context menu event to this widget's contextMenuEvent
+        auto contextEvent = static_cast<QContextMenuEvent*>(event);
+        contextMenuEvent(contextEvent);
+        return true;  // Event handled
+    }
+    
+    // Let other events pass through
+    return QWidget::eventFilter(obj, event);
+}
+
+void SubstateDisplayWidget::contextMenuEvent(QContextMenuEvent* event)
+{
+    // Create context menu for the widget
+    QMenu menu;
+    
+    // Get application style for standard icons
+    QStyle* style = QApplication::style();
+    
+    // Add calculation actions with icons
+    auto calcMinAction = menu.addAction(QIcon(":/icons/zoom_to.png"), "Calculate minimum");
+    connect(calcMinAction, &QAction::triggered, this, &SubstateDisplayWidget::onCalculateMinimum);
+    
+    auto calcMinGtZeroAction = menu.addAction(QIcon(":/icons/zoom_to.png"), "Calculate minimum > 0");
+    connect(calcMinGtZeroAction, &QAction::triggered, this, &SubstateDisplayWidget::onCalculateMinimumGreaterThanZero);
+    
+    menu.addSeparator();
+    
+    auto calcMaxAction = menu.addAction(QIcon(":/icons/zoom_to.png"), "Calculate maximum");
+    connect(calcMaxAction, &QAction::triggered, this, &SubstateDisplayWidget::onCalculateMaximum);
+    
+    // Show menu at cursor position
+    menu.exec(event->globalPos());
 }
 
 void SubstateDisplayWidget::onCalculateMinimum()

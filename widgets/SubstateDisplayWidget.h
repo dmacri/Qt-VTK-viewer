@@ -129,6 +129,13 @@ private slots:
      * Finds the maximum value across all cells and sets it as the max value. */
     void onCalculateMaximum();
 
+protected:
+    /// @brief Override context menu event to add custom actions.
+    void contextMenuEvent(QContextMenuEvent* event) override;
+
+    /// @brief Override event filter to intercept right-click on child widgets.
+    bool eventFilter(QObject* obj, QEvent* event) override;
+
 private:
     /// @brief Setup the UI layout.
     void setupUI();
@@ -139,8 +146,8 @@ private:
     /// @brief Update button enabled state based on min/max values.
     void updateButtonState();
 
-    /// @brief Enable context menu for spinboxes.
-    void enableContextMenus();
+    /// @brief Install event filter on all child widgets to catch right-click.
+    void installEventFiltersOnChildren();
 
     std::string m_fieldName;
 
