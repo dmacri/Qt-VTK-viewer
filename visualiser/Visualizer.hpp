@@ -158,8 +158,9 @@ void Visualizer::drawWithVTK(const Matrix &p, int nRows, int nCols, vtkSmartPoin
     {
         for (int col = 0; col < nCols; col++)
         {
-            // Insert points in normal order (row increases downward)
-            points->InsertNextPoint(/*x=*/col, /*y=*/row, /*z=*/1); /// z is not used
+            // Insert points with Y inverted to match buidColor() indexing
+            // buidColor() uses (nRows - 1 - row) so points must be positioned accordingly
+            points->InsertNextPoint(/*x=*/col, /*y=*/nRows - 1 - row, /*z=*/1); /// z is not used
         }
     }
 
@@ -379,8 +380,8 @@ void Visualizer::build3DSubstatePoints(const Matrix& p, int nRows, int nCols, co
             double scaledHeight = normalizedHeight * heightScale;
 
             // Insert point with Z coordinate as height
-            // Points are inserted sequentially in row-major order
-            points->InsertNextPoint(col, row, scaledHeight);
+            // Y is inverted to match buidColor() indexing: (nRows - 1 - row)
+            points->InsertNextPoint(col, nRows - 1 - row, scaledHeight);
 
             // Store the normalized value for color mapping
             // Map sequential point index to the color value
@@ -429,8 +430,8 @@ void Visualizer::build3DSubstatePointsWithColor(const Matrix& p, int nRows, int 
             double scaledHeight = normalizedHeight * heightScale;
 
             // Insert point with Z coordinate as height
-            // Points are inserted sequentially in row-major order
-            points->InsertNextPoint(col, row, scaledHeight);
+            // Y is inverted to match buidColor() indexing: (nRows - 1 - row)
+            points->InsertNextPoint(col, nRows - 1 - row, scaledHeight);
 
             // Get color from cell's main data (outputValue with nullptr), not from substate
             // This ensures we use the cell's actual color representation
