@@ -171,6 +171,13 @@ private:
     /// @param direction The playback direction
     /// @return true if playback should continue, false if it should stop
     bool handleMissingStepDuringPlayback(StepIndex targetStep, PlayingDirection direction);
+    
+    /// @brief Find the nearest available step in the given direction
+    /// @param targetStep The target step to search from
+    /// @param direction Forward to find next step, Backward to find previous step
+    /// @param outNextStep Output parameter: the found step (only valid if function returns true)
+    /// @return true if a step was found in the given direction, false otherwise
+    bool findNearestAvailableStep(StepIndex targetStep, PlayingDirection direction, StepIndex& outNextStep) const;
 
 private:
     static constexpr int MAX_RECENT_FILES = 10;

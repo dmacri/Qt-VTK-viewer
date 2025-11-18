@@ -257,6 +257,9 @@ void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> avail
     // Store the list of available steps for intelligent step navigation
     this->availableSteps = availableSteps;
     
+    // Update button states based on available steps
+    changeWhichButtonsAreEnabled();
+    
     const auto lastStepAvailableInAvailableSteps = std::ranges::contains(availableSteps, totalSteps());
     if (! lastStepAvailableInAvailableSteps && ! silentMode)
     {
@@ -505,45 +508,51 @@ void MainWindow::onPlaybackTimerTick()
     playbackTimer.setInterval(ui->sleepSpinBox->value());
 }
 
-bool MainWindow::handleMissingStepDuringPlayback(StepIndex targetStep, PlayingDirection direction)
+bool MainWindow::findNearestAvailableStep(StepIndex targetStep, PlayingDirection direction, StepIndex& outNextStep) const
 {
     if (availableSteps.empty())
     {
-        return false; // Stop playback if no available steps
+        return false;
     }
-    
-    StepIndex nextStep;
     
     if (direction == PlayingDirection::Forward)
     {
         // Find the nearest available step after the target
         auto it = std::ranges::upper_bound(availableSteps, targetStep);
         
-        if (it == availableSteps.end())
+        if (it != availableSteps.end())
         {
-            // No more steps forward
-            return false;
+            outNextStep = *it;
+            return true;
         }
         
-        nextStep = *it;
+        return false;
     }
     else // PlayingDirection::Backward
     {
         // Find the nearest available step before the target
-        // We need to find the largest step that is < targetStep
         auto it = std::ranges::lower_bound(availableSteps, targetStep);
         
-        // lower_bound returns iterator to first element >= targetStep
-        // We need to go back one step to get the largest element < targetStep
-        if (it == availableSteps.begin())
+        if (it != availableSteps.begin())
         {
-            // No element < targetStep, so no steps backward
-            return false;
+            --it;
+            outNextStep = *it;
+            return true;
         }
         
-        // Move back to get the element before the one >= targetStep
-        --it;
-        nextStep = *it;
+        return false;
+    }
+}
+
+bool MainWindow::handleMissingStepDuringPlayback(StepIndex targetStep, PlayingDirection direction)
+{
+    StepIndex nextStep;
+    
+    // Try to find the nearest available step in the given direction
+    if (! findNearestAvailableStep(targetStep, direction, nextStep))
+    {
+        // No available step in this direction
+        return false;
     }
     
     // In silent mode, just skip to the next available step
@@ -554,7 +563,6 @@ bool MainWindow::handleMissingStepDuringPlayback(StepIndex targetStep, PlayingDi
     }
     
     // In normal mode, ask user what to do
-    const QString directionText = (direction == PlayingDirection::Forward) ? tr("forward") : tr("backward");
     const QString nextStepText = (direction == PlayingDirection::Forward) 
         ? tr("next available step is %1").arg(nextStep)
         : tr("previous available step is %1").arg(nextStep);
@@ -601,13 +609,25 @@ void MainWindow::onStopButtonClicked()
 
 void MainWindow::onSkipForwardButtonClicked()
 {
-    currentStep = totalSteps();
+    if (availableSteps.empty())
+    {
+        return;
+    }
+    
+    // Jump to the last available step
+    currentStep = availableSteps.back();
     setPositionOnWidgets(currentStep);
 }
 
 void MainWindow::onSkipBackwardButtonClicked()
 {
-    currentStep = FIRST_STEP_NUMBER;
+    if (availableSteps.empty())
+    {
+        return;
+    }
+    
+    // Jump to the first available step
+    currentStep = availableSteps.front();
     setPositionOnWidgets(currentStep);
 }
 
@@ -641,40 +661,32 @@ void MainWindow::navigateToNearestAvailableStep(PlayingDirection direction, Step
     
     StepIndex nextStep;
     
-    if (direction == PlayingDirection::Forward)
+    // Try to find the nearest available step in the given direction
+    if (findNearestAvailableStep(targetStep, direction, nextStep))
     {
-        // Find the nearest available step after the target
-        auto it = std::ranges::upper_bound(availableSteps, targetStep);
-        
-        if (it != availableSteps.end())
+        // Found a step in the given direction
+        if (direction == PlayingDirection::Forward)
         {
-            nextStep = *it;
             std::cerr << "Warning: Step " << targetStep << " not available. "
                       << "Nearest next step is " << nextStep << std::endl;
         }
         else
         {
-            // No available step after target, go to last available
+            std::cerr << "Warning: Step " << targetStep << " not available. "
+                      << "Nearest previous step is " << nextStep << std::endl;
+        }
+    }
+    else
+    {
+        // No step in the given direction, use boundary step
+        if (direction == PlayingDirection::Forward)
+        {
             nextStep = availableSteps.back();
             std::cerr << "Warning: Step " << targetStep << " not available. "
                       << "Going to last available step " << nextStep << std::endl;
         }
-    }
-    else // PlayingDirection::Backward
-    {
-        // Find the nearest available step before the target
-        auto it = std::ranges::lower_bound(availableSteps, targetStep);
-        
-        if (it != availableSteps.begin())
-        {
-            --it;
-            nextStep = *it;
-            std::cerr << "Warning: Step " << targetStep << " not available. "
-                      << "Nearest previous step is " << nextStep << std::endl;
-        }
         else
         {
-            // No available step before target, go to first available
             nextStep = availableSteps.front();
             std::cerr << "Warning: Step " << targetStep << " not available. "
                       << "Going to first available step " << nextStep << std::endl;
