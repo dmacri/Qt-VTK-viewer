@@ -1047,6 +1047,16 @@ void SceneWidget::setViewMode2D()
         return;
 
     currentViewMode = ViewMode::Mode2D;
+    
+    // Disable 3D substate visualization when switching to 2D mode
+    activeSubstateFor3D.clear();
+    
+    // Redraw visualization in 2D mode (without 3D substate)
+    if (settingParameter && sceneWidgetVisualizerProxy)
+    {
+        drawVisualizationWithOptional3DSubstate();
+        renderWindow()->Render();
+    }
 
     // Use custom interactor style that zooms towards cursor position
     vtkNew<CustomInteractorStyle> style;
