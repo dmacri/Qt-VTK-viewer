@@ -456,11 +456,16 @@ void MainWindow::playingRequested(PlayingDirection direction)
 void MainWindow::onPlaybackTimerTick()
 {
     // Calculate target step
-    const auto stepsToMove = static_cast<StepIndex>(ui->speedSpinBox->value());
-    const auto targetStep = currentStep + (stepsToMove * std::to_underlying(playbackDirection));
+    // Note: We need to use signed arithmetic to handle backward direction correctly
+    // to avoid unsigned integer underflow
+    const auto stepsToMove = static_cast<int>(ui->speedSpinBox->value());
+    const auto directionValue = std::to_underlying(playbackDirection);
+    const auto targetStepSigned = static_cast<int>(currentStep) + (stepsToMove * directionValue);
     
-    // Clamp to valid range
-    const auto clampedStep = std::clamp<StepIndex>(targetStep, FIRST_STEP_NUMBER, totalSteps());
+    // Clamp to valid range and convert back to unsigned
+    const auto clampedStep = static_cast<StepIndex>(
+        std::clamp(targetStepSigned, static_cast<int>(FIRST_STEP_NUMBER), static_cast<int>(totalSteps()))
+    );
     
     // Check if we reached the end
     if ((playbackDirection == PlayingDirection::Forward && clampedStep >= totalSteps())
@@ -525,14 +530,18 @@ bool MainWindow::handleMissingStepDuringPlayback(StepIndex targetStep, PlayingDi
     else // PlayingDirection::Backward
     {
         // Find the nearest available step before the target
+        // We need to find the largest step that is < targetStep
         auto it = std::ranges::lower_bound(availableSteps, targetStep);
         
+        // lower_bound returns iterator to first element >= targetStep
+        // We need to go back one step to get the largest element < targetStep
         if (it == availableSteps.begin())
         {
-            // No more steps backward
+            // No element < targetStep, so no steps backward
             return false;
         }
         
+        // Move back to get the element before the one >= targetStep
         --it;
         nextStep = *it;
     }
@@ -614,8 +623,13 @@ void MainWindow::navigateToNearestAvailableStep(PlayingDirection direction, Step
         return;
     }
     
+    // Note: We need to use signed arithmetic to handle backward direction correctly
+    // to avoid unsigned integer underflow
     const auto directionValue = std::to_underlying(direction);
-    const auto targetStep = currentStep + (stepsToMove * directionValue);
+    const auto targetStepSigned = static_cast<int>(currentStep) + (static_cast<int>(stepsToMove) * directionValue);
+    const auto targetStep = static_cast<StepIndex>(
+        std::clamp(targetStepSigned, static_cast<int>(FIRST_STEP_NUMBER), static_cast<int>(totalSteps()))
+    );
     
     // Try to go to the target step
     if (std::ranges::contains(availableSteps, targetStep))
