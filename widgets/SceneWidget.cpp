@@ -133,22 +133,46 @@ void SceneWidget::triggerRenderUpdate()
 
 void SceneWidget::applyCameraAngles()
 {
-    // Reset camera to default position
+    // Temporarily disable VTK warnings.
+    //
+    // Reason:
+    // When the camera elevation approaches ±90 degrees, the view-up vector becomes
+    // nearly parallel to the view-plane normal. VTK interprets this as an invalid
+    // camera configuration and emits warnings such as:
+    //   "Resetting view-up since view plane normal is parallel"
+    //
+    // These warnings normally occur during ResetCamera(), which internally adjusts
+    // the camera to maintain a valid orientation. Since we intentionally allow
+    // near-vertical camera angles, these warnings are expected and not useful here.
+    bool oldWarningState = vtkObject::GetGlobalWarningDisplay();
+    vtkObject::GlobalWarningDisplayOff();
+
     auto camera = renderer->GetActiveCamera();
     if (! camera)
+    {
+        vtkObject::SetGlobalWarningDisplay(oldWarningState);
         return;
+    }
 
+    // Reset camera to a known baseline orientation
     camera->SetPosition(0, 0, 1);
     camera->SetFocalPoint(0, 0, 0);
     camera->SetViewUp(0, 1, 0);
 
-    // Apply stored transformations in order: azimuth first, then elevation
+    // Apply azimuth rotation (horizontal)
     camera->Azimuth(cameraAzimuth);
-    camera->Elevation(cameraElevation);
 
-    // Reset camera bounds and render
+    // Clamp elevation to avoid exactly ±90° and prevent singularities
+    double clampedElevation = std::clamp(cameraElevation, -89.9, 89.9);
+    camera->Elevation(clampedElevation);
+
+    // Recompute camera bounds for the current renderer
     renderer->ResetCamera();
+
     triggerRenderUpdate();
+
+    // Restore previous warning state
+    vtkObject::SetGlobalWarningDisplay(oldWarningState);
 }
 
 void SceneWidget::loadAndUpdateVisualizationForCurrentStep()
