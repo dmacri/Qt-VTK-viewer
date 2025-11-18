@@ -7,11 +7,11 @@
 #pragma once
 
 #include <QWidget>
-#include <QSpinBox>
-#include <QLineEdit>
-#include <QLabel>
-#include <QPushButton>
 
+class QLineEdit;
+class QLabel;
+class QDoubleSpinBox;
+class QPushButton;
 class SettingParameter;
 
 /** @class SubstateDisplayWidget
@@ -128,6 +128,9 @@ private slots:
      * 
      * Finds the maximum value across all cells and sets it as the max value. */
     void onCalculateMaximum();
+
+    /// @brief This is sum of onCalculateMinimumGreaterThanZero() and onCalculateMaximum()
+    void onCalculateMinimumGreaterThanZeroAndMaximum();
 
 protected:
     /// @brief Override context menu event to add custom actions.

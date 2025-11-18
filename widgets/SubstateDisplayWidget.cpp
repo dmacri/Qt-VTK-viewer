@@ -3,13 +3,14 @@
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QGroupBox>
 #include <QMenu>
 #include <QAction>
-#include <QStyle>
-#include <QApplication>
 #include <QContextMenuEvent>
 #include <QEvent>
+#include <QSpinBox>
+#include <QLineEdit>
+#include <QLabel>
+#include <QPushButton>
 #include <limits>
 #include <cmath>
 #include <cctype>
@@ -309,9 +310,6 @@ void SubstateDisplayWidget::contextMenuEvent(QContextMenuEvent* event)
     // Create context menu for the widget
     QMenu menu;
     
-    // Get application style for standard icons
-    QStyle* style = QApplication::style();
-    
     // Add calculation actions with icons
     auto calcMinAction = menu.addAction(QIcon(":/icons/zoom_to.png"), "Calculate minimum");
     connect(calcMinAction, &QAction::triggered, this, &SubstateDisplayWidget::onCalculateMinimum);
@@ -323,6 +321,11 @@ void SubstateDisplayWidget::contextMenuEvent(QContextMenuEvent* event)
     
     auto calcMaxAction = menu.addAction(QIcon(":/icons/zoom_to.png"), "Calculate maximum");
     connect(calcMaxAction, &QAction::triggered, this, &SubstateDisplayWidget::onCalculateMaximum);
+
+    menu.addSeparator();
+
+    auto calcMaxAndMinGtZeroAction = menu.addAction(QIcon(":/icons/zoom_to.png"), "Calculate maximum and minimum > 0");
+    connect(calcMaxAndMinGtZeroAction, &QAction::triggered, this, &SubstateDisplayWidget::onCalculateMinimumGreaterThanZeroAndMaximum);
     
     // Show menu at cursor position
     menu.exec(event->globalPos());
@@ -341,4 +344,10 @@ void SubstateDisplayWidget::onCalculateMinimumGreaterThanZero()
 void SubstateDisplayWidget::onCalculateMaximum()
 {
     emit calculateMaximumRequested(m_fieldName);
+}
+
+void SubstateDisplayWidget::onCalculateMinimumGreaterThanZeroAndMaximum()
+{
+    emit onCalculateMinimumGreaterThanZero();
+    emit onCalculateMaximum();
 }
