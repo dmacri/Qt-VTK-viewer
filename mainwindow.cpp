@@ -1096,9 +1096,11 @@ void MainWindow::on2DModeRequested()
     ui->sceneWidget->setViewMode2D();
     updateCameraControlsVisibility();
 
-    // Synchronize menu checkbox
-    QSignalBlocker blocker(ui->action2DMode);
+    // Synchronize menu checkboxes - ensure only 2D mode is checked
+    QSignalBlocker blocker2D(ui->action2DMode);
+    QSignalBlocker blocker3D(ui->action3DMode);
     ui->action2DMode->setChecked(true);
+    ui->action3DMode->setChecked(false);
 
     if (! silentMode)
     {
@@ -1124,9 +1126,11 @@ void MainWindow::on3DModeRequested()
 
     updateCameraControlsVisibility();
 
-    // Synchronize menu checkbox
-    QSignalBlocker blocker(ui->action3DMode);
+    // Synchronize menu checkboxes - ensure only 3D mode is checked
+    QSignalBlocker blocker2D(ui->action2DMode);
+    QSignalBlocker blocker3D(ui->action3DMode);
     ui->action3DMode->setChecked(true);
+    ui->action2DMode->setChecked(false);
 
     if (! silentMode)
     {
