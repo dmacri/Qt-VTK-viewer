@@ -1208,13 +1208,10 @@ bool SceneWidget::convertWorldToGridCoordinates(const double worldPos[3], int& o
     const double cellHeight = sceneHeight / settingParameter->numberOfRowsY;
 
     // Convert world position to grid indices
-    // Points are now stored with inverted Y: points->InsertNextPoint(col, nRows - 1 - row, z)
-    // So we need to invert the row calculation to match
+    // Matrix p[row][col] is indexed from top-left (row=0 at top, col=0 at left)
+    // VTK Y increases upward, but we need to map to matrix row which increases downward
     int col = static_cast<int>((worldPos[0] - bounds[0]) / cellWidth);
     int row = static_cast<int>((worldPos[1] - bounds[2]) / cellHeight);
-    
-    // Invert row to match the inverted Y coordinates used in visualization
-    row = settingParameter->numberOfRowsY - 1 - row;
 
     // Clamp to valid range
     col = std::max(0, std::min(col, settingParameter->numberOfColumnX - 1));
