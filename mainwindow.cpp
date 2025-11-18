@@ -455,9 +455,36 @@ void MainWindow::playingRequested(PlayingDirection direction)
 
 void MainWindow::onPlaybackTimerTick()
 {
-    // Update current step
-    currentStep += static_cast<StepIndex>(std::to_underlying(playbackDirection) * ui->speedSpinBox->value());
-    currentStep = std::clamp<StepIndex>(currentStep, FIRST_STEP_NUMBER, totalSteps());
+    // Calculate target step
+    const auto stepsToMove = static_cast<StepIndex>(ui->speedSpinBox->value());
+    const auto targetStep = currentStep + (stepsToMove * std::to_underlying(playbackDirection));
+    
+    // Clamp to valid range
+    const auto clampedStep = std::clamp<StepIndex>(targetStep, FIRST_STEP_NUMBER, totalSteps());
+    
+    // Check if we reached the end
+    if ((playbackDirection == PlayingDirection::Forward && clampedStep >= totalSteps())
+        || (playbackDirection == PlayingDirection::Backward && clampedStep <= FIRST_STEP_NUMBER))
+    {
+        playbackTimer.stop();
+        return;
+    }
+    
+    // Check if target step exists in available steps
+    if (! std::ranges::contains(availableSteps, clampedStep))
+    {
+        // Handle missing step
+        if (! handleMissingStepDuringPlayback(clampedStep, playbackDirection))
+        {
+            playbackTimer.stop();
+            return;
+        }
+        // If handleMissingStepDuringPlayback returns true, currentStep was updated
+    }
+    else
+    {
+        currentStep = clampedStep;
+    }
 
     // Update UI
     {
@@ -469,17 +496,81 @@ void MainWindow::onPlaybackTimerTick()
         }
     }
 
-    // Check if we reached the end
-    if ((playbackDirection == PlayingDirection::Forward && currentStep >= totalSteps())
-        || (playbackDirection == PlayingDirection::Backward && currentStep <= FIRST_STEP_NUMBER))
-    {
-        playbackTimer.stop();
-    }
-
     // Update timer interval in case sleepSpinBox changed
     playbackTimer.setInterval(ui->sleepSpinBox->value());
 }
 
+bool MainWindow::handleMissingStepDuringPlayback(StepIndex targetStep, PlayingDirection direction)
+{
+    if (availableSteps.empty())
+    {
+        return false; // Stop playback if no available steps
+    }
+    
+    StepIndex nextStep;
+    
+    if (direction == PlayingDirection::Forward)
+    {
+        // Find the nearest available step after the target
+        auto it = std::ranges::upper_bound(availableSteps, targetStep);
+        
+        if (it == availableSteps.end())
+        {
+            // No more steps forward
+            return false;
+        }
+        
+        nextStep = *it;
+    }
+    else // PlayingDirection::Backward
+    {
+        // Find the nearest available step before the target
+        auto it = std::ranges::lower_bound(availableSteps, targetStep);
+        
+        if (it == availableSteps.begin())
+        {
+            // No more steps backward
+            return false;
+        }
+        
+        --it;
+        nextStep = *it;
+    }
+    
+    // In silent mode, just skip to the next available step
+    if (silentMode)
+    {
+        currentStep = nextStep;
+        return true;
+    }
+    
+    // In normal mode, ask user what to do
+    const QString directionText = (direction == PlayingDirection::Forward) ? tr("forward") : tr("backward");
+    const QString nextStepText = (direction == PlayingDirection::Forward) 
+        ? tr("next available step is %1").arg(nextStep)
+        : tr("previous available step is %1").arg(nextStep);
+    
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this,
+        tr("Missing Step During Playback"),
+        tr("Step %1 is not available.\nThe %2.\n\nDo you want to continue playback skipping to the next available step, "
+           "or stop playback at the current step?")
+            .arg(targetStep)
+            .arg(nextStepText),
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::Yes
+    );
+    
+    if (reply == QMessageBox::Yes)
+    {
+        currentStep = nextStep;
+        return true;
+    }
+    else
+    {
+        return false; // Stop playback
+    }
+}
 
 void MainWindow::onPlayButtonClicked()
 {

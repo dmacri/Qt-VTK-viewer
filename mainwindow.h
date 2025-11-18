@@ -166,6 +166,12 @@ private:
     void initializeReductionManager(const QString& configFileName, std::shared_ptr<Config> optionalConfig = {});
     void updateReductionDisplay();
 
+    /// @brief Handle missing step during playback
+    /// @param targetStep The step that was attempted but not found
+    /// @param direction The playback direction
+    /// @return true if playback should continue, false if it should stop
+    bool handleMissingStepDuringPlayback(StepIndex targetStep, PlayingDirection direction);
+
 private:
     static constexpr int MAX_RECENT_FILES = 10;
     Ui::MainWindow *ui;
