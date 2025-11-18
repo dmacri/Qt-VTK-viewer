@@ -1596,6 +1596,8 @@ void MainWindow::setWidgetsEnabledState(bool enabled)
     // View mode actions should always be enabled
     ui->action2DMode->setEnabled(true);
     ui->action3DMode->setEnabled(true);
+
+    changeWhichButtonsAreEnabled();
 }
 
 
