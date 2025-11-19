@@ -69,13 +69,13 @@ private slots: // menu actions
 
     // Settings submenu
     void onSilentModeToggled(bool checked);
+    void onColorSettingsRequested();
 
     // Help submenu:
     void showAboutThisApplicationDialog();
 
     // other slots
     void onStepNumberChanged();
-    void onColorSettingsRequested();
 
     void onAzimuthChanged(int value);
     void onElevationChanged(int value);

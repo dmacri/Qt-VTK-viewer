@@ -624,8 +624,6 @@
     <addaction name="separator"/>
     <addaction name="actionExport_Video"/>
     <addaction name="separator"/>
-    <addaction name="actionColor_settings"/>
-    <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -653,6 +651,8 @@
      <string>Settings</string>
     </property>
     <addaction name="actionSilentMode"/>
+    <addaction name="separator"/>
+    <addaction name="actionColor_settings"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuModel"/>
