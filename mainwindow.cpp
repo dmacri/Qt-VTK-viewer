@@ -162,6 +162,7 @@ MainWindow::MainWindow(QWidget* parent)
     updateRecentDirectoriesMenu();
 
     enterNoConfigurationFileMode();
+    syncSilentModeAction();
 }
 
 void MainWindow::configureUIElements(const QString& configFileName)
@@ -207,7 +208,36 @@ void MainWindow::connectMenuActions()
     connect(ui->action3DMode, &QAction::triggered, this, &MainWindow::on3DModeRequested);
     connect(ui->actionGridLines, &QAction::triggered, this, &MainWindow::onGridLinesToggled);
 
+    // Settings actions
+    connect(ui->actionSilentMode, &QAction::toggled, this, &MainWindow::onSilentModeToggled);
+
     /// Model selection actions are connected dynamically in createModelMenuActions()
+}
+
+void MainWindow::setSilentMode(bool newSilentMode)
+{
+    if (silentMode == newSilentMode)
+    {
+        return;
+    }
+
+    silentMode = newSilentMode;
+    syncSilentModeAction();
+}
+
+void MainWindow::syncSilentModeAction()
+{
+    if (!ui->actionSilentMode)
+    {
+        return;
+    }
+
+    QSignalBlocker blocker(ui->actionSilentMode);
+    ui->actionSilentMode->setChecked(silentMode);
+    ui->actionSilentMode->setStatusTip(
+        silentMode
+            ? tr("Silent mode enabled: confirmation dialogs are suppressed.")
+            : tr("Silent mode disabled: confirmation dialogs will be shown."));
 }
 
 void MainWindow::configureButtons()
@@ -956,6 +986,11 @@ void MainWindow::onColorSettingsRequested()
     colorSettings->show();
 }
 
+void MainWindow::onSilentModeToggled(bool checked)
+{
+    setSilentMode(checked);
+}
+
 void MainWindow::enterNoConfigurationFileMode()
 {
     ui->sceneWidget->setHidden(true);
@@ -1070,8 +1105,8 @@ void MainWindow::onLoadModelFromDirectoryRequested()
 void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
 {
     // Enable silent mode temporarily to suppress dialogs during loading
-    bool previousSilentMode = silentMode;
-    silentMode = true;
+    const bool previousSilentMode = silentMode;
+    setSilentMode(true);
 
     try
     {
@@ -1097,7 +1132,7 @@ void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
         if (! result.success)
         {
             progress.close();
-            silentMode = previousSilentMode;
+            setSilentMode(previousSilentMode);
 
             // If compilation was attempted and failed, show detailed error dialog
             if (result.compilationResult.has_value())
@@ -1173,7 +1208,7 @@ void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
         addToRecentDirectories(QString::fromStdString(actualModelDir.string()));
 
         progress.close();
-        silentMode = previousSilentMode;
+        setSilentMode(previousSilentMode);
 
         // Show success message only if not in silent mode
         if (! silentMode)
@@ -1192,7 +1227,7 @@ void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
     }
 
     // Restore silent mode
-    silentMode = previousSilentMode;
+    setSilentMode(previousSilentMode);
 }
 
 void MainWindow::createViewModeActionGroup()
@@ -1604,7 +1639,7 @@ void MainWindow::setWidgetsEnabledState(bool enabled)
 void MainWindow::applyCommandLineOptions(const CommandLineParser& cmdParser)
 {
     // Store silent mode flag
-    silentMode = cmdParser.isSilentMode();
+    setSilentMode(cmdParser.isSilentMode());
 
     // Set starting model if specified
     if (cmdParser.getStartingModel())

@@ -38,10 +38,7 @@ public:
     void applyCommandLineOptions(const CommandLineParser& cmdParser);
     void loadModelFromDirectory(const QString& modelDirectory);
 
-    void setSilentMode(bool newSilentMode)
-    {
-        silentMode = newSilentMode;
-    }
+    void setSilentMode(bool newSilentMode);
 
     /// @brief Get the name of the substate field currently used for 3D visualization
     /// @return Field name (e.g., "h", "z") or empty string if no 3D substate is active
@@ -68,6 +65,9 @@ private slots: // menu actions
     // Model submenu
     void onModelSelected();
     void onReloadDataRequested();
+
+    // Settings submenu
+    void onSilentModeToggled(bool checked);
 
     // Help submenu:
     void showAboutThisApplicationDialog();
@@ -178,6 +178,8 @@ private:
     /// @param outNextStep Output parameter: the found step (only valid if function returns true)
     /// @return true if a step was found in the given direction, false otherwise
     bool findNearestAvailableStep(StepIndex targetStep, PlayingDirection direction, StepIndex& outNextStep) const;
+
+    void syncSilentModeAction();
 
 private:
     static constexpr int MAX_RECENT_FILES = 10;
