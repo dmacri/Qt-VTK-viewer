@@ -39,6 +39,7 @@ public:
     void loadModelFromDirectory(const QString& modelDirectory);
 
     void setSilentMode(bool newSilentMode);
+    bool isSilentModeEnabled() const;
 
     /// @brief Get the name of the substate field currently used for 3D visualization
     /// @return Field name (e.g., "h", "z") or empty string if no 3D substate is active
@@ -179,7 +180,7 @@ private:
     /// @return true if a step was found in the given direction, false otherwise
     bool findNearestAvailableStep(StepIndex targetStep, PlayingDirection direction, StepIndex& outNextStep) const;
 
-    void syncSilentModeAction();
+    void updateSilentModeUi(bool checked);
 
 private:
     static constexpr int MAX_RECENT_FILES = 10;
@@ -203,7 +204,4 @@ private:
     QString compilationFailedMessage;
     QString deleteSuccessfulMessage;
     QString deleteFailedMessage;
-
-    // Command-line options
-    bool silentMode = false;
 };

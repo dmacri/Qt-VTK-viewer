@@ -162,7 +162,7 @@ MainWindow::MainWindow(QWidget* parent)
     updateRecentDirectoriesMenu();
 
     enterNoConfigurationFileMode();
-    syncSilentModeAction();
+    updateSilentModeUi(isSilentModeEnabled());
 }
 
 void MainWindow::configureUIElements(const QString& configFileName)
@@ -210,34 +210,52 @@ void MainWindow::connectMenuActions()
 
     // Settings actions
     connect(ui->actionSilentMode, &QAction::toggled, this, &MainWindow::onSilentModeToggled);
-
     /// Model selection actions are connected dynamically in createModelMenuActions()
 }
 
 void MainWindow::setSilentMode(bool newSilentMode)
 {
-    if (silentMode == newSilentMode)
+    if (! ui->actionSilentMode)
     {
         return;
     }
 
-    silentMode = newSilentMode;
-    syncSilentModeAction();
+    if (ui->actionSilentMode->isChecked() == newSilentMode)
+    {
+        updateSilentModeUi(newSilentMode);
+        return;
+    }
+
+    {
+        QSignalBlocker blocker(ui->actionSilentMode);
+        ui->actionSilentMode->setChecked(newSilentMode);
+    }
+
+    updateSilentModeUi(newSilentMode);
 }
 
-void MainWindow::syncSilentModeAction()
+bool MainWindow::isSilentModeEnabled() const
+{
+    if (! ui->actionSilentMode)
+    {
+        return false;
+    }
+    return ui->actionSilentMode->isChecked();
+}
+
+void MainWindow::updateSilentModeUi(bool checked)
 {
     if (!ui->actionSilentMode)
     {
         return;
     }
 
-    QSignalBlocker blocker(ui->actionSilentMode);
-    ui->actionSilentMode->setChecked(silentMode);
-    ui->actionSilentMode->setStatusTip(
-        silentMode
-            ? tr("Silent mode enabled: confirmation dialogs are suppressed.")
-            : tr("Silent mode disabled: confirmation dialogs will be shown."));
+    const QString statusText = checked
+        ? tr("Silent mode enabled: confirmation dialogs are suppressed.")
+        : tr("Silent mode disabled: confirmation dialogs will be shown.");
+
+    ui->actionSilentMode->setStatusTip(statusText);
+    ui->actionSilentMode->setToolTip(statusText);
 }
 
 void MainWindow::configureButtons()
@@ -291,7 +309,7 @@ void MainWindow::availableStepsLoadedFromConfigFile(std::vector<StepIndex> avail
     changeWhichButtonsAreEnabled();
     
     const auto lastStepAvailableInAvailableSteps = std::ranges::contains(availableSteps, totalSteps());
-    if (! lastStepAvailableInAvailableSteps && ! silentMode)
+    if (! lastStepAvailableInAvailableSteps && ! isSilentModeEnabled())
     {
         QMessageBox::warning(this,
                              tr("Number of steps mismatch"),
@@ -401,7 +419,7 @@ void MainWindow::exportVideoDialog()
     try
     {
         recordVideoToFile(outputFilePath, fps);
-        if (! silentMode)
+        if (! isSilentModeEnabled())
         {
             QMessageBox::information(this, tr("Export Complete"),
                                      tr("Video exported successfully to:\n%1").arg(outputFilePath));
@@ -586,7 +604,7 @@ bool MainWindow::handleMissingStepDuringPlayback(StepIndex targetStep, PlayingDi
     }
     
     // In silent mode, just skip to the next available step
-    if (silentMode)
+    if (isSilentModeEnabled())
     {
         currentStep = nextStep;
         return true;
@@ -756,7 +774,7 @@ bool MainWindow::setPositionOnWidgets(StepIndex stepPosition, bool updateSlider)
     }
     catch (const std::exception& e)
     {
-        if (! silentMode)
+        if (! isSilentModeEnabled())
         {
             QMessageBox::warning(this,
                                  "Changing position error",
@@ -851,7 +869,7 @@ void MainWindow::switchToModel(const QString& modelName)
 
         updateMenu2ShowTheSelectedModeAsActive(modelName, modelActionGroup);
 
-        if (! silentMode)
+        if (! isSilentModeEnabled())
         {
             QMessageBox::
                 information(this,
@@ -894,7 +912,7 @@ void MainWindow::onReloadDataRequested()
         // Update substate dock widget after reload
         updateSubstateDockeWidget();
 
-        if (! silentMode)
+        if (! isSilentModeEnabled())
         {
             QMessageBox::information(this, tr("Data Reloaded"),
                                      tr("Data files successfully reloaded for model: %1")
@@ -966,7 +984,7 @@ void MainWindow::openConfigurationFile(const QString& configFileName, std::share
         // Add to recent files
         addToRecentFiles(configFileName);
 
-        if (! silentMode)
+        if (! isSilentModeEnabled())
         {
             QMessageBox::information(this,
                                      tr("Configuration Loaded"),
@@ -1105,7 +1123,7 @@ void MainWindow::onLoadModelFromDirectoryRequested()
 void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
 {
     // Enable silent mode temporarily to suppress dialogs during loading
-    const bool previousSilentMode = silentMode;
+    const bool previousSilentMode = isSilentModeEnabled();
     setSilentMode(true);
 
     try
@@ -1157,7 +1175,7 @@ void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
         if (! pluginLoader.loadPlugin(result.compiledModulePath, /*overridePlugin=*/true))
         {
             progress.close();
-            silentMode = previousSilentMode;
+            setSilentMode(previousSilentMode);
 
             QMessageBox::critical(this,
                                   tr("Module Load Failed"),
@@ -1193,7 +1211,7 @@ void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
         if (!fs::exists(headerPath))
         {
             progress.close();
-            silentMode = previousSilentMode;
+            setSilentMode(previousSilentMode);
 
             QMessageBox::critical(this, tr("Configuration Load Failed"),
                 tr("Header.txt not found in model directory:\n%1").arg(QString::fromStdString(actualModelDir.string())));
@@ -1211,10 +1229,10 @@ void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
         setSilentMode(previousSilentMode);
 
         // Show success message only if not in silent mode
-        if (! silentMode)
+        if (! isSilentModeEnabled())
         {
             QMessageBox::information(this,
-                                     tr("Model Loaded"),
+                                     tr("Model Changed"),
                                      tr("Model '%1' loaded successfully from:\n%2\n\nConfiguration loaded and ready to use.")
                                          .arg(QString::fromStdString(pluginModelName))
                                          .arg(QString::fromStdString(actualModelDir.string())));
@@ -1254,7 +1272,7 @@ void MainWindow::on2DModeRequested()
     ui->action2DMode->setChecked(true);
     ui->action3DMode->setChecked(false);
 
-    if (! silentMode)
+    if (! isSilentModeEnabled())
     {
         QMessageBox::information(this,
                                  tr("View Mode Changed"),
@@ -1284,7 +1302,7 @@ void MainWindow::on3DModeRequested()
     ui->action3DMode->setChecked(true);
     ui->action2DMode->setChecked(false);
 
-    if (! silentMode)
+    if (! isSilentModeEnabled())
     {
         QMessageBox::information(this,
                                  tr("View Mode Changed"),
@@ -1800,7 +1818,7 @@ void MainWindow::initializeReductionManager(const QString& configFileName, std::
     {
         reductionManager.reset();
         ui->actionShow_reduction->setEnabled(false);
-        if (silentMode)
+        if (ui->actionSilentMode->isChecked())
             std::cerr << "Error initializing ReductionManager: " << e.what() << std::endl;
         else
             QMessageBox::warning(this, tr("Reduction initialization error"), tr("Details: ") + e.what());
