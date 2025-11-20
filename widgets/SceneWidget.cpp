@@ -169,6 +169,9 @@ void SceneWidget::applyCameraAngles()
     // Apply roll rotation (around Y axis)
     camera->Roll(cameraRoll);
 
+    // Apply pitch rotation (around Z axis)
+    camera->Pitch(cameraPitch);
+
     // Recompute camera bounds for the current renderer
     renderer->ResetCamera();
 
@@ -572,10 +575,10 @@ void SceneWidget::cameraCallbackFunction(vtkObject* caller, long unsigned int ev
             // Update internal state
             self->cameraAzimuth = azimuth;
             self->cameraElevation = elevation;
-            // Note: Roll is not extracted from VTK camera here, it's maintained separately via setCameraRoll()
+            // Note: Roll and Pitch are not extracted from VTK camera here, they're maintained separately via setCameraRoll() and setCameraPitch()
 
             // Emit signal with actual values
-            emit self->cameraOrientationChanged(azimuth, elevation, self->cameraRoll);
+            emit self->cameraOrientationChanged(azimuth, elevation, self->cameraRoll, self->cameraPitch);
         }
     }
 }
@@ -1070,6 +1073,7 @@ void SceneWidget::setViewMode2D()
     cameraAzimuth = {};
     cameraElevation = {};
     cameraRoll = {};
+    cameraPitch = {};
 
     // Set camera to top-down view
     auto camera = renderer->GetActiveCamera();
@@ -1173,6 +1177,15 @@ void SceneWidget::setCameraRoll(double angle)
 {
     // Store the new roll value
     cameraRoll = angle;
+
+    // Apply camera angles using helper method
+    applyCameraAngles();
+}
+
+void SceneWidget::setCameraPitch(double angle)
+{
+    // Store the new pitch value
+    cameraPitch = angle;
 
     // Apply camera angles using helper method
     applyCameraAngles();

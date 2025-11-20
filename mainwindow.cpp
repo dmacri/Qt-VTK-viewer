@@ -360,6 +360,10 @@ void MainWindow::connectSliders()
     connect(ui->rollSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), ui->rollSlider, &QSlider::setValue);
     connect(ui->rollSlider, &QSlider::valueChanged, ui->rollSpinBox, &QSpinBox::setValue);
 
+    connect(ui->pitchSlider, &QSlider::valueChanged, this, &MainWindow::onPitchChanged);
+    connect(ui->pitchSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), ui->pitchSlider, &QSlider::setValue);
+    connect(ui->pitchSlider, &QSlider::valueChanged, ui->pitchSpinBox, &QSpinBox::setValue);
+
     // Update sliders when camera changes (e.g., via mouse rotation in 3D mode)
     connect(ui->sceneWidget, &SceneWidget::cameraOrientationChanged, this, &MainWindow::onCameraOrientationChanged);
 }
@@ -1288,18 +1292,21 @@ void MainWindow::on3DModeRequested()
 {
     ui->sceneWidget->setViewMode3D();
 
-    // Reset sliders to default position (0, 0, 0) when entering 3D mode
+    // Reset sliders to default position (0, 0, 0, 0) when entering 3D mode
     QSignalBlocker azimuthBlocker(ui->azimuthSlider);
     QSignalBlocker elevationBlocker(ui->elevationSlider);
     QSignalBlocker rollBlocker(ui->rollSlider);
+    QSignalBlocker pitchBlocker(ui->pitchSlider);
     ui->azimuthSlider->setValue(0);
     ui->elevationSlider->setValue(0);
     ui->rollSlider->setValue(0);
+    ui->pitchSlider->setValue(0);
 
     // Reset camera angles to default
     ui->sceneWidget->setCameraAzimuth(0);
     ui->sceneWidget->setCameraElevation(0);
     ui->sceneWidget->setCameraRoll(0);
+    ui->sceneWidget->setCameraPitch(0);
 
     updateCameraControlsVisibility();
 
@@ -1341,14 +1348,17 @@ void MainWindow::syncCameraSliders()
     const double azimuth = ui->sceneWidget->getCameraAzimuth();
     const double elevation = ui->sceneWidget->getCameraElevation();
     const double roll = ui->sceneWidget->getCameraRoll();
+    const double pitch = ui->sceneWidget->getCameraPitch();
 
     QSignalBlocker azimuthBlocker(ui->azimuthSlider);
     QSignalBlocker elevationBlocker(ui->elevationSlider);
     QSignalBlocker rollBlocker(ui->rollSlider);
+    QSignalBlocker pitchBlocker(ui->pitchSlider);
 
     ui->azimuthSlider->setValue(static_cast<int>(azimuth));
     ui->elevationSlider->setValue(static_cast<int>(elevation));
     ui->rollSlider->setValue(static_cast<int>(roll));
+    ui->pitchSlider->setValue(static_cast<int>(pitch));
 }
 
 void MainWindow::onAzimuthChanged(int value)
@@ -1366,15 +1376,22 @@ void MainWindow::onRollChanged(int value)
     ui->sceneWidget->setCameraRoll(value);
 }
 
-void MainWindow::onCameraOrientationChanged(double azimuth, double elevation, double roll)
+void MainWindow::onPitchChanged(int value)
+{
+    ui->sceneWidget->setCameraPitch(value);
+}
+
+void MainWindow::onCameraOrientationChanged(double azimuth, double elevation, double roll, double pitch)
 {
     // Block signals to avoid circular updates
     QSignalBlocker azimuthBlocker(ui->azimuthSlider);
     QSignalBlocker elevationBlocker(ui->elevationSlider);
     QSignalBlocker rollBlocker(ui->rollSlider);
+    QSignalBlocker pitchBlocker(ui->pitchSlider);
     QSignalBlocker azimuthSpinBoxBlocker(ui->azimuthSpinBox);
     QSignalBlocker elevationSpinBoxBlocker(ui->elevationSpinBox);
     QSignalBlocker rollSpinBoxBlocker(ui->rollSpinBox);
+    QSignalBlocker pitchSpinBoxBlocker(ui->pitchSpinBox);
 
     ui->azimuthSlider->setValue(static_cast<int>(azimuth));
     ui->azimuthSpinBox->setValue(static_cast<int>(azimuth));
@@ -1382,6 +1399,8 @@ void MainWindow::onCameraOrientationChanged(double azimuth, double elevation, do
     ui->elevationSpinBox->setValue(static_cast<int>(elevation));
     ui->rollSlider->setValue(static_cast<int>(roll));
     ui->rollSpinBox->setValue(static_cast<int>(roll));
+    ui->pitchSlider->setValue(static_cast<int>(pitch));
+    ui->pitchSpinBox->setValue(static_cast<int>(pitch));
 }
 
 // ============================================================================
