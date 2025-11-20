@@ -175,6 +175,17 @@ public:
         return cameraPitch;
     }
 
+    /// @brief Set camera yaw (rotation around X axis) in degrees
+    void setCameraYaw(double angle);
+
+    /** @brief Get current camera yaw.
+     * 
+     * @return Current yaw angle in degrees */
+    double getCameraYaw() const
+    {
+        return cameraYaw;
+    }
+
     /// @brief Set the substate dock widget for displaying cell information.
     /// 
     /// @param dockWidget Pointer to the SubstatesDockWidget
@@ -246,8 +257,9 @@ signals:
      * @param azimuth Current camera azimuth in degrees
      * @param elevation Current camera elevation in degrees
      * @param roll Current camera roll in degrees (rotation around Y axis)
-     * @param pitch Current camera pitch in degrees (rotation around Z axis) */
-    void cameraOrientationChanged(double azimuth, double elevation, double roll, double pitch);
+     * @param pitch Current camera pitch in degrees (rotation around Z axis)
+     * @param yaw Current camera yaw in degrees (rotation around X axis) */
+    void cameraOrientationChanged(double azimuth, double elevation, double roll, double pitch, double yaw);
 
 public slots:
     /** @brief Slot called when color settings need to be reloaded (at least one of them was changed)
@@ -461,6 +473,9 @@ protected:
 
     /// @brief Current camera pitch angle (cached to avoid recalculation)
     double cameraPitch{};
+
+    /// @brief Current camera yaw angle (cached to avoid recalculation)
+    double cameraYaw{};
 
     /** @brief Last recorded position in VTK world coordinates. */
     std::array<double, 3> m_lastWorldPos;

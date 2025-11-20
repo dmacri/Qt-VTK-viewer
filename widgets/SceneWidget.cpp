@@ -172,6 +172,9 @@ void SceneWidget::applyCameraAngles()
     // Apply pitch rotation (around Z axis)
     camera->Pitch(cameraPitch);
 
+    // Apply yaw rotation (around X axis)
+    camera->Yaw(cameraYaw);
+
     // Recompute camera bounds for the current renderer
     renderer->ResetCamera();
 
@@ -575,10 +578,10 @@ void SceneWidget::cameraCallbackFunction(vtkObject* caller, long unsigned int ev
             // Update internal state
             self->cameraAzimuth = azimuth;
             self->cameraElevation = elevation;
-            // Note: Roll and Pitch are not extracted from VTK camera here, they're maintained separately via setCameraRoll() and setCameraPitch()
+            // Note: Roll, Pitch, and Yaw are not extracted from VTK camera here, they're maintained separately
 
             // Emit signal with actual values
-            emit self->cameraOrientationChanged(azimuth, elevation, self->cameraRoll, self->cameraPitch);
+            emit self->cameraOrientationChanged(azimuth, elevation, self->cameraRoll, self->cameraPitch, self->cameraYaw);
         }
     }
 }
@@ -1074,6 +1077,7 @@ void SceneWidget::setViewMode2D()
     cameraElevation = {};
     cameraRoll = {};
     cameraPitch = {};
+    cameraYaw = {};
 
     // Set camera to top-down view
     auto camera = renderer->GetActiveCamera();
@@ -1186,6 +1190,15 @@ void SceneWidget::setCameraPitch(double angle)
 {
     // Store the new pitch value
     cameraPitch = angle;
+
+    // Apply camera angles using helper method
+    applyCameraAngles();
+}
+
+void SceneWidget::setCameraYaw(double angle)
+{
+    // Store the new yaw value
+    cameraYaw = angle;
 
     // Apply camera angles using helper method
     applyCameraAngles();
