@@ -77,8 +77,9 @@ private slots: // menu actions
     // other slots
     void onStepNumberChanged();
 
-    void onRotationAxisChanged(int axisIndex);
-    void onRotationAngleChanged(int angle);
+    void onRollChanged(int value);
+    void onPitchChanged(int value);
+    void onYawChanged(int value);
     void onCameraOrientationChanged(double azimuth, double elevation, double roll, double pitch, double yaw);
     void syncCameraSliders();
 

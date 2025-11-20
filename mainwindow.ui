@@ -59,38 +59,16 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QLabel" name="rotationAxisLabel">
+        <widget class="QLabel" name="rollLabel">
          <property name="text">
-          <string>Rotation Axis:</string>
+          <string>Roll (X):</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="rotationAxisComboBox">
+        <widget class="QSlider" name="rollSlider">
          <property name="toolTip">
-          <string>Select rotation axis: X, Y, or Z</string>
-         </property>
-         <item>
-          <property name="text">
-           <string>X</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Y</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Z</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item>
-        <widget class="QSlider" name="rotationSlider">
-         <property name="toolTip">
-          <string>Camera rotation angle around selected axis</string>
+          <string>Camera rotation around X axis</string>
          </property>
          <property name="minimum">
           <number>-180</number>
@@ -107,7 +85,85 @@
         </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="rotationSpinBox">
+        <widget class="QSpinBox" name="rollSpinBox">
+         <property name="suffix">
+          <string>°</string>
+         </property>
+         <property name="minimum">
+          <number>-180</number>
+         </property>
+         <property name="maximum">
+          <number>180</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="pitchLabel">
+         <property name="text">
+          <string>Pitch (Y):</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSlider" name="pitchSlider">
+         <property name="toolTip">
+          <string>Camera rotation around Y axis</string>
+         </property>
+         <property name="minimum">
+          <number>-180</number>
+         </property>
+         <property name="maximum">
+          <number>180</number>
+         </property>
+         <property name="value">
+          <number>0</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="pitchSpinBox">
+         <property name="suffix">
+          <string>°</string>
+         </property>
+         <property name="minimum">
+          <number>-180</number>
+         </property>
+         <property name="maximum">
+          <number>180</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="yawLabel">
+         <property name="text">
+          <string>Yaw (Z):</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSlider" name="yawSlider">
+         <property name="toolTip">
+          <string>Camera rotation around Z axis</string>
+         </property>
+         <property name="minimum">
+          <number>-180</number>
+         </property>
+         <property name="maximum">
+          <number>180</number>
+         </property>
+         <property name="value">
+          <number>0</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="yawSpinBox">
          <property name="suffix">
           <string>°</string>
          </property>

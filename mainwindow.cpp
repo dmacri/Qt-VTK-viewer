@@ -347,11 +347,20 @@ void MainWindow::connectSliders()
 {
     connect(ui->updatePositionSlider, &QSlider::valueChanged, this, &MainWindow::onUpdateStepPositionOnSlider);
 
-    // Rotation axis and angle controls
-    connect(ui->rotationAxisComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onRotationAxisChanged);
-    connect(ui->rotationSlider, &QSlider::valueChanged, this, &MainWindow::onRotationAngleChanged);
-    connect(ui->rotationSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), ui->rotationSlider, &QSlider::setValue);
-    connect(ui->rotationSlider, &QSlider::valueChanged, ui->rotationSpinBox, &QSpinBox::setValue);
+    // Camera rotation controls - Roll (X axis)
+    connect(ui->rollSlider, &QSlider::valueChanged, this, &MainWindow::onRollChanged);
+    connect(ui->rollSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), ui->rollSlider, &QSlider::setValue);
+    connect(ui->rollSlider, &QSlider::valueChanged, ui->rollSpinBox, &QSpinBox::setValue);
+
+    // Camera rotation controls - Pitch (Y axis)
+    connect(ui->pitchSlider, &QSlider::valueChanged, this, &MainWindow::onPitchChanged);
+    connect(ui->pitchSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), ui->pitchSlider, &QSlider::setValue);
+    connect(ui->pitchSlider, &QSlider::valueChanged, ui->pitchSpinBox, &QSpinBox::setValue);
+
+    // Camera rotation controls - Yaw (Z axis)
+    connect(ui->yawSlider, &QSlider::valueChanged, this, &MainWindow::onYawChanged);
+    connect(ui->yawSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), ui->yawSlider, &QSlider::setValue);
+    connect(ui->yawSlider, &QSlider::valueChanged, ui->yawSpinBox, &QSpinBox::setValue);
 
     // Update sliders when camera changes (e.g., via mouse rotation in 3D mode)
     connect(ui->sceneWidget, &SceneWidget::cameraOrientationChanged, this, &MainWindow::onCameraOrientationChanged);
@@ -1282,12 +1291,19 @@ void MainWindow::on3DModeRequested()
     ui->sceneWidget->setViewMode3D();
 
     // Reset rotation controls to default when entering 3D mode
-    QSignalBlocker axisBlocker(ui->rotationAxisComboBox);
-    QSignalBlocker sliderBlocker(ui->rotationSlider);
-    QSignalBlocker spinBoxBlocker(ui->rotationSpinBox);
-    ui->rotationAxisComboBox->setCurrentIndex(1);  // Y axis (Roll)
-    ui->rotationSlider->setValue(0);
-    ui->rotationSpinBox->setValue(0);
+    QSignalBlocker rollBlocker(ui->rollSlider);
+    QSignalBlocker pitchBlocker(ui->pitchSlider);
+    QSignalBlocker yawBlocker(ui->yawSlider);
+    QSignalBlocker rollSpinBoxBlocker(ui->rollSpinBox);
+    QSignalBlocker pitchSpinBoxBlocker(ui->pitchSpinBox);
+    QSignalBlocker yawSpinBoxBlocker(ui->yawSpinBox);
+    
+    ui->rollSlider->setValue(0);
+    ui->rollSpinBox->setValue(0);
+    ui->pitchSlider->setValue(0);
+    ui->pitchSpinBox->setValue(0);
+    ui->yawSlider->setValue(0);
+    ui->yawSpinBox->setValue(0);
 
     // Reset camera angles to default
     ui->sceneWidget->setCameraAzimuth(0);
@@ -1332,88 +1348,57 @@ void MainWindow::updateCameraControlsVisibility()
 
 void MainWindow::syncCameraSliders()
 {
-    // Sync rotation slider with current camera position based on selected axis
+    // Sync sliders with current camera position
     const double roll = ui->sceneWidget->getCameraRoll();
     const double pitch = ui->sceneWidget->getCameraPitch();
     const double yaw = ui->sceneWidget->getCameraYaw();
 
-    QSignalBlocker sliderBlocker(ui->rotationSlider);
-    QSignalBlocker spinBoxBlocker(ui->rotationSpinBox);
+    QSignalBlocker rollBlocker(ui->rollSlider);
+    QSignalBlocker pitchBlocker(ui->pitchSlider);
+    QSignalBlocker yawBlocker(ui->yawSlider);
+    QSignalBlocker rollSpinBoxBlocker(ui->rollSpinBox);
+    QSignalBlocker pitchSpinBoxBlocker(ui->pitchSpinBox);
+    QSignalBlocker yawSpinBoxBlocker(ui->yawSpinBox);
 
-    int axisIndex = ui->rotationAxisComboBox->currentIndex();
-    int displayValue = 0;
-    
-    switch (axisIndex)
-    {
-        case 0:  // X axis (Yaw)
-            displayValue = static_cast<int>(yaw);
-            break;
-        case 1:  // Y axis (Roll)
-            displayValue = static_cast<int>(roll);
-            break;
-        case 2:  // Z axis (Pitch)
-            displayValue = static_cast<int>(pitch);
-            break;
-    }
-    
-    ui->rotationSlider->setValue(displayValue);
-    ui->rotationSpinBox->setValue(displayValue);
+    ui->rollSlider->setValue(static_cast<int>(roll));
+    ui->rollSpinBox->setValue(static_cast<int>(roll));
+    ui->pitchSlider->setValue(static_cast<int>(pitch));
+    ui->pitchSpinBox->setValue(static_cast<int>(pitch));
+    ui->yawSlider->setValue(static_cast<int>(yaw));
+    ui->yawSpinBox->setValue(static_cast<int>(yaw));
 }
 
-void MainWindow::onRotationAxisChanged(int axisIndex)
+void MainWindow::onRollChanged(int value)
 {
-    // Reset slider to 0 when axis changes
-    QSignalBlocker sliderBlocker(ui->rotationSlider);
-    QSignalBlocker spinBoxBlocker(ui->rotationSpinBox);
-    ui->rotationSlider->setValue(0);
-    ui->rotationSpinBox->setValue(0);
+    ui->sceneWidget->setCameraRoll(value);
 }
 
-void MainWindow::onRotationAngleChanged(int angle)
+void MainWindow::onPitchChanged(int value)
 {
-    // Apply rotation based on selected axis
-    int axisIndex = ui->rotationAxisComboBox->currentIndex();
-    
-    switch (axisIndex)
-    {
-        case 0:  // X axis (Yaw)
-            ui->sceneWidget->setCameraYaw(angle);
-            break;
-        case 1:  // Y axis (Roll)
-            ui->sceneWidget->setCameraRoll(angle);
-            break;
-        case 2:  // Z axis (Pitch)
-            ui->sceneWidget->setCameraPitch(angle);
-            break;
-    }
+    ui->sceneWidget->setCameraPitch(value);
+}
+
+void MainWindow::onYawChanged(int value)
+{
+    ui->sceneWidget->setCameraYaw(value);
 }
 
 void MainWindow::onCameraOrientationChanged(double azimuth, double elevation, double roll, double pitch, double yaw)
 {
     // Block signals to avoid circular updates
-    QSignalBlocker axisBlocker(ui->rotationAxisComboBox);
-    QSignalBlocker sliderBlocker(ui->rotationSlider);
-    QSignalBlocker spinBoxBlocker(ui->rotationSpinBox);
+    QSignalBlocker rollBlocker(ui->rollSlider);
+    QSignalBlocker pitchBlocker(ui->pitchSlider);
+    QSignalBlocker yawBlocker(ui->yawSlider);
+    QSignalBlocker rollSpinBoxBlocker(ui->rollSpinBox);
+    QSignalBlocker pitchSpinBoxBlocker(ui->pitchSpinBox);
+    QSignalBlocker yawSpinBoxBlocker(ui->yawSpinBox);
 
-    // Update slider based on current axis
-    int axisIndex = ui->rotationAxisComboBox->currentIndex();
-    int displayValue = 0;
-    
-    switch (axisIndex)
-    {
-        case 0:  // X axis (Yaw)
-            displayValue = static_cast<int>(yaw);
-            break;
-        case 1:  // Y axis (Roll)
-            displayValue = static_cast<int>(roll);
-            break;
-        case 2:  // Z axis (Pitch)
-            displayValue = static_cast<int>(pitch);
-            break;
-    }
-    
-    ui->rotationSlider->setValue(displayValue);
-    ui->rotationSpinBox->setValue(displayValue);
+    ui->rollSlider->setValue(static_cast<int>(roll));
+    ui->rollSpinBox->setValue(static_cast<int>(roll));
+    ui->pitchSlider->setValue(static_cast<int>(pitch));
+    ui->pitchSpinBox->setValue(static_cast<int>(pitch));
+    ui->yawSlider->setValue(static_cast<int>(yaw));
+    ui->yawSpinBox->setValue(static_cast<int>(yaw));
 }
 
 // ============================================================================
