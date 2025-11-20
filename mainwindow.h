@@ -79,8 +79,9 @@ private slots: // menu actions
 
     void onAzimuthChanged(int value);
     void onElevationChanged(int value);
-    void onCameraOrientationChanged(double azimuth, double elevation);
+    void onCameraOrientationChanged(double azimuth, double elevation, double roll);
     void syncCameraSliders();
+    void onRollChanged(int value);
 
     void onUse3rdDimensionRequested(const std::string& fieldName);
 

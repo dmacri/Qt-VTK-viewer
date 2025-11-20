@@ -153,6 +153,17 @@ public:
         return cameraElevation;
     }
 
+    /// @brief Set camera roll (rotation around Y axis) in degrees
+    void setCameraRoll(double angle);
+
+    /** @brief Get current camera roll.
+     * 
+     * @return Current roll angle in degrees */
+    double getCameraRoll() const
+    {
+        return cameraRoll;
+    }
+
     /// @brief Set the substate dock widget for displaying cell information.
     /// 
     /// @param dockWidget Pointer to the SubstatesDockWidget
@@ -222,8 +233,9 @@ signals:
      * 
      * This allows UI elements (like sliders) to update when the user rotates the camera.
      * @param azimuth Current camera azimuth in degrees
-     * @param elevation Current camera elevation in degrees */
-    void cameraOrientationChanged(double azimuth, double elevation);
+     * @param elevation Current camera elevation in degrees
+     * @param roll Current camera roll in degrees */
+    void cameraOrientationChanged(double azimuth, double elevation, double roll);
 
 public slots:
     /** @brief Slot called when color settings need to be reloaded (at least one of them was changed)
@@ -431,6 +443,9 @@ protected:
 
     /// @brief Current camera elevation angle (cached to avoid recalculation)
     double cameraElevation{};
+
+    /// @brief Current camera roll angle (cached to avoid recalculation)
+    double cameraRoll{};
 
     /** @brief Last recorded position in VTK world coordinates. */
     std::array<double, 3> m_lastWorldPos;
