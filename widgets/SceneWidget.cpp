@@ -360,6 +360,15 @@ void SceneWidget::setupVtkScene()
     /// Use custom interactor style that zooms towards cursor position.
     /// This provides intuitive zoom behavior when using mouse wheel.
     vtkNew<CustomInteractorStyle> style;
+
+    // Set callbacks for cursor change during zoom/pan operations
+    style->SetOperationStartCallback([this]() {
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+    });
+    style->SetOperationEndCallback([this]() {
+        QApplication::restoreOverrideCursor();
+    });
+
     interactor()->SetInteractorStyle(style);
 
     renderWindow()->SetWindowName(QApplication::applicationName().toLocal8Bit().data());
@@ -1070,6 +1079,15 @@ void SceneWidget::setViewMode2D()
 
     // Use custom interactor style that zooms towards cursor position
     vtkNew<CustomInteractorStyle> style;
+
+    // Set callbacks for cursor change during zoom/pan operations
+    style->SetOperationStartCallback([this]() {
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+    });
+    style->SetOperationEndCallback([this]() {
+        QApplication::restoreOverrideCursor();
+    });
+
     interactor()->SetInteractorStyle(style);
 
     // Reset camera angles

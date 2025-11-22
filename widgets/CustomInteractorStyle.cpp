@@ -13,14 +13,27 @@
 
 vtkStandardNewMacro(CustomInteractorStyle);
 
+
 void CustomInteractorStyle::OnMouseWheelForward()
 {
+    if (m_operationStartCallback)
+        m_operationStartCallback();
+    
     ZoomTowardsCursor(0.9);  // Zoom in by 10%
+    
+    if (m_operationEndCallback)
+        m_operationEndCallback();
 }
 
 void CustomInteractorStyle::OnMouseWheelBackward()
 {
+    if (m_operationStartCallback)
+        m_operationStartCallback();
+    
     ZoomTowardsCursor(1.1);  // Zoom out by 10%
+    
+    if (m_operationEndCallback)
+        m_operationEndCallback();
 }
 
 void CustomInteractorStyle::ZoomTowardsCursor(double zoomFactor)
@@ -155,6 +168,10 @@ void CustomInteractorStyle::OnLeftButtonDown()
         const int* pos = this->Interactor->GetEventPosition();
         m_lastMouseX = pos[0];
         m_lastMouseY = pos[1];
+        
+        // Signal operation start
+        if (m_operationStartCallback)
+            m_operationStartCallback();
     }
     else
     {
@@ -168,6 +185,10 @@ void CustomInteractorStyle::OnLeftButtonUp()
     if (m_isPanning)
     {
         m_isPanning = false;
+        
+        // Signal operation end
+        if (m_operationEndCallback)
+            m_operationEndCallback();
     }
     else
     {
