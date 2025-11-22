@@ -359,17 +359,7 @@ void SceneWidget::setupVtkScene()
 
     /// Use custom interactor style that zooms towards cursor position.
     /// This provides intuitive zoom behavior when using mouse wheel.
-    vtkNew<CustomInteractorStyle> style;
-
-    // Set callbacks for cursor change during zoom/pan operations
-    style->SetOperationStartCallback([this]() {
-        QApplication::setOverrideCursor(Qt::WaitCursor);
-    });
-    style->SetOperationEndCallback([this]() {
-        QApplication::restoreOverrideCursor();
-    });
-
-    interactor()->SetInteractorStyle(style);
+    setupInteractorStyleWithWaitCursor();
 
     renderWindow()->SetWindowName(QApplication::applicationName().toLocal8Bit().data());
 
@@ -1078,17 +1068,7 @@ void SceneWidget::setViewMode2D()
     }
 
     // Use custom interactor style that zooms towards cursor position
-    vtkNew<CustomInteractorStyle> style;
-
-    // Set callbacks for cursor change during zoom/pan operations
-    style->SetOperationStartCallback([this]() {
-        QApplication::setOverrideCursor(Qt::WaitCursor);
-    });
-    style->SetOperationEndCallback([this]() {
-        QApplication::restoreOverrideCursor();
-    });
-
-    interactor()->SetInteractorStyle(style);
+    setupInteractorStyleWithWaitCursor();
 
     // Reset camera angles
     cameraAzimuth = {};
@@ -1141,17 +1121,7 @@ void SceneWidget::setViewMode3D()
 
     // Use CustomInteractorStyle which supports both 3D rotation (TrackballCamera)
     // and cursor-based zoom with wait cursor feedback
-    vtkNew<CustomInteractorStyle> style;
-    
-    // Set callbacks for cursor change during zoom/pan operations
-    style->SetOperationStartCallback([this]() {
-        QApplication::setOverrideCursor(Qt::WaitCursor);
-    });
-    style->SetOperationEndCallback([this]() {
-        QApplication::restoreOverrideCursor();
-    });
-    
-    interactor()->SetInteractorStyle(style);
+    setupInteractorStyleWithWaitCursor();
 
     // Show orientation axes in 3D mode
     setAxesWidgetVisible(true);
@@ -1323,3 +1293,17 @@ bool SceneWidget::isWorldPositionInGrid(const double worldPos[3]) const
     return true;  // Inside grid bounds
 }
 
+void SceneWidget::setupInteractorStyleWithWaitCursor()
+{
+    vtkNew<CustomInteractorStyle> style;
+    
+    // Set callbacks for cursor change during zoom/pan operations
+    style->SetOperationStartCallback([this]() {
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+    });
+    style->SetOperationEndCallback([this]() {
+        QApplication::restoreOverrideCursor();
+    });
+    
+    interactor()->SetInteractorStyle(style);
+}
