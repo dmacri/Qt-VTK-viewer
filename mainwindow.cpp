@@ -362,6 +362,9 @@ void MainWindow::connectSliders()
     connect(ui->yawSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), ui->yawSlider, &QSlider::setValue);
     connect(ui->yawSlider, &QSlider::valueChanged, ui->yawSpinBox, &QSpinBox::setValue);
 
+    // Reset camera button
+    connect(ui->resetCameraButton, &QPushButton::clicked, this, &MainWindow::onResetCameraRequested);
+
     // Update sliders when camera changes (e.g., via mouse rotation in 3D mode)
     connect(ui->sceneWidget, &SceneWidget::cameraOrientationChanged, this, &MainWindow::onCameraOrientationChanged);
 }
@@ -1381,6 +1384,31 @@ void MainWindow::onPitchChanged(int value)
 void MainWindow::onYawChanged(int value)
 {
     ui->sceneWidget->setCameraYaw(value);
+}
+
+void MainWindow::onResetCameraRequested()
+{
+    // Reset all camera angles to initial state
+    ui->sceneWidget->setCameraAzimuth(0);
+    ui->sceneWidget->setCameraElevation(0);
+    ui->sceneWidget->setCameraRoll(0);
+    ui->sceneWidget->setCameraPitch(0);
+    ui->sceneWidget->setCameraYaw(0);
+    
+    // Reset all sliders to 0
+    QSignalBlocker rollBlocker(ui->rollSlider);
+    QSignalBlocker pitchBlocker(ui->pitchSlider);
+    QSignalBlocker yawBlocker(ui->yawSlider);
+    QSignalBlocker rollSpinBoxBlocker(ui->rollSpinBox);
+    QSignalBlocker pitchSpinBoxBlocker(ui->pitchSpinBox);
+    QSignalBlocker yawSpinBoxBlocker(ui->yawSpinBox);
+    
+    ui->rollSlider->setValue(0);
+    ui->rollSpinBox->setValue(0);
+    ui->pitchSlider->setValue(0);
+    ui->pitchSpinBox->setValue(0);
+    ui->yawSlider->setValue(0);
+    ui->yawSpinBox->setValue(0);
 }
 
 void MainWindow::onCameraOrientationChanged(double azimuth, double elevation, double roll, double pitch, double yaw)
