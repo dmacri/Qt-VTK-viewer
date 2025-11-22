@@ -6,18 +6,19 @@
 
 #pragma once
 
-#include <vtkInteractorStyleImage.h>
+#include <vtkInteractorStyleTrackballCamera.h>
 #include <functional>
 
-/** @brief Custom interactor style for cursor-based zoom.
+/** @brief Custom interactor style for cursor-based zoom and 3D rotation.
  * 
- * Extends vtkInteractorStyleImage to override mouse wheel events
- * and zoom towards the cursor position instead of the screen center. */
-class CustomInteractorStyle : public vtkInteractorStyleImage
+ * Extends vtkInteractorStyleTrackballCamera to override mouse wheel events
+ * and zoom towards the cursor position instead of the screen center.
+ * Also supports 3D rotation with trackball camera. */
+class CustomInteractorStyle : public vtkInteractorStyleTrackballCamera
 {
 public:
     static CustomInteractorStyle* New();
-    vtkTypeMacro(CustomInteractorStyle, vtkInteractorStyleImage);
+    vtkTypeMacro(CustomInteractorStyle, vtkInteractorStyleTrackballCamera);
 
     /** @brief Handle mouse wheel forward event (zoom in).
      * 

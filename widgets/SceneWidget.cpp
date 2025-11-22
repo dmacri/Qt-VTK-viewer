@@ -1139,8 +1139,18 @@ void SceneWidget::setViewMode3D()
 
     currentViewMode = ViewMode::Mode3D;
 
-    // Use vtkInteractorStyleTrackballCamera which allows full 3D rotation
-    vtkNew<vtkInteractorStyleTrackballCamera> style;
+    // Use CustomInteractorStyle which supports both 3D rotation (TrackballCamera)
+    // and cursor-based zoom with wait cursor feedback
+    vtkNew<CustomInteractorStyle> style;
+    
+    // Set callbacks for cursor change during zoom/pan operations
+    style->SetOperationStartCallback([this]() {
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+    });
+    style->SetOperationEndCallback([this]() {
+        QApplication::restoreOverrideCursor();
+    });
+    
     interactor()->SetInteractorStyle(style);
 
     // Show orientation axes in 3D mode
