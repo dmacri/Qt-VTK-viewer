@@ -1131,6 +1131,9 @@ void MainWindow::onLoadModelFromDirectoryRequested()
 
 void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
 {
+    // Show wait cursor during model loading
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    
     // Enable silent mode temporarily to suppress dialogs during loading
     const bool previousSilentMode = isSilentModeEnabled();
     setSilentMode(true);
@@ -1253,8 +1256,9 @@ void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
             tr("An error occurred while loading the model:\n%1").arg(e.what()));
     }
 
-    // Restore silent mode
+    // Restore silent mode and cursor
     setSilentMode(previousSilentMode);
+    QApplication::restoreOverrideCursor();
 }
 
 void MainWindow::createViewModeActionGroup()
