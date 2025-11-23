@@ -163,7 +163,7 @@ void CustomInteractorStyle::OnLeftButtonDown()
         m_lastMouseY = pos[1];
         
         // Create wait cursor guard for panning (persists until OnLeftButtonUp)
-        m_panningWaitCursor = std::make_unique<WaitCursorGuard>("Panning...");
+        WaitCursorGuard::changeIcon(/*waitingIcon=*/true);
     }
     else
     {
@@ -178,8 +178,7 @@ void CustomInteractorStyle::OnLeftButtonUp()
     {
         m_isPanning = false;
         
-        // Destroy wait cursor guard (restores cursor automatically)
-        m_panningWaitCursor.reset();
+        WaitCursorGuard::changeIcon(/*waitingIcon=*/false);
     }
     else
     {

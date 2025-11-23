@@ -38,10 +38,22 @@ private:
     std::string message;
 };
 
+void WaitCursorGuard::changeIcon(bool waitingIcon)
+{
+    if (waitingIcon)
+    {
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+    }
+    else
+    {
+        QApplication::restoreOverrideCursor();
+    }
+}
+
 WaitCursorGuard::WaitCursorGuard(const std::string& statusMessageText, bool restoneOnDestroy)
     : startTime(std::chrono::steady_clock::now()), isActive(true), restoneOnDestroy(restoneOnDestroy)
 {
-    QApplication::setOverrideCursor(Qt::WaitCursor);
+    WaitCursorGuard::changeIcon(/*waitingIcon=*/true);
     
     if (! statusMessageText.empty())
     {
@@ -54,7 +66,7 @@ WaitCursorGuard::~WaitCursorGuard()
     if (isActive && restoneOnDestroy)
     {
         statusMessage.reset();  // Destroy status message first
-        QApplication::restoreOverrideCursor();
+        WaitCursorGuard::changeIcon(/*waitingIcon=*/false);
         isActive = false;
     }
 }
@@ -73,7 +85,7 @@ WaitCursorGuard& WaitCursorGuard::operator=(WaitCursorGuard&& other) noexcept
         if (isActive)
         {
             statusMessage.reset();
-            QApplication::restoreOverrideCursor();
+            WaitCursorGuard::changeIcon(/*waitingIcon=*/false);
         }
 
         // Move from other

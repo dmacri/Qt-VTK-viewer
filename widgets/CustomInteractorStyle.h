@@ -7,11 +7,6 @@
 #pragma once
 
 #include <vtkInteractorStyleTrackballCamera.h>
-#include <functional>
-#include <memory>
-
-// Forward declaration to avoid Qt dependency in header
-class WaitCursorGuard;
 
 /** @brief Custom interactor style for cursor-based zoom and 3D rotation.
  * 
@@ -66,8 +61,4 @@ private:
 
     /// @brief Flag indicating if panning is active
     bool m_isPanning = false;
-
-    /// @brief Wait cursor guard for panning operations
-    /// Kept as member so it persists across OnLeftButtonDown/OnLeftButtonUp calls
-    std::unique_ptr<WaitCursorGuard> m_panningWaitCursor; // TODO: Why not to add static methods to WaitCursorGuard instead of mamber like that?
 };

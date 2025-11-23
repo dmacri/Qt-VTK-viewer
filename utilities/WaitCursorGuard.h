@@ -23,6 +23,9 @@
 class WaitCursorGuard
 {
 public:
+    /// @brief This method is to change icon, it is not restoring icon automatically
+    static void changeIcon(bool waitingIcon);
+
     /** @brief Construct and show wait cursor.
      * 
      * @param statusMessage Optional message to display under cursor.
