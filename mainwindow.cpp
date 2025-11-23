@@ -2186,6 +2186,9 @@ void MainWindow::onRecentDirectoryTriggered()
 
 void MainWindow::onUse3rdDimensionRequested(const std::string& fieldName)
 {
+    // Show wait cursor during view mode change
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+
     // Store the active substate for 3D visualization in MainWindow
     activeSubstateFor3D = fieldName;
 
@@ -2197,4 +2200,7 @@ void MainWindow::onUse3rdDimensionRequested(const std::string& fieldName)
 
     // Refresh the visualization with the new substate for the current step
     ui->sceneWidget->selectedStepParameter(currentStep);
+
+    // Restore normal cursor
+    QApplication::restoreOverrideCursor();
 }
