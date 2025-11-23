@@ -7,6 +7,7 @@
 #include <string>
 #include <QApplication>
 #include "utilities/directoryConstants.h"
+#include "utilities/WaitCursorGuard.h"
 #include <vtkCallbackCommand.h>
 #include <vtkInteractorStyleImage.h>
 #include <vtkInteractorStyleTrackballCamera.h>
@@ -1056,7 +1057,7 @@ void SceneWidget::setViewMode2D()
         return;
 
     // Show wait cursor during view mode change
-    QApplication::setOverrideCursor(Qt::WaitCursor);
+    WaitCursorGuard waitCursor("Switching to 2D mode...");
 
     currentViewMode = ViewMode::Mode2D;
     
@@ -1113,9 +1114,8 @@ void SceneWidget::setViewMode2D()
         rulerAxisX->SetVisibility(false);
         rulerAxisY->SetVisibility(false);
     }
-
-    // Restore normal cursor
-    QApplication::restoreOverrideCursor();
+    
+    // Cursor restored automatically by WaitCursorGuard destructor
 }
 
 void SceneWidget::setViewMode3D()
@@ -1124,7 +1124,7 @@ void SceneWidget::setViewMode3D()
         return;
 
     // Show wait cursor during view mode change
-    QApplication::setOverrideCursor(Qt::WaitCursor);
+    WaitCursorGuard waitCursor("Switching to 3D mode...");
 
     currentViewMode = ViewMode::Mode3D;
 
@@ -1140,9 +1140,8 @@ void SceneWidget::setViewMode3D()
     rulerAxisY->SetVisibility(false);
 
     std::cout << "Switched to 3D view mode" << std::endl;
-
-    // Restore normal cursor
-    QApplication::restoreOverrideCursor();
+    
+    // Cursor restored automatically by WaitCursorGuard destructor
 }
 
 void SceneWidget::setAxesWidgetVisible(bool visible)

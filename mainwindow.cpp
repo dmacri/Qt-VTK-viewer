@@ -19,6 +19,7 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "utilities/WaitCursorGuard.h"
 
 #include "config/Config.h"
 #include "config/ConfigConstants.h"
@@ -1132,7 +1133,7 @@ void MainWindow::onLoadModelFromDirectoryRequested()
 void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
 {
     // Show wait cursor during model loading
-    QApplication::setOverrideCursor(Qt::WaitCursor);
+    WaitCursorGuard waitCursor("Loading model from directory...");
     
     // Enable silent mode temporarily to suppress dialogs during loading
     const bool previousSilentMode = isSilentModeEnabled();
@@ -1256,9 +1257,8 @@ void MainWindow::loadModelFromDirectory(const QString& modelDirectory)
             tr("An error occurred while loading the model:\n%1").arg(e.what()));
     }
 
-    // Restore silent mode and cursor
+    // Restore silent mode (cursor restored automatically by WaitCursorGuard destructor)
     setSilentMode(previousSilentMode);
-    QApplication::restoreOverrideCursor();
 }
 
 void MainWindow::createViewModeActionGroup()
@@ -2187,7 +2187,7 @@ void MainWindow::onRecentDirectoryTriggered()
 void MainWindow::onUse3rdDimensionRequested(const std::string& fieldName)
 {
     // Show wait cursor during view mode change
-    QApplication::setOverrideCursor(Qt::WaitCursor);
+    WaitCursorGuard waitCursor("Switching to 3D substate visualization...");
 
     // Store the active substate for 3D visualization in MainWindow
     activeSubstateFor3D = fieldName;
@@ -2200,7 +2200,6 @@ void MainWindow::onUse3rdDimensionRequested(const std::string& fieldName)
 
     // Refresh the visualization with the new substate for the current step
     ui->sceneWidget->selectedStepParameter(currentStep);
-
-    // Restore normal cursor
-    QApplication::restoreOverrideCursor();
+    
+    // Cursor restored automatically by WaitCursorGuard destructor
 }

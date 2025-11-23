@@ -134,6 +134,7 @@ list(APPEND Sources
     utilities/CommandLineParser.cpp
     utilities/ModelLoader.cpp
     utilities/CppModuleBuilder.cpp
+    utilities/WaitCursorGuard.cpp
 )
 file(GLOB Resources
     LIST_DIRECTORIES false
