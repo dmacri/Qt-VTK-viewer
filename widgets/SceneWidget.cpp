@@ -564,8 +564,8 @@ void SceneWidget::cameraCallbackFunction(vtkObject* caller, long unsigned int ev
         if (camera)
         {
             // Get actual camera orientation from VTK
-            double* position = camera->GetPosition();
-            double* focalPoint = camera->GetFocalPoint();
+            const double* position = camera->GetPosition();
+            const double* focalPoint = camera->GetFocalPoint();
 
             // Calculate azimuth and elevation from camera position
             double dx = position[0] - focalPoint[0];
@@ -735,7 +735,7 @@ QString SceneWidget::getNodeAtWorldPosition(const std::array<double, 3>& worldPo
     }
 
     // Get the bounds of the entire scene
-    double* bounds = renderer->ComputeVisiblePropBounds();
+    const double* bounds = renderer->ComputeVisiblePropBounds();
     if (! bounds)
     {
         return {};
@@ -1252,8 +1252,8 @@ bool SceneWidget::convertWorldToGridCoordinates(const double worldPos[3], int& o
         return false;
 
     // Get the bounds of the entire scene
-    double* bounds = renderer->ComputeVisiblePropBounds();
-    if (!bounds)
+    const double* bounds = renderer->ComputeVisiblePropBounds();
+    if (! bounds)
         return false;
 
     // Calculate grid dimensions
