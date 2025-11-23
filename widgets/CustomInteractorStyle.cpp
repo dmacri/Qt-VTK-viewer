@@ -2,6 +2,7 @@
  * @brief Implementation of CustomInteractorStyle for cursor-based zoom. */
 
 #include "CustomInteractorStyle.h"
+#include "utilities/WaitCursorGuard.h"
 #include <vtkCamera.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderWindow.h>
@@ -16,24 +17,16 @@ vtkStandardNewMacro(CustomInteractorStyle);
 
 void CustomInteractorStyle::OnMouseWheelForward()
 {
-    if (m_operationStartCallback)
-        m_operationStartCallback();
+    WaitCursorGuard waitCursor("Zooming in...");
     
     ZoomTowardsCursor(0.9);  // Zoom in by 10%
-    
-    if (m_operationEndCallback)
-        m_operationEndCallback();
 }
 
 void CustomInteractorStyle::OnMouseWheelBackward()
 {
-    if (m_operationStartCallback)
-        m_operationStartCallback();
+    WaitCursorGuard waitCursor("Zooming out...");
     
     ZoomTowardsCursor(1.1);  // Zoom out by 10%
-    
-    if (m_operationEndCallback)
-        m_operationEndCallback();
 }
 
 void CustomInteractorStyle::ZoomTowardsCursor(double zoomFactor)
@@ -169,9 +162,8 @@ void CustomInteractorStyle::OnLeftButtonDown()
         m_lastMouseX = pos[0];
         m_lastMouseY = pos[1];
         
-        // Signal operation start
-        if (m_operationStartCallback)
-            m_operationStartCallback();
+        // Create wait cursor guard for panning (persists until OnLeftButtonUp)
+        m_panningWaitCursor = std::make_unique<WaitCursorGuard>("Panning...");
     }
     else
     {
@@ -186,9 +178,8 @@ void CustomInteractorStyle::OnLeftButtonUp()
     {
         m_isPanning = false;
         
-        // Signal operation end
-        if (m_operationEndCallback)
-            m_operationEndCallback();
+        // Destroy wait cursor guard (restores cursor automatically)
+        m_panningWaitCursor.reset();
     }
     else
     {

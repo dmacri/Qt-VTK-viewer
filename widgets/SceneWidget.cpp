@@ -1307,14 +1307,5 @@ bool SceneWidget::isWorldPositionInGrid(const double worldPos[3]) const
 void SceneWidget::setupInteractorStyleWithWaitCursor()
 {
     vtkNew<CustomInteractorStyle> style;
-    
-    // Set callbacks for cursor change during zoom/pan operations
-    style->SetOperationStartCallback([this]() {
-        QApplication::setOverrideCursor(Qt::WaitCursor);
-    });
-    style->SetOperationEndCallback([this]() {
-        QApplication::restoreOverrideCursor();
-    });
-    
     interactor()->SetInteractorStyle(style);
 }

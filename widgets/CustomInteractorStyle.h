@@ -8,6 +8,10 @@
 
 #include <vtkInteractorStyleTrackballCamera.h>
 #include <functional>
+#include <memory>
+
+// Forward declaration to avoid Qt dependency in header
+class WaitCursorGuard;
 
 /** @brief Custom interactor style for cursor-based zoom and 3D rotation.
  * 
@@ -45,28 +49,6 @@ public:
      * Pans the view when left button is held down. */
     void OnMouseMove() override;
 
-    /** @brief Set callback for operation start (zoom/pan).
-     * 
-     * Called when a long-running operation (zoom or pan) starts.
-     * Useful for showing wait cursor.
-     * 
-     * @param callback Function to call when operation starts */
-    void SetOperationStartCallback(std::function<void()> callback)
-    {
-        m_operationStartCallback = callback;
-    }
-
-    /** @brief Set callback for operation end (zoom/pan).
-     * 
-     * Called when a long-running operation (zoom or pan) ends.
-     * Useful for restoring normal cursor.
-     * 
-     * @param callback Function to call when operation ends */
-    void SetOperationEndCallback(std::function<void()> callback)
-    {
-        m_operationEndCallback = callback;
-    }
-
 private:
     /** @brief Perform zoom towards cursor.
      * 
@@ -85,9 +67,7 @@ private:
     /// @brief Flag indicating if panning is active
     bool m_isPanning = false;
 
-    /// @brief Callback for operation start (zoom/pan)
-    std::function<void()> m_operationStartCallback;
-
-    /// @brief Callback for operation end (zoom/pan)
-    std::function<void()> m_operationEndCallback;
+    /// @brief Wait cursor guard for panning operations
+    /// Kept as member so it persists across OnLeftButtonDown/OnLeftButtonUp calls
+    std::unique_ptr<WaitCursorGuard> m_panningWaitCursor; // TODO: Why not to add static methods to WaitCursorGuard instead of mamber like that?
 };
