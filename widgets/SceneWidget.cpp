@@ -1055,6 +1055,9 @@ void SceneWidget::setViewMode2D()
     if (! interactor())
         return;
 
+    // Show wait cursor during view mode change
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+
     currentViewMode = ViewMode::Mode2D;
     
     // Disable 3D substate visualization when switching to 2D mode
@@ -1110,12 +1113,18 @@ void SceneWidget::setViewMode2D()
         rulerAxisX->SetVisibility(false);
         rulerAxisY->SetVisibility(false);
     }
+
+    // Restore normal cursor
+    QApplication::restoreOverrideCursor();
 }
 
 void SceneWidget::setViewMode3D()
 {
     if (! interactor())
         return;
+
+    // Show wait cursor during view mode change
+    QApplication::setOverrideCursor(Qt::WaitCursor);
 
     currentViewMode = ViewMode::Mode3D;
 
@@ -1131,6 +1140,9 @@ void SceneWidget::setViewMode3D()
     rulerAxisY->SetVisibility(false);
 
     std::cout << "Switched to 3D view mode" << std::endl;
+
+    // Restore normal cursor
+    QApplication::restoreOverrideCursor();
 }
 
 void SceneWidget::setAxesWidgetVisible(bool visible)
