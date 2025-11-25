@@ -351,6 +351,13 @@ protected:
      * whenever the grid color setting changes. */
     void refreshGridColorFromSettings();
 
+    /** @brief Apply grid lines visibility and semi-transparency settings.
+     *
+     * This helper method sets the grid lines visibility state and applies
+     * semi-transparency (50% opacity) to the grid lines actor.
+     * Should be called after buildLoadBalanceLine() to ensure proper appearance. */
+    void applyGridLinesSettings();
+
     /** @brief Connects the VTK keyboard callback to the interactor.
      *
      * This method registers a key press observer on the VTK interactor associated

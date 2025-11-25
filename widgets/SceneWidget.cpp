@@ -697,11 +697,8 @@ void SceneWidget::renderVtkScene()
                                                                      renderer,
                                                                      actorBuildLine);
 
-    // Apply the remembered grid lines visibility state
-    if (actorBuildLine)
-    {
-        actorBuildLine->SetVisibility(gridLinesVisible);
-    }
+    // Apply grid lines visibility and semi-transparency settings
+    applyGridLinesSettings();
 
     sceneWidgetVisualizerProxy->getVisualizer().buildStepText(settingParameter->step,
                                                               settingParameter->font_size,
@@ -1128,6 +1125,20 @@ void SceneWidget::setViewMode2D()
     // Hide orientation axes in 2D mode
     setAxesWidgetVisible(false);
 
+    // Setup 2D ruler axes (bounds will be updated when data is loaded)
+    setup2DRulerAxes();
+
+    // Rebuild grid lines (they were removed when switching to 3D substate)
+    if (settingParameter && sceneWidgetVisualizerProxy && !lines.empty())
+    {
+        sceneWidgetVisualizerProxy->getVisualizer().buildLoadBalanceLine(lines,
+                                                                         settingParameter->numberOfRowsY + 1,
+                                                                         renderer,
+                                                                         actorBuildLine);
+        // Apply grid lines visibility and semi-transparency settings
+        applyGridLinesSettings();
+    }
+
     // Update and show 2D ruler axes only if we have valid data
     double bounds[6];
     renderer->ComputeVisiblePropBounds(bounds);
@@ -1143,6 +1154,8 @@ void SceneWidget::setViewMode2D()
         rulerAxisX->SetVisibility(false);
         rulerAxisY->SetVisibility(false);
     }
+
+    renderWindow()->Render();
     
     // Cursor restored automatically by WaitCursorGuard destructor
 }
@@ -1337,6 +1350,17 @@ void SceneWidget::setupInteractorStyleWithWaitCursor()
 {
     vtkNew<CustomInteractorStyle> style;
     interactor()->SetInteractorStyle(style);
+}
+
+void SceneWidget::applyGridLinesSettings()
+{
+    // Apply the remembered grid lines visibility state and set semi-transparency
+    if (actorBuildLine)
+    {
+        actorBuildLine->SetVisibility(gridLinesVisible);
+        // Set grid lines to semi-transparent (50% opacity)
+        actorBuildLine->GetProperty()->SetOpacity(0.5);
+    }
 }
 
 void SceneWidget::initializeAndDraw3DSubstateVisualization()
