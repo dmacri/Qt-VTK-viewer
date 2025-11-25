@@ -117,6 +117,16 @@ public:
     /// @param visible If true, shows grid lines; if false, hides them
     void setGridLinesVisible(bool visible);
 
+    /// @brief Show or hide flat scene background in 3D mode
+    /// @param visible If true, shows flat background; if false, hides it
+    void setFlatSceneBackgroundVisible(bool visible);
+
+    /// @brief Get the current flat scene background visibility state
+    bool getFlatSceneBackgroundVisible() const
+    {
+        return flatSceneBackgroundVisible;
+    }
+
     /// @brief Get the current ViewMode (2D or 3D)
     ViewMode getViewMode() const
     {
@@ -480,6 +490,9 @@ protected:
     /// @brief Current grid lines visibility state
     bool gridLinesVisible = true;
 
+    /// @brief Flat scene background visibility state (shown in 3D mode)
+    bool flatSceneBackgroundVisible = true;
+
     /// @brief Name of the substate field currently used for 3D visualization (empty if none)
     std::string activeSubstateFor3D;
 
@@ -511,6 +524,10 @@ protected:
      *  The grid provides information about what part was calculated by which node
      *  @note: The type is vtkSmartPointer instead of auto-maintained vtkNew because we need to be able to reset the object */
     vtkSmartPointer<vtkActor> gridActor;
+
+    /** @brief Actor for flat background scene in 3D mode: Renders a flat colored plane at Z=0
+     *  @note: The type is vtkSmartPointer instead of auto-maintained vtkNew because we need to be able to reset the object */
+    vtkSmartPointer<vtkActor> backgroundActor;
 
     /** @brief Actor for load balancing lines: This actor is responsible for rendering the load balancing lines.
      *  @note: The type is vtkSmartPointer instead of auto-maintained vtkNew because we need to be able to reset the object */

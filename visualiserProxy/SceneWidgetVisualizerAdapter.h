@@ -103,6 +103,16 @@ public:
         m_impl.visualiser.refreshWindowsVTK3DSubstateQuadMesh(m_impl.p, nRows, nCols, gridActor, substateFieldName, minValue, maxValue);
     }
 
+    void drawFlatSceneBackground(int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> backgroundActor) override
+    {
+        m_impl.visualiser.drawFlatSceneBackground(m_impl.p, nRows, nCols, renderer, backgroundActor);
+    }
+
+    void refreshFlatSceneBackground(int nRows, int nCols, vtkSmartPointer<vtkActor> backgroundActor) override
+    {
+        m_impl.visualiser.refreshFlatSceneBackground(m_impl.p, nRows, nCols, backgroundActor);
+    }
+
     Visualizer& getVisualizer() override
     {
         return m_impl.visualiser;

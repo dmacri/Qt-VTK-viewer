@@ -60,6 +60,13 @@ public:
     template<class Matrix>
     void refreshWindowsVTK3DSubstateQuadMesh(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue);
 
+    /// @brief Draw flat background plane at Z=0 for 3D visualization.
+    template<class Matrix>
+    void drawFlatSceneBackground(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> backgroundActor);
+    /// @brief Refresh flat background plane colors.
+    template<class Matrix>
+    void refreshFlatSceneBackground(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> backgroundActor);
+
     void buildLoadBalanceLine(const std::vector<Line>& lines, int nRows, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor2D> actorBuildLine);
     void refreshBuildLoadBalanceLine(const std::vector<Line> &lines, int nRows, vtkActor2D* lineActor);
     vtkTextProperty* buildStepLine(StepIndex step, vtkSmartPointer<vtkTextMapper> singleLineTextB);
@@ -526,8 +533,11 @@ void Visualizer::drawWithVTK3DSubstateQuadMesh(const Matrix& p, int nRows, int n
         return;
     }
 
-    // Remove all actors from renderer to start fresh
-    renderer->RemoveAllViewProps();
+    // Remove only the grid actor from renderer (preserve other actors like background)
+    if (gridActor && renderer)
+    {
+        renderer->RemoveActor(gridActor);
+    }
 
     // Build quad mesh surface
     vtkSmartPointer<vtkPolyData> surfacePolyData = build3DSubstateSurfaceQuadMesh(p, nRows, nCols, substateFieldName, minValue, maxValue);
@@ -570,5 +580,79 @@ void Visualizer::refreshWindowsVTK3DSubstateQuadMesh(const Matrix& p, int nRows,
         // Update mapper with new data
         mapper->SetInputData(surfacePolyData);
         mapper->Update();
+    }
+}
+
+// Flat Scene Background Methods
+
+template<class Matrix>
+void Visualizer::drawFlatSceneBackground(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> backgroundActor)
+{
+    // Validate inputs
+    if (!backgroundActor || !renderer)
+    {
+        return;
+    }
+
+    const auto numberOfPoints = nRows * nCols;
+    vtkNew<vtkDoubleArray> pointValues;
+    pointValues->SetNumberOfTuples(numberOfPoints);
+    
+    // Set scalar values for color mapping
+    for (int row = 0; row < nRows; row++)
+    {
+        for (int col = 0; col < nCols; col++)
+        {
+            int pointIndex = row * nCols + col;
+            int colorIndex = (nRows - 1 - row) * nCols + col;
+            pointValues->SetValue(pointIndex, colorIndex);
+        }
+    }
+
+    vtkNew<vtkLookupTable> lut;
+    lut->SetNumberOfTableValues(numberOfPoints);
+
+    // Create flat plane at Z=0
+    vtkNew<vtkPoints> points;
+    for (int row = 0; row < nRows; row++)
+    {
+        for (int col = 0; col < nCols; col++)
+        {
+            // Z=0 for flat background plane
+            points->InsertNextPoint(/*x=*/col, /*y=*/nRows - 1 - row, /*z=*/0);
+        }
+    }
+
+    vtkNew<vtkStructuredGrid> structuredGrid;
+    structuredGrid->SetDimensions(nCols, nRows, 1);
+    structuredGrid->SetPoints(points);
+    structuredGrid->GetPointData()->SetScalars(pointValues);
+
+    buidColor(lut, nCols, nRows, p);
+
+    vtkNew<vtkDataSetMapper> backgroundMapper;
+    backgroundMapper->UpdateDataObject();
+    backgroundMapper->SetInputData(structuredGrid);
+    backgroundMapper->SetLookupTable(lut);
+    backgroundMapper->SetScalarRange(0, numberOfPoints - 1);
+
+    backgroundActor->SetMapper(backgroundMapper);
+    renderer->AddActor(backgroundActor);
+}
+
+template<class Matrix>
+void Visualizer::refreshFlatSceneBackground(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> backgroundActor)
+{
+    // Validate input
+    if (!backgroundActor || !backgroundActor->GetMapper())
+    {
+        return;
+    }
+
+    if (vtkLookupTable* lut = dynamic_cast<vtkLookupTable*>(backgroundActor->GetMapper()->GetLookupTable()))
+    {
+        buidColor(lut, nCols, nRows, p);
+        backgroundActor->GetMapper()->SetLookupTable(lut);
+        backgroundActor->GetMapper()->Update();
     }
 }

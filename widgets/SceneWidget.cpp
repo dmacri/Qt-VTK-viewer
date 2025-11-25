@@ -109,6 +109,7 @@ SceneWidget::SceneWidget(QWidget* parent)
     , settingParameter{ std::make_unique<SettingParameter>() }
     , currentModelName{ sceneWidgetVisualizerProxy->getModelName() }
     , gridActor{ vtkSmartPointer<vtkActor>::New() }
+    , backgroundActor{ vtkSmartPointer<vtkActor>::New() }
     , actorBuildLine{ vtkSmartPointer<vtkActor2D>::New() }
 {
     enableToolTipWhenMouseAboveWidget();
@@ -216,10 +217,14 @@ void SceneWidget::prepareStageWithCurrentNodeConfiguration()
 
 void SceneWidget::drawVisualizationWithOptional3DSubstate()
 {
-    // Remove old actor from renderer to avoid "shadow" artifacts
+    // Remove old actors from renderer to avoid "shadow" artifacts
     if (gridActor && renderer)
     {
         renderer->RemoveActor(gridActor);
+    }
+    if (backgroundActor && renderer)
+    {
+        renderer->RemoveActor(backgroundActor);
     }
     
     // Check if we should use 3D substate visualization
@@ -228,6 +233,15 @@ void SceneWidget::drawVisualizationWithOptional3DSubstate()
         const auto& substateInfo = settingParameter->substateInfo[activeSubstateFor3D];
         if (! std::isnan(substateInfo.minValue) && ! std::isnan(substateInfo.maxValue))
         {
+            // Draw flat background scene if enabled
+            if (flatSceneBackgroundVisible)
+            {
+                sceneWidgetVisualizerProxy->drawFlatSceneBackground(settingParameter->numberOfRowsY,
+                                                                    settingParameter->numberOfColumnX,
+                                                                    renderer,
+                                                                    backgroundActor);
+            }
+
             // Use quad mesh surface for better 3D visualization
             if (useQuadMeshFor3DSubstate)
             {
@@ -266,6 +280,14 @@ void SceneWidget::refreshVisualizationWithOptional3DSubstate()
         const auto& substateInfo = settingParameter->substateInfo[activeSubstateFor3D];
         if (! std::isnan(substateInfo.minValue) && ! std::isnan(substateInfo.maxValue))
         {
+            // Refresh flat background scene if enabled
+            if (flatSceneBackgroundVisible && backgroundActor && backgroundActor->GetMapper())
+            {
+                sceneWidgetVisualizerProxy->refreshFlatSceneBackground(settingParameter->numberOfRowsY,
+                                                                       settingParameter->numberOfColumnX,
+                                                                       backgroundActor);
+            }
+
             // Use quad mesh surface for better 3D visualization
             if (useQuadMeshFor3DSubstate)
             {
@@ -1027,6 +1049,7 @@ void SceneWidget::clearScene()
 
     // Reset VTK actors
     gridActor = vtkSmartPointer<vtkActor>::New();
+    backgroundActor = vtkSmartPointer<vtkActor>::New();
     actorBuildLine = vtkSmartPointer<vtkActor2D>::New();
 }
 
@@ -1201,6 +1224,18 @@ void SceneWidget::setGridLinesVisible(bool visible)
     if (actorBuildLine)
     {
         actorBuildLine->SetVisibility(visible);
+        triggerRenderUpdate();
+    }
+}
+
+void SceneWidget::setFlatSceneBackgroundVisible(bool visible)
+{
+    flatSceneBackgroundVisible = visible;
+    
+    // Update background actor visibility
+    if (backgroundActor)
+    {
+        backgroundActor->SetVisibility(visible);
         triggerRenderUpdate();
     }
 }
