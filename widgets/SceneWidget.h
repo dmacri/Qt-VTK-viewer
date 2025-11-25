@@ -199,6 +199,14 @@ public:
     /// @param fieldName The name of the substate field (e.g., "h", "z"), or empty string to disable
     void setActiveSubstateFor3D(const std::string& fieldName);
 
+    /// @brief Initialize and draw 3D substate visualization for the current step.
+    /// 
+    /// This method should be called when activating 3D substate visualization to initialize
+    /// the scene with the quad mesh surface. Subsequent step updates will use refresh instead.
+    /// 
+    /// @note Call this after setActiveSubstateFor3D() to actually render the visualization
+    void initializeAndDraw3DSubstateVisualization();
+
     /** @brief Callback function for VTK keypress events.
      *  It handles arrow_up and arrow_down keys pressed and changes view of the widget.
      *  Provided argument types are compatible with vtkCallbackCommand::SetCallback
@@ -467,6 +475,9 @@ protected:
 
     /// @brief Name of the substate field currently used for 3D visualization (empty if none)
     std::string activeSubstateFor3D;
+
+    /// @brief Flag to use quad mesh surface for 3D substate visualization instead of height bars
+    bool useQuadMeshFor3DSubstate = true;
 
     /// @brief Current camera azimuth angle (cached to avoid recalculation)
     double cameraAzimuth{};

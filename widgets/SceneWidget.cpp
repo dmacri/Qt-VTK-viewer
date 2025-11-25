@@ -228,13 +228,28 @@ void SceneWidget::drawVisualizationWithOptional3DSubstate()
         const auto& substateInfo = settingParameter->substateInfo[activeSubstateFor3D];
         if (! std::isnan(substateInfo.minValue) && ! std::isnan(substateInfo.maxValue))
         {
-            sceneWidgetVisualizerProxy->drawWithVTK3DSubstate(settingParameter->numberOfRowsY, 
-                                                              settingParameter->numberOfColumnX, 
-                                                              renderer, 
-                                                              gridActor,
-                                                              activeSubstateFor3D,
-                                                              substateInfo.minValue,
-                                                              substateInfo.maxValue);
+            // Use quad mesh surface for better 3D visualization
+            if (useQuadMeshFor3DSubstate)
+            {
+                sceneWidgetVisualizerProxy->drawWithVTK3DSubstateQuadMesh(settingParameter->numberOfRowsY, 
+                                                                          settingParameter->numberOfColumnX, 
+                                                                          renderer, 
+                                                                          gridActor,
+                                                                          activeSubstateFor3D,
+                                                                          substateInfo.minValue,
+                                                                          substateInfo.maxValue);
+            }
+            else
+            {
+                // Fallback to old height bar visualization
+                sceneWidgetVisualizerProxy->drawWithVTK3DSubstate(settingParameter->numberOfRowsY, 
+                                                                  settingParameter->numberOfColumnX, 
+                                                                  renderer, 
+                                                                  gridActor,
+                                                                  activeSubstateFor3D,
+                                                                  substateInfo.minValue,
+                                                                  substateInfo.maxValue);
+            }
             return;
         }
     }
@@ -251,12 +266,26 @@ void SceneWidget::refreshVisualizationWithOptional3DSubstate()
         const auto& substateInfo = settingParameter->substateInfo[activeSubstateFor3D];
         if (! std::isnan(substateInfo.minValue) && ! std::isnan(substateInfo.maxValue))
         {
-            sceneWidgetVisualizerProxy->refreshWindowsVTK3DSubstate(settingParameter->numberOfRowsY, 
-                                                                    settingParameter->numberOfColumnX, 
-                                                                    gridActor,
-                                                                    activeSubstateFor3D,
-                                                                    substateInfo.minValue,
-                                                                    substateInfo.maxValue);
+            // Use quad mesh surface for better 3D visualization
+            if (useQuadMeshFor3DSubstate)
+            {
+                sceneWidgetVisualizerProxy->refreshWindowsVTK3DSubstateQuadMesh(settingParameter->numberOfRowsY, 
+                                                                                settingParameter->numberOfColumnX, 
+                                                                                gridActor,
+                                                                                activeSubstateFor3D,
+                                                                                substateInfo.minValue,
+                                                                                substateInfo.maxValue);
+            }
+            else
+            {
+                // Fallback to old height bar visualization
+                sceneWidgetVisualizerProxy->refreshWindowsVTK3DSubstate(settingParameter->numberOfRowsY, 
+                                                                        settingParameter->numberOfColumnX, 
+                                                                        gridActor,
+                                                                        activeSubstateFor3D,
+                                                                        substateInfo.minValue,
+                                                                        substateInfo.maxValue);
+            }
             return;
         }
     }
@@ -1067,7 +1096,7 @@ void SceneWidget::setViewMode2D()
     // Redraw visualization in 2D mode (without 3D substate)
     if (settingParameter && sceneWidgetVisualizerProxy)
     {
-        drawVisualizationWithOptional3DSubstate();
+        drawVisualizationWithOptional3DSubstate(); // TODO: GB: Should it be called from 2D `SceneWidget::setViewMode2D()`?
         renderWindow()->Render();
     }
 
@@ -1308,4 +1337,28 @@ void SceneWidget::setupInteractorStyleWithWaitCursor()
 {
     vtkNew<CustomInteractorStyle> style;
     interactor()->SetInteractorStyle(style);
+}
+
+void SceneWidget::initializeAndDraw3DSubstateVisualization()
+{
+    // Read the current step data from files
+    lines.resize(settingParameter->numberOfLines);
+    sceneWidgetVisualizerProxy->readStageStateFromFilesForStep(settingParameter.get(), &lines[0]);
+
+    // Draw the 3D substate visualization (initializes the scene with quad mesh)
+    drawVisualizationWithOptional3DSubstate();
+
+    // Update load balancing lines if we have any
+    if (settingParameter->numberOfLines > 0)
+    {
+        sceneWidgetVisualizerProxy->getVisualizer().refreshBuildLoadBalanceLine(lines,
+                                                                                settingParameter->numberOfRowsY + 1,
+                                                                                actorBuildLine);
+    }
+
+    // Update step number display
+    sceneWidgetVisualizerProxy->getVisualizer().buildStepLine(settingParameter->step, singleLineTextStep);
+
+    // Trigger render update
+    triggerRenderUpdate();
 }

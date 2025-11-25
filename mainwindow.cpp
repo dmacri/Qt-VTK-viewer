@@ -2198,8 +2198,8 @@ void MainWindow::onUse3rdDimensionRequested(const std::string& fieldName)
     // Switch to 3D mode
     on3DModeRequested();
 
-    // Refresh the visualization with the new substate for the current step
-    ui->sceneWidget->selectedStepParameter(currentStep);
+    // Initialize and draw the 3D substate visualization (this will create the quad mesh)
+    ui->sceneWidget->initializeAndDraw3DSubstateVisualization();
     
     // Cursor restored automatically by WaitCursorGuard destructor
 }
