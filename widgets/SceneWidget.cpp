@@ -1113,6 +1113,16 @@ void SceneWidget::setViewMode2D()
     // Disable 3D substate visualization when switching to 2D mode
     activeSubstateFor3D.clear();
     
+    // In 2D mode, flat scene background is always visible (it's the 2D visualization itself)
+    flatSceneBackgroundVisible = true;
+    
+    // Clear the 3D background actor (remove any 3D artifacts)
+    if (backgroundActor && renderer)
+    {
+        renderer->RemoveActor(backgroundActor);
+        backgroundActor = vtkSmartPointer<vtkActor>::New();
+    }
+    
     // Redraw visualization in 2D mode (without 3D substate)
     if (settingParameter && sceneWidgetVisualizerProxy)
     {
@@ -1203,6 +1213,13 @@ void SceneWidget::setViewMode3D()
     // Hide 2D ruler axes in 3D mode
     rulerAxisX->SetVisibility(false);
     rulerAxisY->SetVisibility(false);
+
+    // Clear any 2D background artifacts before rendering 3D scene
+    if (backgroundActor && renderer)
+    {
+        renderer->RemoveActor(backgroundActor);
+        backgroundActor = vtkSmartPointer<vtkActor>::New();
+    }
 
     std::cout << "Switched to 3D view mode" << std::endl;
     
