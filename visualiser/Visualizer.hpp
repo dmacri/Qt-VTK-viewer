@@ -4,6 +4,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstdint>
 #include <vtkActor2D.h>
 #include <vtkCellArray.h>
 #include <vtkCoordinate.h>
@@ -29,6 +30,7 @@
 
 #include "utilities/types.h"    // StepIndex
 #include "OOpenCAL/base/Cell.h" // Color
+#include "visualiser/SettingParameter.h" // SubstateInfo
 
 class Line;
 
@@ -42,9 +44,9 @@ class Visualizer
 {
 public:
     template<class Matrix>
-    void drawWithVTK(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName = "");
+    void drawWithVTK(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName = "", const SubstateInfo* substateInfo = nullptr);
     template<class Matrix>
-    void refreshWindowsVTK(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName = "");
+    void refreshWindowsVTK(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName = "", const SubstateInfo* substateInfo = nullptr);
 
     /// @brief Draw 3D substate visualization as a quad mesh surface (new healed quad approach).
     template<class Matrix>
@@ -65,7 +67,7 @@ public:
 
 private:
     template<class Matrix>
-    void buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matrix& p, const std::string& substateFieldName = "");
+    void buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matrix& p, const std::string& substateFieldName = "", const struct SubstateInfo* substateInfo = nullptr);
 
     /** @brief Build 3D quad mesh surface for 3D substate visualization (healed quad approach).
      * 
@@ -95,7 +97,7 @@ private:
 ////////////////////////////////////////////////////////////////////
 
 template <class Matrix>
-void Visualizer::drawWithVTK(const Matrix &p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName)
+void Visualizer::drawWithVTK(const Matrix &p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, const SubstateInfo* substateInfo)
 {
     const auto numberOfPoints = nRows * nCols;
     vtkNew<vtkDoubleArray> pointValues;
@@ -132,7 +134,7 @@ void Visualizer::drawWithVTK(const Matrix &p, int nRows, int nCols, vtkSmartPoin
     structuredGrid->SetPoints(points);
     structuredGrid->GetPointData()->SetScalars(pointValues);
 
-    buidColor(lut, nCols, nRows, p, substateFieldName);
+    buidColor(lut, nCols, nRows, p, substateFieldName, substateInfo);
 
     vtkNew<vtkDataSetMapper> gridMapper;
     gridMapper->UpdateDataObject();
@@ -145,11 +147,11 @@ void Visualizer::drawWithVTK(const Matrix &p, int nRows, int nCols, vtkSmartPoin
 }
 
 template<class Matrix>
-void Visualizer::refreshWindowsVTK(const Matrix &p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName)
+void Visualizer::refreshWindowsVTK(const Matrix &p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, const SubstateInfo* substateInfo)
 {
     if (vtkLookupTable* lut = dynamic_cast<vtkLookupTable*>(gridActor->GetMapper()->GetLookupTable()))
     {
-        buidColor(lut, nCols, nRows, p, substateFieldName);
+        buidColor(lut, nCols, nRows, p, substateFieldName, substateInfo);
         gridActor->GetMapper()->SetLookupTable(lut);
         gridActor->GetMapper()->Update();
     }
@@ -180,21 +182,81 @@ inline double toUnitColor(double channel)
 }
 
 template<class Matrix>
-void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matrix &p, const std::string& substateFieldName)
+void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matrix &p, const std::string& substateFieldName, const SubstateInfo* substateInfo)
 {
     for (int r = 0; r < nRows; ++r)
     {
         for (int c = 0; c < nCols; ++c)
         {
-            // Use substateFieldName if provided, otherwise use nullptr for default color
-            const char* fieldNamePtr = substateFieldName.empty() ? nullptr : substateFieldName.c_str();
-            const auto color = p[r][c].outputValue(fieldNamePtr);
+            Color color(0, 0, 0, 255);  // Default: opaque black
+            double alpha = 1.0;
+            
+            // If substateInfo with colors is provided, use gradient coloring
+            if (substateInfo && !substateInfo->minColor.empty() && !substateInfo->maxColor.empty())
+            {
+                // Get substate value for this cell
+                const char* fieldNamePtr = substateFieldName.empty() ? nullptr : substateFieldName.c_str();
+                std::string cellValue = p[r][c].stringEncoding(fieldNamePtr);
+                
+                try
+                {
+                    double value = std::stod(cellValue);
+                    double minVal = substateInfo->minValue;
+                    double maxVal = substateInfo->maxValue;
+                    
+                    // Check if value is within range
+                    if (std::isnan(minVal) || std::isnan(maxVal) || value < minVal || value > maxVal)
+                    {
+                        // Value out of range - make transparent
+                        alpha = 0.0;
+                        color = Color(0, 0, 0, 0);
+                    }
+                    else
+                    {
+                        // Normalize value to [0, 1]
+                        double normalized = (value - minVal) / (maxVal - minVal);
+                        
+                        // Parse min and max colors (hex format: #RRGGBB)
+                        auto parseHexColor = [](const std::string& hex) -> std::tuple<int, int, int> {
+                            if (hex.length() != 7 || hex[0] != '#')
+                                return {0, 0, 0};
+                            int r = std::stoi(hex.substr(1, 2), nullptr, 16);
+                            int g = std::stoi(hex.substr(3, 2), nullptr, 16);
+                            int b = std::stoi(hex.substr(5, 2), nullptr, 16);
+                            return {r, g, b};
+                        };
+                        
+                        auto [minR, minG, minB] = parseHexColor(substateInfo->minColor);
+                        auto [maxR, maxG, maxB] = parseHexColor(substateInfo->maxColor);
+                        
+                        // Interpolate between min and max colors
+                        int r = static_cast<int>(minR + (maxR - minR) * normalized);
+                        int g = static_cast<int>(minG + (maxG - minG) * normalized);
+                        int b = static_cast<int>(minB + (maxB - minB) * normalized);
+                        
+                        color = Color(static_cast<std::uint8_t>(r), static_cast<std::uint8_t>(g), static_cast<std::uint8_t>(b), 255);
+                    }
+                }
+                catch (const std::exception&)
+                {
+                    // Failed to parse value - make transparent
+                    alpha = 0.0;
+                    color = Color(0, 0, 0, 0);
+                }
+            }
+            else
+            {
+                // Use default outputValue coloring
+                const char* fieldNamePtr = substateFieldName.empty() ? nullptr : substateFieldName.c_str();
+                color = p[r][c].outputValue(fieldNamePtr);
+            }
+            
             lut->SetTableValue(
                 (nRows - 1 - r) * nCols + c,
                 toUnitColor(color.getRed()),
                 toUnitColor(color.getGreen()),
                 toUnitColor(color.getBlue()),
-                1.0 // alpha channel – keep as 1.0 for full opacity (optional scaling)
+                alpha
             );
         }
     }

@@ -73,14 +73,14 @@ public:
         m_impl.modelReader.readStageStateFromFilesForStep(m_impl.p, sp, lines);
     }
 
-    void drawWithVTK(int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName = "") override
+    void drawWithVTK(int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName = "", const struct SubstateInfo* substateInfo = nullptr) override
     {
-        m_impl.visualiser.drawWithVTK(m_impl.p, nRows, nCols, renderer, gridActor, substateFieldName);
+        m_impl.visualiser.drawWithVTK(m_impl.p, nRows, nCols, renderer, gridActor, substateFieldName, substateInfo);
     }
 
-    void refreshWindowsVTK(int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName = "") override
+    void refreshWindowsVTK(int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName = "", const struct SubstateInfo* substateInfo = nullptr) override
     {
-        m_impl.visualiser.refreshWindowsVTK(m_impl.p, nRows, nCols, gridActor, substateFieldName);
+        m_impl.visualiser.refreshWindowsVTK(m_impl.p, nRows, nCols, gridActor, substateFieldName, substateInfo);
     }
 
     void drawWithVTK3DSubstate(int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue) override

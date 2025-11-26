@@ -262,7 +262,12 @@ void SceneWidget::drawVisualizationWithOptional3DSubstate()
     }
     
     // Fallback to regular 2D visualization
-    sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, renderer, gridActor, activeSubstateFor2D);
+    const SubstateInfo* substateInfo2D = nullptr;
+    if (!activeSubstateFor2D.empty() && settingParameter->substateInfo.count(activeSubstateFor2D) > 0)
+    {
+        substateInfo2D = &settingParameter->substateInfo[activeSubstateFor2D];
+    }
+    sceneWidgetVisualizerProxy->drawWithVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, renderer, gridActor, activeSubstateFor2D, substateInfo2D);
 }
 
 void SceneWidget::refreshVisualizationWithOptional3DSubstate()
@@ -292,7 +297,12 @@ void SceneWidget::refreshVisualizationWithOptional3DSubstate()
     }
     
     // Fallback to regular 2D visualization
-    sceneWidgetVisualizerProxy->refreshWindowsVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, gridActor, activeSubstateFor2D);
+    const SubstateInfo* substateInfo2D = nullptr;
+    if (!activeSubstateFor2D.empty() && settingParameter->substateInfo.count(activeSubstateFor2D) > 0)
+    {
+        substateInfo2D = &settingParameter->substateInfo[activeSubstateFor2D];
+    }
+    sceneWidgetVisualizerProxy->refreshWindowsVTK(settingParameter->numberOfRowsY, settingParameter->numberOfColumnX, gridActor, activeSubstateFor2D, substateInfo2D);
 }
 
 void SceneWidget::addVisualizer(const std::string& filename, StepIndex stepNumber)
