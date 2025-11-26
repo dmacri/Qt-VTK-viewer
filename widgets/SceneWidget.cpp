@@ -233,6 +233,13 @@ void SceneWidget::drawVisualizationWithOptional3DSubstate()
         const auto& substateInfo = settingParameter->substateInfo[activeSubstateFor3D];
         if (! std::isnan(substateInfo.minValue) && ! std::isnan(substateInfo.maxValue))
         {
+            // Clear old background actor to remove any 2D artifacts
+            if (backgroundActor && renderer)
+            {
+                renderer->RemoveActor(backgroundActor);
+                backgroundActor = vtkSmartPointer<vtkActor>::New();
+            }
+
             // Draw flat background scene if enabled
             if (flatSceneBackgroundVisible)
             {

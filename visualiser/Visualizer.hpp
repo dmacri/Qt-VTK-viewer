@@ -446,19 +446,21 @@ void Visualizer::drawFlatSceneBackground(const Matrix& p, int nRows, int nCols, 
     vtkNew<vtkDoubleArray> pointValues;
     pointValues->SetNumberOfTuples(numberOfPoints);
     
-    // Set scalar values for color mapping
+    // Set scalar values - all same value for uniform color
     for (int row = 0; row < nRows; row++)
     {
         for (int col = 0; col < nCols; col++)
         {
             int pointIndex = row * nCols + col;
-            int colorIndex = (nRows - 1 - row) * nCols + col;
-            pointValues->SetValue(pointIndex, colorIndex);
+            pointValues->SetValue(pointIndex, 0);  // All points have same value for uniform color
         }
     }
 
     vtkNew<vtkLookupTable> lut;
-    lut->SetNumberOfTableValues(numberOfPoints);
+    lut->SetNumberOfTableValues(1);  // Only one color needed
+    
+    // Set uniform light gray color for the background plane
+    lut->SetTableValue(0, 0.8, 0.8, 0.8, 1.0);  // Light gray, fully opaque
 
     // Create flat plane at Z=0
     vtkNew<vtkPoints> points;
@@ -476,13 +478,11 @@ void Visualizer::drawFlatSceneBackground(const Matrix& p, int nRows, int nCols, 
     structuredGrid->SetPoints(points);
     structuredGrid->GetPointData()->SetScalars(pointValues);
 
-    buidColor(lut, nCols, nRows, p);
-
     vtkNew<vtkDataSetMapper> backgroundMapper;
     backgroundMapper->UpdateDataObject();
     backgroundMapper->SetInputData(structuredGrid);
     backgroundMapper->SetLookupTable(lut);
-    backgroundMapper->SetScalarRange(0, numberOfPoints - 1);
+    backgroundMapper->SetScalarRange(0, 0);  // Single color
 
     backgroundActor->SetMapper(backgroundMapper);
     renderer->AddActor(backgroundActor);
@@ -499,7 +499,8 @@ void Visualizer::refreshFlatSceneBackground(const Matrix& p, int nRows, int nCol
 
     if (vtkLookupTable* lut = dynamic_cast<vtkLookupTable*>(backgroundActor->GetMapper()->GetLookupTable()))
     {
-        buidColor(lut, nCols, nRows, p);
+        // Keep uniform light gray color - no need to update from cell data
+        lut->SetTableValue(0, 0.8, 0.8, 0.8, 1.0);  // Light gray, fully opaque
         backgroundActor->GetMapper()->SetLookupTable(lut);
         backgroundActor->GetMapper()->Update();
     }
