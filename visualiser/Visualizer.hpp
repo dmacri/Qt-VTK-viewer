@@ -109,9 +109,9 @@ private:
      * @param maxValue Maximum value for normalization
      * @return vtkSmartPointer<vtkPolyData> with quad mesh and colors */
     template<class Matrix>
-    vtkSmartPointer<vtkPolyData> build3DSubstateSurfaceQuadMesh(const Matrix& p, int nRows, int nCols, 
-                                                                 const std::string& substateFieldName,
-                                                                 double minValue, double maxValue);
+    vtkSmartPointer<vtkPolyData> build3DSubstateSurfaceQuadMesh(const Matrix& p, int nRows, int nCols,
+                                                                const std::string& substateFieldName,
+                                                                double minValue, double maxValue);
 
     /** @brief Creates a vtkPolyData representing a set of 2D lines.
       * @param lines Vector of Line objects (each defines a line segment)
@@ -229,7 +229,7 @@ void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matr
 ////////////////////////////////////////////////////////////////////
 // 3D Substate Visualization Methods
 
-template <class Matrix>
+template <class Matrix>  // TODO: GB: Should we remove derecated version of using SubstatePoints?
 void Visualizer::drawWithVTK3DSubstate(const Matrix &p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue)
 {
     vtkNew<vtkUnsignedCharArray> pointColors;
