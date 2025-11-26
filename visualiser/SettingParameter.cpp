@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cctype>
+#include <ranges>
 #include "SettingParameter.h"
 
 
@@ -22,7 +23,7 @@ static bool isValidHexColor(const std::string& color)
         return false;
     for (size_t i = 1; i < color.length(); ++i)
     {
-        if (!std::isxdigit(color[i]))
+        if (! std::isxdigit(color[i]))
             return false;
     }
     return true;
@@ -172,16 +173,9 @@ std::map<std::string, SubstateInfo> SettingParameter::parseSubstates() const
 
 std::vector<std::string> SettingParameter::getSubstateFields() const
 {
-    std::vector<std::string> fields;
-    
-    // Use parseSubstates() to get all substate info, then extract just the names
-    auto parsed = parseSubstates();
-    for (const auto& [name, info] : parsed)
-    {
-        fields.push_back(name);
-    }
-    
-    return fields;
+    return parseSubstates()
+    | std::views::transform([](const auto& p) { return p.first; })
+        | std::ranges::to<std::vector<std::string>>();
 }
 
 void SettingParameter::initializeSubstateInfo()

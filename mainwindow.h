@@ -87,6 +87,8 @@ private slots: // menu actions
     void syncCameraSliders();
 
     void onUse3rdDimensionRequested(const std::string& fieldName);
+    void onUse2DRequested(const std::string& fieldName);
+    void onDeactivateRequested();
 
     void onPlayButtonClicked();
     void onStopButtonClicked();

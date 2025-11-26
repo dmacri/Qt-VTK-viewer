@@ -65,6 +65,16 @@ signals:
      * @param fieldName The name of the field */
     void use3rdDimensionRequested(const std::string& fieldName);
 
+    /** @brief Signal emitted when a field is requested to be used as 2D visualization.
+     * 
+     * @param fieldName The name of the field */
+    void use2DRequested(const std::string& fieldName);
+
+    /** @brief Signal emitted when deactivation of substate is requested.
+     * 
+     * Requests to deactivate any active substate (use default colors) */
+    void deactivateRequested();
+
 private slots:
     /** @brief Handle min/max value changes from SubstateDisplayWidget.
      * 
@@ -90,6 +100,9 @@ private slots:
      * @param fieldName The name of the field */
     void onCalculateMaximumRequested(const std::string& fieldName);
 
+    /** @brief Handle deactivate button click */
+    void onDeactivateClicked();
+
 private:
     /** @brief Clear all substate widgets. */
     void clearWidgets();
@@ -97,6 +110,7 @@ private:
     QScrollArea* m_scrollArea;
     QWidget* m_containerWidget;
     QVBoxLayout* m_containerLayout;
+    class QPushButton* m_deactivateButton;
     std::map<std::string, SubstateDisplayWidget*> m_substateWidgets;
     SettingParameter* m_currentSettingParameter = nullptr;
     class ISceneWidgetVisualizer* m_currentVisualizer = nullptr;

@@ -26,6 +26,7 @@ SubstateDisplayWidget::SubstateDisplayWidget(const std::string& fieldName, QWidg
     , m_maxSpinBox(new QDoubleSpinBox())
     , m_formatLineEdit(new QLineEdit())
     , m_use3dButton(new QPushButton("Use as 3rd dimension"))
+    , m_use2dButton(new QPushButton("Use as 2D"))
 {
     setupUI();
     connectSignals();
@@ -119,10 +120,22 @@ void SubstateDisplayWidget::setupUI()
     formatLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->addLayout(formatLayout);
 
+    // Buttons layout (3D, 2D)
+    auto buttonsLayout = new QHBoxLayout();
+    buttonsLayout->setSpacing(2);
+    buttonsLayout->setContentsMargins(0, 0, 0, 0);
+    
     // Use as 3rd dimension button
     m_use3dButton->setMaximumHeight(22);
     m_use3dButton->setStyleSheet("QPushButton { font-size: 8pt; padding: 2px; }");
-    mainLayout->addWidget(m_use3dButton);
+    buttonsLayout->addWidget(m_use3dButton);
+    
+    // Use as 2D button
+    m_use2dButton->setMaximumHeight(22);
+    m_use2dButton->setStyleSheet("QPushButton { font-size: 8pt; padding: 2px; background-color: #e8f4f8; }");
+    buttonsLayout->addWidget(m_use2dButton);
+    
+    mainLayout->addLayout(buttonsLayout);
 
     setLayout(mainLayout);
 }
@@ -132,6 +145,8 @@ void SubstateDisplayWidget::connectSignals()
     connect(m_use3dButton, &QPushButton::clicked, this, [this]() {
         emit use3rdDimensionRequested(m_fieldName);
     });
+
+    connect(m_use2dButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onUse2DClicked);
 
     // Connect spinbox value changes to update button state
     connect(m_minSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
@@ -350,4 +365,9 @@ void SubstateDisplayWidget::onCalculateMinimumGreaterThanZeroAndMaximum()
 {
     emit onCalculateMinimumGreaterThanZero();
     emit onCalculateMaximum();
+}
+
+void SubstateDisplayWidget::onUse2DClicked()
+{
+    emit use2DRequested(m_fieldName);
 }

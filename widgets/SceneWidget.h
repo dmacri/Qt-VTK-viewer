@@ -209,6 +209,25 @@ public:
     /// @param fieldName The name of the substate field (e.g., "h", "z"), or empty string to disable
     void setActiveSubstateFor3D(const std::string& fieldName);
 
+    /// @brief Set the active substate field for 2D visualization.
+    /// 
+    /// When a substate is set as active for 2D, the visualization will use that field's values
+    /// to determine the color of each cell in 2D mode via outputValue(fieldName.c_str()).
+    /// 
+    /// @param fieldName The name of the substate field (e.g., "h", "z"), or empty string to use default
+    void setActiveSubstateFor2D(const std::string& fieldName);
+
+    /// @brief Get the active substate field for 2D visualization.
+    /// 
+    /// @return The name of the active substate field, or empty string if using default
+    std::string getActiveSubstateFor2D() const { return activeSubstateFor2D; }
+
+    /// @brief Refresh the visualization for the current step.
+    /// 
+    /// This method immediately updates the visualization with the current active substate settings.
+    /// It's useful when you want to see changes immediately without waiting for step changes.
+    void refreshVisualization();
+
     /// @brief Initialize and draw 3D substate visualization for the current step.
     /// 
     /// This method should be called when activating 3D substate visualization to initialize
@@ -495,6 +514,9 @@ protected:
 
     /// @brief Name of the substate field currently used for 3D visualization (empty if none)
     std::string activeSubstateFor3D;
+
+    /// @brief Name of the substate field currently used for 2D visualization (empty if using default)
+    std::string activeSubstateFor2D;
 
     /// @brief Current camera azimuth angle (cached to avoid recalculation)
     double cameraAzimuth{};

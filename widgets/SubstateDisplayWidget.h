@@ -91,6 +91,11 @@ signals:
      * @param fieldName The name of the field */
     void use3rdDimensionRequested(const std::string& fieldName);
 
+    /** @brief Signal emitted when "Use as 2D" button is clicked.
+     * 
+     * @param fieldName The name of the field */
+    void use2DRequested(const std::string& fieldName);
+
     /** @brief Signal emitted when min or max values change.
      * 
      * @param fieldName The name of the field
@@ -132,6 +137,9 @@ private slots:
     /// @brief This is sum of onCalculateMinimumGreaterThanZero() and onCalculateMaximum()
     void onCalculateMinimumGreaterThanZeroAndMaximum();
 
+    /// @brief Handle "Use as 2D" button click
+    void onUse2DClicked();
+
 protected:
     /// @brief Override context menu event to add custom actions.
     void contextMenuEvent(QContextMenuEvent* event) override;
@@ -160,4 +168,5 @@ private:
     QDoubleSpinBox* m_maxSpinBox;
     QLineEdit* m_formatLineEdit;
     QPushButton* m_use3dButton;
+    QPushButton* m_use2dButton;
 };

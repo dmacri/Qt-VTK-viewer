@@ -4,6 +4,7 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QFrame>
+#include <QPushButton>
 #include "SubstatesDockWidget.h"
 #include "SubstateDisplayWidget.h"
 #include "visualiser/SettingParameter.h"
@@ -26,6 +27,7 @@ SubstatesDockWidget::SubstatesDockWidget(QWidget* parent)
     , m_scrollArea(nullptr)
     , m_containerWidget(nullptr)
     , m_containerLayout(nullptr)
+    , m_deactivateButton(nullptr)
 {
     // Initialize will be called after UI setup in MainWindow
     // Set initial size - narrower for two-column layout
@@ -42,6 +44,19 @@ void SubstatesDockWidget::initializeFromUI()
         if (m_containerWidget)
         {
             m_containerLayout = qobject_cast<QVBoxLayout*>(m_containerWidget->layout());
+            
+            // Add deactivate button at the bottom
+            if (m_containerLayout)
+            {
+                m_containerLayout->addStretch();
+                
+                m_deactivateButton = new QPushButton("Deactivate Substate");
+                m_deactivateButton->setMaximumHeight(24);
+                m_deactivateButton->setStyleSheet("QPushButton { font-size: 9pt; padding: 3px; background-color: #f8e8e8; }");
+                m_containerLayout->addWidget(m_deactivateButton);
+                
+                connect(m_deactivateButton, &QPushButton::clicked, this, &SubstatesDockWidget::onDeactivateClicked);
+            }
         }
     }
 }
@@ -79,6 +94,8 @@ void SubstatesDockWidget::updateSubstates(SettingParameter* settingParameter)
         // Connect signals
         connect(widget, &SubstateDisplayWidget::use3rdDimensionRequested,
                 this, &SubstatesDockWidget::use3rdDimensionRequested);
+        connect(widget, &SubstateDisplayWidget::use2DRequested,
+                this, &SubstatesDockWidget::use2DRequested);
         connect(widget, QOverload<const std::string&, double, double>::of(&SubstateDisplayWidget::minMaxValuesChanged),
                 this, &SubstatesDockWidget::onMinMaxValuesChanged);
         connect(widget, &SubstateDisplayWidget::calculateMinimumRequested,
@@ -298,4 +315,9 @@ void SubstatesDockWidget::onCalculateMaximumRequested(const std::string& fieldNa
             it->second->setMaxValue(maxValue);
         }
     }
+}
+
+void SubstatesDockWidget::onDeactivateClicked()
+{
+    emit deactivateRequested();
 }

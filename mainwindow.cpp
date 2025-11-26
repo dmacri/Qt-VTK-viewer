@@ -873,6 +873,11 @@ void MainWindow::switchToModel(const QString& modelName)
             throw std::invalid_argument("Model not registered: " + modelName.toStdString());
         }
 
+        // Clear active substates when switching models
+        ui->sceneWidget->setActiveSubstateFor2D("");
+        ui->sceneWidget->setActiveSubstateFor3D("");
+        activeSubstateFor3D = "";
+
         ui->sceneWidget->switchModel(modelName.toStdString());
 
         // Update substate dock widget for new model
@@ -911,6 +916,10 @@ void MainWindow::updateSubstateDockeWidget()
         // Connect signal for 3D visualization request
         connect(ui->substatesDockWidget, &SubstatesDockWidget::use3rdDimensionRequested,
                 this, &MainWindow::onUse3rdDimensionRequested);
+        connect(ui->substatesDockWidget, &SubstatesDockWidget::use2DRequested,
+                this, &MainWindow::onUse2DRequested);
+        connect(ui->substatesDockWidget, &SubstatesDockWidget::deactivateRequested,
+                this, &MainWindow::onDeactivateRequested);
     }
 }
 
@@ -918,6 +927,11 @@ void MainWindow::onReloadDataRequested()
 {
     try
     {
+        // Clear active substates when reloading data
+        ui->sceneWidget->setActiveSubstateFor2D("");
+        ui->sceneWidget->setActiveSubstateFor3D("");
+        activeSubstateFor3D = "";
+
         ui->sceneWidget->reloadData();
 
         // Update substate dock widget after reload
@@ -961,6 +975,11 @@ void MainWindow::openConfigurationFile(const QString& configFileName, std::share
     {
         // Stop any ongoing playback
         playbackTimer.stop();
+
+        // Clear active substates when opening new configuration
+        ui->sceneWidget->setActiveSubstateFor2D("");
+        ui->sceneWidget->setActiveSubstateFor3D("");
+        activeSubstateFor3D = "";
 
         if (bool isFirstConfiguration [[maybe_unused]] = ui->inputFilePathLabel->getFileName().isEmpty())
         {
@@ -2229,3 +2248,32 @@ void MainWindow::onUse3rdDimensionRequested(const std::string& fieldName)
     
     // Cursor restored automatically by WaitCursorGuard destructor
 }
+
+void MainWindow::onUse2DRequested(const std::string& fieldName)
+{
+    // Show wait cursor during visualization change
+    WaitCursorGuard waitCursor("Switching to 2D substate visualization...");
+
+    // Set the active substate for 2D visualization in SceneWidget
+    ui->sceneWidget->setActiveSubstateFor2D(fieldName);
+    
+    // Immediately refresh visualization to show the change
+    ui->sceneWidget->refreshVisualization();
+    
+    // Cursor restored automatically by WaitCursorGuard destructor
+}
+
+void MainWindow::onDeactivateRequested()
+{
+    // Show wait cursor during visualization change
+    WaitCursorGuard waitCursor("Deactivating substate visualization...");
+
+    // Clear the active substate for 2D visualization in SceneWidget
+    ui->sceneWidget->setActiveSubstateFor2D("");
+    
+    // Immediately refresh visualization to show the change
+    ui->sceneWidget->refreshVisualization();
+    
+    // Cursor restored automatically by WaitCursorGuard destructor
+}
+
