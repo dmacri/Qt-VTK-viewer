@@ -30,7 +30,7 @@ public:
      * 
      * @param statusMessage Optional message to display under cursor.
      *                      If empty, no message is shown. */
-    explicit WaitCursorGuard(const std::string& statusMessage = "", bool restoneOnDestroy=true);
+    explicit WaitCursorGuard(const std::string& statusMessage = "");
 
     /** @brief Destructor - restores normal cursor and hides message. */
     ~WaitCursorGuard();
@@ -56,8 +56,6 @@ public:
 private:
     std::chrono::steady_clock::time_point startTime;
     bool isActive = false;
-
-    bool restoneOnDestroy = true; // when operations are separated we don't want to restore default
 
     // Forward declaration to hide Qt dependency
     class StatusMessageImpl;

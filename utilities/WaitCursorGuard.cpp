@@ -50,8 +50,8 @@ void WaitCursorGuard::changeIcon(bool waitingIcon)
     }
 }
 
-WaitCursorGuard::WaitCursorGuard(const std::string& statusMessageText, bool restoneOnDestroy)
-    : startTime(std::chrono::steady_clock::now()), isActive(true), restoneOnDestroy(restoneOnDestroy)
+WaitCursorGuard::WaitCursorGuard(const std::string& statusMessageText)
+    : startTime(std::chrono::steady_clock::now()), isActive(true)
 {
     WaitCursorGuard::changeIcon(/*waitingIcon=*/true);
     
@@ -63,7 +63,7 @@ WaitCursorGuard::WaitCursorGuard(const std::string& statusMessageText, bool rest
 
 WaitCursorGuard::~WaitCursorGuard()
 {
-    if (isActive && restoneOnDestroy)
+    if (isActive)
     {
         statusMessage.reset();  // Destroy status message first
         WaitCursorGuard::changeIcon(/*waitingIcon=*/false);
