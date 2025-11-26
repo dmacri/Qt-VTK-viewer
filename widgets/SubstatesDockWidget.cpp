@@ -44,19 +44,6 @@ void SubstatesDockWidget::initializeFromUI()
         if (m_containerWidget)
         {
             m_containerLayout = qobject_cast<QVBoxLayout*>(m_containerWidget->layout());
-            
-            // Add deactivate button at the bottom
-            if (m_containerLayout)
-            {
-                m_containerLayout->addStretch();
-                
-                m_deactivateButton = new QPushButton("Deactivate Substate");
-                m_deactivateButton->setMaximumHeight(24);
-                m_deactivateButton->setStyleSheet("QPushButton { font-size: 9pt; padding: 3px; background-color: #f8e8e8; }");
-                m_containerLayout->addWidget(m_deactivateButton);
-                
-                connect(m_deactivateButton, &QPushButton::clicked, this, &SubstatesDockWidget::onDeactivateClicked);
-            }
         }
     }
 }
@@ -117,6 +104,16 @@ void SubstatesDockWidget::updateSubstates(SettingParameter* settingParameter)
 
     // Add stretch at the end to push widgets to the top
     m_containerLayout->addStretch();
+    
+    // Add deactivate button at the bottom (only create once)
+    if (!m_deactivateButton)
+    {
+        m_deactivateButton = new QPushButton("Deactivate Substate");
+        m_deactivateButton->setMaximumHeight(24);
+        m_deactivateButton->setStyleSheet("QPushButton { font-size: 9pt; padding: 3px; background-color: #f8e8e8; }");
+        connect(m_deactivateButton, &QPushButton::clicked, this, &SubstatesDockWidget::onDeactivateClicked);
+    }
+    m_containerLayout->addWidget(m_deactivateButton);
 }
 
 void SubstatesDockWidget::updateCellValues(SettingParameter* settingParameter, int row, int col, class ISceneWidgetVisualizer* visualizer)
@@ -172,9 +169,17 @@ void SubstatesDockWidget::saveParametersToSettings(SettingParameter* settingPara
 
 void SubstatesDockWidget::clearWidgets()
 {
-    // Remove all widgets from layout except header (first 2 items: label + separator)
-    // Start from index 2 to preserve header
-    while (m_containerLayout->count() > 2)
+    // Remove all widgets from layout except:
+    // - First 2 items: label + separator (header)
+    // - Last 2 items: stretch + deactivate button (footer)
+    // We need to count total items and remove only the middle ones (substates)
+    
+    // Count total items
+    int totalItems = m_containerLayout->count();
+    
+    // Remove items from index 2 to (totalItems - 2)
+    // This preserves header (0-1) and footer (totalItems-2 to totalItems-1)
+    while (m_containerLayout->count() > 4)  // Keep: header (2) + stretch (1) + button (1)
     {
         QLayoutItem* item = m_containerLayout->takeAt(2);
         if (QWidget* widget = item->widget())

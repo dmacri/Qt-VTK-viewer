@@ -874,9 +874,7 @@ void MainWindow::switchToModel(const QString& modelName)
         }
 
         // Clear active substates when switching models
-        ui->sceneWidget->setActiveSubstateFor2D("");
-        ui->sceneWidget->setActiveSubstateFor3D("");
-        activeSubstateFor3D = "";
+        clearActiveSubstates();
 
         ui->sceneWidget->switchModel(modelName.toStdString());
 
@@ -905,6 +903,14 @@ void MainWindow::switchToModel(const QString& modelName)
         updateMenu2ShowTheSelectedModeAsActive(currentModel, modelActionGroup);
     }
 }
+void MainWindow::clearActiveSubstates()
+{
+    // Clear active substates for both 2D and 3D visualization
+    ui->sceneWidget->setActiveSubstateFor2D("");
+    ui->sceneWidget->setActiveSubstateFor3D("");
+    activeSubstateFor3D = "";
+}
+
 void MainWindow::updateSubstateDockeWidget()
 {
     if (ui->substatesDockWidget && ui->sceneWidget->getSettingParameter())
@@ -928,9 +934,7 @@ void MainWindow::onReloadDataRequested()
     try
     {
         // Clear active substates when reloading data
-        ui->sceneWidget->setActiveSubstateFor2D("");
-        ui->sceneWidget->setActiveSubstateFor3D("");
-        activeSubstateFor3D = "";
+        clearActiveSubstates();
 
         ui->sceneWidget->reloadData();
 
@@ -977,9 +981,7 @@ void MainWindow::openConfigurationFile(const QString& configFileName, std::share
         playbackTimer.stop();
 
         // Clear active substates when opening new configuration
-        ui->sceneWidget->setActiveSubstateFor2D("");
-        ui->sceneWidget->setActiveSubstateFor3D("");
-        activeSubstateFor3D = "";
+        clearActiveSubstates();
 
         if (bool isFirstConfiguration [[maybe_unused]] = ui->inputFilePathLabel->getFileName().isEmpty())
         {

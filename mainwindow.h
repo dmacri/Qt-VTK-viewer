@@ -149,6 +149,9 @@ private:
     void createViewModeActionGroup();
     void updateCameraControlsVisibility();
 
+    /// @brief Clear all active substates (2D and 3D)
+    void clearActiveSubstates();
+
     // Recent files management
     void addToRecentFiles(const QString &filePath);
     QStringList loadRecentFiles() const;
