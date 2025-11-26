@@ -27,8 +27,11 @@
 #include <vtkProperty.h>
 #include <cmath>
 
+#include <QColor>
+
 #include "utilities/types.h"    // StepIndex
 #include "OOpenCAL/base/Cell.h"  // Color
+#include "widgets/ColorSettings.h"  // ColorSettings
 
 class Line;
 
@@ -459,8 +462,9 @@ void Visualizer::drawFlatSceneBackground(const Matrix& p, int nRows, int nCols, 
     vtkNew<vtkLookupTable> lut;
     lut->SetNumberOfTableValues(1);  // Only one color needed
     
-    // Set uniform light gray color for the background plane
-    lut->SetTableValue(0, 0.8, 0.8, 0.8, 1.0);  // Light gray, fully opaque
+    // Set uniform color for the background plane from settings
+    const QColor sceneColor = ColorSettings::instance().flatSceneBackgroundColor();
+    lut->SetTableValue(0, sceneColor.redF(), sceneColor.greenF(), sceneColor.blueF(), 1.0);
 
     // Create flat plane at Z=0
     vtkNew<vtkPoints> points;
@@ -499,8 +503,9 @@ void Visualizer::refreshFlatSceneBackground(const Matrix& p, int nRows, int nCol
 
     if (vtkLookupTable* lut = dynamic_cast<vtkLookupTable*>(backgroundActor->GetMapper()->GetLookupTable()))
     {
-        // Keep uniform light gray color - no need to update from cell data
-        lut->SetTableValue(0, 0.8, 0.8, 0.8, 1.0);  // Light gray, fully opaque
+        // Keep uniform color from settings - no need to update from cell data
+        const QColor sceneColor = ColorSettings::instance().flatSceneBackgroundColor();
+        lut->SetTableValue(0, sceneColor.redF(), sceneColor.greenF(), sceneColor.blueF(), 1.0);
         backgroundActor->GetMapper()->SetLookupTable(lut);
         backgroundActor->GetMapper()->Update();
     }
