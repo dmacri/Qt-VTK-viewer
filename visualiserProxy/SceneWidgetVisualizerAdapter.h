@@ -83,14 +83,14 @@ public:
         m_impl.visualiser.refreshWindowsVTK(m_impl.p, nRows, nCols, gridActor);
     }
 
-    void drawWithVTK3DSubstateQuadMesh(int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue) override
+    void drawWithVTK3DSubstate(int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue) override
     {
-        m_impl.visualiser.drawWithVTK3DSubstateQuadMesh(m_impl.p, nRows, nCols, renderer, gridActor, substateFieldName, minValue, maxValue);
+        m_impl.visualiser.drawWithVTK3DSubstate(m_impl.p, nRows, nCols, renderer, gridActor, substateFieldName, minValue, maxValue);
     }
 
-    void refreshWindowsVTK3DSubstateQuadMesh(int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue) override
+    void refreshWindowsVTK3DSubstate(int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue) override
     {
-        m_impl.visualiser.refreshWindowsVTK3DSubstateQuadMesh(m_impl.p, nRows, nCols, gridActor, substateFieldName, minValue, maxValue);
+        m_impl.visualiser.refreshWindowsVTK3DSubstate(m_impl.p, nRows, nCols, gridActor, substateFieldName, minValue, maxValue);
     }
 
     void drawFlatSceneBackground(int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> backgroundActor) override

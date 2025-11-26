@@ -48,10 +48,10 @@ public:
 
     /// @brief Draw 3D substate visualization as a quad mesh surface (new healed quad approach).
     template<class Matrix>
-    void drawWithVTK3DSubstateQuadMesh(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue);
+    void drawWithVTK3DSubstate(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue);
     /// @brief Refresh 3D substate visualization as a quad mesh surface (new healed quad approach).
     template<class Matrix>
-    void refreshWindowsVTK3DSubstateQuadMesh(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue);
+    void refreshWindowsVTK3DSubstate(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, double minValue, double maxValue);
 
     /// @brief Draw flat background plane at Z=0 for 3D visualization.
     template<class Matrix>
@@ -367,11 +367,11 @@ vtkSmartPointer<vtkPolyData> Visualizer::build3DSubstateSurfaceQuadMesh(const Ma
 }
 
 template<class Matrix>
-void Visualizer::drawWithVTK3DSubstateQuadMesh(const Matrix& p, int nRows, int nCols, 
-                                               vtkSmartPointer<vtkRenderer> renderer, 
-                                               vtkSmartPointer<vtkActor> gridActor,
-                                               const std::string& substateFieldName, 
-                                               double minValue, double maxValue)
+void Visualizer::drawWithVTK3DSubstate(const Matrix& p, int nRows, int nCols,
+                                       vtkSmartPointer<vtkRenderer> renderer,
+                                       vtkSmartPointer<vtkActor> gridActor,
+                                       const std::string& substateFieldName,
+                                       double minValue, double maxValue)
 {
     // Validate min/max values
     if (std::isnan(minValue) || std::isnan(maxValue) || minValue >= maxValue)
@@ -411,10 +411,10 @@ void Visualizer::drawWithVTK3DSubstateQuadMesh(const Matrix& p, int nRows, int n
 }
 
 template<class Matrix>
-void Visualizer::refreshWindowsVTK3DSubstateQuadMesh(const Matrix& p, int nRows, int nCols, 
-                                                     vtkSmartPointer<vtkActor> gridActor,
-                                                     const std::string& substateFieldName, 
-                                                     double minValue, double maxValue)
+void Visualizer::refreshWindowsVTK3DSubstate(const Matrix& p, int nRows, int nCols,
+                                             vtkSmartPointer<vtkActor> gridActor,
+                                             const std::string& substateFieldName,
+                                             double minValue, double maxValue)
 {
     // Validate min/max values
     if (std::isnan(minValue) || std::isnan(maxValue) || minValue >= maxValue)

@@ -242,13 +242,13 @@ void SceneWidget::drawVisualizationWithOptional3DSubstate()
                                                                     backgroundActor);
             }
 
-            sceneWidgetVisualizerProxy->drawWithVTK3DSubstateQuadMesh(settingParameter->numberOfRowsY,
-                                                                      settingParameter->numberOfColumnX,
-                                                                      renderer,
-                                                                      gridActor,
-                                                                      activeSubstateFor3D,
-                                                                      substateInfo.minValue,
-                                                                      substateInfo.maxValue);
+            sceneWidgetVisualizerProxy->drawWithVTK3DSubstate(settingParameter->numberOfRowsY,
+                                                              settingParameter->numberOfColumnX,
+                                                              renderer,
+                                                              gridActor,
+                                                              activeSubstateFor3D,
+                                                              substateInfo.minValue,
+                                                              substateInfo.maxValue);
 
             return;
         }
@@ -274,12 +274,12 @@ void SceneWidget::refreshVisualizationWithOptional3DSubstate()
                                                                        backgroundActor);
             }
 
-            sceneWidgetVisualizerProxy->refreshWindowsVTK3DSubstateQuadMesh(settingParameter->numberOfRowsY,
-                                                                            settingParameter->numberOfColumnX,
-                                                                            gridActor,
-                                                                            activeSubstateFor3D,
-                                                                            substateInfo.minValue,
-                                                                            substateInfo.maxValue);
+            sceneWidgetVisualizerProxy->refreshWindowsVTK3DSubstate(settingParameter->numberOfRowsY,
+                                                                    settingParameter->numberOfColumnX,
+                                                                    gridActor,
+                                                                    activeSubstateFor3D,
+                                                                    substateInfo.minValue,
+                                                                    substateInfo.maxValue);
             return;
         }
     }
