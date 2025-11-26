@@ -85,6 +85,22 @@ public:
      * @return Field name */
     std::string getFieldName() const { return m_fieldName; }
 
+    /// @brief Set the min color for this substate
+    /// @param color Hex color string (e.g., "#FF0000"), or empty string to disable
+    void setMinColor(const std::string& color);
+
+    /// @brief Set the max color for this substate
+    /// @param color Hex color string (e.g., "#0000FF"), or empty string to disable
+    void setMaxColor(const std::string& color);
+
+    /// @brief Get the min color
+    /// @return Hex color string or empty string if not set
+    std::string getMinColor() const { return m_minColor; }
+
+    /// @brief Get the max color
+    /// @return Hex color string or empty string if not set
+    std::string getMaxColor() const { return m_maxColor; }
+
 signals:
     /** @brief Signal emitted when "Use as 3rd dimension" button is clicked.
      * 
@@ -117,6 +133,13 @@ signals:
      * 
      * @param fieldName The name of the field */
     void calculateMaximumRequested(const std::string& fieldName);
+
+    /** @brief Signal emitted when min or max colors change.
+     * 
+     * @param fieldName The name of the field
+     * @param minColor The new minimum color (hex string or empty)
+     * @param maxColor The new maximum color (hex string or empty) */
+    void colorsChanged(const std::string& fieldName, const std::string& minColor, const std::string& maxColor);
 
 private slots:
     /** @brief Calculate and set minimum value from all cells in current step.
@@ -151,8 +174,20 @@ private:
     /// @brief Setup the UI layout.
     void setupUI();
 
-    /// @brief Connect signals and slots.
+    /// @brief Connect signals to slots.
     void connectSignals();
+
+    /// @brief Handle min color button click
+    void onMinColorClicked();
+
+    /// @brief Handle max color button click
+    void onMaxColorClicked();
+
+    /// @brief Handle clear colors button click
+    void onClearColorsClicked();
+
+    /// @brief Update color button appearance based on current color
+    void updateColorButtonAppearance();
 
     /// @brief Update button enabled state based on min/max values.
     void updateButtonState();
@@ -169,4 +204,15 @@ private:
     QLineEdit* m_formatLineEdit;
     QPushButton* m_use3dButton;
     QPushButton* m_use2dButton;
+    
+    // Color picker widgets
+    class QLabel* m_minColorLabel;
+    class QPushButton* m_minColorButton;
+    class QLabel* m_maxColorLabel;
+    class QPushButton* m_maxColorButton;
+    class QPushButton* m_clearColorsButton;
+    
+    // Current colors (empty string = inactive)
+    std::string m_minColor;
+    std::string m_maxColor;
 };

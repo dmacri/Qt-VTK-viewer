@@ -76,6 +76,8 @@ void SubstatesDockWidget::updateSubstates(SettingParameter* settingParameter)
             widget->setMinValue(it->second.minValue);
             widget->setMaxValue(it->second.maxValue);
             widget->setFormat(it->second.format);
+            widget->setMinColor(it->second.minColor);
+            widget->setMaxColor(it->second.maxColor);
         }
 
         // Connect signals
@@ -91,6 +93,8 @@ void SubstatesDockWidget::updateSubstates(SettingParameter* settingParameter)
                 this, &SubstatesDockWidget::onCalculateMinimumGreaterThanZeroRequested);
         connect(widget, &SubstateDisplayWidget::calculateMaximumRequested,
                 this, &SubstatesDockWidget::onCalculateMaximumRequested);
+        connect(widget, &SubstateDisplayWidget::colorsChanged,
+                this, &SubstatesDockWidget::onColorsChanged);
 
         m_containerLayout->addWidget(widget);
         m_substateWidgets[field] = widget;
@@ -325,4 +329,18 @@ void SubstatesDockWidget::onCalculateMaximumRequested(const std::string& fieldNa
 void SubstatesDockWidget::onDeactivateClicked()
 {
     emit deactivateRequested();
+}
+
+void SubstatesDockWidget::onColorsChanged(const std::string& fieldName, const std::string& minColor, const std::string& maxColor)
+{
+    // Update the substateInfo in SettingParameter with the new colors
+    if (m_currentSettingParameter)
+    {
+        auto it = m_currentSettingParameter->substateInfo.find(fieldName);
+        if (it != m_currentSettingParameter->substateInfo.end())
+        {
+            it->second.minColor = minColor;
+            it->second.maxColor = maxColor;
+        }
+    }
 }

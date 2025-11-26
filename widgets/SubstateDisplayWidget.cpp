@@ -11,6 +11,7 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <QPushButton>
+#include <QColorDialog>
 #include <limits>
 #include <cmath>
 #include <cctype>
@@ -27,6 +28,13 @@ SubstateDisplayWidget::SubstateDisplayWidget(const std::string& fieldName, QWidg
     , m_formatLineEdit(new QLineEdit())
     , m_use3dButton(new QPushButton("Use as 3rd dimension"))
     , m_use2dButton(new QPushButton("Use as 2D"))
+    , m_minColorLabel(new QLabel("Min:"))
+    , m_minColorButton(new QPushButton())
+    , m_maxColorLabel(new QLabel("Max:"))
+    , m_maxColorButton(new QPushButton())
+    , m_clearColorsButton(new QPushButton("Clear Colors"))
+    , m_minColor("")
+    , m_maxColor("")
 {
     setupUI();
     connectSignals();
@@ -137,6 +145,35 @@ void SubstateDisplayWidget::setupUI()
     
     mainLayout->addLayout(buttonsLayout);
 
+    // Colors layout
+    auto colorsLayout = new QHBoxLayout();
+    colorsLayout->setSpacing(4);
+    colorsLayout->setContentsMargins(0, 0, 0, 0);
+    
+    // Min color
+    m_minColorLabel->setMaximumWidth(30);
+    colorsLayout->addWidget(m_minColorLabel);
+    m_minColorButton->setMaximumHeight(20);
+    m_minColorButton->setMaximumWidth(40);
+    m_minColorButton->setToolTip("Click to set minimum value color");
+    colorsLayout->addWidget(m_minColorButton);
+    
+    // Max color
+    m_maxColorLabel->setMaximumWidth(30);
+    colorsLayout->addWidget(m_maxColorLabel);
+    m_maxColorButton->setMaximumHeight(20);
+    m_maxColorButton->setMaximumWidth(40);
+    m_maxColorButton->setToolTip("Click to set maximum value color");
+    colorsLayout->addWidget(m_maxColorButton);
+    
+    // Clear colors button
+    m_clearColorsButton->setMaximumHeight(20);
+    m_clearColorsButton->setStyleSheet("QPushButton { font-size: 7pt; padding: 1px; }");
+    colorsLayout->addWidget(m_clearColorsButton);
+    
+    colorsLayout->addStretch();
+    mainLayout->addLayout(colorsLayout);
+
     setLayout(mainLayout);
 }
 
@@ -148,6 +185,11 @@ void SubstateDisplayWidget::connectSignals()
 
     connect(m_use2dButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onUse2DClicked);
 
+    // Connect color buttons
+    connect(m_minColorButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onMinColorClicked);
+    connect(m_maxColorButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onMaxColorClicked);
+    connect(m_clearColorsButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onClearColorsClicked);
+
     // Connect spinbox value changes to update button state
     connect(m_minSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
             this, &SubstateDisplayWidget::updateButtonState);
@@ -156,6 +198,7 @@ void SubstateDisplayWidget::connectSignals()
 
     // Initial button state
     updateButtonState();
+    updateColorButtonAppearance();
 }
 
 void SubstateDisplayWidget::setCellValue(const std::string& value)
@@ -370,4 +413,73 @@ void SubstateDisplayWidget::onCalculateMinimumGreaterThanZeroAndMaximum()
 void SubstateDisplayWidget::onUse2DClicked()
 {
     emit use2DRequested(m_fieldName);
+}
+
+void SubstateDisplayWidget::setMinColor(const std::string& color)
+{
+    m_minColor = color;
+    updateColorButtonAppearance();
+    emit colorsChanged(m_fieldName, m_minColor, m_maxColor);
+}
+
+void SubstateDisplayWidget::setMaxColor(const std::string& color)
+{
+    m_maxColor = color;
+    updateColorButtonAppearance();
+    emit colorsChanged(m_fieldName, m_minColor, m_maxColor);
+}
+
+void SubstateDisplayWidget::onMinColorClicked()
+{
+    QColor currentColor = m_minColor.empty() ? QColor(Qt::white) : QColor(QString::fromStdString(m_minColor));
+    QColor selectedColor = QColorDialog::getColor(currentColor, this, "Select minimum value color");
+    
+    if (selectedColor.isValid())
+    {
+        setMinColor(selectedColor.name().toStdString());
+    }
+}
+
+void SubstateDisplayWidget::onMaxColorClicked()
+{
+    QColor currentColor = m_maxColor.empty() ? QColor(Qt::white) : QColor(QString::fromStdString(m_maxColor));
+    QColor selectedColor = QColorDialog::getColor(currentColor, this, "Select maximum value color");
+    
+    if (selectedColor.isValid())
+    {
+        setMaxColor(selectedColor.name().toStdString());
+    }
+}
+
+void SubstateDisplayWidget::onClearColorsClicked()
+{
+    setMinColor("");
+    setMaxColor("");
+}
+
+void SubstateDisplayWidget::updateColorButtonAppearance()
+{
+    // Min color button
+    if (m_minColor.empty())
+    {
+        m_minColorButton->setStyleSheet("QPushButton { background-color: #cccccc; border: 1px solid #999999; }");
+        m_minColorButton->setToolTip("Click to set minimum value color (currently inactive)");
+    }
+    else
+    {
+        m_minColorButton->setStyleSheet(QString("QPushButton { background-color: %1; border: 1px solid #000000; }").arg(QString::fromStdString(m_minColor)));
+        m_minColorButton->setToolTip(QString("Min color: %1").arg(QString::fromStdString(m_minColor)));
+    }
+    
+    // Max color button
+    if (m_maxColor.empty())
+    {
+        m_maxColorButton->setStyleSheet("QPushButton { background-color: #cccccc; border: 1px solid #999999; }");
+        m_maxColorButton->setToolTip("Click to set maximum value color (currently inactive)");
+    }
+    else
+    {
+        m_maxColorButton->setStyleSheet(QString("QPushButton { background-color: %1; border: 1px solid #000000; }").arg(QString::fromStdString(m_maxColor)));
+        m_maxColorButton->setToolTip(QString("Max color: %1").arg(QString::fromStdString(m_maxColor)));
+    }
 }

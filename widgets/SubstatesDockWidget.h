@@ -103,6 +103,15 @@ private slots:
     /** @brief Handle deactivate button click */
     void onDeactivateClicked();
 
+    /** @brief Handle color changes from SubstateDisplayWidget.
+     * 
+     * Updates the substateInfo in SettingParameter when user changes colors.
+     * 
+     * @param fieldName The name of the field
+     * @param minColor The new minimum color (hex string or empty)
+     * @param maxColor The new maximum color (hex string or empty) */
+    void onColorsChanged(const std::string& fieldName, const std::string& minColor, const std::string& maxColor);
+
 private:
     /** @brief Clear all substate widgets. */
     void clearWidgets();
