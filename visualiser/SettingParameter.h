@@ -18,6 +18,9 @@ struct SubstateInfo
     double minValue = std::numeric_limits<double>::quiet_NaN(); ///< Minimum value for display (user-editable, NaN if not set)
     double maxValue = std::numeric_limits<double>::quiet_NaN(); ///< Maximum value for display (user-editable, NaN if not set)
     std::string format = "";                                    ///< Printf format string (user-editable, empty if not set)
+    double noValue = std::numeric_limits<double>::quiet_NaN();  ///< Value representing "no data" (NaN if not set)
+    std::string minColor = "";                                  ///< Hex color for minimum value (e.g., "#000011", empty if not set)
+    std::string maxColor = "";                                  ///< Hex color for maximum value (e.g., "#0011ff", empty if not set)
 };
 
 /** @struct SettingParameter
@@ -46,6 +49,26 @@ struct SettingParameter
 
     bool changed; ///< Flag indicating if settings have been modified and currently visible state should be redrown
 
+    /** @brief Parse substates string into SubstateInfo map.
+     * 
+     * Parses the substates string into individual SubstateInfo entries.
+     * Supports multiple formats:
+     * - Simple: "h,z" or "s"
+     * - Extended: "(h,%f,1,100)" or "(h,%f,-1)" or "(h,%f,1,100,-1)" or "(h,%f,1,100,-1,#000011,#0011ff)"
+     * - Mixed: "h,(z,%f,1,100),s"
+     * 
+     * Format details:
+     * - name: field name (required)
+     * - format: printf format string (optional, e.g., "%f")
+     * - minValue: minimum value for display (optional)
+     * - maxValue: maximum value for display (optional)
+     * - noValue: value representing "no data" (optional)
+     * - minColor: hex color for minimum (optional, e.g., "#000011")
+     * - maxColor: hex color for maximum (optional, e.g., "#0011ff")
+     * 
+     * @return Map of field name -> SubstateInfo */
+    std::map<std::string, SubstateInfo> parseSubstates() const;
+    
     /** @brief Parse substates string into a vector of field names.
      * 
      * Parses the substates string (e.g., "h,z" or "s") into individual field names.
