@@ -283,13 +283,14 @@ Color Visualizer::calculateCellColor(int row, int column, const Matrix &p, const
         {
             // Failed to parse value - use flat scene background color
             const QColor sceneColor = ColorSettings::instance().flatSceneBackgroundColor();
-            return Color(
+            color = Color(
                 static_cast<std::uint8_t>(sceneColor.red()),
                 static_cast<std::uint8_t>(sceneColor.green()),
                 static_cast<std::uint8_t>(sceneColor.blue()),
                 255
             );
         }
+        return color;
     }
     else
     {
