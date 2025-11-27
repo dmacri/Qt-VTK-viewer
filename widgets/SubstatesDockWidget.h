@@ -59,6 +59,11 @@ public:
      * @param settingParameter The setting parameter to update */
     void saveParametersToSettings(SettingParameter* settingParameter);
 
+    /** @brief Set active substate widget (highlights it).
+     * 
+     * @param fieldName The name of the field to highlight, or empty to clear all */
+    void setActiveSubstate(const std::string& fieldName);
+
 signals:
     /** @brief Signal emitted when a field is requested to be used as 3rd dimension.
      * 

@@ -44,9 +44,9 @@ class Visualizer
 {
 public:
     template<class Matrix>
-    void drawWithVTK(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName = "", const SubstateInfo* substateInfo = nullptr);
+    void drawWithVTK(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const SubstateInfo* substateInfo = nullptr);
     template<class Matrix>
-    void refreshWindowsVTK(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName = "", const SubstateInfo* substateInfo = nullptr);
+    void refreshWindowsVTK(const Matrix& p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const SubstateInfo* substateInfo = nullptr);
 
     /// @brief Draw 3D substate visualization as a quad mesh surface (new healed quad approach).
     template<class Matrix>
@@ -67,7 +67,7 @@ public:
 
 private:
     template<class Matrix>
-    void buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matrix& p, const std::string& substateFieldName = "", const struct SubstateInfo* substateInfo = nullptr);
+    void buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matrix& p, const struct SubstateInfo* substateInfo = nullptr);
 
     /** @brief Build 3D quad mesh surface for 3D substate visualization (healed quad approach).
      * 
@@ -97,7 +97,7 @@ private:
 ////////////////////////////////////////////////////////////////////
 
 template <class Matrix>
-void Visualizer::drawWithVTK(const Matrix &p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, const SubstateInfo* substateInfo)
+void Visualizer::drawWithVTK(const Matrix &p, int nRows, int nCols, vtkSmartPointer<vtkRenderer> renderer, vtkSmartPointer<vtkActor> gridActor, const SubstateInfo* substateInfo)
 {
     const auto numberOfPoints = nRows * nCols;
     vtkNew<vtkDoubleArray> pointValues;
@@ -134,7 +134,7 @@ void Visualizer::drawWithVTK(const Matrix &p, int nRows, int nCols, vtkSmartPoin
     structuredGrid->SetPoints(points);
     structuredGrid->GetPointData()->SetScalars(pointValues);
 
-    buidColor(lut, nCols, nRows, p, substateFieldName, substateInfo);
+    buidColor(lut, nCols, nRows, p, substateInfo);
 
     vtkNew<vtkDataSetMapper> gridMapper;
     gridMapper->UpdateDataObject();
@@ -147,11 +147,11 @@ void Visualizer::drawWithVTK(const Matrix &p, int nRows, int nCols, vtkSmartPoin
 }
 
 template<class Matrix>
-void Visualizer::refreshWindowsVTK(const Matrix &p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const std::string& substateFieldName, const SubstateInfo* substateInfo)
+void Visualizer::refreshWindowsVTK(const Matrix &p, int nRows, int nCols, vtkSmartPointer<vtkActor> gridActor, const SubstateInfo* substateInfo)
 {
     if (vtkLookupTable* lut = dynamic_cast<vtkLookupTable*>(gridActor->GetMapper()->GetLookupTable()))
     {
-        buidColor(lut, nCols, nRows, p, substateFieldName, substateInfo);
+        buidColor(lut, nCols, nRows, p, substateInfo);
         gridActor->GetMapper()->SetLookupTable(lut);
         gridActor->GetMapper()->Update();
     }
@@ -182,7 +182,7 @@ inline double toUnitColor(double channel)
 }
 
 template<class Matrix>
-void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matrix &p, const std::string& substateFieldName, const SubstateInfo* substateInfo)
+void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matrix &p, const SubstateInfo* substateInfo)
 {
     for (int r = 0; r < nRows; ++r)
     {
@@ -195,7 +195,7 @@ void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matr
             if (substateInfo && !substateInfo->minColor.empty() && !substateInfo->maxColor.empty())
             {
                 // Get substate value for this cell
-                const char* fieldNamePtr = substateFieldName.empty() ? nullptr : substateFieldName.c_str();
+                const char* fieldNamePtr = substateInfo->name.empty() ? nullptr : substateInfo->name.c_str();
                 std::string cellValue = p[r][c].stringEncoding(fieldNamePtr);
                 
                 try
@@ -247,7 +247,7 @@ void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matr
             else
             {
                 // Use default outputValue coloring
-                const char* fieldNamePtr = substateFieldName.empty() ? nullptr : substateFieldName.c_str();
+                const char* fieldNamePtr = nullptr;
                 color = p[r][c].outputValue(fieldNamePtr);
             }
             

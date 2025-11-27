@@ -353,3 +353,22 @@ void SubstatesDockWidget::onVisualizationRefreshRequested()
     // This will be handled by MainWindow/SceneWidget which has access to the gridActor
     emit visualizationRefreshRequested();
 }
+
+void SubstatesDockWidget::setActiveSubstate(const std::string& fieldName)
+{
+    // Deactivate all widgets first
+    for (auto& [name, widget] : m_substateWidgets)
+    {
+        widget->setActive(false);
+    }
+    
+    // Activate the specified widget if it exists
+    if (!fieldName.empty())
+    {
+        auto it = m_substateWidgets.find(fieldName);
+        if (it != m_substateWidgets.end())
+        {
+            it->second->setActive(true);
+        }
+    }
+}

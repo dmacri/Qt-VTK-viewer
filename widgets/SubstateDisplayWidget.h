@@ -99,7 +99,11 @@ public:
 
     /// @brief Get the max color
     /// @return Hex color string or empty string if not set
-    std::string getMaxColor() const { return m_maxColor; }
+    std::string getMaxColor() const;
+
+    /// @brief Set widget as active (highlighted background).
+    /// @param active True to highlight, false to remove highlight
+    void setActive(bool active);
 
 signals:
     /** @brief Signal emitted when "Use as 3rd dimension" button is clicked.

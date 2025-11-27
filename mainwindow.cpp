@@ -2244,6 +2244,9 @@ void MainWindow::onUse3rdDimensionRequested(const std::string& fieldName)
     // Also set it in SceneWidget so it knows which substate to use for 3D
     ui->sceneWidget->setActiveSubstateFor3D(fieldName);
 
+    // Highlight the active substate in the dock widget
+    ui->substatesDockWidget->setActiveSubstate(fieldName);
+
     // Switch to 3D mode
     on3DModeRequested();
 
@@ -2261,6 +2264,9 @@ void MainWindow::onUse2DRequested(const std::string& fieldName)
     // Set the active substate for 2D visualization in SceneWidget
     ui->sceneWidget->setActiveSubstateFor2D(fieldName);
     
+    // Highlight the active substate in the dock widget
+    ui->substatesDockWidget->setActiveSubstate(fieldName);
+    
     // Immediately refresh visualization to show the change
     ui->sceneWidget->refreshVisualization();
     
@@ -2274,6 +2280,9 @@ void MainWindow::onDeactivateRequested()
 
     // Clear the active substate for 2D visualization in SceneWidget
     ui->sceneWidget->setActiveSubstateFor2D("");
+    
+    // Clear highlight from all substates in the dock widget
+    ui->substatesDockWidget->setActiveSubstate("");
     
     // Immediately refresh visualization to show the change
     ui->sceneWidget->refreshVisualization();

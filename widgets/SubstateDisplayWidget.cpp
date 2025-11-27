@@ -518,3 +518,17 @@ void SubstateDisplayWidget::onMaxSpinBoxFocusOut()
 {
     emit visualizationRefreshRequested();
 }
+
+void SubstateDisplayWidget::setActive(bool active)
+{
+    if (active)
+    {
+        // Highlight with light blue background
+        setStyleSheet("SubstateDisplayWidget { background-color: #E3F2FD; border: 2px solid #2196F3; border-radius: 4px; }");
+    }
+    else
+    {
+        // Remove highlight
+        setStyleSheet("");
+    }
+}
