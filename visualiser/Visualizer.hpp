@@ -31,6 +31,7 @@
 #include "utilities/types.h"    // StepIndex
 #include "OOpenCAL/base/Cell.h" // Color
 #include "visualiser/SettingParameter.h" // SubstateInfo
+#include "widgets/ColorSettings.h" // ColorSettings
 
 class Line;
 
@@ -204,12 +205,34 @@ void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matr
                     double minVal = substateInfo->minValue;
                     double maxVal = substateInfo->maxValue;
                     
-                    // Check if value is within range
-                    if (std::isnan(minVal) || std::isnan(maxVal) || value < minVal || value > maxVal)
+                    // Check if value is noValue (out of range or equals noValue)
+                    bool isNoValue = false;
+                    if (std::isnan(minVal) || std::isnan(maxVal))
                     {
-                        // Value out of range - make transparent
-                        alpha = 0.0;
-                        color = Color(0, 0, 0, 0);
+                        // Min/max not set - use default coloring
+                        isNoValue = false;
+                    }
+                    else if (!std::isnan(substateInfo->noValue) && value == substateInfo->noValue)
+                    {
+                        // Value equals noValue
+                        isNoValue = true;
+                    }
+                    else if (value < minVal || value > maxVal)
+                    {
+                        // Value out of range
+                        isNoValue = true;
+                    }
+                    
+                    if (isNoValue)
+                    {
+                        // Use flat scene background color for noValue
+                        const QColor sceneColor = ColorSettings::instance().flatSceneBackgroundColor();
+                        color = Color(
+                            static_cast<std::uint8_t>(sceneColor.red()),
+                            static_cast<std::uint8_t>(sceneColor.green()),
+                            static_cast<std::uint8_t>(sceneColor.blue()),
+                            255
+                        );
                     }
                     else
                     {
@@ -239,9 +262,14 @@ void Visualizer::buidColor(vtkLookupTable* lut, int nCols, int nRows, const Matr
                 }
                 catch (const std::exception&)
                 {
-                    // Failed to parse value - make transparent
-                    alpha = 0.0;
-                    color = Color(0, 0, 0, 0);
+                    // Failed to parse value - use flat scene background color
+                    const QColor sceneColor = ColorSettings::instance().flatSceneBackgroundColor();
+                    color = Color(
+                        static_cast<std::uint8_t>(sceneColor.red()),
+                        static_cast<std::uint8_t>(sceneColor.green()),
+                        static_cast<std::uint8_t>(sceneColor.blue()),
+                        255
+                    );
                 }
             }
             else

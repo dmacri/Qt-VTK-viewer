@@ -191,14 +191,13 @@ std::string SubstateDisplayWidget::fieldName() const
 
 void SubstateDisplayWidget::updateButtonState()
 {
-    // Button is enabled only if both min and max values are set
+    // Buttons are enabled only if both min and max values are set
     const bool hasMin = hasMinValue();
     const bool hasMax = hasMaxValue();
     const bool isEnabled = hasMin && hasMax;
     
+    // Update "Use as 3D" button state
     ui->use3dButton->setEnabled(isEnabled);
-    
-    // Update tooltip to explain why button might be disabled
     if (isEnabled)
     {
         ui->use3dButton->setToolTip("Use this field as 3rd dimension in 3D visualization");
@@ -206,6 +205,17 @@ void SubstateDisplayWidget::updateButtonState()
     else
     {
         ui->use3dButton->setToolTip("Set both Min and Max values to enable 3D visualization");
+    }
+
+    // Update "Use as 2D" button state (same requirement as 3D)
+    ui->use2dButton->setEnabled(isEnabled);
+    if (isEnabled)
+    {
+        ui->use2dButton->setToolTip("Use this field as 2D visualization");
+    }
+    else
+    {
+        ui->use2dButton->setToolTip("Set both Min and Max values to enable 2D visualization");
     }
 
     // Emit signal with current min/max values so they can be stored in substateInfo
