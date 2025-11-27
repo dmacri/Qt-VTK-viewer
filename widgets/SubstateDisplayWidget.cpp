@@ -16,33 +16,25 @@
 SubstateDisplayWidget::SubstateDisplayWidget(const std::string& fieldName, QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::SubstateDisplayWidget)
-    , m_fieldName(fieldName)
     , m_minColor("")
     , m_maxColor("")
 {
     // Create UI from .ui file
     ui->setupUi(this);
-    
-    // Get pointers to widgets from UI
-    m_minColorLabel = ui->minColorLabel;
-    m_minColorButton = ui->minColorButton;
-    m_maxColorLabel = ui->maxColorLabel;
-    m_maxColorButton = ui->maxColorButton;
-    m_clearColorsButton = ui->clearColorsButton;
-    
+
     // Set field name in label
     ui->nameLabel->setText(QString::fromStdString(fieldName));
-    
+
     // Configure spinboxes
     ui->minSpinBox->setValue(ui->minSpinBox->minimum());
     ui->maxSpinBox->setValue(ui->maxSpinBox->minimum());
-        
+
     // Enable context menu for the widget
     setContextMenuPolicy(Qt::CustomContextMenu);
-    
+
     // Install event filter on all child widgets to intercept right-click
     installEventFiltersOnChildren();
-    
+
     // Connect signals
     connectSignals();
 }
@@ -55,15 +47,15 @@ SubstateDisplayWidget::~SubstateDisplayWidget()
 void SubstateDisplayWidget::connectSignals()
 {
     connect(ui->use3dButton, &QPushButton::clicked, this, [this]() {
-        emit use3rdDimensionRequested(m_fieldName);
+        emit use3rdDimensionRequested(fieldName());
     });
 
     connect(ui->use2dButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onUse2DClicked);
 
     // Connect color buttons
-    connect(m_minColorButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onMinColorClicked);
-    connect(m_maxColorButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onMaxColorClicked);
-    connect(m_clearColorsButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onClearColorsClicked);
+    connect(ui->minColorButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onMinColorClicked);
+    connect(ui->maxColorButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onMaxColorClicked);
+    connect(ui->clearColorsButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onClearColorsClicked);
 
     // Connect spinbox value changes to update button state
     connect(ui->minSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
@@ -193,6 +185,11 @@ bool SubstateDisplayWidget::hasMaxValue() const
     return ui->maxSpinBox->value() != ui->maxSpinBox->minimum();
 }
 
+std::string SubstateDisplayWidget::fieldName() const
+{
+    return ui->nameLabel->text().toStdString();
+}
+
 void SubstateDisplayWidget::updateButtonState()
 {
     // Button is enabled only if both min and max values are set
@@ -213,7 +210,7 @@ void SubstateDisplayWidget::updateButtonState()
     }
 
     // Emit signal with current min/max values so they can be stored in substateInfo
-    emit minMaxValuesChanged(m_fieldName, getMinValue(), getMaxValue());
+    emit minMaxValuesChanged(fieldName(), getMinValue(), getMaxValue());
 }
 
 void SubstateDisplayWidget::installEventFiltersOnChildren()
@@ -285,19 +282,19 @@ void SubstateDisplayWidget::contextMenuEvent(QContextMenuEvent* event)
 
 void SubstateDisplayWidget::onCalculateMinimum()
 {
-    emit calculateMinimumRequested(m_fieldName);
+    emit calculateMinimumRequested(fieldName());
     emit visualizationRefreshRequested();
 }
 
 void SubstateDisplayWidget::onCalculateMinimumGreaterThanZero()
 {
-    emit calculateMinimumGreaterThanZeroRequested(m_fieldName);
+    emit calculateMinimumGreaterThanZeroRequested(fieldName());
     emit visualizationRefreshRequested();
 }
 
 void SubstateDisplayWidget::onCalculateMaximum()
 {
-    emit calculateMaximumRequested(m_fieldName);
+    emit calculateMaximumRequested(fieldName());
     emit visualizationRefreshRequested();
 }
 
@@ -310,14 +307,14 @@ void SubstateDisplayWidget::onCalculateMinimumGreaterThanZeroAndMaximum()
 
 void SubstateDisplayWidget::onUse2DClicked()
 {
-    emit use2DRequested(m_fieldName);
+    emit use2DRequested(fieldName());
 }
 
 void SubstateDisplayWidget::setMinColor(const std::string& color)
 {
     m_minColor = color;
     updateColorButtonAppearance();
-    emit colorsChanged(m_fieldName, m_minColor, m_maxColor);
+    emit colorsChanged(fieldName(), m_minColor, m_maxColor);
     emit visualizationRefreshRequested();
 }
 
@@ -325,7 +322,7 @@ void SubstateDisplayWidget::setMaxColor(const std::string& color)
 {
     m_maxColor = color;
     updateColorButtonAppearance();
-    emit colorsChanged(m_fieldName, m_minColor, m_maxColor);
+    emit colorsChanged(fieldName(), m_minColor, m_maxColor);
     emit visualizationRefreshRequested();
 }
 
@@ -374,8 +371,8 @@ void SubstateDisplayWidget::updateColorButtonAppearance()
     };
     
     // Update both buttons
-    updateColorButton(m_minColorButton, m_minColor, "Min");
-    updateColorButton(m_maxColorButton, m_maxColor, "Max");
+    updateColorButton(ui->minColorButton, m_minColor, "Min");
+    updateColorButton(ui->maxColorButton, m_maxColor, "Max");
 }
 
 void SubstateDisplayWidget::onMinSpinBoxFocusOut()

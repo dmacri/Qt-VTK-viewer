@@ -90,10 +90,7 @@ public:
     /** @brief Get the field name.
      * 
      * @return Field name */
-    std::string getFieldName() const
-    {
-        return m_fieldName;
-    }
+    std::string fieldName() const;
 
     /// @brief Set the min color for this substate
     /// @param color Hex color string (e.g., "#FF0000"), or empty string to disable
@@ -221,15 +218,6 @@ private:
     void onMaxSpinBoxFocusOut();
 
     Ui::SubstateDisplayWidget *ui;
-
-    std::string m_fieldName;
-    
-    // Color picker widgets
-    class QLabel* m_minColorLabel;
-    class QPushButton* m_minColorButton;
-    class QLabel* m_maxColorLabel;
-    class QPushButton* m_maxColorButton;
-    class QPushButton* m_clearColorsButton;
     
     // Current colors (empty string = inactive)
     std::string m_minColor;
