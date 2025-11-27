@@ -36,6 +36,7 @@ SubstateDisplayWidget::SubstateDisplayWidget(const std::string& fieldName, QWidg
     , m_minColor("")
     , m_maxColor("")
 {
+    setObjectName("SubstateDisplayWidget");
     setupUI();
     connectSignals();
     
@@ -71,7 +72,7 @@ void SubstateDisplayWidget::setupUI()
     auto valueLayout = new QHBoxLayout();
     auto valueTextLabel = new QLabel("Val:");
     valueTextLabel->setMaximumWidth(35);
-    m_valueLabel->setStyleSheet("QLabel { background-color: #f0f0f0; padding: 1px; font-size: 9pt; }");
+    m_valueLabel->setStyleSheet("QLabel { padding: 1px; font-size: 9pt; font-weight: bold; }");
     m_valueLabel->setMaximumHeight(20);
     valueLayout->addWidget(valueTextLabel);
     valueLayout->addWidget(m_valueLabel);
@@ -484,29 +485,23 @@ void SubstateDisplayWidget::onClearColorsClicked()
 
 void SubstateDisplayWidget::updateColorButtonAppearance()
 {
-    // Min color button
-    if (m_minColor.empty())
-    {
-        m_minColorButton->setStyleSheet("QPushButton { background-color: #cccccc; border: 1px solid #999999; }");
-        m_minColorButton->setToolTip("Click to set minimum value color (currently inactive)");
-    }
-    else
-    {
-        m_minColorButton->setStyleSheet(QString("QPushButton { background-color: %1; border: 1px solid #000000; }").arg(QString::fromStdString(m_minColor)));
-        m_minColorButton->setToolTip(QString("Min color: %1").arg(QString::fromStdString(m_minColor)));
-    }
+    // Lambda to update a single color button
+    auto updateColorButton = [](QPushButton* button, const std::string& color, const QString& label) {
+        if (color.empty())
+        {
+            button->setStyleSheet("QPushButton { background-color: #cccccc; border: 1px solid #999999; }");
+            button->setToolTip(QString("Click to set %1 value color (currently inactive)").arg(label.toLower()));
+        }
+        else
+        {
+            button->setStyleSheet(QString("QPushButton { background-color: %1; border: 1px solid #000000; }").arg(QString::fromStdString(color)));
+            button->setToolTip(QString("%1 color: %2").arg(label, QString::fromStdString(color)));
+        }
+    };
     
-    // Max color button
-    if (m_maxColor.empty())
-    {
-        m_maxColorButton->setStyleSheet("QPushButton { background-color: #cccccc; border: 1px solid #999999; }");
-        m_maxColorButton->setToolTip("Click to set maximum value color (currently inactive)");
-    }
-    else
-    {
-        m_maxColorButton->setStyleSheet(QString("QPushButton { background-color: %1; border: 1px solid #000000; }").arg(QString::fromStdString(m_maxColor)));
-        m_maxColorButton->setToolTip(QString("Max color: %1").arg(QString::fromStdString(m_maxColor)));
-    }
+    // Update both buttons
+    updateColorButton(m_minColorButton, m_minColor, "Min");
+    updateColorButton(m_maxColorButton, m_maxColor, "Max");
 }
 
 void SubstateDisplayWidget::onMinSpinBoxFocusOut()
@@ -523,12 +518,14 @@ void SubstateDisplayWidget::setActive(bool active)
 {
     if (active)
     {
-        // Highlight with light blue background
-        setStyleSheet("background-color: #E3F2FD; border: 2px solid #2196F3; border-radius: 4px; padding: 2px;");
+        // Highlight with light blue background without affecting children
+        setStyleSheet("QWidget#SubstateDisplayWidget { background-color: #E3F2FD; border: 2px solid #2196F3; border-radius: 4px; padding: 2px; }");
+        setAutoFillBackground(true);
     }
     else
     {
         // Remove highlight
         setStyleSheet("");
+        setAutoFillBackground(false);
     }
 }
