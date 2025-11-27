@@ -926,6 +926,8 @@ void MainWindow::updateSubstateDockeWidget()
                 this, &MainWindow::onUse2DRequested);
         connect(ui->substatesDockWidget, &SubstatesDockWidget::deactivateRequested,
                 this, &MainWindow::onDeactivateRequested);
+        connect(ui->substatesDockWidget, &SubstatesDockWidget::visualizationRefreshRequested,
+                ui->sceneWidget, &SceneWidget::refreshVisualization);
     }
 }
 

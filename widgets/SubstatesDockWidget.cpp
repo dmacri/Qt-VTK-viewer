@@ -95,6 +95,8 @@ void SubstatesDockWidget::updateSubstates(SettingParameter* settingParameter)
                 this, &SubstatesDockWidget::onCalculateMaximumRequested);
         connect(widget, &SubstateDisplayWidget::colorsChanged,
                 this, &SubstatesDockWidget::onColorsChanged);
+        connect(widget, &SubstateDisplayWidget::visualizationRefreshRequested,
+                this, &SubstatesDockWidget::onVisualizationRefreshRequested);
 
         m_containerLayout->addWidget(widget);
         m_substateWidgets[field] = widget;
@@ -343,4 +345,11 @@ void SubstatesDockWidget::onColorsChanged(const std::string& fieldName, const st
             it->second.maxColor = maxColor;
         }
     }
+}
+
+void SubstatesDockWidget::onVisualizationRefreshRequested()
+{
+    // Emit signal to request visualization refresh
+    // This will be handled by MainWindow/SceneWidget which has access to the gridActor
+    emit visualizationRefreshRequested();
 }

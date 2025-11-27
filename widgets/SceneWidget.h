@@ -306,6 +306,12 @@ public slots:
      * current color settings from the ColorSettings singleton. */
     void onColorsReloadRequested();
 
+    /** @brief Refresh VTK visualization with optional 3D substate support (step updates).
+     * 
+     * This slot handles both 2D and 3D visualization based on activeSubstateFor3D.
+     * It's used when updating visualization for current step or when colors/settings change. */
+    void refreshVisualizationWithOptional3DSubstate();
+
 protected:
     /// @brief Renders the VTK scene. It needs to be called when reading from config file
     void renderVtkScene();
@@ -474,12 +480,6 @@ protected:
      * This helper method handles both 2D and 3D visualization based on activeSubstateFor3D.
      * It's used during initial scene setup in renderVtkScene(). */
     void drawVisualizationWithOptional3DSubstate();
-
-    /** @brief Refresh VTK visualization with optional 3D substate support (step updates).
-     * 
-     * This helper method handles both 2D and 3D visualization based on activeSubstateFor3D.
-     * It's used when updating visualization for current step in loadAndUpdateVisualizationForCurrentStep(). */
-    void refreshVisualizationWithOptional3DSubstate();
 
     /** @brief Handle mouse press events to update substate display.
      * 

@@ -196,6 +196,10 @@ void SubstateDisplayWidget::connectSignals()
     connect(m_maxSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
             this, &SubstateDisplayWidget::updateButtonState);
 
+    // Install event filters on spinboxes to detect focus out
+    m_minSpinBox->installEventFilter(this);
+    m_maxSpinBox->installEventFilter(this);
+
     // Initial button state
     updateButtonState();
     updateColorButtonAppearance();
@@ -359,6 +363,21 @@ bool SubstateDisplayWidget::eventFilter(QObject* obj, QEvent* event)
         return true;  // Event handled
     }
     
+    // Intercept focus out on spinboxes to trigger visualization refresh
+    if (event->type() == QEvent::FocusOut)
+    {
+        if (obj == m_minSpinBox)
+        {
+            onMinSpinBoxFocusOut();
+            return false;  // Let the event pass through
+        }
+        else if (obj == m_maxSpinBox)
+        {
+            onMaxSpinBoxFocusOut();
+            return false;  // Let the event pass through
+        }
+    }
+    
     // Let other events pass through
     return QWidget::eventFilter(obj, event);
 }
@@ -392,22 +411,26 @@ void SubstateDisplayWidget::contextMenuEvent(QContextMenuEvent* event)
 void SubstateDisplayWidget::onCalculateMinimum()
 {
     emit calculateMinimumRequested(m_fieldName);
+    emit visualizationRefreshRequested();
 }
 
 void SubstateDisplayWidget::onCalculateMinimumGreaterThanZero()
 {
     emit calculateMinimumGreaterThanZeroRequested(m_fieldName);
+    emit visualizationRefreshRequested();
 }
 
 void SubstateDisplayWidget::onCalculateMaximum()
 {
     emit calculateMaximumRequested(m_fieldName);
+    emit visualizationRefreshRequested();
 }
 
 void SubstateDisplayWidget::onCalculateMinimumGreaterThanZeroAndMaximum()
 {
     emit onCalculateMinimumGreaterThanZero();
     emit onCalculateMaximum();
+    emit visualizationRefreshRequested();
 }
 
 void SubstateDisplayWidget::onUse2DClicked()
@@ -420,6 +443,7 @@ void SubstateDisplayWidget::setMinColor(const std::string& color)
     m_minColor = color;
     updateColorButtonAppearance();
     emit colorsChanged(m_fieldName, m_minColor, m_maxColor);
+    emit visualizationRefreshRequested();
 }
 
 void SubstateDisplayWidget::setMaxColor(const std::string& color)
@@ -427,6 +451,7 @@ void SubstateDisplayWidget::setMaxColor(const std::string& color)
     m_maxColor = color;
     updateColorButtonAppearance();
     emit colorsChanged(m_fieldName, m_minColor, m_maxColor);
+    emit visualizationRefreshRequested();
 }
 
 void SubstateDisplayWidget::onMinColorClicked()
@@ -482,4 +507,14 @@ void SubstateDisplayWidget::updateColorButtonAppearance()
         m_maxColorButton->setStyleSheet(QString("QPushButton { background-color: %1; border: 1px solid #000000; }").arg(QString::fromStdString(m_maxColor)));
         m_maxColorButton->setToolTip(QString("Max color: %1").arg(QString::fromStdString(m_maxColor)));
     }
+}
+
+void SubstateDisplayWidget::onMinSpinBoxFocusOut()
+{
+    emit visualizationRefreshRequested();
+}
+
+void SubstateDisplayWidget::onMaxSpinBoxFocusOut()
+{
+    emit visualizationRefreshRequested();
 }

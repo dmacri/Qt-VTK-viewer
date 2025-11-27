@@ -75,6 +75,11 @@ signals:
      * Requests to deactivate any active substate (use default colors) */
     void deactivateRequested();
 
+    /** @brief Signal emitted when visualization needs to be refreshed.
+     * 
+     * Emitted when colors, min/max values, or other visualization settings change. */
+    void visualizationRefreshRequested();
+
 private slots:
     /** @brief Handle min/max value changes from SubstateDisplayWidget.
      * 
@@ -111,6 +116,11 @@ private slots:
      * @param minColor The new minimum color (hex string or empty)
      * @param maxColor The new maximum color (hex string or empty) */
     void onColorsChanged(const std::string& fieldName, const std::string& minColor, const std::string& maxColor);
+
+    /** @brief Handle visualization refresh request from SubstateDisplayWidget.
+     * 
+     * Refreshes the visualization when colors, min/max values, or other settings change. */
+    void onVisualizationRefreshRequested();
 
 private:
     /** @brief Clear all substate widgets. */

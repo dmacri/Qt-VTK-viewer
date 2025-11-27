@@ -141,6 +141,11 @@ signals:
      * @param maxColor The new maximum color (hex string or empty) */
     void colorsChanged(const std::string& fieldName, const std::string& minColor, const std::string& maxColor);
 
+    /** @brief Signal emitted when visualization needs to be refreshed.
+     * 
+     * Emitted when colors, min/max values, or other visualization settings change. */
+    void visualizationRefreshRequested();
+
 private slots:
     /** @brief Calculate and set minimum value from all cells in current step.
      * 
@@ -194,6 +199,12 @@ private:
 
     /// @brief Install event filter on all child widgets to catch right-click.
     void installEventFiltersOnChildren();
+
+    /// @brief Handle focus out on min spinbox to trigger refresh
+    void onMinSpinBoxFocusOut();
+
+    /// @brief Handle focus out on max spinbox to trigger refresh
+    void onMaxSpinBoxFocusOut();
 
     std::string m_fieldName;
 
