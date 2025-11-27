@@ -100,17 +100,6 @@ public:
     /// @param color Hex color string (e.g., "#0000FF"), or empty string to disable
     void setMaxColor(const std::string& color);
 
-    /// @brief Get the min color
-    /// @return Hex color string or empty string if not set
-    std::string getMinColor() const
-    {
-        return m_minColor;
-    }
-
-    /// @brief Get the max color
-    /// @return Hex color string or empty string if not set
-    std::string getMaxColor() const;
-
     /// @brief Set widget as active (highlighted background).
     /// @param active True to highlight, false to remove highlight
     void setActive(bool active);

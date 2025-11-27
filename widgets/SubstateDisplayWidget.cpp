@@ -1,14 +1,15 @@
 /** @file SubstateDisplayWidget.cpp
  * @brief Implementation of SubstateDisplayWidget. */
 
+#include <cmath> //std::isnan
+#include <limits>
+#include <cctype>
 #include <QMenu>
 #include <QAction>
 #include <QContextMenuEvent>
 #include <QEvent>
 #include <QPushButton>
 #include <QColorDialog>
-#include <limits>
-#include <cctype>
 #include "SubstateDisplayWidget.h"
 #include "ui_SubstateDisplayWidget.h"
 
@@ -16,8 +17,6 @@
 SubstateDisplayWidget::SubstateDisplayWidget(const std::string& fieldName, QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::SubstateDisplayWidget)
-    , m_minColor("")
-    , m_maxColor("")
 {
     // Create UI from .ui file
     ui->setupUi(this);
