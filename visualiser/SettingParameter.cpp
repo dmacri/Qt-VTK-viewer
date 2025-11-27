@@ -173,9 +173,8 @@ std::map<std::string, SubstateInfo> SettingParameter::parseSubstates() const
 
 std::vector<std::string> SettingParameter::getSubstateFields() const
 {
-    return parseSubstates()
-    | std::views::transform([](const auto& p) { return p.first; })
-        | std::ranges::to<std::vector<std::string>>();
+    auto substateFieldsRange = parseSubstates() | std::views::transform([](const auto& p) { return p.first; });
+    return {substateFieldsRange.begin(), substateFieldsRange.end()};
 }
 
 void SettingParameter::initializeSubstateInfo()
