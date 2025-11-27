@@ -1,190 +1,64 @@
 /** @file SubstateDisplayWidget.cpp
  * @brief Implementation of SubstateDisplayWidget. */
 
-#include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QMenu>
 #include <QAction>
 #include <QContextMenuEvent>
 #include <QEvent>
-#include <QSpinBox>
-#include <QLineEdit>
-#include <QLabel>
 #include <QPushButton>
 #include <QColorDialog>
 #include <limits>
-#include <cmath>
 #include <cctype>
 #include "SubstateDisplayWidget.h"
+#include "ui_SubstateDisplayWidget.h"
 
 
 SubstateDisplayWidget::SubstateDisplayWidget(const std::string& fieldName, QWidget* parent)
     : QWidget(parent)
+    , ui(new Ui::SubstateDisplayWidget)
     , m_fieldName(fieldName)
-    , m_nameLabel(new QLabel(QString::fromStdString(fieldName)))
-    , m_valueLabel(new QLabel("-"))
-    , m_minSpinBox(new QDoubleSpinBox())
-    , m_maxSpinBox(new QDoubleSpinBox())
-    , m_formatLineEdit(new QLineEdit())
-    , m_use3dButton(new QPushButton("Use as 3rd dimension"))
-    , m_use2dButton(new QPushButton("Use as 2D"))
-    , m_minColorLabel(new QLabel("Min:"))
-    , m_minColorButton(new QPushButton())
-    , m_maxColorLabel(new QLabel("Max:"))
-    , m_maxColorButton(new QPushButton())
-    , m_clearColorsButton(new QPushButton("Clear Colors"))
     , m_minColor("")
     , m_maxColor("")
 {
-    setObjectName("SubstateDisplayWidget");
-    setupUI();
-    connectSignals();
+    // Create UI from .ui file
+    ui->setupUi(this);
     
+    // Get pointers to widgets from UI
+    m_minColorLabel = ui->minColorLabel;
+    m_minColorButton = ui->minColorButton;
+    m_maxColorLabel = ui->maxColorLabel;
+    m_maxColorButton = ui->maxColorButton;
+    m_clearColorsButton = ui->clearColorsButton;
+    
+    // Set field name in label
+    ui->nameLabel->setText(QString::fromStdString(fieldName));
+    
+    // Configure spinboxes
+    ui->minSpinBox->setValue(ui->minSpinBox->minimum());
+    ui->maxSpinBox->setValue(ui->maxSpinBox->minimum());
+        
     // Enable context menu for the widget
     setContextMenuPolicy(Qt::CustomContextMenu);
     
     // Install event filter on all child widgets to intercept right-click
     installEventFiltersOnChildren();
+    
+    // Connect signals
+    connectSignals();
 }
 
-void SubstateDisplayWidget::setupUI()
+SubstateDisplayWidget::~SubstateDisplayWidget()
 {
-    // Create main layout with border
-    auto mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(5, 5, 5, 5);
-    mainLayout->setSpacing(4);
-
-    // Set widget border
-    setStyleSheet("SubstateDisplayWidget { border: 1px solid #cccccc; border-radius: 3px; background-color: #f9f9f9; }");
-
-    // Title with field name (full width) - bold and larger
-    auto titleLayout = new QHBoxLayout();
-    auto titleLabel = new QLabel("Param:");
-    titleLabel->setStyleSheet("QLabel { font-size: 8pt; }");
-    titleLabel->setMaximumWidth(40);
-    m_nameLabel->setStyleSheet("QLabel { font-size: 10pt; font-weight: bold; }");
-    titleLayout->addWidget(titleLabel);
-    titleLayout->addWidget(m_nameLabel);
-    titleLayout->setContentsMargins(0, 0, 0, 0);
-    mainLayout->addLayout(titleLayout);
-
-    // Value display (read-only) - full width
-    auto valueLayout = new QHBoxLayout();
-    auto valueTextLabel = new QLabel("Val:");
-    valueTextLabel->setMaximumWidth(35);
-    m_valueLabel->setStyleSheet("QLabel { padding: 1px; font-size: 9pt; font-weight: bold; }");
-    m_valueLabel->setMaximumHeight(20);
-    valueLayout->addWidget(valueTextLabel);
-    valueLayout->addWidget(m_valueLabel);
-    valueLayout->setContentsMargins(0, 0, 0, 0);
-    mainLayout->addLayout(valueLayout);
-
-    // Two-column layout for Min and Max
-    auto minMaxLayout = new QHBoxLayout();
-    minMaxLayout->setSpacing(2);
-    minMaxLayout->setContentsMargins(0, 0, 0, 0);
-
-    // Minimum value (left column)
-    auto minLayout = new QVBoxLayout();
-    auto minTextLabel = new QLabel("Min:");
-    minTextLabel->setStyleSheet("QLabel { font-size: 8pt; }");
-    m_minSpinBox->setRange(-1e9, 1e9);
-    m_minSpinBox->setDecimals(2);
-    m_minSpinBox->setSpecialValueText(" ");  // Empty display for minimum value
-    m_minSpinBox->setValue(m_minSpinBox->minimum());  // Start with "empty" state
-    m_minSpinBox->setMaximumHeight(20);
-    m_minSpinBox->setStyleSheet("QDoubleSpinBox { font-size: 8pt; }");
-    minLayout->addWidget(minTextLabel);
-    minLayout->addWidget(m_minSpinBox);
-    minLayout->setContentsMargins(0, 0, 0, 0);
-    minLayout->setSpacing(0);
-    minMaxLayout->addLayout(minLayout);
-
-    // Maximum value (right column)
-    auto maxLayout = new QVBoxLayout();
-    auto maxTextLabel = new QLabel("Max:");
-    maxTextLabel->setStyleSheet("QLabel { font-size: 8pt; }");
-    m_maxSpinBox->setRange(-1e9, 1e9);
-    m_maxSpinBox->setDecimals(2);
-    m_maxSpinBox->setSpecialValueText(" ");  // Empty display for minimum value
-    m_maxSpinBox->setValue(m_maxSpinBox->minimum());  // Start with "empty" state
-    m_maxSpinBox->setMaximumHeight(20);
-    m_maxSpinBox->setStyleSheet("QDoubleSpinBox { font-size: 8pt; }");
-    maxLayout->addWidget(maxTextLabel);
-    maxLayout->addWidget(m_maxSpinBox);
-    maxLayout->setContentsMargins(0, 0, 0, 0);
-    maxLayout->setSpacing(0);
-    minMaxLayout->addLayout(maxLayout);
-
-    mainLayout->addLayout(minMaxLayout);
-
-    // Format string (full width)
-    auto formatLayout = new QHBoxLayout();
-    auto formatTextLabel = new QLabel("Fmt:");
-    formatTextLabel->setMaximumWidth(35);
-    m_formatLineEdit->setMaximumHeight(20);
-    m_formatLineEdit->setStyleSheet("QLineEdit { font-size: 8pt; }");
-    formatLayout->addWidget(formatTextLabel);
-    formatLayout->addWidget(m_formatLineEdit);
-    formatLayout->setContentsMargins(0, 0, 0, 0);
-    mainLayout->addLayout(formatLayout);
-
-    // Buttons layout (3D, 2D)
-    auto buttonsLayout = new QHBoxLayout();
-    buttonsLayout->setSpacing(2);
-    buttonsLayout->setContentsMargins(0, 0, 0, 0);
-    
-    // Use as 3rd dimension button
-    m_use3dButton->setMaximumHeight(22);
-    m_use3dButton->setStyleSheet("QPushButton { font-size: 8pt; padding: 2px; }");
-    buttonsLayout->addWidget(m_use3dButton);
-    
-    // Use as 2D button
-    m_use2dButton->setMaximumHeight(22);
-    m_use2dButton->setStyleSheet("QPushButton { font-size: 8pt; padding: 2px; background-color: #e8f4f8; }");
-    buttonsLayout->addWidget(m_use2dButton);
-    
-    mainLayout->addLayout(buttonsLayout);
-
-    // Colors layout
-    auto colorsLayout = new QHBoxLayout();
-    colorsLayout->setSpacing(4);
-    colorsLayout->setContentsMargins(0, 0, 0, 0);
-    
-    // Min color
-    m_minColorLabel->setMaximumWidth(30);
-    colorsLayout->addWidget(m_minColorLabel);
-    m_minColorButton->setMaximumHeight(20);
-    m_minColorButton->setMaximumWidth(40);
-    m_minColorButton->setToolTip("Click to set minimum value color");
-    colorsLayout->addWidget(m_minColorButton);
-    
-    // Max color
-    m_maxColorLabel->setMaximumWidth(30);
-    colorsLayout->addWidget(m_maxColorLabel);
-    m_maxColorButton->setMaximumHeight(20);
-    m_maxColorButton->setMaximumWidth(40);
-    m_maxColorButton->setToolTip("Click to set maximum value color");
-    colorsLayout->addWidget(m_maxColorButton);
-    
-    // Clear colors button
-    m_clearColorsButton->setMaximumHeight(20);
-    m_clearColorsButton->setStyleSheet("QPushButton { font-size: 7pt; padding: 1px; }");
-    colorsLayout->addWidget(m_clearColorsButton);
-    
-    colorsLayout->addStretch();
-    mainLayout->addLayout(colorsLayout);
-
-    setLayout(mainLayout);
+    delete ui;
 }
 
 void SubstateDisplayWidget::connectSignals()
 {
-    connect(m_use3dButton, &QPushButton::clicked, this, [this]() {
+    connect(ui->use3dButton, &QPushButton::clicked, this, [this]() {
         emit use3rdDimensionRequested(m_fieldName);
     });
 
-    connect(m_use2dButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onUse2DClicked);
+    connect(ui->use2dButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onUse2DClicked);
 
     // Connect color buttons
     connect(m_minColorButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onMinColorClicked);
@@ -192,14 +66,14 @@ void SubstateDisplayWidget::connectSignals()
     connect(m_clearColorsButton, &QPushButton::clicked, this, &SubstateDisplayWidget::onClearColorsClicked);
 
     // Connect spinbox value changes to update button state
-    connect(m_minSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+    connect(ui->minSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
             this, &SubstateDisplayWidget::updateButtonState);
-    connect(m_maxSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+    connect(ui->maxSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
             this, &SubstateDisplayWidget::updateButtonState);
 
     // Install event filters on spinboxes to detect focus out
-    m_minSpinBox->installEventFilter(this);
-    m_maxSpinBox->installEventFilter(this);
+    ui->minSpinBox->installEventFilter(this);
+    ui->maxSpinBox->installEventFilter(this);
 
     // Initial button state
     updateButtonState();
@@ -235,65 +109,65 @@ void SubstateDisplayWidget::setCellValue(const std::string& value)
                     if (std::isdigit(precChar))
                         precision = precChar - '0';
                 }
-                m_valueLabel->setText(QString::number(numValue, 'f', precision));
+                ui->valueLabel->setText(QString::number(numValue, 'f', precision));
             }
             else if (isInteger)
             {
                 // Format as integer
-                m_valueLabel->setText(QString::number(static_cast<long long>(numValue)));
+                ui->valueLabel->setText(QString::number(static_cast<long long>(numValue)));
             }
             else
             {
                 // Default: show as-is
-                m_valueLabel->setText(QString::fromStdString(value));
+                ui->valueLabel->setText(QString::fromStdString(value));
             }
         }
         catch (const std::exception&)
         {
             // If parsing fails, show value as-is
-            m_valueLabel->setText(QString::fromStdString(value));
+            ui->valueLabel->setText(QString::fromStdString(value));
         }
     }
     else
     {
         // No format specified, show value as-is
-        m_valueLabel->setText(QString::fromStdString(value));
+        ui->valueLabel->setText(QString::fromStdString(value));
     }
 }
 
 double SubstateDisplayWidget::getMinValue() const
 {
-    if (m_minSpinBox->value() == m_minSpinBox->minimum())
+    if (ui->minSpinBox->value() == ui->minSpinBox->minimum())
         return std::numeric_limits<double>::quiet_NaN();
-    return m_minSpinBox->value();
+    return ui->minSpinBox->value();
 }
 
 void SubstateDisplayWidget::setMinValue(double value)
 {
     if (std::isnan(value))
-        m_minSpinBox->setValue(m_minSpinBox->minimum());  // Empty state
+        ui->minSpinBox->setValue(ui->minSpinBox->minimum());  // Empty state
     else
-        m_minSpinBox->setValue(value);
+        ui->minSpinBox->setValue(value);
 }
 
 double SubstateDisplayWidget::getMaxValue() const
 {
-    if (m_maxSpinBox->value() == m_maxSpinBox->minimum())
+    if (ui->maxSpinBox->value() == ui->maxSpinBox->minimum())
         return std::numeric_limits<double>::quiet_NaN();
-    return m_maxSpinBox->value();
+    return ui->maxSpinBox->value();
 }
 
 void SubstateDisplayWidget::setMaxValue(double value)
 {
     if (std::isnan(value))
-        m_maxSpinBox->setValue(m_maxSpinBox->minimum());  // Empty state
+        ui->maxSpinBox->setValue(ui->maxSpinBox->minimum());  // Empty state
     else
-        m_maxSpinBox->setValue(value);
+        ui->maxSpinBox->setValue(value);
 }
 
 std::string SubstateDisplayWidget::getFormat() const
 {
-    auto text = m_formatLineEdit->text().toStdString();
+    auto text = ui->formatLineEdit->text().toStdString();
     // Remove % prefix if present
     if (!text.empty() && text[0] == '%')
         return text.substr(1);
@@ -306,17 +180,17 @@ void SubstateDisplayWidget::setFormat(const std::string& format)
     std::string cleanFormat = format;
     if (!cleanFormat.empty() && cleanFormat[0] == '%')
         cleanFormat = cleanFormat.substr(1);
-    m_formatLineEdit->setText(QString::fromStdString(cleanFormat));
+    ui->formatLineEdit->setText(QString::fromStdString(cleanFormat));
 }
 
 bool SubstateDisplayWidget::hasMinValue() const
 {
-    return m_minSpinBox->value() != m_minSpinBox->minimum();
+    return ui->minSpinBox->value() != ui->minSpinBox->minimum();
 }
 
 bool SubstateDisplayWidget::hasMaxValue() const
 {
-    return m_maxSpinBox->value() != m_maxSpinBox->minimum();
+    return ui->maxSpinBox->value() != ui->maxSpinBox->minimum();
 }
 
 void SubstateDisplayWidget::updateButtonState()
@@ -326,16 +200,16 @@ void SubstateDisplayWidget::updateButtonState()
     const bool hasMax = hasMaxValue();
     const bool isEnabled = hasMin && hasMax;
     
-    m_use3dButton->setEnabled(isEnabled);
+    ui->use3dButton->setEnabled(isEnabled);
     
     // Update tooltip to explain why button might be disabled
     if (isEnabled)
     {
-        m_use3dButton->setToolTip("Use this field as 3rd dimension in 3D visualization");
+        ui->use3dButton->setToolTip("Use this field as 3rd dimension in 3D visualization");
     }
     else
     {
-        m_use3dButton->setToolTip("Set both Min and Max values to enable 3D visualization");
+        ui->use3dButton->setToolTip("Set both Min and Max values to enable 3D visualization");
     }
 
     // Emit signal with current min/max values so they can be stored in substateInfo
@@ -345,12 +219,12 @@ void SubstateDisplayWidget::updateButtonState()
 void SubstateDisplayWidget::installEventFiltersOnChildren()
 {
     // Install event filter on all child widgets to intercept right-click
-    m_minSpinBox->installEventFilter(this);
-    m_maxSpinBox->installEventFilter(this);
-    m_formatLineEdit->installEventFilter(this);
-    m_use3dButton->installEventFilter(this);
-    m_nameLabel->installEventFilter(this);
-    m_valueLabel->installEventFilter(this);
+    ui->minSpinBox->installEventFilter(this);
+    ui->maxSpinBox->installEventFilter(this);
+    ui->formatLineEdit->installEventFilter(this);
+    ui->use3dButton->installEventFilter(this);
+    ui->nameLabel->installEventFilter(this);
+    ui->valueLabel->installEventFilter(this);
 }
 
 bool SubstateDisplayWidget::eventFilter(QObject* obj, QEvent* event)
@@ -367,12 +241,12 @@ bool SubstateDisplayWidget::eventFilter(QObject* obj, QEvent* event)
     // Intercept focus out on spinboxes to trigger visualization refresh
     if (event->type() == QEvent::FocusOut)
     {
-        if (obj == m_minSpinBox)
+        if (obj == ui->minSpinBox)
         {
             onMinSpinBoxFocusOut();
             return false;  // Let the event pass through
         }
-        else if (obj == m_maxSpinBox)
+        else if (obj == ui->maxSpinBox)
         {
             onMaxSpinBoxFocusOut();
             return false;  // Let the event pass through

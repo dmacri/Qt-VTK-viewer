@@ -14,6 +14,11 @@ class QDoubleSpinBox;
 class QPushButton;
 class SettingParameter;
 
+namespace Ui
+{
+class SubstateDisplayWidget;
+}
+
 /** @class SubstateDisplayWidget
  * @brief Widget for displaying a single substate field with editable parameters.
  * 
@@ -34,6 +39,8 @@ public:
      * @param fieldName The name of the substate field (e.g., "h", "z")
      * @param parent Parent widget */
     explicit SubstateDisplayWidget(const std::string& fieldName, QWidget* parent = nullptr);
+
+    ~SubstateDisplayWidget();
 
     /** @brief Update the displayed cell value.
      * 
@@ -83,7 +90,10 @@ public:
     /** @brief Get the field name.
      * 
      * @return Field name */
-    std::string getFieldName() const { return m_fieldName; }
+    std::string getFieldName() const
+    {
+        return m_fieldName;
+    }
 
     /// @brief Set the min color for this substate
     /// @param color Hex color string (e.g., "#FF0000"), or empty string to disable
@@ -95,7 +105,10 @@ public:
 
     /// @brief Get the min color
     /// @return Hex color string or empty string if not set
-    std::string getMinColor() const { return m_minColor; }
+    std::string getMinColor() const
+    {
+        return m_minColor;
+    }
 
     /// @brief Get the max color
     /// @return Hex color string or empty string if not set
@@ -180,9 +193,6 @@ protected:
     bool eventFilter(QObject* obj, QEvent* event) override;
 
 private:
-    /// @brief Setup the UI layout.
-    void setupUI();
-
     /// @brief Connect signals to slots.
     void connectSignals();
 
@@ -210,15 +220,9 @@ private:
     /// @brief Handle focus out on max spinbox to trigger refresh
     void onMaxSpinBoxFocusOut();
 
-    std::string m_fieldName;
+    Ui::SubstateDisplayWidget *ui;
 
-    QLabel* m_nameLabel;
-    QLabel* m_valueLabel;
-    QDoubleSpinBox* m_minSpinBox;
-    QDoubleSpinBox* m_maxSpinBox;
-    QLineEdit* m_formatLineEdit;
-    QPushButton* m_use3dButton;
-    QPushButton* m_use2dButton;
+    std::string m_fieldName;
     
     // Color picker widgets
     class QLabel* m_minColorLabel;
