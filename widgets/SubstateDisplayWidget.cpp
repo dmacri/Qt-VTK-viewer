@@ -13,6 +13,20 @@
 #include "SubstateDisplayWidget.h"
 #include "ui_SubstateDisplayWidget.h"
 
+namespace
+{
+constexpr double emptyValue = -1e9;
+
+/// @brief Configure spinboxes with special value text for empty display
+void setUpSpinBoxWithNoValue(QDoubleSpinBox* spinBox)
+{
+    spinBox->setMinimum(emptyValue);
+    spinBox->setMaximum(1e9);
+    spinBox->setSpecialValueText(" "); // space for empty display
+    spinBox->setValue(emptyValue);
+}
+} // namespace
+
 
 SubstateDisplayWidget::SubstateDisplayWidget(const std::string& fieldName, QWidget* parent)
     : QWidget(parent)
@@ -23,10 +37,9 @@ SubstateDisplayWidget::SubstateDisplayWidget(const std::string& fieldName, QWidg
 
     // Set field name in label
     ui->nameLabel->setText(QString::fromStdString(fieldName));
-
-    // Configure spinboxes
-    ui->minSpinBox->setValue(ui->minSpinBox->minimum());
-    ui->maxSpinBox->setValue(ui->maxSpinBox->minimum());
+    
+    setUpSpinBoxWithNoValue(ui->minSpinBox);
+    setUpSpinBoxWithNoValue(ui->maxSpinBox);
 
     // Enable context menu for the widget
     setContextMenuPolicy(Qt::CustomContextMenu);
@@ -128,30 +141,34 @@ void SubstateDisplayWidget::setCellValue(const std::string& value)
 
 double SubstateDisplayWidget::getMinValue() const
 {
-    if (ui->minSpinBox->value() == ui->minSpinBox->minimum())
+    const double value = ui->minSpinBox->value();
+    // Return NaN if value is the "empty" sentinel
+    if (value == emptyValue)
         return std::numeric_limits<double>::quiet_NaN();
-    return ui->minSpinBox->value();
+    return value;
 }
 
 void SubstateDisplayWidget::setMinValue(double value)
 {
     if (std::isnan(value))
-        ui->minSpinBox->setValue(ui->minSpinBox->minimum());  // Empty state
+        ui->minSpinBox->setValue(emptyValue);
     else
         ui->minSpinBox->setValue(value);
 }
 
 double SubstateDisplayWidget::getMaxValue() const
 {
-    if (ui->maxSpinBox->value() == ui->maxSpinBox->minimum())
+    const double value = ui->maxSpinBox->value();
+    // Return NaN if value is the "empty" sentinel
+    if (value == emptyValue)
         return std::numeric_limits<double>::quiet_NaN();
-    return ui->maxSpinBox->value();
+    return value;
 }
 
 void SubstateDisplayWidget::setMaxValue(double value)
 {
     if (std::isnan(value))
-        ui->maxSpinBox->setValue(ui->maxSpinBox->minimum());  // Empty state
+        ui->maxSpinBox->setValue(emptyValue);
     else
         ui->maxSpinBox->setValue(value);
 }

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>261</width>
+    <width>292</width>
     <height>177</height>
    </rect>
   </property>
@@ -180,17 +180,11 @@
          <property name="styleSheet">
           <string>QDoubleSpinBox { font-size: 8pt; }</string>
          </property>
-         <property name="specialValueText">
-          <string/>
-         </property>
          <property name="decimals">
           <number>2</number>
          </property>
-         <property name="minimum">
-          <double>-1000000000.000000000000000</double>
-         </property>
          <property name="maximum">
-          <double>1000000000.000000000000000</double>
+          <double>9999.989999999999782</double>
          </property>
         </widget>
        </item>
@@ -234,17 +228,11 @@
          <property name="styleSheet">
           <string>QDoubleSpinBox { font-size: 8pt; }</string>
          </property>
-         <property name="specialValueText">
-          <string/>
-         </property>
          <property name="decimals">
           <number>2</number>
          </property>
-         <property name="minimum">
-          <double>-1000000000.000000000000000</double>
-         </property>
          <property name="maximum">
-          <double>1000000000.000000000000000</double>
+          <double>9999.989999999999782</double>
          </property>
         </widget>
        </item>
