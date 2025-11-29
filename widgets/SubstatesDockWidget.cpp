@@ -79,8 +79,8 @@ void SubstatesDockWidget::updateSubstates(SettingParameter* settingParameter)
             widget->setMinColor(it->second.minColor);
             widget->setMaxColor(it->second.maxColor);
             widget->setNoValue(it->second.noValue);
-            // Enable noValue checkbox if noValue is set
-            widget->setNoValueEnabled(!std::isnan(it->second.noValue));
+            // Restore noValue enabled state from saved configuration
+            widget->setNoValueEnabled(it->second.noValueEnabled);
         }
 
         // Connect signals
