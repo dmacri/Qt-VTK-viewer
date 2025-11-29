@@ -231,9 +231,9 @@ Color Visualizer::calculateCellColor(int row, int column, const Matrix &p, const
                 // Min/max not set - use default coloring
                 isNoValue = false;
             }
-            else if (!std::isnan(substateInfo->noValue) && value == substateInfo->noValue)
+            else if (substateInfo->noValueEnabled && !std::isnan(substateInfo->noValue) && value == substateInfo->noValue)
             {
-                // Value equals noValue
+                // Value equals noValue and noValue filtering is enabled
                 isNoValue = true;
             }
             else if (value < minVal || value > maxVal)
